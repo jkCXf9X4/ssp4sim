@@ -9,9 +9,3 @@ namespace ssp4sim
 }
 
 
-// log_toggle.hpp
-#ifdef _LOG_
-  #define IF_LOG(stmt) do { stmt } while (0)
-#else
-  #define IF_LOG(stmt) do { } while (0)
-#endif

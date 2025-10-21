@@ -3,8 +3,6 @@
 #include "utils/log.hpp"
 #include "utils/time.hpp"
 
-#include "ssp4sim_definitions.hpp"
-
 #include <fmi4c.h>
 
 #include <cstdint>

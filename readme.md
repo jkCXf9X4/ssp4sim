@@ -1,6 +1,6 @@
-# SSP4CPP
+# SSP4SIM
 
-SSP4CPP is a C++23 library and application for simulating Structure and Parameterization (SSP) archives. The goal is to create a small experimental simulation engine to develop and test novel (and old) simulation strategies.
+SSP4SIM is a C++23 library and application for simulating Structure and Parameterization (SSP) archives. The goal is to create a small experimental simulation engine to develop and test novel (and old) simulation strategies.
 
 It currently supports the following execution strategies:
 - Gauss-Jacobi
@@ -21,7 +21,7 @@ The project is organized into the following directories:
 - `lib`: Contains the simulation engine, which is responsible for loading and executing SSP files.
 - `public`: Contains main application and python api.
 - `resources`: Contains SSP files and other resources used by the examples and tests.
-- `tests`: Contains unit tests for the SSP4CPP library.
+- `tests`: Contains unit tests for the SSP4SIM library.
 
 
 ## Getting started
@@ -60,9 +60,9 @@ After building, you can run the SSP simulation engine:
 This will run a simple simulation using one of the example ssps.
 
 ## Running tests
-To run the tests, you first need to enable the `SSP4CPP_BUILD_TEST` option in CMake:
+To run the tests, you first need to enable the `SSP4SIM_BUILD_TEST` option in CMake:
 ```bash
-cmake -B build -S . -DSSP4CPP_BUILD_TEST=ON
+cmake -B build -S . -DSSP4SIM_BUILD_TEST=ON
 cmake --build build && ./build/tests/test_1
 ```
 ctest --test-dir build/tests currently malfunctions...
@@ -70,7 +70,7 @@ ctest --test-dir build/tests currently malfunctions...
 ## Building python api
 Make sure to use the same version of python as you build for. First build the python bindings
 ```bash
-cmake -B build -S . -DSSP4CPP_BUILD_PYTHON=ON
+cmake -B build -S . -DSSP4SIM_BUILD_PYTHON=ON
 cmake --build build
 
 python3 -m venv venv

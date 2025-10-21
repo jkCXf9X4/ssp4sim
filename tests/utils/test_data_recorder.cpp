@@ -15,9 +15,12 @@
 #include <filesystem>
 #include <thread>
 #include <chrono>
+#include <vector>
 
-using namespace ssp4cpp;
-using namespaceutils;
+using ssp4sim::utils::DataRecorder;
+using ssp4sim::utils::DataStorage;
+using ssp4sim::utils::DataType;
+namespace sim_time = ssp4sim::utils::time;
 
 // Helper function to check if file exists and contains expected data
 bool check_file_contains(const std::string &filename, const std::string &expected)
@@ -114,7 +117,7 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     std::memcpy(storage.get_item(area, 0), &temperature, sizeof(double));
     std::memcpy(storage.get_item(area, 1), &mode, sizeof(int));
 
-    const uint64_t timestamp = 1ULL * utils::time::nanoseconds_per_second;
+    const uint64_t timestamp = 1ULL * sim_time::nanoseconds_per_second;
     storage.set_time(area, timestamp);
     storage.flag_new_data(area);
 
@@ -163,7 +166,7 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     std::memcpy(secondary.get_item(area, 0), &secondary_pressure, sizeof(double));
     std::memcpy(secondary.get_item(area, 1), &secondary_index, sizeof(int));
 
-    const uint64_t timestamp = 1ULL * utils::time::nanoseconds_per_second;
+    const uint64_t timestamp = 1ULL * sim_time::nanoseconds_per_second;
     primary.set_time(area, timestamp);
     secondary.set_time(area, timestamp);
     primary.flag_new_data(area);

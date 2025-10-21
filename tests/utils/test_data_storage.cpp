@@ -6,9 +6,10 @@
 #include "data_storage.hpp"
 
 #include <string>
+#include <iostream>
 
-using namespace sim;
-using namespaceutils;
+using ssp4sim::utils::DataStorage;
+using ssp4sim::utils::DataType;
 
 
 TEST_CASE("DataStorage2 basic allocation", "[DataStorage2]")

@@ -1,12 +1,15 @@
-
-#include <task_thread_pool.hpp>
+#include "utils/task_thread_pool.hpp"
 
 #include <atomic>
 #include <chrono>
+#include <future>
+#include <iostream>
 #include <thread>
+#include <vector>
 
 #include <catch.hpp>
-using namespace common;
+
+using ssp4sim::utils::ThreadPool;
 
 TEST_CASE("ThreadPool executes simple tasks", "[threadpool]")
 {

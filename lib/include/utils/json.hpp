@@ -3,25 +3,26 @@
 
 #include <nlohmann/json.hpp>
 
-#include <string>
 #include <fstream>
+#include <stdexcept>
+#include <string>
 
 namespace ssp4sim::utils::json
 {
 
     using Json = nlohmann::json;
 
-    Json parse_json(const std::string &s)
+    inline Json parse_json(const std::string &s)
     {
         return Json::parse(s);
     }
 
-    std::string to_string(const Json &j)
+    inline std::string to_string(const Json &j)
     {
         return j.dump();
     }
 
-    Json parse_json_file(const std::string &filename)
+    inline Json parse_json_file(const std::string &filename)
     {
         std::ifstream in(filename);
         if (!in)

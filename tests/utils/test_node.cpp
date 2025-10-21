@@ -1,9 +1,7 @@
-
-
 #include <catch.hpp>
-#include <utils/node.hpp>
+#include "utils/node.hpp"
 
-using namespace ssp4cpp::utils::graph;
+using ssp4sim::utils::graph::Node;
 
 TEST_CASE("Node basic construction and name", "[Node]") {
     Node n1;

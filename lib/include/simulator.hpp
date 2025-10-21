@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ssp.hpp"
 #include "fmu.hpp"
 #include "utils/io.hpp"

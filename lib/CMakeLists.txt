@@ -22,7 +22,7 @@ target_include_directories(ssp4sim_lib
 target_compile_options(ssp4sim_lib PRIVATE -Wfatal-errors)
 
 find_package(nlohmann_json CONFIG REQUIRED)
-target_link_libraries(ssp4sim_lib PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(ssp4sim_lib PUBLIC nlohmann_json::nlohmann_json)
 
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE TBB::tbb TBB::tbbmalloc)

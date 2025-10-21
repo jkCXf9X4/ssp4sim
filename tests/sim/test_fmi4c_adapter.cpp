@@ -1,4 +1,6 @@
-#include "handler/fmi4c_adapter.hpp"
+#include "fmi4c_adapter.hpp"
+
+#include "utils/time.hpp"
 
 #include <catch.hpp>
 
@@ -7,6 +9,8 @@
 #include <string>
 
 using namespace ssp4sim::handler;
+
+using namespace ssp4sim::utils::time;
 
 namespace
 {
@@ -75,10 +79,10 @@ TEST_CASE("CoSimulationModel enforces call order", "[fmi4c_adapter]")
     FmuInstance instance(fmu_path, "call-order-instance");
     CoSimulationModel model(instance);
 
-    REQUIRE_THROWS_AS(model.setup_experiment(0.0, 1.0, 0.0), std::logic_error);
+    REQUIRE_THROWS_AS(model.setup_experiment(0.0, s_to_ns(1.0), 0.0), std::logic_error);
     REQUIRE_THROWS_AS(model.enter_initialization_mode(), std::logic_error);
     REQUIRE_THROWS_AS(model.exit_initialization_mode(), std::logic_error);
-    REQUIRE_THROWS_AS(model.step(0.1), std::logic_error);
+    REQUIRE_THROWS_AS(model.step(s_to_ns(0.1)), std::logic_error);
 }
 
 TEST_CASE("CoSimulationModel runs scenario FMU lifecycle", "[fmi4c_adapter][integration]")
@@ -90,17 +94,17 @@ TEST_CASE("CoSimulationModel runs scenario FMU lifecycle", "[fmi4c_adapter][inte
     REQUIRE(model.instantiate(false, false));
     REQUIRE(model.instantiate(false, false));
 
-    REQUIRE(model.setup_experiment(0.0, 10.0, 1e-4));
-    REQUIRE(model.get_simulation_time() == Catch::Approx(0.0));
+    REQUIRE(model.setup_experiment(0.0, s_to_ns(10.0), 1e-4));
+    REQUIRE(ns_to_s(model.get_simulation_time()) == Catch::Approx(0.0));
 
     REQUIRE(model.enter_initialization_mode());
     auto scenario_schedule = std::string("Alt;L;0.0,0.0;300.0,10000.0\nMach;L;0.0,0.0;300.0,1.2\nheat_load;ZOH;0.0,50.0;150.0,4000.0\nWgt_On_Whl;ZOH;0.0,1.0;150.0,0.0\nAircraft_state;ZOH;0.0,0.0;150.0,4.0");
     REQUIRE(model.write_string(0, scenario_schedule));
     REQUIRE(model.exit_initialization_mode());
 
-    REQUIRE(model.step(0.5));
+    REQUIRE(model.step(s_to_ns(0.5)));
     REQUIRE(model.last_status() == fmi2OK);
-    REQUIRE(model.get_simulation_time() == Catch::Approx(0.5));
+    REQUIRE(ns_to_s(model.get_simulation_time()) == Catch::Approx(0.5));
 
     double altitude = 0.0;
     REQUIRE(model.read_real(1, altitude));
@@ -129,7 +133,7 @@ TEST_CASE("Atmos FMU computes ambient properties based on inputs", "[fmi4c_adapt
     CoSimulationModel model(instance);
 
     REQUIRE(model.instantiate(false, false));
-    REQUIRE(model.setup_experiment(0.0, 1.0, 1e-4));
+    REQUIRE(model.setup_experiment(0.0, s_to_ns(1.0), 1e-4));
     REQUIRE(model.enter_initialization_mode());
 
     REQUIRE(model.write_real(kDtisaVr, 0.0));
@@ -138,8 +142,8 @@ TEST_CASE("Atmos FMU computes ambient properties based on inputs", "[fmi4c_adapt
 
     REQUIRE(model.exit_initialization_mode());
 
-    REQUIRE(model.step(0.1));
-    REQUIRE(model.get_simulation_time() == Catch::Approx(0.1));
+    REQUIRE(model.step(s_to_ns(0.1)));
+    REQUIRE(ns_to_s(model.get_simulation_time()) == Catch::Approx(0.1));
 
     double sea_level_temp = 0.0;
     double sea_level_pressure = 0.0;
@@ -161,7 +165,7 @@ TEST_CASE("Atmos FMU computes ambient properties based on inputs", "[fmi4c_adapt
         REQUIRE_FALSE(input_status_ok);
     }
 
-    REQUIRE(model.step(0.1));
+    REQUIRE(model.step(s_to_ns(0.1)));
 
     double high_alt_temp = 0.0;
     double high_alt_pressure = 0.0;
@@ -207,7 +211,7 @@ TEST_CASE("Atmos FMU reports solver events via EventCounter", "[fmi4c_adapter][f
 
     REQUIRE(model.instantiate(false, false));
 
-    REQUIRE(model.setup_experiment(0.0, 0.0, 1e-4));
+    REQUIRE(model.setup_experiment(0, 0, 1e-4));
 
     REQUIRE(model.enter_initialization_mode());
 
@@ -228,7 +232,7 @@ TEST_CASE("Atmos FMU reports solver events via EventCounter", "[fmi4c_adapter][f
 
     while (time < total_time)
     {
-        time = model.get_simulation_time();
+        time = ns_to_s(model.get_simulation_time());
         // std::cout << time << std::endl;
 
         double new_altitude = altitude_derivative * time;
@@ -254,7 +258,7 @@ TEST_CASE("Atmos FMU reports solver events via EventCounter", "[fmi4c_adapter][f
             std::cout << "derivative_status_ok" << std::endl;
         }
         
-        model.step(step);
+        model.step(s_to_ns(step));
         model.read_real(kEventCounterVr, event_counter);
 
         // std::cout << "EventCounter after time " << time << ": " << event_counter << std::endl;

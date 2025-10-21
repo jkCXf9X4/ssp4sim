@@ -1,15 +1,16 @@
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
 
-#include "ssp4cpp/utils/log.hpp"
-
 #include "data_ring_storage.hpp"
 #include "data_type.hpp"
+#include "utils/log.hpp"
 
-using namespace sim;
-using namespaceutils;
+#include <iostream>
 
-ssp4cpp::utils::Logger logger = ssp4cpp::utils::Logger("RingStorage", ssp4cpp::utils::LogLevel::debug);
+using ssp4sim::utils::DataType;
+using ssp4sim::utils::RingStorage;
+
+Logger logger = Logger("RingStorage", LogLevel::debug);
 
 TEST_CASE("RingStorage constructor")
 {
@@ -65,19 +66,19 @@ TEST_CASE("RingStorage get_item")
     storage.allocate();
 
     auto area1 = storage.push(100);
-    logger.trace("Pushing 100, area: {}", area1);
+    logger(trace)("Pushing 100, area: {}", area1);
     auto item = (int32_t*)storage.get_item(area1, index);
     *item = 1;
     storage.flag_new_data(area1);
     
     auto area2 = storage.push(200);
-    logger.trace("Pushing 200, area: {}", area2);
+    logger(trace)("Pushing 200, area: {}", area2);
     item = (int32_t*)storage.get_item(area2, index);
     *item = 2;
     storage.flag_new_data(area2);
     
     auto area3 = storage.push(300);
-    logger.trace("Pushing 300, area: {}", area3);
+    logger(trace)("Pushing 300, area: {}", area3);
     item = (int32_t*)storage.get_item(area3, index);
     *item = 3;
     storage.flag_new_data(area3);

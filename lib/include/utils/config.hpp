@@ -2,8 +2,6 @@
 
 #include "utils/log.hpp"
 
-// Config.hpp
-#pragma once
 #include <string>
 #include <fstream>
 #include <sstream>
