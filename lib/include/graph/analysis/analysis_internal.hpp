@@ -19,7 +19,7 @@ namespace ssp4sim::sim::analysis::graph
         uint64_t delay = 0;
 
     public:
-        common::Logger log = common::Logger("ssp4sim.graph.AnalysisModelVariable", common::LogLevel::debug);
+        Logger log = Logger("ssp4sim.graph.AnalysisModelVariable", LogLevel::debug);
         std::string component;
         std::string variable_name;
 
@@ -34,7 +34,7 @@ namespace ssp4sim::sim::analysis::graph
 
         ~AnalysisModelVariable()
         {
-            log.ext_trace("[{}] Destroying AnalysisModelVariable", __func__);
+            log(ext_trace)("[{}] Destroying AnalysisModelVariable", __func__);
         }
 
         void update_name()

@@ -25,10 +25,10 @@ namespace ssp4sim::sim::utils
      * - store multiple time versions of the data to enable access backwards in time
      */
 
-    class DataStorage : public common::str::IString
+    class DataStorage : public utils::str::IString
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.utils.DataStorage", common::LogLevel::debug);
+        Logger log = Logger("ssp4sim.utils.DataStorage", LogLevel::debug);
 
         // all data
         std::unique_ptr<std::byte[]> data;
@@ -140,7 +140,7 @@ namespace ssp4sim::sim::utils
                 {
                     if (types[index] == utils::DataType::string)
                     {
-                        log.debug("[{}] Setting string {}:{} - {}", __func__, index, names[index], types[index].to_string());
+                        log(debug)("[{}] Setting string {}:{} - {}", __func__, index, names[index], types[index].to_string());
                         auto s = (std::string*)locations[area][index];
                         *s = std::string("");
                     }

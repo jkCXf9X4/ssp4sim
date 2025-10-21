@@ -35,7 +35,7 @@ namespace ssp4sim::sim
     class Simulation
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.Simulation", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.Simulation", LogLevel::info);
 
         Ssp *ssp;
 
@@ -55,7 +55,7 @@ namespace ssp4sim::sim
         {
             this->ssp = ssp;
 
-            log.info("[{}] Creating simulation", __func__);
+            log(info)("[{}] Creating simulation", __func__);
             fmu_handler = std::make_unique<handler::FmuHandler>(this->ssp);
             recorder = std::make_unique<utils::DataRecorder>(result_file);
         }
@@ -66,23 +66,23 @@ namespace ssp4sim::sim
          */
         void init()
         {
-            log.info("[{}] Initializing simulation", __func__);
+            log(info)("[{}] Initializing simulation", __func__);
 
-            log.info("[{}] - Initializing fmus", __func__);
+            log(info)("[{}] - Initializing fmus", __func__);
             fmu_handler->init();
 
-            log.info("[{}] - Creating analysis graph", __func__);
+            log(info)("[{}] - Creating analysis graph", __func__);
             auto analysis_graph = analysis::graph::AnalysisGraphBuilder(ssp, fmu_handler.get()).build();
-            log.debug(" -- {}", analysis_graph->to_string());
+            log(debug)(" -- {}", analysis_graph->to_string());
 
-            log.info("[{}] - Creating simulation graph", __func__);
+            log(info)("[{}] - Creating simulation graph", __func__);
             sim_graph = graph::GraphBuilder(analysis_graph.get(), recorder.get()).build();
-            log.debug(" -- {}", sim_graph->to_string());
+            log(debug)(" -- {}", sim_graph->to_string());
 
-            log.info("[{}] - Init simulation graph", __func__);
+            log(info)("[{}] - Init simulation graph", __func__);
             sim_graph->init();
 
-            log.info("[{}] - Initializing recorder", __func__);
+            log(info)("[{}] - Initializing recorder", __func__);
             recorder->init();
         }
 
@@ -100,29 +100,29 @@ namespace ssp4sim::sim
                 recorder->start_recording();
             }
 
-            log.info("[{}] Starting simulation", __func__);
+            log(info)("[{}] Starting simulation", __func__);
 
-            uint64_t start_time = common::time::s_to_ns(utils::Config::get<double>("simulation.start_time"));
-            uint64_t end_time = common::time::s_to_ns(utils::Config::get<double>("simulation.stop_time"));
-            uint64_t timestep = common::time::s_to_ns(utils::Config::get<double>("simulation.timestep"));
+            uint64_t start_time = utils::time::s_to_ns(utils::Config::get<double>("simulation.start_time"));
+            uint64_t end_time = utils::time::s_to_ns(utils::Config::get<double>("simulation.stop_time"));
+            uint64_t timestep = utils::time::s_to_ns(utils::Config::get<double>("simulation.timestep"));
 
-            auto sim_timer = common::time::Timer();
+            auto sim_timer = utils::time::Timer();
             sim_graph->invoke(sim::graph::StepData(start_time, end_time, timestep));
             auto sim_wall_time = sim_timer.stop();
 
-            log.info("[{}] Total walltime: {} ", __func__, common::time::ns_to_s(sim_wall_time));
+            log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
 
             recorder->stop_recording();
-            log.info("[{}] Simulation completed\n", __func__);
+            log(info)("[{}] Simulation completed\n", __func__);
 
             uint64_t total_model_time = 0;
             for (auto &node : sim_graph->nodes)
             {
                 auto model_walltime = node->walltime_ns;
-                log.info("[{}] Model {} walltime: {}", __func__, node->name, common::time::ns_to_s(model_walltime));
+                log(info)("[{}] Model {} walltime: {}", __func__, node->name, utils::time::ns_to_s(model_walltime));
                 total_model_time += model_walltime;
             }
-            log.info("[{}] Model walltime: {}", __func__, common::time::ns_to_s(total_model_time));
+            log(info)("[{}] Model walltime: {}", __func__, utils::time::ns_to_s(total_model_time));
         }
     };
 

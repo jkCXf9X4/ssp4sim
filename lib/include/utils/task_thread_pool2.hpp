@@ -35,7 +35,7 @@ namespace ssp4sim::sim::utils
     class ThreadPool2
     {
     private:
-        common::Logger log = common::Logger("ssp4sim.utils.ThreadPool2", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.utils.ThreadPool2", LogLevel::info);
 
         std::mutex mtx;
         std::condition_variable cv;
@@ -61,7 +61,7 @@ namespace ssp4sim::sim::utils
                 dones[i] = false;
                 workers.emplace_back(&ThreadPool2::worker_thread, this, i, std::ref(dones[i]));
             }
-            log.debug("[{}] Threads started", __func__);
+            log(debug)("[{}] Threads started", __func__);
         }
 
         /**
@@ -69,7 +69,7 @@ namespace ssp4sim::sim::utils
          */
         ~ThreadPool2()
         {
-            log.debug("[{}] Destroying threadpool", __func__);
+            log(debug)("[{}] Destroying threadpool", __func__);
             terminate.store(true);
 
             // Wake everyone so they see terminate==true
@@ -79,7 +79,7 @@ namespace ssp4sim::sim::utils
             }
             cv.notify_all();
 
-            log.debug("[{}] Waiting for all tasks to complete", __func__);
+            log(debug)("[{}] Waiting for all tasks to complete", __func__);
             for (std::thread &worker : workers)
             {
                 if (worker.joinable())
@@ -87,13 +87,13 @@ namespace ssp4sim::sim::utils
                     worker.join();
                 }
             }
-            log.debug("[{}] Threadpool successfully destroyed", __func__);
+            log(debug)("[{}] Threadpool successfully destroyed", __func__);
         }
 
         void ready(int nodes)
         {
             IF_LOG({
-                log.debug("[{}] Ready", __func__);
+                log(debug)("[{}] Ready", __func__);
             });
 
             for (int i = 0; i < workers.size(); ++i)
@@ -118,7 +118,7 @@ namespace ssp4sim::sim::utils
         void enqueue(task_info &task)
         {
             IF_LOG({
-                log.debug("[{}] Enqueueing task: {}", __func__, task.node->name);
+                log(debug)("[{}] Enqueueing task: {}", __func__, task.node->name);
             });
 
             {
@@ -126,7 +126,7 @@ namespace ssp4sim::sim::utils
                 tasks.emplace(std::move(task));
             }
             IF_LOG({
-                log.debug("[{}] Task queued: {}", __func__, task.node->name);
+                log(debug)("[{}] Task queued: {}", __func__, task.node->name);
             });
         }
 
@@ -162,7 +162,7 @@ namespace ssp4sim::sim::utils
                         if (!tasks.empty())
                         {
                             IF_LOG({
-                                log.debug("[{}] Found new task, que {}", __func__, que);
+                                log(debug)("[{}] Found new task, que {}", __func__, que);
                             });
 
                             task = std::move(tasks.top());
@@ -175,19 +175,19 @@ namespace ssp4sim::sim::utils
                     {
                         auto &t = task.value();
                         IF_LOG({
-                            log.debug("[{}] Invoking {} {}", __func__, t.node->name, t.step.to_string());
+                            log(debug)("[{}] Invoking {} {}", __func__, t.node->name, t.step.to_string());
                         });
 
                         t.node->invoke(t.step);
                         IF_LOG({
-                            log.debug("[{}] Task completed {}", __func__, t.node->name);
+                            log(debug)("[{}] Task completed {}", __func__, t.node->name);
                         });
                     }
                 }
                 done = true;
             }
 
-            log.debug("[{}] Thread finished", __func__);
+            log(debug)("[{}] Thread finished", __func__);
         }
     };
 

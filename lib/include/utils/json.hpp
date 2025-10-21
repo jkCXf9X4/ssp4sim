@@ -2,7 +2,9 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
+
 #include <string>
+#include <fstream>
 
 namespace ssp4sim::utils::json
 {

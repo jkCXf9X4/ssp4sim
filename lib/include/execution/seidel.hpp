@@ -29,7 +29,7 @@ namespace ssp4sim::sim::graph
     class SeidelBase : public ExecutionBase
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.execution.SeidelBase", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.execution.SeidelBase", LogLevel::info);
 
         const int nr_of_nodes = 0;
         std::vector<SeidelNode> seidel_nodes;
@@ -37,8 +37,8 @@ namespace ssp4sim::sim::graph
 
         SeidelBase(std::vector<Invocable *> _nodes_) : ExecutionBase(std::move(_nodes_)), nr_of_nodes(nodes.size()), seidel_nodes(nr_of_nodes)
         {
-            log.info("[{}] ", __func__);
-            log.trace("[{}] nr_of_nodes {}, seidel_nodes {}", __func__, nr_of_nodes, seidel_nodes.size());
+            log(info)("[{}] ", __func__);
+            log(trace)("[{}] nr_of_nodes {}, seidel_nodes {}", __func__, nr_of_nodes, seidel_nodes.size());
 
             for (auto &node : this->nodes)
             {
@@ -50,10 +50,10 @@ namespace ssp4sim::sim::graph
                 n.nr_parents = node->parents.size();
                 n.nr_parents_counter = n.nr_parents;
 
-                log.ext_trace("[{}] Assigning SeidelNode {}", __func__, id);
+                log(ext_trace)("[{}] Assigning SeidelNode {}", __func__, id);
             }
 
-            log.info("[{}] Evaluating start nodes", __func__);
+            log(info)("[{}] Evaluating start nodes", __func__);
             for (auto &node : this->seidel_nodes)
             {
                 if (node.node->nr_parents() == 0)
@@ -78,11 +78,11 @@ namespace ssp4sim::sim::graph
     class SerialSeidel final : public SeidelBase
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.execution.SerialSeidel", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.execution.SerialSeidel", LogLevel::info);
 
         SerialSeidel(std::vector<Invocable *> nodes) : SeidelBase(std::move(nodes))
         {
-            log.info("[{}] ", __func__);
+            log(info)("[{}] ", __func__);
         }
 
         virtual void print(std::ostream &os) const
@@ -117,7 +117,7 @@ namespace ssp4sim::sim::graph
         uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
         {
             IF_LOG({
-                log.ext_trace("[{}] step data: {}", __func__, step_data.to_string());
+                log(ext_trace)("[{}] step data: {}", __func__, step_data.to_string());
             });
 
             step_data.valid_input_time = step_data.end_time;
@@ -126,7 +126,7 @@ namespace ssp4sim::sim::graph
             reset_counters();
 
             IF_LOG({
-                log.trace("[{}] Invoking nodes", __func__);
+                log(trace)("[{}] Invoking nodes", __func__);
             });
 
             while (nr_of_nodes != completed)
@@ -137,7 +137,7 @@ namespace ssp4sim::sim::graph
                     {
 
                         IF_LOG({
-                            log.trace("[{}] Starting", __func__, node.id);
+                            log(trace)("[{}] Starting", __func__, node.id);
                         });
 
                         node.node->invoke(step_data);
@@ -151,7 +151,7 @@ namespace ssp4sim::sim::graph
             }
 
             IF_LOG({
-                log.trace("[{}] End. completed  {}", __func__, completed);
+                log(trace)("[{}] End. completed  {}", __func__, completed);
             });
 
             return step_data.end_time;
@@ -161,11 +161,11 @@ namespace ssp4sim::sim::graph
     class ParallelSeidel final : public SeidelBase
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.execution.ParallelSeidel", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.execution.ParallelSeidel", LogLevel::info);
 
         ParallelSeidel(std::vector<Invocable *> nodes) : SeidelBase(std::move(nodes))
         {
-            log.info("[{}]", __func__);
+            log(info)("[{}]", __func__);
         }
 
         virtual void print(std::ostream &os) const
@@ -184,7 +184,7 @@ namespace ssp4sim::sim::graph
         uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
         {
             IF_LOG({
-                log.ext_trace("[{}] step data: {}", __func__, step_data.to_string());
+                log(ext_trace)("[{}] step data: {}", __func__, step_data.to_string());
             });
 
             step_data.valid_input_time = step_data.end_time;
@@ -198,7 +198,7 @@ namespace ssp4sim::sim::graph
             // int completed = 0;
 
             // IF_LOG({
-            //     log.trace("[{}] Invoking all start nodes", __func__);
+            //     log(trace)("[{}] Invoking all start nodes", __func__);
             // });
 
             // for (auto &sn : start_nodes)
@@ -210,7 +210,7 @@ namespace ssp4sim::sim::graph
             // while (launched != completed)
             // {
             //     IF_LOG({
-            //         log.trace("[{}] Waiting for nodes to finish. launched {}, completed  {}", __func__, launched, completed);
+            //         log(trace)("[{}] Waiting for nodes to finish. launched {}, completed  {}", __func__, launched, completed);
             //     });
 
             //     shared_state->sem.acquire();
@@ -225,7 +225,7 @@ namespace ssp4sim::sim::graph
             //     auto &finished_node = seidel_nodes[msg.worker_id];
 
             //     IF_LOG({
-            //         log.trace("[{}] Node finished: {}", __func__, finished_node.node->name);
+            //         log(trace)("[{}] Node finished: {}", __func__, finished_node.node->name);
             //     });
 
             //     // enqueue children whose all parents are invoked
@@ -237,7 +237,7 @@ namespace ssp4sim::sim::graph
             //         if (child.nr_parents_counter == 0)
             //         {
             //             IF_LOG({
-            //                 log.debug("[{}] Node ready, invoking: {}", __func__, child.node->name);
+            //                 log(debug)("[{}] Node ready, invoking: {}", __func__, child.node->name);
             //             });
 
             //             child.node->async_invoke(step_data);
@@ -246,7 +246,7 @@ namespace ssp4sim::sim::graph
             //     }
             // }
             // IF_LOG({
-            //     log.trace("[{}] End. launched {}, completed  {}", __func__, launched, completed);
+            //     log(trace)("[{}] End. launched {}, completed  {}", __func__, launched, completed);
             // });
 
             return step_data.end_time;

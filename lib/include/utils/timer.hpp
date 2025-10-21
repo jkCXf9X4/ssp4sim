@@ -16,7 +16,7 @@ namespace ssp4sim::utils::time
     public:
         using clock = std::chrono::steady_clock;
 
-        common::Logger log = common::Logger("ssp4cpp.common.ScopeTimer", common::LogLevel::debug);
+        Logger log = Logger("ssp4cpp.common.ScopeTimer", LogLevel::debug);
 
         ScopeTimer(std::string label) : label_(label), start_(clock::now()) {}
 
@@ -32,7 +32,7 @@ namespace ssp4sim::utils::time
             // log: "<func> <label> took X µs"
             if (result_callback_ns == nullptr)
             {
-                log.info("[ScopeTimer] {} took {}ns", label_, (double)dur.count() / ssp4sim::utils::time::nanoseconds_per_second);
+                log(info)("[ScopeTimer] {} took {}ns", label_, (double)dur.count() / ssp4sim::utils::time::nanoseconds_per_second);
             }
             else
             {
@@ -51,7 +51,7 @@ namespace ssp4sim::utils::time
     public:
         using clock = std::chrono::steady_clock;
 
-        // common::Logger log = common::Logger("Timer", common::LogLevel::debug);
+        // Logger log = Logger("Timer", LogLevel::debug);
 
         Timer() : start_(clock::now()) {}
 

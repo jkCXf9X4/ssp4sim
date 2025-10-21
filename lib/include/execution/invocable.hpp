@@ -9,7 +9,7 @@
 namespace ssp4sim::sim::graph
 {
 
-    class StepData : public common::str::IString
+    class StepData : public utils::str::IString
     {
     public:
         uint64_t start_time;
@@ -56,7 +56,7 @@ namespace ssp4sim::sim::graph
         }
     };
 
-    class Invocable : public common::graph::Node, public virtual common::str::IString
+    class Invocable : public utils::graph::Node, public virtual utils::str::IString
     {
     public:
         uint64_t walltime_ns = 0;

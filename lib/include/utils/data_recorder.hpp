@@ -42,7 +42,7 @@ namespace ssp4sim::sim::utils
     class DataRecorder
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.utils.DataRecorder", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.utils.DataRecorder", LogLevel::info);
 
         std::ofstream file;
         std::unique_ptr<std::thread> worker;
@@ -65,16 +65,16 @@ namespace ssp4sim::sim::utils
         std::unique_ptr<std::byte[]> data;
         std::vector<std::vector<bool>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
 
-        const uint64_t recording_interval = common::time::s_to_ns(utils::Config::getOr<double>("simulation.result_interval", 1.0));
+        const uint64_t recording_interval = utils::time::s_to_ns(utils::Config::getOr<double>("simulation.result_interval", 1.0));
         uint64_t last_print_time = 0;
         size_t printed_rows = 0;
 
         DataRecorder(const std::string &filename)
             : file(filename, std::ios::out)
         {
-            log.ext_trace("[{}] Constructor", __func__);
+            log(ext_trace)("[{}] Constructor", __func__);
 
-            log.debug("[{}] Recording interval {}", __func__, recording_interval);
+            log(debug)("[{}] Recording interval {}", __func__, recording_interval);
         }
 
         DataRecorder(const DataRecorder &) = delete;
@@ -82,7 +82,7 @@ namespace ssp4sim::sim::utils
 
         ~DataRecorder()
         {
-            log.ext_trace("[{}] init", __func__);
+            log(ext_trace)("[{}] init", __func__);
         }
 
         void add_storage(DataStorage *storage)
@@ -98,7 +98,7 @@ namespace ssp4sim::sim::utils
 
                 row_size += storage->pos;
 
-                log.trace("[{}] Adding tracker, storage: {}", __func__, storage->name);
+                log(trace)("[{}] Adding tracker, storage: {}", __func__, storage->name);
 
                 tracker_index++;
             }
@@ -106,7 +106,7 @@ namespace ssp4sim::sim::utils
 
         inline void reset_update_status(std::size_t row)
         {
-            log.ext_trace("[{}] Init", __func__);
+            log(ext_trace)("[{}] Init", __func__);
             for (auto &t : trackers)
             {
                 updated_tracker[row][t.index] = false;
@@ -115,7 +115,7 @@ namespace ssp4sim::sim::utils
 
         void print_headers()
         {
-            log.ext_trace("[{}] Init", __func__);
+            log(ext_trace)("[{}] Init", __func__);
             file << "time";
             for (const auto &tracker : trackers)
             {
@@ -129,11 +129,11 @@ namespace ssp4sim::sim::utils
 
         void init()
         {
-            log.ext_trace("[{}] Init", __func__);
+            log(ext_trace)("[{}] Init", __func__);
             auto allocation_size = row_size * rows;
 
             data = std::make_unique<std::byte[]>(allocation_size);
-            log.ext_trace("[{}] Completed allocation", __func__);
+            log(ext_trace)("[{}] Completed allocation", __func__);
 
             // ensure that all rows have the status of not updated at the start
             updated_tracker.reserve(rows);
@@ -154,7 +154,7 @@ namespace ssp4sim::sim::utils
 
         void start_recording()
         {
-            log.info("[{}] Starting recording", __func__);
+            log(info)("[{}] Starting recording", __func__);
             running = true; // must be set before the start of the thread, otherwise it wont start
             worker = std::make_unique<std::thread>([this]()
                                                    { loop(); });
@@ -163,7 +163,7 @@ namespace ssp4sim::sim::utils
 
         void stop_recording()
         {
-            log.info("[{}] Stop recording", __func__);
+            log(info)("[{}] Stop recording", __func__);
             if (!running)
             {
                 return;
@@ -212,10 +212,10 @@ namespace ssp4sim::sim::utils
         void print_row(uint16_t row)
         {
             IF_LOG({
-                log.trace("[{}] Row: {}", __func__, row);
+                log(trace)("[{}] Row: {}", __func__, row);
             });
 
-            auto time = common::time::ns_to_s(row_time_map[row]);
+            auto time = utils::time::ns_to_s(row_time_map[row]);
 
             file << time;
             for (const auto &tracker : trackers)
@@ -225,7 +225,7 @@ namespace ssp4sim::sim::utils
                 for (int item = 0; item < tracker.storage->items; ++item)
                 {
                     IF_LOG({
-                        log.ext_trace("[{}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, item);
+                        log(ext_trace)("[{}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, item);
                     });
 
                     auto pos = tracker.storage->positions[item];
@@ -250,26 +250,26 @@ namespace ssp4sim::sim::utils
 
         void update()
         {
-            log.ext_trace("[{}] Notifying recording to update", __func__);
+            log(ext_trace)("[{}] Notifying recording to update", __func__);
             // to slow, removed
             // event.notify_all();
         }
 
         void loop()
         {
-            log.debug("[{}] Starting recording thread", __func__);
+            log(debug)("[{}] Starting recording thread", __func__);
 
             // spinn, spinn!
             while (running)
             {
                 IF_LOG({
-                    log.ext_trace("[{}] Looking for new content to write to file", __func__);
+                    log(ext_trace)("[{}] Looking for new content to write to file", __func__);
                 });
 
                 for (auto &tracker : trackers)
                 {
                     IF_LOG({
-                        log.ext_trace("[{}] Evaluating storage {} {}", __func__, tracker.storage->to_string(), tracker.storage->index);
+                        log(ext_trace)("[{}] Evaluating storage {} {}", __func__, tracker.storage->to_string(), tracker.storage->index);
                     });
 
                     for (std::size_t area = 0; area < tracker.storage->areas; ++area)
@@ -279,7 +279,7 @@ namespace ssp4sim::sim::utils
                         {
 
                             IF_LOG({
-                                log.trace("[{}] Found new data; area: {}", __func__, area);
+                                log(trace)("[{}] Found new data; area: {}", __func__, area);
                             });
 
                             process_new_data(tracker, storage, area);
@@ -290,7 +290,7 @@ namespace ssp4sim::sim::utils
                 }
             }
 
-            log.debug("[{}] Exiting recording thread", __func__);
+            log(debug)("[{}] Exiting recording thread", __func__);
         }
 
         void process_new_data(ssp4sim::sim::utils::Tracker &tracker, sim::utils::DataStorage *storage, std::size_t area)
@@ -302,7 +302,7 @@ namespace ssp4sim::sim::utils
             if (ts >= last_print_time + recording_interval)
             {
                 IF_LOG({
-                    log.trace("[{}] New print time: {}, last_print_time {}", __func__, ts, last_print_time);
+                    log(trace)("[{}] New print time: {}, last_print_time {}", __func__, ts, last_print_time);
                 });
 
                 last_print_time += recording_interval;
@@ -311,7 +311,7 @@ namespace ssp4sim::sim::utils
                 if (new_item_counter >= rows) [[likely]]
                 {
                     IF_LOG({
-                        log.trace("[{}] Row already in use, print and reset. {}", __func__, head);
+                        log(trace)("[{}] Row already in use, print and reset. {}", __func__, head);
                     });
 
                     print_row(head); // print before overwriting
@@ -323,7 +323,7 @@ namespace ssp4sim::sim::utils
                 row_time_map[head] = ts;
                 time_row_map[ts] = head;
                 IF_LOG({
-                    log.trace("[{}] New row [{}] with time [{}]", __func__, head, ts);
+                    log(trace)("[{}] New row [{}] with time [{}]", __func__, head, ts);
                 });
             }
 
@@ -331,7 +331,7 @@ namespace ssp4sim::sim::utils
             {
                 auto row = time_row_map[ts];
                 IF_LOG({
-                    log.trace("[{}] Copying new data; row {}, size: {}", __func__, row, tracker.size);
+                    log(trace)("[{}] Copying new data; row {}, size: {}", __func__, row, tracker.size);
                 });
 
                 memcpy(get_data_pos(row, tracker.row_pos), storage->locations[area][0], tracker.size);

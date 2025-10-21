@@ -19,7 +19,7 @@ namespace ssp4sim::sim::graph
     class GraphBuilder
     {
     public:
-        static inline auto log = common::Logger("ssp4sim.graph.GraphBuilder", common::LogLevel::info);
+        static inline auto log = Logger("ssp4sim.graph.GraphBuilder", LogLevel::info);
 
         AnalysisGraph *analysis_graph;
         utils::DataRecorder *recorder;
@@ -32,19 +32,19 @@ namespace ssp4sim::sim::graph
 
         std::unique_ptr<Graph> build()
         {
-            log.trace("[{}] init", __func__);
+            log(trace)("[{}] init", __func__);
             std::map<std::string, std::unique_ptr<Invocable>> models;
 
-            log.trace("[{}] - Create the fmu models", __func__);
+            log(trace)("[{}] - Create the fmu models", __func__);
             for (auto &[ssp_resource_name, analysis_model] : analysis_graph->models)
             {
                 auto m = make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu);
                 m->recorder = recorder;
-                log.ext_trace("[{}] -- New Model: {}", __func__, m->name);
+                log(ext_trace)("[{}] -- New Model: {}", __func__, m->name);
                 models[analysis_model->name] = std::move(m);
             }
 
-            log.trace("[{}] - Create the data storage areas within the model", __func__);
+            log(trace)("[{}] - Create the data storage areas within the model", __func__);
             for (auto &[_, analysis_model] : analysis_graph->models)
             {
                 auto model = static_cast<FmuModel*>(models[analysis_model->name].get());
@@ -73,7 +73,7 @@ namespace ssp4sim::sim::graph
                     {
                         info.initial_value = connector->initial_value->get_value();
 
-                        log.debug("[{}] -- Store start value for {} : {}", __func__, info.name, fmi2::ext::enums::data_type_to_string(info.type, (void *)info.initial_value.get()));
+                        log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, fmi2::ext::enums::data_type_to_string(info.type, (void *)info.initial_value.get()));
                     }
 
                     if (connector->causality == Causality::input)
@@ -91,7 +91,7 @@ namespace ssp4sim::sim::graph
                 }
             }
 
-            log.trace("[{}] - Hand the information regarding the connections over to the model", __func__);
+            log(trace)("[{}] - Hand the information regarding the connections over to the model", __func__);
             for (auto &[_, connection] : analysis_graph->connections)
             {
                 auto source_model = static_cast<FmuModel*>(models[connection->source_model->name].get());
@@ -116,7 +116,7 @@ namespace ssp4sim::sim::graph
                 target_model->connections.push_back(std::move(con_info));
             }
 
-            log.trace("[{}] - Allocate the input/output areas", __func__);
+            log(trace)("[{}] - Allocate the input/output areas", __func__);
             for (auto &[ssp_resource_name, model] : models)
             {
                 auto m = static_cast<FmuModel*>(model.get());
@@ -126,7 +126,7 @@ namespace ssp4sim::sim::graph
                 recorder->add_storage(m->output_area->data.get());
             }
 
-            log.trace("[{}] - Create connections between models", __func__);
+            log(trace)("[{}] - Create connections between models", __func__);
             for (auto &[_, analysis_model] : analysis_graph->models)
             {
                 for (auto &child : analysis_model->children)
@@ -138,7 +138,7 @@ namespace ssp4sim::sim::graph
             // Do not break algebraic loops here, do it in the executor. It depending on additional information
             // This enables runtime breaking of loops
 
-            log.ext_trace("[{}] exit", __func__);
+            log(ext_trace)("[{}] exit", __func__);
             return std::make_unique<Graph>(std::move(models));
         }
     };

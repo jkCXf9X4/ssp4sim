@@ -54,14 +54,14 @@ namespace ssp4sim::sim::handler
     class FmuInstance
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.handler.FmuInstance", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.handler.FmuInstance", LogLevel::info);
 
         FmuInstance(const std::filesystem::path &path, std::string instance_name)
         {
             fmu_path_ = path.string();
             instance_name_ = std::move(instance_name);
 
-            log.debug("[{}] Loading FMU {}", __func__, fmu_path_);
+            log(debug)("[{}] Loading FMU {}", __func__, fmu_path_);
             detail::ensure_message_callback_registered();
             detail::clear_last_message();
             handle_ = fmi4c_loadFmu(fmu_path_.c_str(), instance_name_.c_str());
@@ -82,7 +82,7 @@ namespace ssp4sim::sim::handler
         {
             if (handle_ != nullptr)
             {
-                log.debug("[{}] Freeing FMU {}", __func__, fmu_path_);
+                log(debug)("[{}] Freeing FMU {}", __func__, fmu_path_);
                 fmi4c_freeFmu(handle_);
                 handle_ = nullptr;
             }
@@ -144,7 +144,7 @@ namespace ssp4sim::sim::handler
         fmi2Status last_status_ = fmi2OK;
 
     public:
-        common::Logger log = common::Logger("ssp4sim.handler.CoSimulationModel", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.handler.CoSimulationModel", LogLevel::info);
 
         explicit CoSimulationModel(FmuInstance &instance) : instance_(instance)
         {
@@ -177,7 +177,7 @@ namespace ssp4sim::sim::handler
                 throw std::runtime_error(std::format("FMU '{}' does not support co-simulation", instance_.path()));
             }
 
-            log.debug("[{}] Instantiating FMU {}", __func__, instance_.path());
+            log(debug)("[{}] Instantiating FMU {}", __func__, instance_.path());
             detail::ensure_message_callback_registered();
             detail::clear_last_message();
             handle = fmi2_instantiate(instance_.raw(),
@@ -220,16 +220,16 @@ namespace ssp4sim::sim::handler
             auto stop_defined = stop_time > start_time ? fmi2True : fmi2False;
             auto tolerance_defined = tolerance > 0.0 ? fmi2True : fmi2False;
 
-            double start = common::time::ns_to_s (start_time);
-            double stop = common::time::ns_to_s (stop_time);
+            double start = utils::time::ns_to_s (start_time);
+            double stop = utils::time::ns_to_s (stop_time);
 
-            log.debug("[{}] setup_experiment start:{} stop:{} tolerance:{}", __func__, start, stop, tolerance);
+            log(debug)("[{}] setup_experiment start:{} stop:{} tolerance:{}", __func__, start, stop, tolerance);
 
             last_status_ = fmi2_setupExperiment(handle, tolerance_defined, tolerance, start, stop_defined, stop);
             if (status_ok(last_status_))
             {
                 current_time_ = start_time;
-                log.info("[{}] start:{}", __func__, current_time_);
+                log(info)("[{}] start:{}", __func__, current_time_);
             }
             return status_ok(last_status_);
         }
@@ -264,13 +264,13 @@ namespace ssp4sim::sim::handler
                 auto step_time = stop_time - sim_time;
 
                 IF_LOG({
-                    log.debug("[{}] step_time {}s ", __func__, common::time::ns_to_s(step_time));
+                    log(debug)("[{}] step_time {}s ", __func__, utils::time::ns_to_s(step_time));
                 });
 
                 if (this->step(step_time) == false)
                 {
                     int status = last_status();
-                    log.error("Error! step() returned with status: {}", std::to_string(status));
+                    log(error)("Error! step() returned with status: {}", std::to_string(status));
                     if (status == 3)
                     {
                         throw std::runtime_error("Execution failed");
@@ -279,7 +279,7 @@ namespace ssp4sim::sim::handler
                 sim_time = get_simulation_time();
 
                 IF_LOG({
-                    log.trace("[{}], sim time {}", __func__, sim_time);
+                    log(trace)("[{}], sim time {}", __func__, sim_time);
                 });
             }
             return sim_time;
@@ -292,11 +292,11 @@ namespace ssp4sim::sim::handler
                 throw std::logic_error("step called before instantiate");
             }
 
-            double current = common::time::ns_to_s(current_time_);
-            double step = common::time::ns_to_s(step_size);
+            double current = utils::time::ns_to_s(current_time_);
+            double step = utils::time::ns_to_s(step_size);
 
             IF_LOG({
-                log.debug("[{}] current {} step {}", __func__, current, step);
+                log(debug)("[{}] current {} step {}", __func__, current, step);
             });
 
             last_status_ = fmi2_doStep(handle, current, step, fmi2True);
@@ -315,7 +315,7 @@ namespace ssp4sim::sim::handler
                 return true;
             }
 
-            log.debug("[{}] Terminating FMU {}", __func__, instance_.path());
+            log(debug)("[{}] Terminating FMU {}", __func__, instance_.path());
             last_status_ = fmi2_terminate(handle);
             fmi2_freeInstance(handle);
             instantiated_ = false;

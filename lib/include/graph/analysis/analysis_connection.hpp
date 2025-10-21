@@ -20,7 +20,7 @@ namespace ssp4sim::sim::analysis::graph
         uint64_t delay = 0;
 
     public:
-        common::Logger log = common::Logger("ssp4sim.graph.AnalysisConnection", common::LogLevel::debug);
+        Logger log = Logger("ssp4sim.graph.AnalysisConnection", LogLevel::debug);
         std::string source_component_name;
         std::string source_connector_name;
         std::string target_component_name;
@@ -48,7 +48,7 @@ namespace ssp4sim::sim::analysis::graph
 
         ~AnalysisConnection()
         {
-            log.ext_trace("[{}] Destroying AnalysisConnection", __func__);
+            log(ext_trace)("[{}] Destroying AnalysisConnection", __func__);
         }
 
         void update_name()

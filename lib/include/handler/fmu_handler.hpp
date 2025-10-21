@@ -56,7 +56,7 @@ namespace ssp4sim::sim::handler
     class FmuHandler
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.handler.FmuHandler", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.handler.FmuHandler", LogLevel::info);
 
         Ssp *ssp;
 
@@ -69,17 +69,17 @@ namespace ssp4sim::sim::handler
         {
             this->ssp = ssp;
 
-            log.debug("[{}] Creating FMU map", __func__);
+            log(debug)("[{}] Creating FMU map", __func__);
             fmu_map = ssp4sim::ssp::ext::create_fmu_map(*ssp);
             for (auto &[fmu_name, fmu] : fmu_map)
             {
-                log.debug("[{}] - FMU: {} - ", __func__, fmu_name, fmu->to_string());
+                log(debug)("[{}] - FMU: {} - ", __func__, fmu_name, fmu->to_string());
             }
 
             // create a non owning variant to be passed around
-            fmu_ref_map = common::map_ns::map_unique_to_ref(fmu_map);
+            fmu_ref_map = utils::map_ns::map_unique_to_ref(fmu_map);
 
-            log.debug("[{}] Creating FMU Info map", __func__);
+            log(debug)("[{}] Creating FMU Info map", __func__);
             for (auto &[name, fmu] : fmu_ref_map)
             {
                 fmu_info_map.emplace(name, make_unique<FmuInfo>(name, fmu));
@@ -88,12 +88,12 @@ namespace ssp4sim::sim::handler
 
         void init()
         {
-            log.trace("[{}] Model init ", __func__);
+            log(trace)("[{}] Model init ", __func__);
             for (auto &[_, fmu] : this->fmu_info_map)
             {
                 fmu->model->instantiate(false, false);
             }
-            log.trace("[{}] Model init completed", __func__);
+            log(trace)("[{}] Model init completed", __func__);
         }
     };
 }

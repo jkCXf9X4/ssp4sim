@@ -25,10 +25,10 @@ namespace ssp4sim::sim::utils
      * The buffer is not designed to store all data of the simulation but will continuously overwrite old data
      *
      */
-    class RingStorage : public common::str::IString
+    class RingStorage : public utils::str::IString
     {
 
-        common::Logger log = common::Logger("ssp4sim.utils.RingStorage", common::LogLevel::debug);
+        Logger log = Logger("ssp4sim.utils.RingStorage", LogLevel::debug);
 
     public:
         std::unique_ptr<DataStorage> data;
@@ -44,7 +44,7 @@ namespace ssp4sim::sim::utils
 
         RingStorage(size_t capacity, std::string name) : name(name)
         {
-            log.ext_trace("[{}] Constructor", __func__);
+            log(ext_trace)("[{}] Constructor", __func__);
             if (capacity == 0)
             {
                 throw runtime_error("[RingBuffer] buffer_size != 0");
@@ -89,7 +89,7 @@ namespace ssp4sim::sim::utils
         int64_t get_area(uint64_t time)
         {
             IF_LOG({
-                log.ext_trace("[{}] init", __func__);
+                log(ext_trace)("[{}] init", __func__);
             });
 
             for (std::size_t i = 0; i < size; ++i)
@@ -98,7 +98,7 @@ namespace ssp4sim::sim::utils
                 if (data->timestamps[pos] == time)
                 {
                     IF_LOG({
-                        log.ext_trace("[{}] found valid area, {}", __func__, pos);
+                        log(ext_trace)("[{}] found valid area, {}", __func__, pos);
                     });
 
                     return pos;
@@ -111,7 +111,7 @@ namespace ssp4sim::sim::utils
         int64_t get_valid_area(uint64_t time)
         {
             IF_LOG({
-                log.ext_trace("[{}] init", __func__);
+                log(ext_trace)("[{}] init", __func__);
             });
 
             for (std::size_t i = 0; i < size; ++i)
@@ -120,7 +120,7 @@ namespace ssp4sim::sim::utils
                 if (data->timestamps[pos] <= time)
                 {
                     IF_LOG({
-                        log.ext_trace("[{}] found valid area, {}", __func__, pos);
+                        log(ext_trace)("[{}] found valid area, {}", __func__, pos);
                     });
 
                     return pos;
@@ -142,14 +142,14 @@ namespace ssp4sim::sim::utils
         byte *get_valid_item(uint64_t time, std::size_t index)
         {
             IF_LOG({
-                log.ext_trace("[{}] Init", __func__);
+                log(ext_trace)("[{}] Init", __func__);
             });
 
             auto valid_area = get_valid_area(time);
             if (valid_area != -1)
             {
                 IF_LOG({
-                    log.ext_trace("[{}] Valid area found, returning the pointer", __func__);
+                    log(ext_trace)("[{}] Valid area found, returning the pointer", __func__);
                 });
 
                 return data->get_item(valid_area, index);
@@ -177,7 +177,7 @@ namespace ssp4sim::sim::utils
         int push()
         {
             IF_LOG({
-                log.ext_trace("[{}] init", __func__);
+                log(ext_trace)("[{}] init", __func__);
             });
 
             if (is_full()) [[likely]]

@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <string>
 
-using namespace sim::handler;
+using namespace ssp4sim::sim::handler;
 
 namespace
 {

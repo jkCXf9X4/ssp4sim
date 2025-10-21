@@ -24,7 +24,7 @@ namespace ssp4sim::sim
     class Simulator
     {
     public:
-        common::Logger log = common::Logger("ssp4sim.Simulator", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.Simulator", LogLevel::info);
 
         std::unique_ptr<Ssp> ssp;
         std::unique_ptr<Simulation> sim;
@@ -36,32 +36,32 @@ namespace ssp4sim::sim
          */
         Simulator(const std::string &config_path)
         {
-            log.info("[{}] Creating Simulator\n", __func__);
+            log(info)("[{}] Creating Simulator\n", __func__);
             
-            log.debug("[{}] - Loading config", __func__);
+            log(debug)("[{}] - Loading config", __func__);
             utils::Config::loadFromFile(config_path);
-            log.debug("[{}] -- Config:\n{}\n", __func__, utils::Config::as_string());
+            log(debug)("[{}] -- Config:\n{}\n", __func__, utils::Config::as_string());
 
             auto log_file = "./results/log.log";
             log.enable_file_sink(log_file, false);
-            log.info("[{}] File log enabled, {}", __func__, log_file);
+            log(info)("[{}] File log enabled, {}", __func__, log_file);
             
             try
             {
                 log.enable_socket_sink("127.0.0.1:19996");
-                log.info("[{}] Socket log enabled", __func__);
+                log(info)("[{}] Socket log enabled", __func__);
             }
             catch(const std::exception& e)
             {
-                log.warning("[{}] Socket log disabled", __func__);
+                log(warning)("[{}] Socket log disabled", __func__);
             }
 
-            log.debug("[{}] - Importing SSP", __func__);
+            log(debug)("[{}] - Importing SSP", __func__);
             auto ssp_path = utils::Config::get<std::string>("simulation.ssp");
             ssp = std::make_unique<ssp4sim::Ssp>(ssp_path);
-            log.debug("[{}] -- SSP: {}", __func__, ssp->to_string());
+            log(debug)("[{}] -- SSP: {}", __func__, ssp->to_string());
             
-            log.debug("[{}] - Creating simulation\n", __func__);
+            log(debug)("[{}] - Creating simulation\n", __func__);
             sim = std::make_unique<Simulation>(ssp.get());
         }
         
@@ -76,7 +76,7 @@ namespace ssp4sim::sim
          */
         void init()
         {
-            log.info("[{}] Initializing Simulator\n", __func__);
+            log(info)("[{}] Initializing Simulator\n", __func__);
             sim->init();
         }
         
@@ -85,7 +85,7 @@ namespace ssp4sim::sim
          */
         void simulate()
         {
-            log.info("[{}] Starting Simulator\n", __func__);
+            log(info)("[{}] Starting Simulator\n", __func__);
             sim->simulate();
         }
 

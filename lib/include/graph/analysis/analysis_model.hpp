@@ -19,7 +19,7 @@ namespace ssp4sim::sim::analysis::graph
         uint64_t delay = 0;
 
     public:
-        common::Logger log = common::Logger("ssp4sim.graph.AnalysisModel", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.graph.AnalysisModel", LogLevel::info);
 
         std::string fmu_name;
         handler::FmuInfo *fmu;
@@ -41,7 +41,7 @@ namespace ssp4sim::sim::analysis::graph
         
         ~AnalysisModel()
         {
-            log.ext_trace("[{}] Destroying AnalysisModel", __func__);
+            log(ext_trace)("[{}] Destroying AnalysisModel", __func__);
         }
 
         void set_interpolation_data(bool canInterpolateInputs, int maxOutputDerivativeOrder)

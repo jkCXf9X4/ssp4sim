@@ -44,7 +44,7 @@ namespace ssp4sim::utils
                 workers.emplace_back([this]
                                      { worker_thread(); });
             }
-            log.debug("[{}] Threads started", __func__);
+            log(debug)("[{}] Threads started", __func__);
         }
 
         /**
@@ -52,14 +52,14 @@ namespace ssp4sim::utils
          */
         ~ThreadPool()
         {
-            log.debug("[{}] Destroying threadpool", __func__);
+            log(debug)("[{}] Destroying threadpool", __func__);
             stop = true;
 
             // release all threads to ensure that they are closing down
             // The que will always be empty when this occurs
             task_semaphore.release(static_cast<std::ptrdiff_t>(workers.size()));
 
-            log.debug("[{}] Waiting for all tasks to complete", __func__);
+            log(debug)("[{}] Waiting for all tasks to complete", __func__);
             for (std::thread &worker : workers)
             {
                 if (worker.joinable())
@@ -67,7 +67,7 @@ namespace ssp4sim::utils
                     worker.join();
                 }
             }
-            log.debug("[{}] Threadpool successfully destroyed", __func__);
+            log(debug)("[{}] Threadpool successfully destroyed", __func__);
         }
 
         /**
@@ -81,7 +81,7 @@ namespace ssp4sim::utils
         {
             using return_type = std::invoke_result_t<F>;
             IF_LOG({
-                log.debug("[{}] Enqueueing task", __func__);
+                log(debug)("[{}] Enqueueing task", __func__);
             });
 
             auto task = std::make_shared<std::packaged_task<return_type()>>(std::forward<F>(f));
@@ -96,7 +96,7 @@ namespace ssp4sim::utils
             // notify a worker that one task is available
             task_semaphore.release();
             IF_LOG({
-                log.debug("[{}] Task queued", __func__);
+                log(debug)("[{}] Task queued", __func__);
             });
 
             return res;
@@ -123,7 +123,7 @@ namespace ssp4sim::utils
                     if (!tasks.empty())
                     {
                         IF_LOG({
-                            log.debug("[{}] Task starting", __func__);
+                            log(debug)("[{}] Task starting", __func__);
                         });
                         
                         task = std::move(tasks.front());
@@ -133,11 +133,11 @@ namespace ssp4sim::utils
 
                 task();
                 IF_LOG({
-                    log.debug("[{}] Task completed", __func__);
+                    log(debug)("[{}] Task completed", __func__);
                 });
             }
 
-            log.debug("[{}] Thread finished", __func__);
+            log(debug)("[{}] Thread finished", __func__);
         }
     };
 

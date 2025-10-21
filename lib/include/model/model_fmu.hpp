@@ -32,7 +32,7 @@ namespace ssp4sim::sim::graph
         uint64_t _end_time = 0;
 
     public:
-        common::Logger log = common::Logger("ssp4sim.model.FmuModel", common::LogLevel::info);
+        Logger log = Logger("ssp4sim.model.FmuModel", LogLevel::info);
 
         handler::FmuInfo *fmu;
 
@@ -57,7 +57,7 @@ namespace ssp4sim::sim::graph
 
         ~FmuModel()
         {
-            log.ext_trace("[{}] Destroying FmuModel", __func__);
+            log(ext_trace)("[{}] Destroying FmuModel", __func__);
             fmu->model->terminate();
         }
 
@@ -70,40 +70,40 @@ namespace ssp4sim::sim::graph
 
         void init()
         {
-            log.trace("[{}] FmuModel init {}", __func__, name);
+            log(trace)("[{}] FmuModel init {}", __func__, name);
 
             double start_time = utils::Config::get<double>("simulation.start_time");
             double end_time = utils::Config::get<double>("simulation.stop_time") + 10;
             double tolerance = utils::Config::get<double>("simulation.tolerance");
 
-            log.debug("[{}] setup_experiment: {} ", __func__, name);
-            if (!fmu->model->setup_experiment(common::time::s_to_ns(start_time), common::time::s_to_ns(end_time), tolerance))
-                log.error("[{}] setup_experiment failed ", __func__);
+            log(debug)("[{}] setup_experiment: {} ", __func__, name);
+            if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time), tolerance))
+                log(error)("[{}] setup_experiment failed ", __func__);
 
-            log.debug("[{}] enter_initialization_mode: {} ", __func__, name);
+            log(debug)("[{}] enter_initialization_mode: {} ", __func__, name);
             if (!fmu->model->enter_initialization_mode())
             {
-                log.error("[{}] enter_initialization_mode failed ", __func__);
+                log(error)("[{}] enter_initialization_mode failed ", __func__);
                 throw std::runtime_error(std::format("[{}] enter_initialization_mode failed for {}", __func__, name));
             }
 
-            log.trace("[{}] Set start parameter values", __func__);
+            log(trace)("[{}] Set start parameter values", __func__);
             ConnectorInfo::set_start_values(this->parameters);
 
-            log.debug("[{}] exit_initialization_mode: {} ", __func__, name);
+            log(debug)("[{}] exit_initialization_mode: {} ", __func__, name);
             if (!fmu->model->exit_initialization_mode())
             {
-                log.error("[{}] exit_initialization_mode failed ", __func__);
+                log(error)("[{}] exit_initialization_mode failed ", __func__);
                 throw std::runtime_error(std::format("[{}] exit_initialization_mode failed for {}", __func__, name));
             }
 
-            log.ext_trace("[{}] Set input area", __func__);
+            log(ext_trace)("[{}] Set input area", __func__);
             ConnectorInfo::set_initial_input_area(this->input_area.get(), this->inputs);
 
-            log.ext_trace("[{}] Invoke at timestep 0", __func__);
+            log(ext_trace)("[{}] Invoke at timestep 0", __func__);
             invoke(StepData(0, 0, 0));
 
-            log.ext_trace("[{}] FmuModel init completed", __func__);
+            log(ext_trace)("[{}] FmuModel init completed", __func__);
         }
 
                 // Only allowed during initialization 
@@ -112,7 +112,7 @@ namespace ssp4sim::sim::graph
             auto target_area = input_area->get_or_push(start);
 
             IF_LOG({
-                log.info("[{}] Propagating at start_time {}, input_area {} timestamp {}", __func__, start,target_area, input_area->data->timestamps[target_area]);
+                log(info)("[{}] Propagating at start_time {}, input_area {} timestamp {}", __func__, start,target_area, input_area->data->timestamps[target_area]);
             });
 
             ConnectionInfo::retrieve_model_inputs(connections, target_area, start);
@@ -122,7 +122,7 @@ namespace ssp4sim::sim::graph
             auto area = output_area->get_or_push(start);
 
             IF_LOG({
-                log.info("[{}] Propagating at start_time {}, output area {} timestamp {}", __func__, start, area, output_area->data->timestamps[area]);
+                log(info)("[{}] Propagating at start_time {}, output area {} timestamp {}", __func__, start, area, output_area->data->timestamps[area]);
             });
 
             ConnectorInfo::read_values_from_model(outputs, output_area.get(), area);
@@ -133,7 +133,7 @@ namespace ssp4sim::sim::graph
         inline void pre(uint64_t model_start_time, uint64_t valid_input_time)
         {
             IF_LOG({
-                log.trace("[{}] Init. model_start_time {}, valid_input_time {}", __func__, model_start_time, valid_input_time);
+                log(trace)("[{}] Init. model_start_time {}, valid_input_time {}", __func__, model_start_time, valid_input_time);
             });
 
             auto target_area = input_area->push(model_start_time);
@@ -146,13 +146,13 @@ namespace ssp4sim::sim::graph
 
             if (forward_derivatives)
             {
-                auto model_timer = common::time::Timer();
+                auto model_timer = utils::time::Timer();
                 ConnectorInfo::apply_input_derivatives(inputs, target_area);
                 this->walltime_ns += model_timer.stop();
             }
 
             IF_LOG({
-                log.ext_trace("[{}] Input area after pre: {}", __func__, input_area->data->export_area(target_area));
+                log(ext_trace)("[{}] Input area after pre: {}", __func__, input_area->data->export_area(target_area));
             });
         }
 
@@ -160,7 +160,7 @@ namespace ssp4sim::sim::graph
         inline void post(uint64_t time)
         {
             IF_LOG({
-                log.trace("[{}] Store results, timestamp: {}", __func__, time);
+                log(trace)("[{}] Store results, timestamp: {}", __func__, time);
             });
 
             auto area = output_area->push(time);
@@ -169,14 +169,14 @@ namespace ssp4sim::sim::graph
 
             if (forward_derivatives && _end_time != 0)
             {
-                auto model_timer = common::time::Timer();
+                auto model_timer = utils::time::Timer();
                 ConnectorInfo::fetch_output_derivatives(outputs, area);
                 this->walltime_ns += model_timer.stop();
             }
             output_area->flag_new_data(area);
 
             IF_LOG({
-                log.ext_trace("[{}] Output area after post: {}", __func__, output_area->data->export_area(area));
+                log(ext_trace)("[{}] Output area after post: {}", __func__, output_area->data->export_area(area));
             });
         }
 
@@ -184,7 +184,7 @@ namespace ssp4sim::sim::graph
         {
 
             IF_LOG({
-                log.debug("[{}] Init {}, stepdata: {}", __func__, name, step_data.to_string());
+                log(debug)("[{}] Init {}, stepdata: {}", __func__, name, step_data.to_string());
             });
 
             _start_time = _end_time;
@@ -192,15 +192,15 @@ namespace ssp4sim::sim::graph
             auto _timestep = _end_time - _start_time;
 
             IF_LOG({
-                log.trace("[{}] {} start_time: {} valid_input_time: {} timestep: {} end_time: {}",
+                log(trace)("[{}] {} start_time: {} valid_input_time: {} timestep: {} end_time: {}",
                           __func__, this->name.c_str(), _start_time, step_data.valid_input_time, _timestep, _end_time);
             });
 
             pre(_start_time, step_data.valid_input_time);
 
-            auto model_timer = common::time::Timer();
+            auto model_timer = utils::time::Timer();
             IF_LOG({
-                log.debug("[{}] Step until {}", __func__, _end_time);
+                log(debug)("[{}] Step until {}", __func__, _end_time);
             });
             _end_time = fmu->model->step_until(_end_time);
             this->walltime_ns += model_timer.stop();
@@ -209,7 +209,7 @@ namespace ssp4sim::sim::graph
             post(delayed_time);
 
             IF_LOG({
-                log.ext_trace("[{}] Completed, delayed_time:", __func__, delayed_time);
+                log(ext_trace)("[{}] Completed, delayed_time:", __func__, delayed_time);
             });
 
             return delayed_time;

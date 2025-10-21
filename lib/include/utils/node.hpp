@@ -135,7 +135,7 @@ namespace ssp4sim::utils::graph
             {
                 if (n->is_orphan())
                 {
-                    // log.ext_trace("[{}] Deleting {}", __func__, n->name);
+                    // log(ext_trace)("[{}] Deleting {}", __func__, n->name);
                     delete n;
                 }
                 else
