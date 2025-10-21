@@ -5,7 +5,7 @@
 
 #include <fstream>
 
-using namespace ssp4sim::sim::utils;
+using namespace ssp4sim::utils;
 
 TEST_CASE("Config tests", "[config]")
 {

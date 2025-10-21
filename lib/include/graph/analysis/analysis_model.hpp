@@ -11,7 +11,7 @@
 #include <vector>
 #include <map>
 
-namespace ssp4sim::sim::analysis::graph
+namespace ssp4sim::analysis::graph
 {
 
     class AnalysisModel : public ssp4sim::utils::graph::Node

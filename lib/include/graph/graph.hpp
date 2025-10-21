@@ -16,7 +16,7 @@
 #include <algorithm>
 #include <map>
 
-namespace ssp4sim::sim::graph
+namespace ssp4sim::graph
 {
 
     class Graph final : public Invocable

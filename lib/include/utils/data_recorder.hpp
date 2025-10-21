@@ -17,7 +17,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace ssp4sim::sim::utils
+namespace ssp4sim::utils
 {
     struct Tracker
     {
@@ -233,7 +233,7 @@ namespace ssp4sim::sim::utils
                     file << ", ";
                     if (print_tracker)
                     {
-                        auto data_type_str = fmi2::ext::enums::data_type_to_string(type, get_data_pos(row, tracker.row_pos + pos));
+                        auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(type, get_data_pos(row, tracker.row_pos + pos));
                         file << data_type_str;
                     }
                 }
@@ -293,7 +293,7 @@ namespace ssp4sim::sim::utils
             log(debug)("[{}] Exiting recording thread", __func__);
         }
 
-        void process_new_data(ssp4sim::sim::utils::Tracker &tracker, sim::utils::DataStorage *storage, std::size_t area)
+        void process_new_data(ssp4sim::utils::Tracker &tracker,utils::DataStorage *storage, std::size_t area)
         {
 
             auto ts = storage->timestamps[area];

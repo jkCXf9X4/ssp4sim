@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-namespace ssp4sim::sim::handler
+namespace ssp4sim::handler
 {
     namespace detail
     {

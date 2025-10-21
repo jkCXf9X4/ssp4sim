@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-namespace ssp4sim::sim::analysis::graph
+namespace ssp4sim::analysis::graph
 {
 
     class AnalysisConnection : public ssp4sim::utils::graph::Node
@@ -36,7 +36,7 @@ namespace ssp4sim::sim::analysis::graph
         {
         }
 
-        AnalysisConnection(ssp4sim::ssp1::ssd::Connection *connection)
+        AnalysisConnection(ssp4cpp::ssp1::ssd::Connection *connection)
         {
             source_component_name = connection->startElement.value();
             source_connector_name = connection->startConnector;

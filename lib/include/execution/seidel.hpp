@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <execution>
 
-namespace ssp4sim::sim::graph
+namespace ssp4sim::graph
 {
     struct SeidelNode
     {

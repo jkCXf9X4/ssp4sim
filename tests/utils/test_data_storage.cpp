@@ -8,7 +8,7 @@
 #include <string>
 
 using namespace sim;
-using namespace sim::utils;
+using namespaceutils;
 
 
 TEST_CASE("DataStorage2 basic allocation", "[DataStorage2]")

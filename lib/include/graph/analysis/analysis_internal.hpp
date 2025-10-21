@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace ssp4sim::sim::analysis::graph
+namespace ssp4sim::analysis::graph
 {
     // intra model connections
     class AnalysisModelVariable : public ssp4sim::utils::graph::Node

@@ -30,8 +30,8 @@ class Simulation {
   class FmuInfo {
     +system_name: std::string
     +model_name: std::string
-    +fmu: ssp4sim::Fmu*
-    +model_description: ssp4sim::fmi2::md::fmi2ModelDescription*
+    +fmu: ssp4cpp::Fmu*
+    +model_description: ssp4cpp::fmi2::md::fmi2ModelDescription*
     +fmi_instance: std::unique_ptr<handler::FmuInstance>
     +model: std::unique_ptr<handler::CoSimulationModel>
     +FmuInfo(name, fmu)
@@ -112,7 +112,7 @@ class Simulation {
     }
 
     class AnalysisGraphBuilder {
-        +ssp: ssp4sim::Ssp*
+        +ssp: ssp4cpp::Ssp*
         +fmu_handler: handler::FmuHandler*
         +AnalysisGraphBuilder(ssp, fmu_handler)
         +build(): std::unique_ptr<AnalysisGraph>

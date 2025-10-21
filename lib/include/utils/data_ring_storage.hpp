@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <iostream>
 
-namespace ssp4sim::sim::utils
+namespace ssp4sim::utils
 {
     using namespace std;
 
@@ -25,7 +25,7 @@ namespace ssp4sim::sim::utils
      * The buffer is not designed to store all data of the simulation but will continuously overwrite old data
      *
      */
-    class RingStorage : public utils::str::IString
+    class RingStorage : public ssp4cpp::utils::str::IString
     {
 
         Logger log = Logger("ssp4sim.utils.RingStorage", LogLevel::debug);

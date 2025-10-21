@@ -15,7 +15,7 @@
 #include <list>
 #include <format>
 
-namespace ssp4sim::sim::handler
+namespace ssp4sim::handler
 {
     // using namespace std;
 
@@ -25,14 +25,14 @@ namespace ssp4sim::sim::handler
         std::string model_name;
 
         // Borrowing
-        ssp4sim::Fmu *fmu;
-        ssp4sim::fmi2::md::fmi2ModelDescription *model_description;
+        ssp4cpp::Fmu *fmu;
+        ssp4cpp::fmi2::md::fmi2ModelDescription *model_description;
 
         // Owning
         std::unique_ptr<FmuInstance> fmi_instance;
         std::unique_ptr<CoSimulationModel> model;
 
-        FmuInfo(std::string name, ssp4sim::Fmu *fmu)
+        FmuInfo(std::string name, ssp4cpp::Fmu *fmu)
         {
             this->model_name = fmu->md->modelName;
             this->system_name = name;
@@ -58,19 +58,19 @@ namespace ssp4sim::sim::handler
     public:
         Logger log = Logger("ssp4sim.handler.FmuHandler", LogLevel::info);
 
-        Ssp *ssp;
+        ssp4cpp::Ssp *ssp;
 
-        std::map<std::string, std::unique_ptr<Fmu>> fmu_map;
-        std::map<std::string, ssp4sim::Fmu *> fmu_ref_map; // Non owning
+        std::map<std::string, std::unique_ptr<ssp4cpp::Fmu>> fmu_map;
+        std::map<std::string, ssp4cpp::Fmu *> fmu_ref_map; // Non owning
 
         std::map<std::string, std::unique_ptr<FmuInfo>> fmu_info_map;
 
-        FmuHandler(ssp4sim::Ssp *ssp)
+        FmuHandler(ssp4cpp::Ssp *ssp)
         {
             this->ssp = ssp;
 
             log(debug)("[{}] Creating FMU map", __func__);
-            fmu_map = ssp4sim::ssp::ext::create_fmu_map(*ssp);
+            fmu_map = ssp4cpp::ssp::ext::create_fmu_map(*ssp);
             for (auto &[fmu_name, fmu] : fmu_map)
             {
                 log(debug)("[{}] - FMU: {} - ", __func__, fmu_name, fmu->to_string());

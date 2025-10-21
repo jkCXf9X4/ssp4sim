@@ -6,10 +6,11 @@
 #include <cstdint>
 #include <string>
 
-namespace ssp4sim::sim::graph
+// Rename to execution
+namespace ssp4sim::graph
 {
 
-    class StepData : public utils::str::IString
+    class StepData : public ssp4cpp::utils::str::IString
     {
     public:
         uint64_t start_time;
@@ -56,7 +57,7 @@ namespace ssp4sim::sim::graph
         }
     };
 
-    class Invocable : public utils::graph::Node, public virtual utils::str::IString
+    class Invocable : public utils::graph::Node, public virtual ssp4cpp::utils::str::IString
     {
     public:
         uint64_t walltime_ns = 0;

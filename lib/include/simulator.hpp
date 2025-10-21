@@ -11,7 +11,7 @@
 #include <vector>
 #include <map>
 
-namespace ssp4sim::sim
+namespace ssp4sim
 {
     /**
      * @brief A high-level simulator class that simplifies the process of running
@@ -26,7 +26,7 @@ namespace ssp4sim::sim
     public:
         Logger log = Logger("ssp4sim.Simulator", LogLevel::info);
 
-        std::unique_ptr<Ssp> ssp;
+        std::unique_ptr<ssp4cpp::Ssp> ssp;
         std::unique_ptr<Simulation> sim;
 
         /**
@@ -58,7 +58,7 @@ namespace ssp4sim::sim
 
             log(debug)("[{}] - Importing SSP", __func__);
             auto ssp_path = utils::Config::get<std::string>("simulation.ssp");
-            ssp = std::make_unique<ssp4sim::Ssp>(ssp_path);
+            ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path);
             log(debug)("[{}] -- SSP: {}", __func__, ssp->to_string());
             
             log(debug)("[{}] - Creating simulation\n", __func__);

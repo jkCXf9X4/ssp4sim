@@ -17,7 +17,7 @@
 #include <chrono>
 
 using namespace ssp4cpp;
-using namespace sim::utils;
+using namespaceutils;
 
 // Helper function to check if file exists and contains expected data
 bool check_file_contains(const std::string &filename, const std::string &expected)

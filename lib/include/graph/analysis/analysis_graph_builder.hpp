@@ -24,7 +24,7 @@
 #include <set>
 #include <list>
 
-namespace ssp4sim::sim::analysis::graph
+namespace ssp4sim::analysis::graph
 {
     using namespace std;
 
@@ -33,20 +33,20 @@ namespace ssp4sim::sim::analysis::graph
     public:
         static inline auto log = Logger("ssp4sim.graph.AnalysisGraphBuilder", LogLevel::info);
 
-        ssp4sim::Ssp *ssp;
+        ssp4cpp::Ssp *ssp;
         handler::FmuHandler *fmu_handler;
 
-        AnalysisGraphBuilder(ssp4sim::Ssp *ssp, handler::FmuHandler *fmu_handler)
+        AnalysisGraphBuilder(ssp4cpp::Ssp *ssp, handler::FmuHandler *fmu_handler)
         {
             this->ssp = ssp;
             this->fmu_handler = fmu_handler;
         }
 
-        map<string, std::unique_ptr<AnalysisModel>> create_models(ssp4sim::Ssp &ssp)
+        map<string, std::unique_ptr<AnalysisModel>> create_models(ssp4cpp::Ssp &ssp)
         {
             log(ext_trace)("[{}] init", __func__);
             map<string, std::unique_ptr<AnalysisModel>> models;
-            for (auto &[ssp_resource_name, local_resource_name] : ssp::ext::get_resource_map(ssp))
+            for (auto &[ssp_resource_name, local_resource_name] : ssp4cpp::ssp::ext::get_resource_map(ssp))
             {
                 auto fmu = fmu_handler->fmu_info_map[ssp_resource_name].get();
                 auto m = make_unique<AnalysisModel>(ssp_resource_name, local_resource_name, fmu);
@@ -63,17 +63,17 @@ namespace ssp4sim::sim::analysis::graph
             return std::move(models);
         }
 
-        map<string, std::unique_ptr<AnalysisConnector>> create_connectors(ssp4sim::Ssp &ssp)
+        map<string, std::unique_ptr<AnalysisConnector>> create_connectors(ssp4cpp::Ssp &ssp)
         {
             log(ext_trace)("[{}] init", __func__);
             map<string, std::unique_ptr<AnalysisConnector>> items;
             if (ssp.ssd->System.Elements.has_value())
             {
-                auto connectors = ssp1::ext::elements::get_connectors(
+                auto connectors = ssp4cpp::ssp1::ext::elements::get_connectors(
                     ssp.ssd->System.Elements.value(),
-                    {ssp4sim::fmi2::md::Causality::input, ssp4sim::fmi2::md::Causality::output, ssp4sim::fmi2::md::Causality::parameter});
+                    {ssp4cpp::fmi2::md::Causality::input, ssp4cpp::fmi2::md::Causality::output, ssp4cpp::fmi2::md::Causality::parameter});
 
-                auto start_values = ssp1::ext::ssv::get_start_value_mappings(ssp.dir, *ssp.ssd);
+                auto start_values = ssp4cpp::ssp1::ext::ssv::get_start_value_mappings(ssp.dir, *ssp.ssd);
 
                 for (auto &[index, connector, component] : connectors)
                 {
@@ -87,14 +87,14 @@ namespace ssp4sim::sim::analysis::graph
                     auto md = fmu->model_description;
 
                     log(ext_trace)("[{}] get_variable_by_name", __func__);
-                    auto var = fmi2::ext::model_variables::get_variable_by_name(md->ModelVariables, connector_name);
+                    auto var = ssp4cpp::fmi2::ext::model_variables::get_variable_by_name(md->ModelVariables, connector_name);
 
                     log(ext_trace)("[{}] Name {}", __func__, var->name);
                     if (var)
                     {
                         auto value_reference = var->valueReference.value();
                         log(ext_trace)("[{}] get_variable_type {}", __func__, value_reference);
-                        auto type = fmi2::ext::model_variables::get_variable_type(*var);
+                        auto type = ssp4cpp::fmi2::ext::model_variables::get_variable_type(*var);
 
                         log(ext_trace)("[{}] Create AnalysisConnector", __func__);
                         auto c = std::make_unique<AnalysisConnector>(
@@ -102,13 +102,13 @@ namespace ssp4sim::sim::analysis::graph
 
                         c->causality = connector->kind;
 
-                        auto start_value = fmi2::ext::model_variables::get_variable_start_value(*var);
+                        auto start_value = ssp4cpp::fmi2::ext::model_variables::get_variable_start_value(*var);
                         if (start_value)
                         {
                             log(debug)("[{}] Storing start value for {}.{}, {}", __func__, component_name, var->name, type.to_string());
-                            c->initial_value = std::make_unique<ssp1::ext::ssv::StartValue>(var->name, type);
+                            c->initial_value = std::make_unique<ssp4cpp::ssp1::ext::ssv::StartValue>(var->name, type);
                             c->initial_value->store_value(start_value);
-                            log(debug)("[{}] - Value {}", __func__, fmi2::ext::enums::data_type_to_string(type, c->initial_value->value.get()));
+                            log(debug)("[{}] - Value {}", __func__, ssp4cpp::fmi2::ext::enums::data_type_to_string(type, c->initial_value->value.get()));
                         }
 
                         // parameter set might overwrite initial value
@@ -118,7 +118,7 @@ namespace ssp4sim::sim::analysis::graph
                         {
                             log(debug)("[{}] Applying parameter for {} - {}", __func__, parameter_name, type.to_string());
                             const auto &start_value = start_values.at(parameter_name);
-                            c->initial_value = std::make_unique<ssp1::ext::ssv::StartValue>(start_value);
+                            c->initial_value = std::make_unique<ssp4cpp::ssp1::ext::ssv::StartValue>(start_value);
                         }
 
                         items[c->name] = std::move(c);
@@ -129,7 +129,7 @@ namespace ssp4sim::sim::analysis::graph
             return std::move(items);
         }
 
-        map<string, std::unique_ptr<AnalysisConnection>> create_connections(ssp4sim::Ssp &ssp)
+        map<string, std::unique_ptr<AnalysisConnection>> create_connections(ssp4cpp::Ssp &ssp)
         {
             log(ext_trace)("[{}] init", __func__);
             map<string, std::unique_ptr<AnalysisConnection>> items;
@@ -146,7 +146,7 @@ namespace ssp4sim::sim::analysis::graph
             return std::move(items);
         }
 
-        map<string, std::unique_ptr<AnalysisModelVariable>> create_model_variables(map<string, ssp4sim::Fmu *> &fmu_map)
+        map<string, std::unique_ptr<AnalysisModelVariable>> create_model_variables(map<string, ssp4cpp::Fmu *> &fmu_map)
         {
             log(warning)("[{}] init, deprecated", __func__);
             map<string, std::unique_ptr<AnalysisModelVariable>> items;
@@ -172,7 +172,7 @@ namespace ssp4sim::sim::analysis::graph
             auto connections = create_connections(*ssp);
             auto model_variables = create_model_variables(fmu_handler->fmu_ref_map);
 
-            auto fmu_connections = ssp1::ext::elements::get_fmu_connections(*ssp->ssd);
+            auto fmu_connections = ssp4cpp::ssp1::ext::elements::get_fmu_connections(*ssp->ssd);
 
             log(trace)("[{}] Connecting FMUs", __func__);
             for (auto &[source, target] : fmu_connections)
@@ -250,10 +250,10 @@ namespace ssp4sim::sim::analysis::graph
 //         if (outputs.has_value())
 //         {
 
-//             auto dependencies = ssp4sim::fmi2::ext::dependency::get_dependencies_variables(
+//             auto dependencies = ssp4cpp::fmi2::ext::dependency::get_dependencies_variables(
 //                 outputs.value().Unknowns,
 //                 fmu->md.ModelVariables,
-//                 ssp4sim::fmi2::md::DependenciesKind::dependent);
+//                 ssp4cpp::fmi2::md::DependenciesKind::dependent);
 
 //             for (auto &[source, target, kind] : dependencies)
 //             {

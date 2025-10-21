@@ -2,7 +2,7 @@
 
 Simulator 
 - handles top resources, shared across simulations
-  - ssp, ssp4sim::fmu, config files
+  - ssp, ssp4cpp::Fmu, config files
   - starting and stopping simulations
 
 Simulation

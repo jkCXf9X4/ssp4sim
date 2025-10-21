@@ -21,9 +21,6 @@ target_include_directories(ssp4sim_lib
 
 target_compile_options(ssp4sim_lib PRIVATE -Wfatal-errors)
 
-target_link_libraries(ssp4sim_lib PRIVATE schema_lib)
-
-
 find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE nlohmann_json::nlohmann_json)
 

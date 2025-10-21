@@ -13,10 +13,10 @@
 #include <string>
 #include <vector>
 
-namespace ssp4sim::sim::analysis::graph
+namespace ssp4sim::analysis::graph
 {
     // Kind of unnecessary but doesn't hurt ether
-    class AnalysisGraph : public utils::str::IString
+    class AnalysisGraph : public ssp4cpp::utils::str::IString
     {
     public:
         Logger log = Logger("ssp4sim.graph.AnalysisGraph", LogLevel::debug);
@@ -37,23 +37,23 @@ namespace ssp4sim::sim::analysis::graph
               connections(std::move(connections_))
 
         {
-            auto m = utils::map_ns::map_unique_to_ref(models);
-            nodes = utils::map_ns::map_to_value_vector_copy(m);
+            auto m = ssp4sim::utils::map_ns::map_unique_to_ref(models);
+            nodes = ssp4sim::utils::map_ns::map_to_value_vector_copy(m);
         }
 
         std::vector<AnalysisModel *> get_start_nodes() const
         {
-            auto start_nodes = utils::graph::Node::get_ancestors(nodes);
+            auto start_nodes = ssp4sim::utils::graph::Node::get_ancestors(nodes);
             return start_nodes;
         }
 
         virtual void print(std::ostream &os) const
         {
-            auto strong_system_graph = utils::graph::strongly_connected_components(utils::graph::Node::cast_to_parent_ptrs(nodes));
+            auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(ssp4sim::utils::graph::Node::cast_to_parent_ptrs(nodes));
             
             os << "Simulation Graph DOT:\n" 
-            << utils::graph::Node::to_dot(nodes) << "\n"
-            << utils::graph::ssc_to_string(strong_system_graph)
+            << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
+            << ssp4sim::utils::graph::ssc_to_string(strong_system_graph)
             << "\nStart nodes:\n";
             
             for (auto &model : get_start_nodes())

@@ -12,7 +12,7 @@
 #include <shared_mutex>
 #include <nlohmann/json.hpp>
 
-namespace ssp4sim::sim::utils
+namespace ssp4sim::utils
 {
 
     struct config_error : std::runtime_error

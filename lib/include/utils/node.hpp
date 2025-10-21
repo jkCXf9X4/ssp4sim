@@ -16,7 +16,7 @@ namespace ssp4sim::utils::graph
      */
     class Node : public virtual ssp4cpp::utils::str::IString
     {
-        Logger log = Logger("ssp4cpp.common.Node", LogLevel::ext_trace);
+        Logger log = Logger("ssp4sim.common.Node", LogLevel::ext_trace);
 
     public:
         std::string name;

@@ -23,7 +23,7 @@
 #include <list>
 #include <chrono>
 
-namespace ssp4sim::sim
+namespace ssp4sim
 {
     /**
      * @brief Main class for running a simulation.
@@ -37,7 +37,7 @@ namespace ssp4sim::sim
     public:
         Logger log = Logger("ssp4sim.Simulation", LogLevel::info);
 
-        Ssp *ssp;
+        ssp4cpp::Ssp *ssp;
 
         std::unique_ptr<handler::FmuHandler> fmu_handler;
         std::unique_ptr<utils::DataRecorder> recorder;
@@ -51,7 +51,7 @@ namespace ssp4sim::sim
          *
          * @param ssp A pointer to the SSP object to be simulated.
          */
-        Simulation(Ssp *ssp)
+        Simulation(ssp4cpp::Ssp *ssp)
         {
             this->ssp = ssp;
 
@@ -107,7 +107,7 @@ namespace ssp4sim::sim
             uint64_t timestep = utils::time::s_to_ns(utils::Config::get<double>("simulation.timestep"));
 
             auto sim_timer = utils::time::Timer();
-            sim_graph->invoke(sim::graph::StepData(start_time, end_time, timestep));
+            sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
             auto sim_wall_time = sim_timer.stop();
 
             log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));

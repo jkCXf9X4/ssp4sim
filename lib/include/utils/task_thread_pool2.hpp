@@ -2,6 +2,7 @@
 #pragma once
 
 #include "ssp4sim_definitions.hpp"
+#include "invocable.hpp"
 
 #include <atomic>
 #include <cstdint>
@@ -22,12 +23,12 @@
 
 #include "invocable.hpp"
 
-namespace ssp4sim::sim::utils
+namespace ssp4sim::utils
 {
     struct task_info
     {
-        graph::Invocable *node;
-        graph::StepData step;
+        ssp4sim::graph::Invocable *node;
+        ssp4sim::graph::StepData step;
     };
     /**
      * @brief Simple thread pool for executing queued tasks.
@@ -191,4 +192,4 @@ namespace ssp4sim::sim::utils
         }
     };
 
-} // namespace ssp4sim::sim::utils
+} // namespace ssp4sim::utils

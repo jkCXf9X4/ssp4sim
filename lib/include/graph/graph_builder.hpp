@@ -12,7 +12,7 @@
 
 #include <map>
 
-namespace ssp4sim::sim::graph
+namespace ssp4sim::graph
 {
     using AnalysisGraph = analysis::graph::AnalysisGraph;
 
@@ -73,7 +73,7 @@ namespace ssp4sim::sim::graph
                     {
                         info.initial_value = connector->initial_value->get_value();
 
-                        log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, fmi2::ext::enums::data_type_to_string(info.type, (void *)info.initial_value.get()));
+                        log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, ssp4cpp::fmi2::ext::enums::data_type_to_string(info.type, (void *)info.initial_value.get()));
                     }
 
                     if (connector->causality == Causality::input)

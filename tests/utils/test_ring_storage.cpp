@@ -7,7 +7,7 @@
 #include "data_type.hpp"
 
 using namespace sim;
-using namespace sim::utils;
+using namespaceutils;
 
 ssp4cpp::utils::Logger logger = ssp4cpp::utils::Logger("RingStorage", ssp4cpp::utils::LogLevel::debug);
 

@@ -15,7 +15,7 @@
 #include <assert.h>
 #include <execution>
 
-namespace ssp4sim::sim::graph
+namespace ssp4sim::graph
 {
 
     class JacobiSerial final : public ExecutionBase
@@ -174,7 +174,7 @@ namespace ssp4sim::sim::graph
 
             for (auto &node : nodes)
             {
-                auto ti = sim::utils::task_info{node, step};
+                auto ti =utils::task_info{node, step};
                 pool.enqueue(ti);
             }
 

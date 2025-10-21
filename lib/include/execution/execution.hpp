@@ -4,7 +4,7 @@
 
 #include "invocable.hpp"
 
-namespace ssp4sim::sim::graph
+namespace ssp4sim::graph
 {
 
     class ExecutionBase : public Invocable

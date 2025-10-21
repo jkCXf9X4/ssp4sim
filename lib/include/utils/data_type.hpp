@@ -8,9 +8,9 @@
 #include <string>
 #include <stdexcept>
 
-namespace ssp4sim::sim::utils
+namespace ssp4sim::utils
 {
-    using DataType = ssp4sim::fmi2::md::Type;
+    using DataType = ssp4cpp::fmi2::md::Type;
 
     inline constexpr void read_from_model_(DataType t,
                                            handler::CoSimulationModel &model,

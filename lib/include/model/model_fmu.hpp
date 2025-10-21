@@ -4,6 +4,7 @@
 #include "utils/map.hpp"
 #include "utils/string.hpp"
 #include "utils/time.hpp"
+#include "utils/timer.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -22,7 +23,7 @@
 #include <vector>
 #include <functional>
 
-namespace ssp4sim::sim::graph
+namespace ssp4sim::graph
 {
 
     class FmuModel final : public Invocable
