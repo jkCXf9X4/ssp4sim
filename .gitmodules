@@ -1,0 +1,6 @@
+[submodule "3rdParty/ssp4cpp"]
+	path = 3rdParty/ssp4cpp
+	url = git@github.com:jkCXf9X4/ssp4cpp.git
+[submodule "3rdParty/fmi4c"]
+	path = 3rdParty/fmi4c
+	url = git@github.com:robbr48/fmi4c.git
