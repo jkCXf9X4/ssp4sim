@@ -1,11 +1,12 @@
 {
   "dependencies": [
-    "libzip",
-    "pugixml",
     "nlohmann-json",
     "catch2",
     "tbb",
     "pybind11",
+    
+    "libzip",
+    "pugixml",
     "kissnet"
   ]
 }

@@ -73,7 +73,7 @@ namespace ssp4sim::analysis::graph
                     ssp.ssd->System.Elements.value(),
                     {ssp4cpp::fmi2::md::Causality::input, ssp4cpp::fmi2::md::Causality::output, ssp4cpp::fmi2::md::Causality::parameter});
 
-                auto start_values = ssp4cpp::ssp1::ext::ssv::get_start_value_mappings(ssp.dir, *ssp.ssd);
+                auto start_values = ssp4cpp::ssp1::ext::ssv::get_start_value_mappings(ssp);
 
                 for (auto &[index, connector, component] : connectors)
                 {

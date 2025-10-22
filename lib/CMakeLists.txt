@@ -13,10 +13,11 @@ target_include_directories(ssp4sim_lib
     ${CMAKE_CURRENT_LIST_DIR}/include/graph/analysis
     ${CMAKE_CURRENT_LIST_DIR}/include/handler
     ${CMAKE_CURRENT_LIST_DIR}/include/model
+    ${CMAKE_CURRENT_LIST_DIR}/include/schema_extensions
     ${CMAKE_CURRENT_LIST_DIR}/include/utils
 
-  PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}/include_private  
+#  PRIVATE
+#    ${CMAKE_CURRENT_LIST_DIR}/include_private  
 )
 
 target_compile_options(ssp4sim_lib PRIVATE -Wfatal-errors)
