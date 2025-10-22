@@ -4,8 +4,8 @@
     "catch2",
     "tbb",
     "pybind11",
-    
-    "cutecpp",
-    "ssp4cpp"
+    "libzip",
+    "pugixml",
+    "kissnet"
   ]
 }

@@ -17,12 +17,8 @@ target_link_libraries(sim_app PRIVATE nlohmann_json::nlohmann_json)
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(sim_app PRIVATE TBB::tbb TBB::tbbmalloc)
 
-find_package(ssp4cpp CONFIG REQUIRED)
-find_package(pugixml CONFIG REQUIRED)
-find_package(libzip CONFIG REQUIRED)
 target_link_libraries(sim_app PRIVATE ssp4cpp::ssp4cpp)
 
-find_package(cutecpp CONFIG REQUIRED)
 target_link_libraries(sim_app PRIVATE cutecpp::cutecpp)
 
 target_link_libraries(sim_app PUBLIC ssp4sim::3rd::fmi4c)

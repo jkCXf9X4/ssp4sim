@@ -21,9 +21,6 @@ target_link_libraries(py_ssp4sim PRIVATE nlohmann_json::nlohmann_json)
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(py_ssp4sim PRIVATE TBB::tbb TBB::tbbmalloc)
 
-find_package(ssp4cpp CONFIG REQUIRED)
-find_package(pugixml CONFIG REQUIRED)
-find_package(libzip CONFIG REQUIRED)
 target_link_libraries(py_ssp4sim PRIVATE ssp4cpp::ssp4cpp)
 
 target_link_libraries(py_ssp4sim PUBLIC ssp4sim::3rd::fmi4c)
