@@ -11,6 +11,8 @@ find_package(Catch2 CONFIG REQUIRED)
 target_link_libraries(test_1 PRIVATE Catch2::Catch2WithMain)
 
 find_package(ssp4cpp CONFIG REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
+find_package(libzip CONFIG REQUIRED)
 target_link_libraries(test_1 PRIVATE ssp4cpp::ssp4cpp)
 
 find_package(cutecpp CONFIG REQUIRED)

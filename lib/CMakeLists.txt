@@ -29,6 +29,8 @@ find_package(TBB CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE TBB::tbb TBB::tbbmalloc)
 
 find_package(ssp4cpp CONFIG REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
+find_package(libzip CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE ssp4cpp::ssp4cpp)
 
 find_package(cutecpp CONFIG REQUIRED)
