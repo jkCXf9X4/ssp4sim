@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 
 #include "utils/time.hpp"
 #include "utils/data_recorder.hpp"

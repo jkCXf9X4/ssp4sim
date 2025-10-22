@@ -1,13 +1,15 @@
 #pragma once
 
+
 #include "utils/node.hpp"
 #include "utils/map.hpp"
-#include "utils/string.hpp"
 #include "utils/time.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 
 #include "data_type.hpp"
+
+#include "ssp4cpp/utils/interface.hpp"
 
 #include <string>
 #include <vector>
@@ -25,7 +27,7 @@ namespace ssp4sim::utils
      * - store multiple time versions of the data to enable access backwards in time
      */
 
-    class DataStorage : public ssp4cpp::utils::str::IString
+    class DataStorage : public ssp4cpp::utils::interfaces::IString
     {
     public:
         Logger log = Logger("ssp4sim.utils.DataStorage", LogLevel::debug);

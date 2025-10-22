@@ -15,7 +15,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 
 namespace ssp4sim::utils
 {

@@ -2,15 +2,18 @@
 
 #include "utils/node.hpp"
 #include "utils/map.hpp"
-#include "utils/string.hpp"
 #include "utils/time.hpp"
-#include "utils/log.hpp"
 
-#include "FMI2_Enums.hpp"
+
 #include "FMI2_Enums_Ext.hpp"
 #include "SSP1_SystemStructureParameter_Ext.hpp"
 
 #include "sim.hpp"
+
+#include "cutecpp/log.hpp"
+
+#include "ssp4cpp/utils/string.hpp"
+#include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 
 #include <string>
 #include <vector>

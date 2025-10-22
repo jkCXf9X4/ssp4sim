@@ -55,7 +55,7 @@ sudo apt install ninja-build
 ## Running examples
 After building, you can run the SSP simulation engine:
 ```bash
-./build/public/ssp4sim_app/ssp4sim_app ./resources/embrace/embrace.json
+./build/public/ssp4sim_app/sim_app ./resources/embrace/embrace.json
 ```
 This will run a simple simulation using one of the example ssps.
 

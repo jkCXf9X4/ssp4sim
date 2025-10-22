@@ -1,11 +1,12 @@
 #pragma once
 
-#include "utils/string.hpp"
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
 #include "data_storage.hpp"
+
+#include "ssp4cpp/utils/interface.hpp"
 
 #include <string>
 #include <cstring>
@@ -25,7 +26,7 @@ namespace ssp4sim::utils
      * The buffer is not designed to store all data of the simulation but will continuously overwrite old data
      *
      */
-    class RingStorage : public ssp4cpp::utils::str::IString
+    class RingStorage : public ssp4cpp::utils::interfaces::IString
     {
 
         Logger log = Logger("ssp4sim.utils.RingStorage", LogLevel::debug);

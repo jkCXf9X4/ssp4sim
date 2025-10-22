@@ -12,8 +12,8 @@
 #include "data_recorder.hpp"
 
 #include "SSP_Ext.hpp"
-#include "ssp.hpp"
-#include "fmu.hpp"
+#include "ssp4cpp/ssp.hpp"
+#include "ssp4cpp/fmu.hpp"
 #include "config.hpp"
 
 #include <vector>

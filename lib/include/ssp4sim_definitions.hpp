@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FMI2_Enums.hpp"
+#include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 
 namespace ssp4sim
 {

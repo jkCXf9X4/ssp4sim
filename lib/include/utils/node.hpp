@@ -1,7 +1,8 @@
 #pragma once
 
-#include "utils/string.hpp"
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
+
+#include "ssp4cpp/utils/interface.hpp"
 
 #include <vector>
 #include <string>
@@ -14,7 +15,7 @@ namespace ssp4sim::utils::graph
     /**
      * @brief Basic bidirectional graph node used throughout the project.
      */
-    class Node : public virtual ssp4cpp::utils::str::IString
+    class Node : public virtual ssp4cpp::utils::interfaces::IString
     {
         Logger log = Logger("ssp4sim.common.Node", LogLevel::ext_trace);
 

@@ -1,4 +1,4 @@
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 #include "simulator.hpp"
 
 using namespace ssp4sim;

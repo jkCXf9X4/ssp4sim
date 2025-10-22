@@ -5,8 +5,7 @@
     "tbb",
     "pybind11",
     
-    "libzip",
-    "pugixml",
-    "kissnet"
+    "cutecpp",
+    "ssp4cpp"
   ]
 }

@@ -2,7 +2,6 @@
 
 #include "utils/node.hpp"
 #include "utils/map.hpp"
-#include "utils/string.hpp"
 #include "utils/time.hpp"
 
 #include "ssp4sim_definitions.hpp"
@@ -16,13 +15,15 @@
 
 #include "fmu_handler.hpp"
 
+#include "ssp4cpp/utils/interface.hpp"
+
 #include <string>
 #include <vector>
 #include <functional>
 
 namespace ssp4sim::graph
 {
-    struct ConnectionInfo : public ssp4cpp::utils::str::IString
+    struct ConnectionInfo : public ssp4cpp::utils::interfaces::IString
     {
         static inline Logger log = Logger("ssp4sim.model.ConnectionInfo", LogLevel::info);
 

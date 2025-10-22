@@ -2,9 +2,6 @@
 
 #include "SSP1_SystemStructureParameter_Ext.hpp"
 
-#include "SSP1_SystemStructureParameterValues_XML.hpp"
-#include "SSP1_SystemStructureParameterMapping_XML.hpp"
-
 namespace ssp4cpp::ssp1::ext::ssv
 {
     std::vector<StartValue> get_start_values(std::vector<ParameterBindings> &bindings)

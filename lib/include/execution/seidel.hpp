@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 
 #include "ssp4sim_definitions.hpp"
 

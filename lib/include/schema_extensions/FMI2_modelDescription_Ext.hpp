@@ -1,10 +1,10 @@
 
 #pragma once
 
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 
-#include "FMI2_Enums.hpp"
-#include "FMI2_modelDescription.hpp"
+#include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
+#include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
 
 #include <vector>
 #include <string>

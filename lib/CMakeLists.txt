@@ -28,6 +28,10 @@ target_link_libraries(ssp4sim_lib PUBLIC nlohmann_json::nlohmann_json)
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE TBB::tbb TBB::tbbmalloc)
 
-target_link_libraries(ssp4sim_lib PUBLIC ssp4sim::3rd::fmi4c)
+find_package(ssp4cpp CONFIG REQUIRED)
+target_link_libraries(ssp4sim_lib PRIVATE ssp4cpp::ssp4cpp)
 
-target_link_libraries(ssp4sim_lib PUBLIC ssp4sim::3rd::ssp4cpp)
+find_package(cutecpp CONFIG REQUIRED)
+target_link_libraries(ssp4sim_lib PRIVATE cutecpp::cutecpp)
+
+target_link_libraries(ssp4sim_lib PUBLIC ssp4sim::3rd::fmi4c)

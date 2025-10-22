@@ -11,7 +11,9 @@ find_package(pybind11 CONFIG)
 # pybind11 method:
 pybind11_add_module(py_ssp4sim ${ALL_SRC})
 
+
 target_link_libraries(py_ssp4sim PRIVATE ssp4sim_lib)
+
 
 find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(py_ssp4sim PRIVATE nlohmann_json::nlohmann_json)
@@ -19,9 +21,10 @@ target_link_libraries(py_ssp4sim PRIVATE nlohmann_json::nlohmann_json)
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(py_ssp4sim PRIVATE TBB::tbb TBB::tbbmalloc)
 
-target_link_libraries(py_ssp4sim PUBLIC ssp4sim::3rd::fmi4c)
+find_package(ssp4cpp CONFIG REQUIRED)
+target_link_libraries(py_ssp4sim PRIVATE ssp4cpp::ssp4cpp)
 
-target_link_libraries(py_ssp4sim PUBLIC ssp4sim::3rd::ssp4cpp)
+target_link_libraries(py_ssp4sim PUBLIC ssp4sim::3rd::fmi4c)
 
 
 file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/")

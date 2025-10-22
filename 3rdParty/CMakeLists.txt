@@ -4,6 +4,3 @@ option(FMI4C_USE_INCLUDED_ZLIB ON)
 
 add_subdirectory(fmi4c)
 add_library(ssp4sim::3rd::fmi4c ALIAS fmi4c)
-
-add_subdirectory(ssp4cpp)
-add_library(ssp4sim::3rd::ssp4cpp ALIAS ssp4cpp)

@@ -1,7 +1,7 @@
 
 #include "SSP1_SystemStructureDescription_Ext.hpp"
 
-#include "utils/string.hpp"
+#include "ssp4cpp/utils/string.hpp"
 
 #include <vector>
 #include <tuple>

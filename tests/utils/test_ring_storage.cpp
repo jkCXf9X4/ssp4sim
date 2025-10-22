@@ -3,7 +3,7 @@
 
 #include "data_ring_storage.hpp"
 #include "data_type.hpp"
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 
 #include <iostream>
 

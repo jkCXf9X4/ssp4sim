@@ -4,6 +4,8 @@
 #include "utils/vector.hpp"
 
 #include "SSP_Ext.hpp"
+#include "SSP1_SystemStructureDescription_Ext.hpp"
+
 #include "FMI2_modelDescription_Ext.hpp"
 #include "FMI2_Enums_Ext.hpp"
 

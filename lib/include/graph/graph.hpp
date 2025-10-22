@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 #include "utils/map.hpp"
 #include "utils/vector.hpp"
 

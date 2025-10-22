@@ -2,7 +2,6 @@
 
 #include "utils/node.hpp"
 #include "utils/map.hpp"
-#include "utils/string.hpp"
 #include "utils/time.hpp"
 #include "tarjan.hpp"
 
@@ -10,13 +9,15 @@
 #include "analysis_model.hpp"
 #include "analysis_connector.hpp"
 
+#include "ssp4cpp/utils/interface.hpp"
+
 #include <string>
 #include <vector>
 
 namespace ssp4sim::analysis::graph
 {
     // Kind of unnecessary but doesn't hurt ether
-    class AnalysisGraph : public ssp4cpp::utils::str::IString
+    class AnalysisGraph : public ssp4cpp::utils::interfaces::IString
     {
     public:
         Logger log = Logger("ssp4sim.graph.AnalysisGraph", LogLevel::debug);

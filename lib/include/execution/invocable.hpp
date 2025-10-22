@@ -1,7 +1,8 @@
 #pragma once
 
-#include "utils/string.hpp"
 #include "utils/node.hpp"
+
+#include "ssp4cpp/utils/interface.hpp"
 
 #include <cstdint>
 #include <string>
@@ -10,7 +11,7 @@
 namespace ssp4sim::graph
 {
 
-    class StepData : public ssp4cpp::utils::str::IString
+    class StepData : public ssp4cpp::utils::interfaces::IString
     {
     public:
         uint64_t start_time;
@@ -57,7 +58,7 @@ namespace ssp4sim::graph
         }
     };
 
-    class Invocable : public utils::graph::Node, public virtual ssp4cpp::utils::str::IString
+    class Invocable : public utils::graph::Node, public virtual ssp4cpp::utils::interfaces::IString
     {
     public:
         uint64_t walltime_ns = 0;

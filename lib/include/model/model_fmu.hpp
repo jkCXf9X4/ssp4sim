@@ -2,7 +2,7 @@
 
 #include "utils/node.hpp"
 #include "utils/map.hpp"
-#include "utils/string.hpp"
+#include "ssp4cpp/utils/string.hpp"
 #include "utils/time.hpp"
 #include "utils/timer.hpp"
 

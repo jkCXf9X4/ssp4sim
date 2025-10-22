@@ -2,16 +2,16 @@
 
 #pragma once
 
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 
-#include "FMI2_modelDescription.hpp"
-#include "SSP1_SystemStructureDescription.hpp"
+#include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
+#include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 
-#include "SSP1_SystemStructureParameterValues.hpp"
-#include "SSP1_SystemStructureParameterMapping.hpp"
+#include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterValues.hpp"
+#include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterMapping.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
-#include "ssp.hpp"
+#include "ssp4cpp/ssp.hpp"
 
 #include <memory>
 #include <cstring>

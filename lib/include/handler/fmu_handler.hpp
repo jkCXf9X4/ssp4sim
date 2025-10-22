@@ -3,8 +3,8 @@
 #include "utils/map.hpp"
 #include "utils/vector.hpp"
 
-#include "ssp.hpp"
-#include "fmu.hpp"
+#include "ssp4cpp/ssp.hpp"
+#include "ssp4cpp/fmu.hpp"
 
 #include "fmi4c_adapter.hpp"
 

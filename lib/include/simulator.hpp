@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ssp.hpp"
-#include "fmu.hpp"
+#include "ssp4cpp/ssp.hpp"
+#include "ssp4cpp/fmu.hpp"
 #include "utils/io.hpp"
-#include "utils/log.hpp"
+#include "cutecpp/log.hpp"
 #include "utils/json.hpp"
 #include "utils/map.hpp"
 
