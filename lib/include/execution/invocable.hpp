@@ -72,7 +72,7 @@ namespace ssp4sim::graph
             exit_init();
         }
         
-        virtual uint64_t invoke(StepData data, const bool only_feedthrough = false) = 0;
+        virtual uint64_t invoke(StepData data) = 0;
 
         virtual void print(std::ostream &os) const
         {

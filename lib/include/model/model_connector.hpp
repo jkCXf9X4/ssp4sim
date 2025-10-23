@@ -73,10 +73,10 @@ namespace ssp4sim::graph
             }
         }
 
-        static void set_initial_input_area(ssp4sim::utils::RingStorage *input_area, std::map<std::string, ConnectorInfo> &inputs)
+        static void set_initial_input_area(ssp4sim::utils::RingStorage *input_area, std::map<std::string, ConnectorInfo> &inputs, uint64_t time)
         {
             log(trace)("[{}] Set input start area", __func__);
-            auto area = input_area->push(0); //
+            auto area = input_area->push(time); //
 
             for (auto &[name, input] : inputs)
             {

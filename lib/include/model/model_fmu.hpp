@@ -69,7 +69,7 @@ namespace ssp4sim::graph
                << "\n}\n";
         }
 
-        void init()
+        void enter_init()
         {
             log(trace)("[{}] FmuModel init {}", __func__, name);
 
@@ -88,34 +88,36 @@ namespace ssp4sim::graph
                 throw std::runtime_error(std::format("[{}] enter_initialization_mode failed for {}", __func__, name));
             }
 
-            log(trace)("[{}] Set start parameter values", __func__);
+            log(ext_trace)("[{}] Set input area", __func__);
+            ConnectorInfo::set_initial_input_area(this->input_area.get(), this->inputs, 0);
+
+            log(trace)("[{}] Set start values", __func__);
             ConnectorInfo::set_start_values(this->parameters);
+            ConnectorInfo::set_start_values(this->inputs);
+        }
 
-            // direct feedthrough evaluation should come in here....
 
+        void exit_init()
+        {
+            log(trace)("[{}] FmuModel init {}", __func__, name);
             log(debug)("[{}] exit_initialization_mode: {} ", __func__, name);
             if (!fmu->model->exit_initialization_mode())
             {
                 log(error)("[{}] exit_initialization_mode failed ", __func__);
                 throw std::runtime_error(std::format("[{}] exit_initialization_mode failed for {}", __func__, name));
             }
-
-            log(ext_trace)("[{}] Set input area", __func__);
-            ConnectorInfo::set_initial_input_area(this->input_area.get(), this->inputs);
-
-            log(ext_trace)("[{}] Invoke at timestep 0", __func__);
-            invoke(StepData(0, 0, 0));
-
             log(ext_trace)("[{}] FmuModel init completed", __func__);
         }
 
-                // Only allowed during initialization 
+        // Only allowed during initialization
         inline uint64_t direct_feedthrough(uint64_t start)
         {
+            log(warning)("[{}] This solution is not ok. Doing direct feedthrough for all variables will overwrite inputs with outputs that are unset. It can ony be done for the relevant algebraic loops. Nothing else!", __func__);
+
             auto target_area = input_area->get_or_push(start);
 
             IF_LOG({
-                log(info)("[{}] Propagating at start_time {}, input_area {} timestamp {}", __func__, start,target_area, input_area->data->timestamps[target_area]);
+                log(info)("[{}] Propagating at start_time {}, input_area {} timestamp {}", __func__, start, target_area, input_area->data->timestamps[target_area]);
             });
 
             ConnectionInfo::retrieve_model_inputs(connections, target_area, start);
@@ -196,7 +198,7 @@ namespace ssp4sim::graph
 
             IF_LOG({
                 log(trace)("[{}] {} start_time: {} valid_input_time: {} timestep: {} end_time: {}",
-                          __func__, this->name.c_str(), _start_time, step_data.valid_input_time, _timestep, _end_time);
+                           __func__, this->name.c_str(), _start_time, step_data.valid_input_time, _timestep, _end_time);
             });
 
             pre(_start_time, step_data.valid_input_time);
@@ -219,21 +221,9 @@ namespace ssp4sim::graph
         }
 
         // hot path
-        uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
+        uint64_t invoke(StepData step_data) override final
         {
-            if (only_feedthrough == false) [[likely]]
-            {
-                step_data.valid_input_time += 1;
-                return step(step_data);
-            }
-            else [[unlikely]]
-            {
-                // The direct feedthrough loop will be stored in start +1ns
-                // valid_input_time need to be increased by one to take this into account
-                // this is only allowed during initialization
-                // causes a hard time for the solvers leading to massive walltime increase 10x if used during step mode
-                return this->direct_feedthrough(step_data.start_time + 1);
-            }
+            return step(step_data);
         }
     };
 }

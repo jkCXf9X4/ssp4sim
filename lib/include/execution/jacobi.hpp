@@ -35,28 +35,8 @@ namespace ssp4sim::graph
             os << "JacobiSerial:\n{}\n";
         }
 
-        inline void direct_feedthrough(StepData step_data)
-        {
-            IF_LOG({
-                log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
-            });
-            
-            for (int i = 0; i < 4; i++)
-            {
-                for (auto &model : this->nodes)
-                {
-                    model->invoke(step_data, true);
-                }
-            }
-        }
-
-        void init() override
-        {
-            // direct_feedthrough();
-        }
-
         // hot path
-        uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
+        uint64_t invoke(StepData step_data) override final
         {
             auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep, step_data.start_time);
 
@@ -87,12 +67,8 @@ namespace ssp4sim::graph
             log(info)("[{}] JacobiParallelFutures", __func__);
         }
 
-        void init() override
-        {
-        }
-
         // hot path
-        uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
+        uint64_t invoke(StepData step_data) override final
         {
             IF_LOG({
                 log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
@@ -123,12 +99,8 @@ namespace ssp4sim::graph
             log(info)("[{}] JacobiParallelTBB", __func__);
         }
 
-        void init() override
-        {
-        }
-
         // hot path
-        uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
+        uint64_t invoke(StepData step_data) override final
         {
             IF_LOG({
                 log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
@@ -157,12 +129,8 @@ namespace ssp4sim::graph
             log(info)("[{}] JacobiParallelSpin", __func__);
         }
 
-        void init() override
-        {
-        }
-
         // hot path
-        uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
+        uint64_t invoke(StepData step_data) override final
         {
             IF_LOG({
                 log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());

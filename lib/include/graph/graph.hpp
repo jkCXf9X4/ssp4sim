@@ -59,18 +59,12 @@ namespace ssp4sim::graph
 
             executor = select_executor();
 
-            log(trace)("[{}] - Initializing models ", __func__);
-
-            for (auto &[_, model] : this->models)
-            {
-                log(ext_trace)("[{}] -- Initializing model: {} ", __func__, model->name);
-                model->init();
-            }
-            log(ext_trace)("[{}] - Model init completed", __func__);
+            log(trace)("[{}] - Initializing executor ", __func__);
+            executor->init();
         }
 
         // hot path
-        uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
+        uint64_t invoke(StepData step_data) override final
         {
             IF_LOG({
                 log(trace)("[{}] Invoking Graph, full step: {}", __func__, step_data.to_string());
