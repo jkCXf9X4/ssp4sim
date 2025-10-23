@@ -11,7 +11,7 @@
 
 namespace ssp4sim::ext::ssp
 {
-    inline auto log = Logger("ssp4cpp.ssp.ext", LogLevel::info);
+    inline auto log = Logger("ssp4sim.ext.ssp", LogLevel::info);
 
     std::map<std::string, std::string> get_resource_map(ssp4cpp::Ssp &ssp);
 

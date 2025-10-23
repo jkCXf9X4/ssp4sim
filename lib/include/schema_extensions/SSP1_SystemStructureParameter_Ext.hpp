@@ -7,6 +7,8 @@
 #include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 
+#include "ssp4cpp/utils/interface.hpp"
+
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterValues.hpp"
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterMapping.hpp"
 
@@ -19,14 +21,14 @@
 
 namespace ssp4sim::ext::ssp1::ssv
 {
-    inline auto log = Logger("ssp4cpp.ssp1.ext.ssv", LogLevel::info);
+    inline auto log = Logger("ssp4sim.ext.ssp.ssp1.ssv", LogLevel::info);
 
     using namespace ssp4cpp::ssp1::ssv;
     using namespace ssp4cpp::ssp1::ssm;
 
     using DataType = ssp4cpp::fmi2::md::Type;
 
-    struct StartValue
+    struct StartValue : public ssp4cpp::utils::interfaces::IString
     {
         std::string name;
         std::vector<std::string> mappings; // name + mappings
@@ -40,6 +42,7 @@ namespace ssp4sim::ext::ssp1::ssv
             this->type = type;
             this->size = fmi2::enums::get_data_type_size(type);
             this->value = std::make_unique<std::byte[]>(this->size);
+
             mappings.push_back(name);
         }
 
@@ -82,9 +85,6 @@ namespace ssp4sim::ext::ssp1::ssv
 
         StartValue(StartValue &&other) noexcept = default;
 
-        // StartValue &operator=(const StartValue &other) = default;
-        // StartValue &operator=(StartValue &&other) noexcept = default;
-
         std::unique_ptr<std::byte[]> get_value()
         {
             auto v = std::make_unique<std::byte[]>(size);
@@ -106,6 +106,16 @@ namespace ssp4sim::ext::ssp1::ssv
                 memcpy((void *)this->value.get(), value, this->size);
             }
         }
+
+        virtual void print(std::ostream &os) const
+        {
+            os << "Model { \n"
+               << "\nName: " << name
+               << "\ntype: " << type.to_string()
+               << "\value: " << ext::fmi2::enums::data_type_to_string(type, value.get())
+               << "\n}\n";
+        }
+
     };
 
 

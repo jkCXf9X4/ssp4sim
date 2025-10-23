@@ -12,7 +12,7 @@ namespace ssp4sim::ext::fmi2
 
     namespace enums
     {
-        inline auto log = Logger("ssp4cpp.fmi2.ext.enums", LogLevel::debug);
+        inline auto log = Logger("ssp4sim.ext.fmi2.enums", LogLevel::debug);
 
         using DataType = ssp4cpp::fmi2::md::Type;
 
