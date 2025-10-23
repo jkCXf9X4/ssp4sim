@@ -103,7 +103,7 @@ namespace ssp4sim::graph
             }
             input_area->flag_new_data(area);
 
-            log(ext_trace)("[{}] Input area after initialization: {}", __func__, input_area->data->export_area(area));
+            log(trace)("[{}] Input area after initialization: {}", __func__, input_area->data->export_area(area));
         }
 
 

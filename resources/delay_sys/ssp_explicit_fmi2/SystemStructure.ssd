@@ -389,8 +389,8 @@
             <ssd:Connection endConnector="input_1" endElement="LET4" startConnector="output_1" startElement="LET3" information_delay="0.002">
                 <ssd:ConnectionGeometry pointsX="-2 7.6" pointsY="20 20"/>
             </ssd:Connection>
-            <ssd:Connection endConnector="output_1" endElement="LET4" startConnector="input_1" startElement="LET5" information_delay="0.002">
-                <ssd:ConnectionGeometry pointsX="47.6 30" pointsY="20 20"/>
+            <ssd:Connection endConnector="input_1" endElement="LET5" startConnector="output_1" startElement="LET4" information_delay="0.002">
+                <ssd:ConnectionGeometry pointsX="34 47.6" pointsY="20 20"/>
             </ssd:Connection>
         </ssd:Connections>
         <ssd:SystemGeometry x1="-100" x2="100" y1="-100" y2="100"/>

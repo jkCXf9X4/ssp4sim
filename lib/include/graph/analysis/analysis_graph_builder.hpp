@@ -81,7 +81,7 @@ namespace ssp4sim::analysis::graph
                 {
                     auto component_name = component->name.value();
                     auto connector_name = connector->name;
-                    log(trace)("[{}] Creating Connector: {} - {}", __func__, component_name, connector_name);
+                    log(ext_trace)("[{}] Potential Connector: {} - {}", __func__, component_name, connector_name);
 
                     // using namespace handler;
                     auto fmu = fmu_handler->fmu_info_map[component_name].get();
@@ -93,7 +93,7 @@ namespace ssp4sim::analysis::graph
 
                     if (var)
                     {
-                        log(ext_trace)("[{}] Name {}", __func__, var->name);
+                        log(debug)("[{}] Creating Connector: {}.{}", __func__, component_name, var->name);
                         auto value_reference = var->valueReference.value();
                         log(ext_trace)("[{}] get_variable_type {}", __func__, value_reference);
                         auto type = ext::fmi2::model_variables::get_variable_type(*var);
@@ -126,14 +126,14 @@ namespace ssp4sim::analysis::graph
                         
                         if (c->initial_value)
                         {
-                            log(warning)("[{}] Initial value {}", __func__, c->initial_value->to_string());
+                            log(debug)("[{}] Initial value {}", __func__, c->initial_value->to_string());
                         }
 
                         items[c->name] = std::move(c);
                     }
                     else
                     {
-                        log(warning)("[{}] No variable found for name {}", __func__, connector_name);
+                        log(trace)("[{}] No variable found for name {}", __func__, connector_name);
                     }
                 }
             }

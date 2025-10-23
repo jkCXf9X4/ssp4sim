@@ -72,6 +72,9 @@ namespace ssp4sim::graph
         void enter_init()
         {
             log(trace)("[{}] FmuModel init {}", __func__, name);
+            
+            log(trace)("[{}] Input area: {}", __func__, input_area->to_string());
+            log(trace)("[{}] Output area: {}", __func__, output_area->to_string());
 
             double start_time = utils::Config::get<double>("simulation.start_time");
             double end_time = utils::Config::get<double>("simulation.stop_time") + 10;
@@ -106,6 +109,7 @@ namespace ssp4sim::graph
                 log(error)("[{}] exit_initialization_mode failed ", __func__);
                 throw std::runtime_error(std::format("[{}] exit_initialization_mode failed for {}", __func__, name));
             }
+            
             log(ext_trace)("[{}] FmuModel init completed", __func__);
         }
 
@@ -157,7 +161,7 @@ namespace ssp4sim::graph
             }
 
             IF_LOG({
-                log(ext_trace)("[{}] Input area after pre: {}", __func__, input_area->data->export_area(target_area));
+                log(trace)("[{}] Input area after pre: {}", __func__, input_area->data->export_area(target_area));
             });
         }
 
@@ -181,7 +185,7 @@ namespace ssp4sim::graph
             output_area->flag_new_data(area);
 
             IF_LOG({
-                log(ext_trace)("[{}] Output area after post: {}", __func__, output_area->data->export_area(area));
+                log(trace)("[{}] Output area after post: {}", __func__, output_area->data->export_area(area));
             });
         }
 
