@@ -1,10 +1,11 @@
 {
     "simulation" :
     {
-        "ssp": "./resources/embrace/embrace_scen.ssp",
+        "ssp": "./resources/delay_sys/ssp_explicit_fmi2",
+        "ssp": "./resources/delay_sys/ssp_implicit_fmi2",
         "start_time":0.0,
-        "stop_time":1200,
-        "timestep": 0.01,
+        "stop_time":0.1,
+        "timestep": 0.001,
         "tolerance": 1e-4,
 
         "executor": "jacobi",

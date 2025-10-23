@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Created by Dymola on 2025-10-17T07:50:06Z -->
 <ssd:SystemStructureDescription generationDateAndTime="2025-10-17T07:50:06Z" generationTool="Dymola by Dassault Systemes" name="Delay" version="1.0" xmlns:smmd="http://www.3ds.com/MyDymolaSpecificNameSpace" xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon" xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription" xmlns:ssm="http://ssp-standard.org/SSP1/SystemStructureParameterMapping" xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
-    <ssd:System description="" name="ssp_explicit_fmi2">
+    <ssd:System description="" name="ssp_implicit_fmi2">
         <ssd:Elements>
-            <ssd:Component name="LET1" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary">
+            <ssd:Component name="LET1" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary" information_delay="0.003" explicit_delay="false">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal" kind="parameter" name="delayTime">
                         <ssc:Binary mime-type="text/x-modelica; path=Modelica.Units.SI.Time"/>
@@ -122,7 +122,7 @@
                     </ssd:ParameterBinding>
                 </ssd:ParameterBindings>
             </ssd:Component>
-            <ssd:Component name="LET2" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary">
+            <ssd:Component name="LET2" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary" information_delay="0.002" explicit_delay="false">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal" kind="parameter" name="delayTime">
                         <ssc:Binary mime-type="text/x-modelica; path=Modelica.Units.SI.Time"/>
@@ -184,7 +184,7 @@
                     </ssd:ParameterBinding>
                 </ssd:ParameterBindings>
             </ssd:Component>
-            <ssd:Component name="LET3" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary">
+            <ssd:Component name="LET3" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary" information_delay="0.005" explicit_delay="false">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal" kind="parameter" name="delayTime">
                         <ssc:Binary mime-type="text/x-modelica; path=Modelica.Units.SI.Time"/>
@@ -246,7 +246,7 @@
                     </ssd:ParameterBinding>
                 </ssd:ParameterBindings>
             </ssd:Component>
-            <ssd:Component name="LET4" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary">
+            <ssd:Component name="LET4" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary" information_delay="0.005" explicit_delay="false">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal" kind="parameter" name="delayTime">
                         <ssc:Binary mime-type="text/x-modelica; path=Modelica.Units.SI.Time"/>
@@ -308,7 +308,7 @@
                     </ssd:ParameterBinding>
                 </ssd:ParameterBindings>
             </ssd:Component>
-            <ssd:Component name="LET5" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary">
+            <ssd:Component name="LET5" source="resources/Delay_delay_fmi2.fmu" type="application/x-fmu-sharedlibrary" information_delay="0.007" explicit_delay="false">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal" kind="parameter" name="delayTime">
                         <ssc:Binary mime-type="text/x-modelica; path=Modelica.Units.SI.Time"/>
@@ -375,16 +375,16 @@
             <ssd:Connection endConnector="input_1" endElement="LET1" startConnector="freq_output" startElement="Sources">
                 <ssd:ConnectionGeometry pointsX="-114 -102 -102 -92.4" pointsY="19 19 20 20"/>
             </ssd:Connection>
-            <ssd:Connection endConnector="input_1" endElement="LET2" startConnector="output_1" startElement="LET1">
+            <ssd:Connection endConnector="input_1" endElement="LET2" startConnector="output_1" startElement="LET1" information_delay="0.001">
                 <ssd:ConnectionGeometry pointsX="-70 -56.4" pointsY="20 20"/>
             </ssd:Connection>
-            <ssd:Connection endConnector="input_1" endElement="LET3" startConnector="output_1" startElement="LET2">
+            <ssd:Connection endConnector="input_1" endElement="LET3" startConnector="output_1" startElement="LET2" information_delay="0.001">
                 <ssd:ConnectionGeometry pointsX="-34 -24.4" pointsY="20 20"/>
             </ssd:Connection>
-            <ssd:Connection endConnector="input_1" endElement="LET4" startConnector="output_1" startElement="LET3">
+            <ssd:Connection endConnector="input_1" endElement="LET4" startConnector="output_1" startElement="LET3" information_delay="0.002">
                 <ssd:ConnectionGeometry pointsX="-2 7.6" pointsY="20 20"/>
             </ssd:Connection>
-            <ssd:Connection endConnector="output_1" endElement="LET4" startConnector="input_1" startElement="LET5">
+            <ssd:Connection endConnector="output_1" endElement="LET4" startConnector="input_1" startElement="LET5" information_delay="0.002">
                 <ssd:ConnectionGeometry pointsX="47.6 30" pointsY="20 20"/>
             </ssd:Connection>
         </ssd:Connections>
