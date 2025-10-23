@@ -28,11 +28,13 @@ namespace ssp4sim::graph
 
     class FmuModel final : public Invocable
     {
+    public:
         uint64_t delay = 0;
+        bool is_delay_modeled = false;
+
         uint64_t _start_time = 0;
         uint64_t _end_time = 0;
 
-    public:
         Logger log = Logger("ssp4sim.model.FmuModel", LogLevel::info);
 
         handler::FmuInfo *fmu;
@@ -72,7 +74,7 @@ namespace ssp4sim::graph
         void enter_init()
         {
             log(trace)("[{}] FmuModel init {}", __func__, name);
-            
+
             log(trace)("[{}] Input area: {}", __func__, input_area->to_string());
             log(trace)("[{}] Output area: {}", __func__, output_area->to_string());
 
@@ -99,7 +101,6 @@ namespace ssp4sim::graph
             ConnectorInfo::set_start_values(this->inputs);
         }
 
-
         void exit_init()
         {
             log(trace)("[{}] FmuModel init {}", __func__, name);
@@ -109,7 +110,7 @@ namespace ssp4sim::graph
                 log(error)("[{}] exit_initialization_mode failed ", __func__);
                 throw std::runtime_error(std::format("[{}] exit_initialization_mode failed for {}", __func__, name));
             }
-            
+
             log(ext_trace)("[{}] FmuModel init completed", __func__);
         }
 
@@ -214,7 +215,11 @@ namespace ssp4sim::graph
             _end_time = fmu->model->step_until(_end_time);
             this->walltime_ns += model_timer.stop();
 
-            auto delayed_time = _end_time - delay;
+            auto delayed_time = _end_time;
+            if (is_delay_modeled == false)
+            {
+                auto delayed_time = _end_time - delay;
+            }
             post(delayed_time);
 
             IF_LOG({

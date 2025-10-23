@@ -17,9 +17,9 @@ namespace ssp4sim::analysis::graph
 
     class AnalysisConnection : public ssp4sim::utils::graph::Node
     {
+    public:
         uint64_t delay = 0;
 
-    public:
         Logger log = Logger("ssp4sim.graph.AnalysisConnection", LogLevel::debug);
         std::string source_component_name;
         std::string source_connector_name;
@@ -80,9 +80,7 @@ namespace ssp4sim::analysis::graph
                << "\ntarget_component_name: " << target_component_name
                << "\ntarget_connector_name: " << target_connector_name
                << "\n }\n";
-
         }
-
     };
 
 }

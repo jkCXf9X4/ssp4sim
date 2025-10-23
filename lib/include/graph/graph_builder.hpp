@@ -41,6 +41,10 @@ namespace ssp4sim::graph
                 auto m = make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu);
                 m->recorder = recorder;
                 log(ext_trace)("[{}] -- New Model: {}", __func__, m->name);
+
+                m->delay = analysis_model->delay;
+                m->is_delay_modeled = analysis_model->is_delay_modeled;
+
                 models[analysis_model->name] = std::move(m);
             }
 
@@ -111,6 +115,8 @@ namespace ssp4sim::graph
 
                 con_info.forward_derivatives = source_connector.forward_derivatives;
                 con_info.forward_derivatives_order = source_connector.forward_derivatives_order;
+
+                con_info.delay = connection->delay;
 
                 // the target is responsible for copying the connection
                 target_model->connections.push_back(std::move(con_info));

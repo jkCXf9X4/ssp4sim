@@ -16,9 +16,10 @@ namespace ssp4sim::analysis::graph
 
     class AnalysisModel : public ssp4sim::utils::graph::Node
     {
-        uint64_t delay = 0;
-
     public:
+        uint64_t delay = 0;
+        bool is_delay_modeled = false;
+
         Logger log = Logger("ssp4sim.graph.AnalysisModel", LogLevel::info);
 
         std::string fmu_name;
@@ -38,7 +39,6 @@ namespace ssp4sim::analysis::graph
             this->fmu_name = fmu_name;
         }
 
-        
         ~AnalysisModel()
         {
             log(ext_trace)("[{}] Destroying AnalysisModel", __func__);
@@ -57,6 +57,5 @@ namespace ssp4sim::analysis::graph
                << "\nFmu: " << fmu_name
                << "\n}\n";
         }
-
     };
 }

@@ -35,6 +35,8 @@ namespace ssp4sim::graph
         uint32_t source_index;
         uint32_t target_index;
 
+        uint64_t delay = 0;
+
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;
 
@@ -64,7 +66,7 @@ namespace ssp4sim::graph
                     log(ext_trace)("[{}] Fetch valid data connection {}", __func__, connection.to_string());
                 });
 
-                auto source_area = connection.source_storage->get_valid_area(valid_input_time);
+                auto source_area = connection.source_storage->get_valid_area(valid_input_time - connection.delay);
 
                 if (source_area != -1)
                 {

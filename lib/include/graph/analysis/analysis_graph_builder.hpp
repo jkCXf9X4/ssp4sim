@@ -48,15 +48,22 @@ namespace ssp4sim::analysis::graph
         {
             log(ext_trace)("[{}] init", __func__);
             map<string, std::unique_ptr<AnalysisModel>> models;
-            for (auto &[ssp_resource_name, local_resource_name] : ssp4sim::ext::ssp::get_resource_map(ssp))
+
+            for (auto &resource : ext::ssp::get_resources(*ssp.ssd))
             {
+                auto ssp_resource_name = resource->name.value_or("null");
+
                 auto fmu = fmu_handler->fmu_info_map[ssp_resource_name].get();
-                auto m = make_unique<AnalysisModel>(ssp_resource_name, local_resource_name, fmu);
+                auto m = make_unique<AnalysisModel>(ssp_resource_name, resource->source, fmu);
+
                 if (fmu->model_description->CoSimulation)
                 {
                     auto co_sim = *fmu->model_description->CoSimulation;
                     m->set_interpolation_data(co_sim.canInterpolateInputs.value_or(false), co_sim.maxOutputDerivativeOrder.value_or(0));
                 }
+
+                m->delay = resource->information_delay.value_or(0);
+                m->is_delay_modeled = resource->explicit_delay.value_or(false);
 
                 log(trace)("[{}] New Model: {}", __func__, m->name);
                 models[m->name] = std::move(m);
@@ -112,9 +119,9 @@ namespace ssp4sim::analysis::graph
                             c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(var->name, type);
                             c->initial_value->store_value(start_value);
                         }
-                        
+
                         log(trace)("[{}] TODO: Internal SSP parameterset should overwrite the fmu", __func__);
-                    
+
                         // parameter set might overwrite initial value
                         if (mapping_start_values.contains(system_name))
                         {
@@ -123,7 +130,7 @@ namespace ssp4sim::analysis::graph
                             const auto &start_value = mapping_start_values.at(system_name);
                             c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(start_value);
                         }
-                        
+
                         if (c->initial_value)
                         {
                             log(debug)("[{}] Initial value {}", __func__, c->initial_value->to_string());
@@ -151,6 +158,7 @@ namespace ssp4sim::analysis::graph
                 {
                     auto c = make_unique<AnalysisConnection>(&connection);
                     log(trace)("[{}] New Connection: {}", __func__, c->name);
+                    c->delay = connection.information_delay.value_or(0);
                     items[c->name] = std::move(c);
                 }
             }
