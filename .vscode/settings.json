@@ -68,6 +68,12 @@
         "typeinfo": "cpp",
         "format": "cpp",
         "source_location": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "complex": "cpp",
+        "any": "cpp",
+        "forward_list": "cpp",
+        "future": "cpp",
+        "ranges": "cpp",
+        "valarray": "cpp"
     }
 }

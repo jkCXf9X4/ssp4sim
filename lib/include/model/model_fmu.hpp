@@ -91,6 +91,8 @@ namespace ssp4sim::graph
             log(trace)("[{}] Set start parameter values", __func__);
             ConnectorInfo::set_start_values(this->parameters);
 
+            // direct feedthrough evaluation should come in here....
+
             log(debug)("[{}] exit_initialization_mode: {} ", __func__, name);
             if (!fmu->model->exit_initialization_mode())
             {
@@ -219,7 +221,7 @@ namespace ssp4sim::graph
         // hot path
         uint64_t invoke(StepData step_data, const bool only_feedthrough = false) override final
         {
-            if (!only_feedthrough) [[likely]]
+            if (only_feedthrough == false) [[likely]]
             {
                 step_data.valid_input_time += 1;
                 return step(step_data);

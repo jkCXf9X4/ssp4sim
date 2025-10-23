@@ -64,7 +64,14 @@ namespace ssp4sim::graph
         uint64_t walltime_ns = 0;
         uint64_t id = 0;
 
-        virtual void init() = 0;
+        virtual void enter_init() {}
+        virtual void exit_init() {}
+        virtual void init()
+        {
+            enter_init();
+            exit_init();
+        }
+        
         virtual uint64_t invoke(StepData data, const bool only_feedthrough = false) = 0;
 
         virtual void print(std::ostream &os) const
