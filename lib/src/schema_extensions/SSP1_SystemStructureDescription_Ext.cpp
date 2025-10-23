@@ -17,13 +17,13 @@ using namespace ssp4cpp::utils::str;
 using namespace ssp4cpp::utils;
 namespace views = std::ranges::views;
 
-namespace ssp4cpp::ssp1::ext
+namespace ssp4sim::ext::ssp1
 {
     using namespace ssp4cpp::ssp1::ssd;
 
     namespace ssd
     {
-        std::vector<TComponent *> get_resources(const ssp1::ssd::SystemStructureDescription &ssd)
+        std::vector<TComponent *> get_resources(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd)
         {
             auto resources = vector<TComponent *>();
 
@@ -79,7 +79,7 @@ namespace ssp4cpp::ssp1::ext
 
         IndexConnectorComponentTuples get_connectors(
             Elements &elements,
-            std::initializer_list<fmi2::md::Causality> causalities)
+            std::initializer_list<ssp4cpp::fmi2::md::Causality> causalities)
         {
             auto in = get_connectors(elements);
             auto out = IndexConnectorComponentTuples();
@@ -93,7 +93,7 @@ namespace ssp4cpp::ssp1::ext
             return out;
         }
 
-        set<pair<string, string>> get_fmu_connections(const ssp1::ssd::SystemStructureDescription &ssd)
+        set<pair<string, string>> get_fmu_connections(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd)
         {
             auto fmu_connections = set<pair<string, string>>();
             if (ssd.System.Connections.has_value())

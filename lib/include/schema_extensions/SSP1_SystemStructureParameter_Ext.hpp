@@ -17,14 +17,14 @@
 #include <cstring>
 #include <filesystem>
 
-namespace ssp4cpp::ssp1::ext::ssv
+namespace ssp4sim::ext::ssp1::ssv
 {
     inline auto log = Logger("ssp4cpp.ssp1.ext.ssv", LogLevel::info);
 
     using namespace ssp4cpp::ssp1::ssv;
     using namespace ssp4cpp::ssp1::ssm;
 
-    using DataType = ssp4cpp::fmi2::ext::enums::DataType;
+    using DataType = ssp4cpp::fmi2::md::Type;
 
     struct StartValue
     {
@@ -38,7 +38,7 @@ namespace ssp4cpp::ssp1::ext::ssv
         {
             this->name = name;
             this->type = type;
-            this->size = fmi2::ext::enums::get_data_type_size(type);
+            this->size = fmi2::enums::get_data_type_size(type);
             this->value = std::make_unique<std::byte[]>(this->size);
             mappings.push_back(name);
         }

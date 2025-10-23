@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace ssp4cpp::fmi2::ext
+namespace ssp4sim::ext::fmi2
 {
 
     namespace enums

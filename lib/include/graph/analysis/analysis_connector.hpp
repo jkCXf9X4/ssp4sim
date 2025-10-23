@@ -42,7 +42,7 @@ namespace ssp4sim::analysis::graph
         std::size_t size;
 
         // for start value / parameter
-        std::unique_ptr<ssp4cpp::ssp1::ext::ssv::StartValue> initial_value;
+        std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value;
 
         AnalysisModel *model;
 
@@ -64,7 +64,7 @@ namespace ssp4sim::analysis::graph
 
             this->value_reference = value_reference;
             this->type = type;
-            this->size = ssp4cpp::fmi2::ext::enums::get_data_type_size(type);
+            this->size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
         }
 
         virtual ~AnalysisConnector()

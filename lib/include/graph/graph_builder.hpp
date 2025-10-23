@@ -73,7 +73,7 @@ namespace ssp4sim::graph
                     {
                         info.initial_value = connector->initial_value->get_value();
 
-                        log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, ssp4cpp::fmi2::ext::enums::data_type_to_string(info.type, (void *)info.initial_value.get()));
+                        log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, (void *)info.initial_value.get()));
                     }
 
                     if (connector->causality == Causality::input)

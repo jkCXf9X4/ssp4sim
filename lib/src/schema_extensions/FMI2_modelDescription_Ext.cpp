@@ -4,10 +4,11 @@
 #include <optional>
 #include <vector>
 #include <string>
+#include <stacktrace>
 
 #include <iostream>
 
-namespace ssp4cpp::fmi2::ext
+namespace ssp4sim::ext::fmi2
 {
     using namespace std;
     using namespace ssp4cpp::fmi2::md;
@@ -34,7 +35,6 @@ namespace ssp4cpp::fmi2::ext
                     return &var;
                 }
             }
-            log(trace)("[{}] No variable found for name {}", __func__, name);
             return nullptr;
         }
 
@@ -139,8 +139,8 @@ namespace ssp4cpp::fmi2::ext
 
             for (auto [index, dependency, kind] : dependencies)
             {
-                auto output = ext::model_variables::get_variable(mv, index);
-                auto dep = ext::model_variables::get_variable(mv, dependency);
+                auto output = model_variables::get_variable(mv, index);
+                auto dep = model_variables::get_variable(mv, dependency);
 
                 auto t = VariableDependencyCoupling(output, dep, kind);
                 result.push_back(t);

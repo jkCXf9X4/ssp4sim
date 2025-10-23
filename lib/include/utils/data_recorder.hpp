@@ -233,7 +233,7 @@ namespace ssp4sim::utils
                     file << ", ";
                     if (print_tracker)
                     {
-                        auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(type, get_data_pos(row, tracker.row_pos + pos));
+                        auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(type, get_data_pos(row, tracker.row_pos + pos));
                         file << data_type_str;
                     }
                 }

@@ -79,7 +79,7 @@ namespace ssp4sim::utils
         {
             index += 1;
             items += 1;
-            auto size = ssp4cpp::fmi2::ext::enums::get_data_type_size(type);
+            auto size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
             index_name_map[name] = index;
 
             names.push_back(name);
@@ -220,7 +220,7 @@ namespace ssp4sim::utils
             for (int i = 0; i < items; i++)
             {
                 auto item = get_item(area, i);
-                auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(types[i], item);
+                auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(types[i], item);
                 oss << "{ position " << positions[i]
                     << ", der_position " << der_positions[i]
                     << ", der_orders " << max_interpolation_orders[i]

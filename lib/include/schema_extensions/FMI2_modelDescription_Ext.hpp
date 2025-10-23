@@ -10,7 +10,7 @@
 #include <string>
 #include <tuple>
 
-namespace ssp4cpp::fmi2::ext
+namespace ssp4sim::ext::fmi2
 {
     using namespace ssp4cpp::fmi2::md;
 

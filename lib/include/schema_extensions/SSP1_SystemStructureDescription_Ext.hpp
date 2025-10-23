@@ -8,7 +8,7 @@
 #include <vector>
 #include <set>
 
-namespace ssp4cpp::ssp1::ext
+namespace ssp4sim::ext::ssp1
 {
     using namespace ssp4cpp::ssp1::ssd;
 
@@ -18,7 +18,7 @@ namespace ssp4cpp::ssp1::ext
     {
         inline auto log = Logger("ssp4cpp.ssp1.ext.ssd", LogLevel::debug);
 
-        std::vector<TComponent *> get_resources(const ssp1::ssd::SystemStructureDescription &ssd);
+        std::vector<TComponent *> get_resources(const SystemStructureDescription &ssd);
     }
 
     namespace elements
@@ -32,11 +32,11 @@ namespace ssp4cpp::ssp1::ext
 
         IndexConnectorComponentTuples get_connectors(
             Elements &elements,
-            std::initializer_list<fmi2::md::Causality> causalities);
+            std::initializer_list<ssp4cpp::fmi2::md::Causality> causalities);
 
         // Get connections between fmus
         // return a set of <source_fmu, target_fmu> strings
-        set<pair<string, string>> get_fmu_connections(const ssp1::ssd::SystemStructureDescription &ssd);
+        set<pair<string, string>> get_fmu_connections(const SystemStructureDescription &ssd);
     }
 
 }

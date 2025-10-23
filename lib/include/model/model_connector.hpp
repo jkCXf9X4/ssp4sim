@@ -64,7 +64,7 @@ namespace ssp4sim::graph
                 {
                     auto data_ptr = (void *)connector.initial_value.get();
 
-                    auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(connector.type, data_ptr);
+                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(connector.type, data_ptr);
                     log(debug)("[{}] Set initial value for {}, {} : {}",
                                 __func__, name, connector.type.to_string(), data_type_str);
 
@@ -85,7 +85,7 @@ namespace ssp4sim::graph
                     auto data_ptr = (void *)input.initial_value.get();
                     auto item = input_area->get_item(area, input.index);
 
-                    auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(input.type, data_ptr);
+                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, data_ptr);
                     log(debug)("[{}] Set initial input value for {}, {} : {}",
                                 __func__, name, input.type.to_string(), data_type_str);
 
@@ -118,7 +118,7 @@ namespace ssp4sim::graph
                 auto input_item = storage->get_item(area, input.index);
 
                 IF_LOG({
-                    auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(input.type, input_item);
+                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, input_item);
                     log(debug)("[{}] Copying input to model. {}, data: {}", __func__, input.to_string(), data_type_str);
                 });
 
@@ -142,7 +142,7 @@ namespace ssp4sim::graph
                 utils::read_from_model_(output.type, *output.fmu->model, output.value_ref, (void *)item);
 
                 IF_LOG({
-                    auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(output.type, item);
+                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(output.type, item);
                     log(debug)("[{}] Copying output from model. {}, data: {}", __func__, output.to_string(), data_type_str);
                 });
             }

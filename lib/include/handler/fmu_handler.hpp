@@ -70,7 +70,7 @@ namespace ssp4sim::handler
             this->ssp = ssp;
 
             log(debug)("[{}] Creating FMU map", __func__);
-            fmu_map = ssp4cpp::ssp::ext::create_fmu_map(*ssp);
+            fmu_map = ssp4sim::ext::ssp::create_fmu_map(*ssp);
             for (auto &[fmu_name, fmu] : fmu_map)
             {
                 log(debug)("[{}] - FMU: {} - ", __func__, fmu_name, fmu->to_string());

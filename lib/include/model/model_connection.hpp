@@ -74,7 +74,7 @@ namespace ssp4sim::graph
                     
                     auto source_item = connection.source_storage->get_item(source_area, connection.source_index);
                     IF_LOG({
-                        auto data_type_str = ssp4cpp::fmi2::ext::enums::data_type_to_string(connection.type, source_item);
+                        auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(connection.type, source_item);
                         log(trace)("[{}] Found valid item, copying data to target area: {}",
                                     __func__, data_type_str);
                     });

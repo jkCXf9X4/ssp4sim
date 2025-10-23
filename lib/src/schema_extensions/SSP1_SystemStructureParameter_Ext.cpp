@@ -2,9 +2,9 @@
 
 #include "SSP1_SystemStructureParameter_Ext.hpp"
 
-namespace ssp4cpp::ssp1::ext::ssv
+namespace ssp4sim::ext::ssp1::ssv
 {
-    std::vector<StartValue> get_start_values(std::vector<ParameterBindings> &bindings)
+    std::vector<StartValue> get_start_values(std::vector<ssp4cpp::ParameterBindings> &bindings)
     {
         log(trace)("[{}] Init", __func__);
 
