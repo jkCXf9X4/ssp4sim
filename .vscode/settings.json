@@ -75,6 +75,8 @@
         "future": "cpp",
         "ranges": "cpp",
         "valarray": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "stacktrace": "cpp",
+        "bitset": "cpp"
     }
 }

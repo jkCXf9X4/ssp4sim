@@ -42,7 +42,7 @@ namespace ssp4sim::analysis::graph
         std::size_t size;
 
         // for start value / parameter
-        std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value;
+        std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value = nullptr;
 
         AnalysisModel *model;
 

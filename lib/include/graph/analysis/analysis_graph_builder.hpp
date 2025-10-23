@@ -103,29 +103,30 @@ namespace ssp4sim::analysis::graph
                             component_name, connector_name, value_reference, type);
 
                         c->causality = connector->kind;
-                        auto parameter_name = std::format("{}.{}", component_name, var->name);
+                        auto system_name = std::format("{}.{}", component_name, var->name);
 
                         auto start_value = ext::fmi2::model_variables::get_variable_start_value(*var);
                         if (start_value)
                         {
-                            log(debug)("[{}] Storing start value for {}, {}", __func__, parameter_name, type.to_string());
+                            log(debug)("[{}] Applying start value for {}", __func__, system_name);
                             c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(var->name, type);
                             c->initial_value->store_value(start_value);
                         }
                         
+                        log(trace)("[{}] TODO: Internal SSP parameterset should overwrite the fmu", __func__);
+                    
                         // parameter set might overwrite initial value
-                        log(ext_trace)("Parameter name {}", parameter_name);
-                        if (mapping_start_values.contains(parameter_name))
+                        if (mapping_start_values.contains(system_name))
                         {
-                            log(debug)("[{}] Applying parameterset value to {}, {}", __func__, parameter_name, type.to_string());
-                            const auto &start_value = mapping_start_values.at(parameter_name);
-                            
+                            log(debug)("[{}] Applying parameterset value to {}, {}", __func__, system_name, type.to_string());
+
+                            const auto &start_value = mapping_start_values.at(system_name);
                             c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(start_value);
                         }
                         
                         if (c->initial_value)
                         {
-                            log(debug)("[{}] - Initial value {}", __func__, c->initial_value->to_string());
+                            log(warning)("[{}] Initial value {}", __func__, c->initial_value->to_string());
                         }
 
                         items[c->name] = std::move(c);

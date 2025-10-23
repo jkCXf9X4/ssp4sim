@@ -112,7 +112,7 @@ namespace ssp4sim::ext::ssp1::ssv
             os << "Model { \n"
                << "\nName: " << name
                << "\ntype: " << type.to_string()
-               << "\value: " << ext::fmi2::enums::data_type_to_string(type, value.get())
+               << "\nValue: " << ext::fmi2::enums::data_type_to_string(type, value.get())
                << "\n}\n";
         }
 

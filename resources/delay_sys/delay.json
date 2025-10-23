@@ -1,8 +1,8 @@
 {
     "simulation" :
     {
-        "ssp": "./resources/delay_sys/ssp_explicit_fmi2",
         "ssp": "./resources/delay_sys/ssp_implicit_fmi2",
+        "ssp": "./resources/delay_sys/ssp_explicit_fmi2",
         "start_time":0.0,
         "stop_time":0.1,
         "timestep": 0.001,
