@@ -1,9 +1,13 @@
 {
     "simulation" :
     {
-        "id": "linear_delay_sys",
-        // "ssp": "./resources/delay_sys/ssp_implicit_fmi2",
-        "ssp": "./resources/delay_sys/ssp_explicit_fmi2",
+        "ssp": "./resources/delay_sys/ssp_delay_fmi2",
+        // "ssd": "delay_con.ssd",
+        "ssd": "explicit_delay_mod_con.ssd",
+        // "ssd": "explicit_delay_mod.ssd",
+        // "ssd": "implicit_delay_mod_con.ssd",
+        // "ssd": "implicit_delay_mod.ssd",
+        // "ssd": "no_delay.ssd",
         "start_time":0.0,
         "stop_time":0.1,
         "timestep": 0.001,
@@ -24,7 +28,7 @@
         
         "enable_recording": true,
         "log_file": "./results/linear_delay_sys_[TIME].log",
-        "result_file": "./results/linear_delay_sys_[TIME].results.csv",
-        "result_interval": 0.01
+        "result_file": "./results/linear_delay_sys_[TIME].results.csv"
+        // "result_interval": 0.001
     }
 }

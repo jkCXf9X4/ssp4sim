@@ -44,6 +44,7 @@ namespace ssp4sim::graph
 
                 m->delay = analysis_model->delay;
                 m->is_delay_modeled = analysis_model->is_delay_modeled;
+                log(debug)("Model: {}, delay {}, is_delay_modeled: {} ", m->name, m->delay, m->is_delay_modeled);
 
                 models[analysis_model->name] = std::move(m);
             }
@@ -117,6 +118,7 @@ namespace ssp4sim::graph
                 con_info.forward_derivatives_order = source_connector.forward_derivatives_order;
 
                 con_info.delay = connection->delay;
+                log(debug)("Connection: {}, delay {}", connection->name, connection->delay);
 
                 // the target is responsible for copying the connection
                 target_model->connections.push_back(std::move(con_info));

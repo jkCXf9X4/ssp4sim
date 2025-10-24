@@ -218,7 +218,7 @@ namespace ssp4sim::graph
             auto delayed_time = _end_time;
             if (is_delay_modeled == false)
             {
-                auto delayed_time = _end_time - delay;
+                delayed_time = _end_time + delay;
             }
             post(delayed_time);
 

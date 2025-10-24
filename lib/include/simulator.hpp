@@ -60,7 +60,8 @@ namespace ssp4sim
 
             log(debug)("[{}] - Importing SSP", __func__);
             auto ssp_path = utils::Config::get<std::string>("simulation.ssp");
-            ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path);
+            auto ssd = utils::Config::getOr<std::string>("simulation.ssd", "SystemStructure.ssd");
+            ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path, ssd);
             log(debug)("[{}] -- SSP: {}", __func__, ssp->to_string());
             
             log(debug)("[{}] - Creating simulation\n", __func__);

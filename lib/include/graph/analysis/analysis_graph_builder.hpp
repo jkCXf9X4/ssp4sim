@@ -2,6 +2,7 @@
 
 #include "utils/map.hpp"
 #include "utils/vector.hpp"
+#include "utils/time.hpp"
 
 #include "SSP_Ext.hpp"
 #include "SSP1_SystemStructureDescription_Ext.hpp"
@@ -62,7 +63,7 @@ namespace ssp4sim::analysis::graph
                     m->set_interpolation_data(co_sim.canInterpolateInputs.value_or(false), co_sim.maxOutputDerivativeOrder.value_or(0));
                 }
 
-                m->delay = resource->information_delay.value_or(0);
+                m->delay = utils::time::s_to_ns(resource->information_delay.value_or(0));
                 m->is_delay_modeled = resource->explicit_delay.value_or(false);
 
                 log(trace)("[{}] New Model: {}", __func__, m->name);
@@ -158,7 +159,7 @@ namespace ssp4sim::analysis::graph
                 {
                     auto c = make_unique<AnalysisConnection>(&connection);
                     log(trace)("[{}] New Connection: {}", __func__, c->name);
-                    c->delay = connection.information_delay.value_or(0);
+                    c->delay = utils::time::s_to_ns(connection.information_delay.value_or(0));
                     items[c->name] = std::move(c);
                 }
             }
