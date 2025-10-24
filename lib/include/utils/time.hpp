@@ -1,5 +1,10 @@
 #pragma once
 
+#include <chrono>
+#include <format>
+#include <string>
+#include <iostream>
+
 /**
  * @brief Time related utility constants.
  */
@@ -25,4 +30,18 @@ namespace ssp4sim::utils::time
         return static_cast<uint64_t>(t * utils::time::nanoseconds_per_second);
     }
 
+    inline auto time_now()
+    {
+        using namespace std::chrono;
+        return system_clock::now();
+    }
+
+    inline auto time_now_str()
+    {
+        using namespace std::chrono;
+        auto now = system_clock::now();
+
+        // Format as YYYY-MM-DD_HH-MM-SS
+        return std::format("{:%Y-%m-%d_%H-%M-%S}", zoned_time{current_zone(), now});
+    }
 }

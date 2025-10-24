@@ -1,7 +1,8 @@
 {
     "simulation" :
     {
-        "ssp": "./resources/delay_sys/ssp_implicit_fmi2",
+        "id": "linear_delay_sys",
+        // "ssp": "./resources/delay_sys/ssp_implicit_fmi2",
         "ssp": "./resources/delay_sys/ssp_explicit_fmi2",
         "start_time":0.0,
         "stop_time":0.1,
@@ -20,9 +21,10 @@
         {
             "parallel": false
         },
-
+        
         "enable_recording": true,
-        "result_file": "./results/result.csv",
+        "log_file": "./results/linear_delay_sys_[TIME].log",
+        "result_file": "./results/linear_delay_sys_[TIME].results.csv",
         "result_interval": 0.01
     }
 }

@@ -44,7 +44,7 @@ namespace ssp4sim
             utils::Config::loadFromFile(config_path);
             log(debug)("[{}] -- Config:\n{}\n", __func__, utils::Config::as_string());
 
-            auto log_file = "./results/log.log";
+            auto log_file = utils::Config::get<std::string>("simulation.log_file");
             log.enable_file_sink(log_file, false);
             log(info)("[{}] File log enabled, {}", __func__, log_file);
             

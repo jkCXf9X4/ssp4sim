@@ -1,6 +1,10 @@
 #pragma once
 
+#include "utils/time.hpp"
+
 #include "cutecpp/log.hpp"
+
+#include <nlohmann/json.hpp>
 
 #include <string>
 #include <fstream>
@@ -8,7 +12,9 @@
 #include <stdexcept>
 #include <optional>
 #include <shared_mutex>
-#include <nlohmann/json.hpp>
+#include <type_traits>
+#include <ranges>
+#include <regex>
 
 namespace ssp4sim::utils
 {
@@ -42,7 +48,10 @@ namespace ssp4sim::utils
             }
             std::ostringstream buf;
             buf << in.rdbuf();
-            nlohmann::json parsed = nlohmann::json::parse(buf.str());
+            nlohmann::json parsed = nlohmann::json::parse(buf.str(),
+                                                          /* callback */ nullptr,
+                                                          /* allow exceptions */ true,
+                                                          /* ignore_comments */ true); // <-- enable comments with c++ style in json
 
             data_ = std::move(parsed);
         }
@@ -76,7 +85,14 @@ namespace ssp4sim::utils
 
             try
             {
-                return node->get<T>();
+                if constexpr (std::is_same_v<T, std::string>)
+                {
+                    return substitute_tags(node->get<T>());
+                }
+                else
+                {
+                    return node->get<T>();
+                }
             }
             catch (const std::exception &e)
             {
@@ -146,6 +162,11 @@ namespace ssp4sim::utils
                 pos = dot + 1;
             }
             return cur;
+        }
+
+        static std::string substitute_tags(std::string text)
+        {
+            return std::regex_replace(text, std::regex("\\[TIME\\]"), time::time_now_str());
         }
     };
 
