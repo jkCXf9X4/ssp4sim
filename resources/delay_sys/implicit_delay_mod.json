@@ -25,6 +25,7 @@
         "enable_recording": true,
         "log_file": "./results/implicit_delay_mod.log",
         "result_file": "./results/implicit_delay_mod.csv",
+        "ensure_results": true,
         "result_interval": 0.001
     }
 }

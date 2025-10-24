@@ -8,12 +8,15 @@ def main() -> None:
     script_dir = Path(__file__).resolve().parent
     print ( script_dir)
 
-    variants = ["delay_con",
+    variants = [
+        "explicit_delay_con",
         "explicit_delay_mod_con",
         "explicit_delay_mod",
+        "explicit_no_delay",
+        "implicit_delay_con",
         "implicit_delay_mod_con",
         "implicit_delay_mod",
-        "no_delay",]
+        "implicit_no_delay",]
 
     for v in variants:
         text = f"""
@@ -43,6 +46,7 @@ def main() -> None:
         "enable_recording": true,
         "log_file": "./results/{v}.log",
         "result_file": "./results/{v}.csv",
+        "ensure_results": true,
         "result_interval": 0.001
     }}
 }}

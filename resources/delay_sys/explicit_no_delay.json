@@ -3,7 +3,7 @@
     "simulation" :
     {
         "ssp": "./resources/delay_sys/ssp_delay_fmi2",
-        "ssd": "explicit_delay_mod_con.ssd",
+        "ssd": "explicit_no_delay.ssd",
         "start_time":0.0,
         "stop_time":0.1,
         "timestep": 0.001,
@@ -23,8 +23,8 @@
         },
         
         "enable_recording": true,
-        "log_file": "./results/explicit_delay_mod_con.log",
-        "result_file": "./results/explicit_delay_mod_con.csv",
+        "log_file": "./results/explicit_no_delay.log",
+        "result_file": "./results/explicit_no_delay.csv",
         "ensure_results": true,
         "result_interval": 0.001
     }

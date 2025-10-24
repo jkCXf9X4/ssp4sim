@@ -148,7 +148,7 @@ def main() -> None:
     reference_path = script_dir / "reference_system_native.csv"
     results_dir = script_dir.parents[2] / "results"
 
-    result_files = sorted(results_dir.glob("linear_delay_sys_*.results.csv"))
+    result_files = sorted(results_dir.glob("*.csv"))
     if not result_files:
         print(f"No result files found in {results_dir}")
         return

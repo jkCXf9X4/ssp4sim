@@ -77,6 +77,7 @@ namespace ssp4sim
 
             log(info)("[{}] - Creating simulation graph", __func__);
             sim_graph = graph::GraphBuilder(analysis_graph.get(), recorder.get()).build();
+            sim_graph->recorder = recorder.get();
             log(debug)(" -- {}", sim_graph->to_string());
 
             log(info)("[{}] - Init simulation graph", __func__);

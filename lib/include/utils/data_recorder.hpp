@@ -30,14 +30,13 @@ namespace ssp4sim::utils
         uint64_t timestamp = 0;
     };
 
+    /*
+    * Solution build upon that both input and outputs are stored in the same row, if not then the output file will be incomplete....
 
-/*
-* Solution build upon that both input and outputs are stored in the same row, if not then the output file will be incomplete....
+    * new solution is needed later....
 
-* new solution is needed later....
-
-* @todo: Log everything that is between +-2 steps from the print time to ensure that no data is lost but still avoiding to log everything
-*/
+    * @todo: Log everything that is between +-2 steps from the print time to ensure that no data is lost but still avoiding to log everything
+    */
 
     class DataRecorder
     {
@@ -220,8 +219,6 @@ namespace ssp4sim::utils
             file << time;
             for (const auto &tracker : trackers)
             {
-                auto print_tracker = updated_tracker[row][tracker.index];
-
                 for (int item = 0; item < tracker.storage->items; ++item)
                 {
                     IF_LOG({
@@ -231,7 +228,7 @@ namespace ssp4sim::utils
                     auto pos = tracker.storage->positions[item];
                     auto type = tracker.storage->types[item];
                     file << ", ";
-                    if (print_tracker)
+                    if (updated_tracker[row][tracker.index])
                     {
                         auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(type, get_data_pos(row, tracker.row_pos + pos));
                         file << data_type_str;
@@ -293,13 +290,14 @@ namespace ssp4sim::utils
             log(debug)("[{}] Exiting recording thread", __func__);
         }
 
-        void process_new_data(ssp4sim::utils::Tracker &tracker,utils::DataStorage *storage, std::size_t area)
+        void process_new_data(ssp4sim::utils::Tracker &tracker, utils::DataStorage *storage, std::size_t area)
         {
 
             auto ts = storage->timestamps[area];
 
             // is it time to add a new row for printing?
-            if (ts >= last_print_time + recording_interval)
+            // if (ts >= last_print_time + recording_interval)
+            if (time_row_map.contains(ts) == false)
             {
                 IF_LOG({
                     log(trace)("[{}] New print time: {}, last_print_time {}", __func__, ts, last_print_time);
@@ -337,6 +335,26 @@ namespace ssp4sim::utils
                 memcpy(get_data_pos(row, tracker.row_pos), storage->locations[area][0], tracker.size);
                 updated_tracker[row][tracker.index] = true;
             }
+        }
+
+        void wait_until_done()
+        {
+            bool unprocessed_data;
+            do
+            {
+                // log(warning)("Spinning");
+                unprocessed_data = false;
+                for (auto &tracker : trackers)
+                {
+                    for (std::size_t area = 0; area < tracker.storage->areas; ++area)
+                    {
+                        if (tracker.storage->new_data_flags[area])
+                        {
+                            unprocessed_data = true;
+                        }
+                    }
+                }
+            } while (unprocessed_data == true);
         }
     };
 }

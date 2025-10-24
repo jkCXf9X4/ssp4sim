@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <cstddef>
+#include <atomic>
 
 namespace ssp4sim::utils
 {
@@ -51,7 +52,7 @@ namespace ssp4sim::utils
         std::vector<std::uint64_t> timestamps;
         std::vector<std::vector<std::byte *>> locations;     // absolute location in memory
         std::vector<std::vector<std::byte *>> der_locations; // absolute location in memory
-        std::vector<bool> new_data_flags;
+        std::vector<std::atomic<bool>> new_data_flags;
 
         std::size_t areas = 1;
         std::size_t pos = 0;
@@ -64,12 +65,12 @@ namespace ssp4sim::utils
 
         bool allocated = false;
 
-        DataStorage(int areas)
+        DataStorage(int areas) : new_data_flags(areas)
         {
             this->areas = areas;
         }
 
-        DataStorage(int areas, std::string name)
+        DataStorage(int areas, std::string name) : new_data_flags(areas)
         {
             this->areas = areas;
             this->name = name;
@@ -135,7 +136,7 @@ namespace ssp4sim::utils
                     }
                     
                 }
-                new_data_flags.push_back(false);
+                new_data_flags[area] = false;
 
                 // Initialize all strings with an empty string
                 for (int index = 0; index < types.size(); index++)

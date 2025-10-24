@@ -3,6 +3,7 @@
 #include "cutecpp/log.hpp"
 #include "utils/map.hpp"
 #include "utils/vector.hpp"
+#include "utils/data_recorder.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -28,6 +29,9 @@ namespace ssp4sim::graph
         std::vector<Invocable *> nodes;
 
         std::unique_ptr<ExecutionBase> executor;
+
+        utils::DataRecorder *recorder = nullptr;
+        const bool wait_for_recorder = utils::Config::getOr<bool>("simulation.ensure_results", false);
 
         Graph() = default;
 
@@ -78,10 +82,15 @@ namespace ssp4sim::graph
                 IF_LOG({
                     log(debug)("[{}] Graph executing step: {}", __func__, s.to_string());
                 });
-                
+
                 executor->invoke(s);
 
                 t += step_data.timestep;
+
+                if (wait_for_recorder)
+                {
+                    recorder->wait_until_done();
+                }
             }
             return t;
         }
