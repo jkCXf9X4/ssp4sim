@@ -227,7 +227,7 @@ namespace ssp4sim::handler
             if (status_ok(last_status_))
             {
                 current_time_ = start_time;
-                log(info)("[{}] start:{}", __func__, current_time_);
+                log(debug)("[{}] start:{}", __func__, current_time_);
             }
             return status_ok(last_status_);
         }
