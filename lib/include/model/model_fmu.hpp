@@ -216,9 +216,21 @@ namespace ssp4sim::graph
             this->walltime_ns += model_timer.stop();
 
             auto delayed_time = _end_time;
+
+            // compensate for a delay that is not included in the model
             if (is_delay_modeled == false)
             {
-                delayed_time = _end_time + delay;
+                if (_start_time + delay > _end_time)
+                {
+                    delayed_time = _start_time + delay;
+                }
+                else
+                {
+                    IF_LOG({
+                        log(trace)("[{}] {}, A phase shift of {} will be introduced due to step size is larger than the delay",
+                                   __func__, this->name, _end_time - (_start_time + delay));
+                    });
+                }
             }
             post(delayed_time);
 

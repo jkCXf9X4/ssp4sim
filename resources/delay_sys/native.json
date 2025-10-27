@@ -3,10 +3,10 @@
     "simulation" :
     {
         "ssp": "./resources/delay_sys/ssp_delay_fmi2",
-        "ssd": "explicit_no_delay.ssd",
+        "ssd": "native.ssd",
         "start_time":0.0,
         "stop_time":0.1,
-        "timestep": 0.001,
+        "timestep": 0.00001,
         "tolerance": 1e-4,
 
         "executor": "jacobi",
@@ -23,8 +23,8 @@
         },
         
         "enable_recording": true,
-        "log_file": "./results/explicit_no_delay.log",
-        "result_file": "./results/explicit_no_delay.csv",
+        "log_file": "./results/native.log",
+        "result_file": "./results/native.csv",
         "ensure_results": true,
         "result_interval": 0.001
     }

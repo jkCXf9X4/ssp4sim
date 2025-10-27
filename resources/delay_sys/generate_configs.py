@@ -32,7 +32,7 @@ def main() -> None:
 
         "executor": "jacobi",
         "thread_pool_workers": 5,
-        "forward_derivatives": true,
+        "forward_derivatives": false,
         "jacobi":
         {{
             "parallel": false,

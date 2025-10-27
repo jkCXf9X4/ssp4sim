@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='utf-8'?>
+<ssv:ParameterSet xmlns:ssv="http://ssp-standard.org/SSP1/ParameterValues" version="1.0" name="Default">
+	<ssv:Parameters>
+		<ssv:Parameter name="LET1.delayTime">
+			<ssv:Real value="0.003" />
+		</ssv:Parameter>
+		<ssv:Parameter name="LET2.delayTime">
+			<ssv:Real value="0.002" />
+		</ssv:Parameter>
+		<ssv:Parameter name="LET3.delayTime">
+			<ssv:Real value="0.005" />
+		</ssv:Parameter>
+		<ssv:Parameter name="LET4.delayTime">
+			<ssv:Real value="0.005" />
+		</ssv:Parameter>
+		<ssv:Parameter name="LET5.delayTime">
+			<ssv:Real value="0.007" />
+		</ssv:Parameter>
+		<ssv:Parameter name="C1.delayTime">
+			<ssv:Real value="0.001" />
+		</ssv:Parameter>
+		<ssv:Parameter name="C2.delayTime">
+			<ssv:Real value="0.001" />
+		</ssv:Parameter>
+		<ssv:Parameter name="C3.delayTime">
+			<ssv:Real value="0.002" />
+		</ssv:Parameter>
+		<ssv:Parameter name="C4.delayTime">
+			<ssv:Real value="0.002" />
+		</ssv:Parameter>
+		<ssv:Parameter name="Sources.f">
+			<ssv:Real value="10.0" />
+		</ssv:Parameter>
+	</ssv:Parameters>
+</ssv:ParameterSet>

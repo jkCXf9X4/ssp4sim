@@ -94,6 +94,8 @@ def plot_reference(
     plt.title("Reference Signals")
     plt.legend(loc="upper right", ncol=2, fontsize="small")
     plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+    plt.xlim(0, 0.12) # Set x-axis
+    plt.ylim(-1.1, 1.1) # Set y-axis  
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     plt.savefig(output_path, dpi=200)
