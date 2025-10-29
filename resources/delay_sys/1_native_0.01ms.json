@@ -3,18 +3,18 @@
     "simulation" :
     {
         "ssp": "./resources/delay_sys/ssp_delay_fmi2",
-        "ssd": "delay_con.ssd",
+        "ssd": "native.ssd",
         "start_time":0.0,
-        "stop_time":0.1,
-        "timestep": 0.001,
+        "stop_time":0.3,
+        "timestep": 0.00001,
         "tolerance": 1e-4,
 
         "executor": "jacobi",
         "thread_pool_workers": 5,
-        "forward_derivatives": true,
+        "forward_derivatives": false,
         "jacobi":
         {
-            "parallel": false,
+            "parallel": true,
             "method" : 1
         },
         "seidel":
@@ -23,8 +23,9 @@
         },
         
         "enable_recording": true,
-        "log_file": "./results/delay_con.log",
-        "result_file": "./results/delay_con.csv",
+        "log_file": "./results/1_native_0.01ms.log",
+        "result_file": "./results/1_native_0.01ms.csv",
+        "ensure_results": true,
         "result_interval": 0.001
     }
 }

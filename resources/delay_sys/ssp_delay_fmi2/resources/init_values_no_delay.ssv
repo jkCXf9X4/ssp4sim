@@ -16,6 +16,18 @@
 		<ssv:Parameter name="LET5.delayTime">
 			<ssv:Real value="0.0" />
 		</ssv:Parameter>
+		<ssv:Parameter name="C1.delayTime">
+			<ssv:Real value="0.0" />
+		</ssv:Parameter>
+		<ssv:Parameter name="C2.delayTime">
+			<ssv:Real value="0.0" />
+		</ssv:Parameter>
+		<ssv:Parameter name="C3.delayTime">
+			<ssv:Real value="0.0" />
+		</ssv:Parameter>
+		<ssv:Parameter name="C4.delayTime">
+			<ssv:Real value="0.0" />
+		</ssv:Parameter>
 		<ssv:Parameter name="Sources.f">
 			<ssv:Real value="10.0" />
 		</ssv:Parameter>

@@ -5,16 +5,16 @@
         "ssp": "./resources/delay_sys/ssp_delay_fmi2",
         "ssd": "native.ssd",
         "start_time":0.0,
-        "stop_time":0.1,
-        "timestep": 0.00001,
+        "stop_time":0.3,
+        "timestep": 0.002,
         "tolerance": 1e-4,
 
         "executor": "jacobi",
         "thread_pool_workers": 5,
-        "forward_derivatives": true,
+        "forward_derivatives": false,
         "jacobi":
         {
-            "parallel": false,
+            "parallel": true,
             "method" : 1
         },
         "seidel":
@@ -23,8 +23,8 @@
         },
         
         "enable_recording": true,
-        "log_file": "./results/native.log",
-        "result_file": "./results/native.csv",
+        "log_file": "./results/1_native_2ms.log",
+        "result_file": "./results/1_native_2ms.csv",
         "ensure_results": true,
         "result_interval": 0.001
     }

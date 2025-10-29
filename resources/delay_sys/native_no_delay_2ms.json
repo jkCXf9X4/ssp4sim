@@ -3,9 +3,9 @@
     "simulation" :
     {
         "ssp": "./resources/delay_sys/ssp_delay_fmi2",
-        "ssd": "explicit_delay_mod_con.ssd",
+        "ssd": "native_no_delay.ssd",
         "start_time":0.0,
-        "stop_time":0.1,
+        "stop_time":0.3,
         "timestep": 0.002,
         "tolerance": 1e-4,
 
@@ -14,7 +14,7 @@
         "forward_derivatives": false,
         "jacobi":
         {
-            "parallel": false,
+            "parallel": true,
             "method" : 1
         },
         "seidel":
@@ -23,9 +23,8 @@
         },
         
         "enable_recording": true,
-        "log_file": "./results/explicit_delay_mod_con_long.log",
-        "result_file": "./results/explicit_delay_mod_con_long.csv",
-        "ensure_results": true,
+        "log_file": "./results/no_delay_2m.log",
+        "result_file": "./results/no_delay_2m.csv",
         "result_interval": 0.001
     }
 }

@@ -35,7 +35,7 @@ namespace ssp4sim::graph
         uint64_t _start_time = 0;
         uint64_t _end_time = 0;
 
-        Logger log = Logger("ssp4sim.model.FmuModel", LogLevel::info);
+        Logger log;
 
         handler::FmuInfo *fmu;
 
@@ -50,7 +50,7 @@ namespace ssp4sim::graph
 
         bool forward_derivatives = utils::Config::getOr<bool>("simulation.forward_derivatives", true);
 
-        FmuModel(std::string name, handler::FmuInfo *fmu)
+        FmuModel(std::string name, handler::FmuInfo *fmu) :log(std::format("models.{}", name), LogLevel::info)
         {
             this->fmu = fmu;
             this->name = name;

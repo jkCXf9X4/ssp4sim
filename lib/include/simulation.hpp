@@ -108,7 +108,9 @@ namespace ssp4sim
             uint64_t timestep = utils::time::s_to_ns(utils::Config::get<double>("simulation.timestep"));
 
             auto sim_timer = utils::time::Timer();
+
             sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
+            
             auto sim_wall_time = sim_timer.stop();
 
             log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
