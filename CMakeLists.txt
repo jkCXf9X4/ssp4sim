@@ -7,12 +7,33 @@ message("Current ssp4sim_prj version: ${projectVersion}\n")
 set(CMAKE_CXX_STANDARD 23)
 
 # OPTIONS
-option(SSP4SIM_BUILD_TEST "Build test executable" ON)
+option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
 option(SSP4SIM_BUILD_PYTHON_API "Build python api" OFF)
+
+# Use ccache if possible
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
+    message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
+else()
+    message(STATUS "ccache not found; compiler launcher disabled")
+endif()
 
 ## Link static
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++")
+
+# Faster linker
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # Prefer lld for faster link steps when supported
+    message(STATUS "Using lld")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
+    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=lld")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(STATUS "Skipping lld for GCC; GCC LTO requires the GNU linker plugin")
+endif()
 
 
 # COMPILER
@@ -67,7 +88,4 @@ if (SSP4SIM_BUILD_TEST)
     message("Building tests\n")
     add_subdirectory(tests)
 ENDIF ()
-
-
-
 

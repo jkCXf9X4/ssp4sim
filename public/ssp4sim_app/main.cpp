@@ -1,7 +1,6 @@
 #include "cutecpp/log.hpp"
-#include "simulator.hpp"
 
-using namespace ssp4sim;
+#include "simulator.hpp"
 
 int main(int argc, char *argv[])
 {
@@ -21,7 +20,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    auto sim = Simulator(config_path);
+    auto sim = ssp4sim::Simulator(config_path);
 
     sim.init();
     sim.simulate();

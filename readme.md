@@ -63,6 +63,7 @@ This will run a simple simulation using one of the example ssps.
 To run the tests, you first need to enable the `SSP4SIM_BUILD_TEST` option in CMake:
 ```bash
 cmake -B build -S . -DSSP4SIM_BUILD_TEST=ON
+cmake -B build -S . -DSSP4SIM_BUILD_TEST=OFF
 cmake --build build && ./build/tests/test_1
 ```
 ctest --test-dir build/tests currently malfunctions...

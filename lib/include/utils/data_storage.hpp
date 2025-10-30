@@ -17,6 +17,7 @@
 #include <memory>
 #include <cstddef>
 #include <atomic>
+#include <cstring>
 
 namespace ssp4sim::utils
 {

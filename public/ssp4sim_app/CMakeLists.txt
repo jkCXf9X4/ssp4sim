@@ -10,7 +10,6 @@ target_compile_options(sim_app PRIVATE -Wfatal-errors)
 target_link_libraries(sim_app PRIVATE ssp4sim_lib)
 
 
-
 find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(sim_app PRIVATE nlohmann_json::nlohmann_json)
 

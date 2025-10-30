@@ -1,20 +1,19 @@
 #pragma once
 
-#include "ssp4cpp/ssp.hpp"
-#include "ssp4cpp/fmu.hpp"
-#include "utils/io.hpp"
 #include "cutecpp/log.hpp"
-#include "utils/json.hpp"
-#include "utils/map.hpp"
 
-#include "simulation.hpp"
-#include "config.hpp"
+#include <memory>
+#include <string>
 
-#include <vector>
-#include <map>
+namespace ssp4cpp
+{
+    class Ssp; // Forward dec
+}
 
 namespace ssp4sim
 {
+    class Simulation; // Forward dec
+
     /**
      * @brief A high-level simulator class that simplifies the process of running
      * a simulation.
@@ -36,63 +35,19 @@ namespace ssp4sim
          *
          * @param config_path The path to the simulation configuration file.
          */
-        Simulator(const std::string &config_path)
-        {
-            log(info)("[{}] Creating Simulator\n", __func__);
-            
-            log(debug)("[{}] - Loading config", __func__);
-            utils::Config::loadFromFile(config_path);
-            log(debug)("[{}] -- Config:\n{}\n", __func__, utils::Config::as_string());
+        explicit Simulator(const std::string &config_path);
 
-            auto log_file = utils::Config::get<std::string>("simulation.log.file");
-            log.enable_file_sink(log_file, false);
-            log(info)("[{}] File log enabled, {}", __func__, log_file);
-            
-            try
-            {
-                log.enable_socket_sink("127.0.0.1:19996");
-                log(info)("[{}] Socket log enabled", __func__);
-            }
-            catch(const std::exception& e)
-            {
-                log(warning)("[{}] Socket log disabled", __func__);
-            }
+        ~Simulator();
 
-            log(debug)("[{}] - Importing SSP", __func__);
-            auto ssp_path = utils::Config::get<std::string>("simulation.ssp");
-            auto ssd = utils::Config::getOr<std::string>("simulation.ssd", "SystemStructure.ssd");
-            ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path, ssd);
-            log(debug)("[{}] -- SSP: {}", __func__, ssp->to_string());
-            
-            log(debug)("[{}] - Creating simulation\n", __func__);
-            sim = std::make_unique<Simulation>(ssp.get());
-        }
-        
-        ~Simulator()
-        {
-            // std::unique_ptr will automatically clean up FMUs and SSP
-            // when this is destroyed the application will end, no need to free memory resources
-        }
-        
         /**
          * @brief Initializes the simulator.
          */
-        void init()
-        {
-            log(info)("[{}] Initializing Simulator\n", __func__);
-            sim->init();
-        }
-        
+        void init();
+
         /**
          * @brief Runs the simulation.
          */
-        void simulate()
-        {
-            log(info)("[{}] Starting Simulator\n", __func__);
-            sim->simulate();
-        }
-
+        void simulate();
 
     };
 }
-
