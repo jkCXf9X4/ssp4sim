@@ -48,14 +48,14 @@ namespace ssp4sim::graph
         std::map<std::string, ConnectorInfo> parameters;
         std::vector<ConnectionInfo> connections;
 
-        bool forward_derivatives = utils::Config::getOr<bool>("simulation.forward_derivatives", true);
+        bool forward_derivatives = utils::Config::getOr<bool>("simulation.executor.forward_derivatives", true);
 
         FmuModel(std::string name, handler::FmuInfo *fmu) :log(std::format("models.{}", name), LogLevel::info)
         {
             this->fmu = fmu;
             this->name = name;
-            input_area = make_unique<utils::RingStorage>(2, name + ".input");
-            output_area = make_unique<utils::RingStorage>(10, name + ".output");
+            input_area = make_unique<utils::RingStorage>(10, name + ".input");
+            output_area = make_unique<utils::RingStorage>(40, name + ".output");
         }
 
         ~FmuModel()

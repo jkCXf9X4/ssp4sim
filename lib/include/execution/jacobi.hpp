@@ -23,11 +23,9 @@ namespace ssp4sim::graph
     public:
         Logger log = Logger("ssp4sim.execution.JacobiSerial", LogLevel::info);
 
-        const bool feedthrough = utils::Config::getOr<bool>("simulation.jacobi.feedthrough", false);
-
         JacobiSerial(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {
-            log(info)("[{}] Feedthrough {}", __func__, feedthrough);
+            log(info)("[{}] ", __func__);
         }
 
         virtual void print(std::ostream &os) const

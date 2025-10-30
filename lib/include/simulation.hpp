@@ -45,8 +45,8 @@ namespace ssp4sim
 
         std::map<std::string, std::unique_ptr<graph::Invocable>> nodes; 
 
-        bool enable_recording = utils::Config::getOr<bool>("simulation.enable_recording", true);
-        std::string result_file = utils::Config::get<std::string>("simulation.result_file");
+        bool enable_recording = utils::Config::getOr<bool>("simulation.recording.enable", true);
+        std::string result_file = utils::Config::get<std::string>("simulation.recording.result_file");
 
         /**
          * @brief Constructs a new Simulation object.

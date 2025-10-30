@@ -18,14 +18,14 @@ namespace ssp4sim::graph
     class DelayExecutor final : public ExecutionBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.Delay", LogLevel::info);
+        Logger log = Logger("ssp4sim.execution.DelayExecutor", LogLevel::info);
 
         std::vector<Invocable *> g1;
         std::vector<Invocable *> g2;
         std::vector<Invocable *> g3;
         std::vector<Invocable *> g4;
 
-        uint64_t substep = utils::time::s_to_ns(utils::Config::get<double>("simulation.delay.substep"));
+        uint64_t substep = utils::time::s_to_ns(utils::Config::getOr<double>("simulation.executor.custom.delay.sub_step", 0.001));
 
         DelayExecutor(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {
@@ -54,11 +54,13 @@ namespace ssp4sim::graph
             g3.push_back(c4);
             
             g4.push_back(let5);
+
+            log(info)("[{}] DelayExecutor, substep: {}", __func__, substep);
         }
 
         virtual void print(std::ostream &os) const
         {
-            os << "Delay:\n{}\n";
+            os << "DelayExecutor:\n{}\n";
         }
 
 

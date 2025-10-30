@@ -9,24 +9,41 @@
         "timestep": 0.007,
         "tolerance": 1e-4,
 
-        "executor": "custom.delay",
-        "thread_pool_workers": 5,
-        "forward_derivatives": false,
-        "jacobi":
+        "executor": 
         {
-            "parallel": true,
-            "method" : 1
+            "method":"custom.delay",
+            
+            "thread_pool_workers": 5,
+            "forward_derivatives": false,
+
+            "jacobi":
+            {
+                "parallel": true,
+                "method" : 1
+            },
+            "seidel":
+            {
+                "parallel": false
+            },
+            "custom.delay":
+            {
+                "sub_step":0.002
+            }
+            
         },
-        "seidel":
+
+        "recording":
         {
-            "parallel": false
+            "enable": true,
+            "wait_for": true,
+            "interval": 0.001,
+            "result_file": "./results/2_grouping_7ms.csv"
         },
-        
-        "enable_recording": true,
-        "log_file": "./results/1_native_2ms.log",
-        "result_file": "./results/1_native_2ms.csv",
-        "wait_for_recorder": true,
-        "result_interval": 0.001
+
+        "log":
+        {
+            "file": "./results/2_grouping_7ms.log"
+        }
     }
 }
     

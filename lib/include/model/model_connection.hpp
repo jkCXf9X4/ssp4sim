@@ -43,8 +43,8 @@ namespace ssp4sim::graph
             os << "ConnectionInfo { "
                << "type: " << type
                << ", size: " << size
-               << ", source_storage: " << source_storage
-               << ", target_storage: " << target_storage
+               << ", source_storage: " << source_storage->name
+               << ", target_storage: " << target_storage->name
                << ", source_index: " << source_index
                << ", target_index: " << target_index
                << ", forward_derivatives: " << forward_derivatives_order
@@ -104,7 +104,7 @@ namespace ssp4sim::graph
                 {
                     if (valid_input_time > 1)
                     {
-                        log(warning)("[{}] No valid data for t {}, connection", __func__, valid_input_time, connection.to_string());
+                        log(warning)("[{}] No valid data for t {}, connection: {}", __func__, valid_input_time, connection.to_string());
                     }
                 }
             }

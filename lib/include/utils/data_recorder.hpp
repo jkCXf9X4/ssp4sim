@@ -64,7 +64,7 @@ namespace ssp4sim::utils
         std::unique_ptr<std::byte[]> data;
         std::vector<std::vector<bool>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
 
-        const uint64_t recording_interval = utils::time::s_to_ns(utils::Config::getOr<double>("simulation.result_interval", 1.0));
+        const uint64_t recording_interval = utils::time::s_to_ns(utils::Config::getOr<double>("simulation.recording.interval", 1.0));
         uint64_t last_print_time = 0;
         size_t printed_rows = 0;
 

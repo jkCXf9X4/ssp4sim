@@ -33,14 +33,14 @@ namespace ssp4sim::graph
 
         std::unique_ptr<ExecutionBase> build(std::vector<Invocable *> nodes)
         {
-            auto executor_method = utils::Config::getOr<std::string>("simulation.executor", "jacobi");
-            int workers = utils::Config::getOr<int>("simulation.thread_pool_workers", 5);
+            auto executor_method = utils::Config::getOr<std::string>("simulation.executor.method", "jacobi");
+            int workers = utils::Config::getOr<int>("simulation.executor.thread_pool_workers", 5);
 
             if (executor_method == "jacobi")
             {
-                if (utils::Config::getOr<bool>("simulation.jacobi.parallel", false))
+                if (utils::Config::getOr<bool>("simulation.executor.jacobi.parallel", false))
                 {
-                    int parallel_method = utils::Config::getOr<int>("simulation.jacobi.method", 1); // default TBB
+                    int parallel_method = utils::Config::getOr<int>("simulation.executor.jacobi.method", 1); // default TBB
 
                     if (parallel_method == 1)
                     {
@@ -70,7 +70,7 @@ namespace ssp4sim::graph
             }
             else if (executor_method == "seidel")
             {
-                if (utils::Config::getOr<bool>("simulation.seidel.parallel", false))
+                if (utils::Config::getOr<bool>("simulation.executor.seidel.parallel", false))
                 {
                     log(info)("[{}] Running ParallelSeidel", __func__);
                     return std::make_unique<ParallelSeidel>(nodes);

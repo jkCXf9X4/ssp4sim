@@ -1,4 +1,3 @@
-
 {
     "simulation" :
     {
@@ -9,24 +8,41 @@
         "timestep": 0.00001,
         "tolerance": 1e-4,
 
-        "executor": "jacobi",
-        "thread_pool_workers": 5,
-        "forward_derivatives": false,
-        "jacobi":
+        "executor": 
         {
-            "parallel": true,
-            "method" : 1
+            "method":"jacobi",
+            
+            "thread_pool_workers": 5,
+            "forward_derivatives": false,
+
+            "jacobi":
+            {
+                "parallel": true,
+                "method" : 1
+            },
+            "seidel":
+            {
+                "parallel": false
+            },
+            "custom.delay":
+            {
+                "sub_step":0.002
+            }
+            
         },
-        "seidel":
+
+        "recording":
         {
-            "parallel": false
+            "enable": true,
+            "wait_for": true,
+            "interval": 0.001,
+            "result_file": "./results/1_native_0.01ms.csv"
         },
-        
-        "enable_recording": true,
-        "log_file": "./results/1_native_0.01ms.log",
-        "result_file": "./results/1_native_0.01ms.csv",
-        "wait_for_recorder": true,
-        "result_interval": 0.001
+
+        "log":
+        {
+            "file": "./results/1_native_0.01ms.log"
+        }
     }
 }
     
