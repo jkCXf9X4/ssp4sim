@@ -25,7 +25,7 @@
         "enable_recording": true,
         "log_file": "./results/1_native_1ms.log",
         "result_file": "./results/1_native_1ms.csv",
-        "ensure_results": true,
+        "wait_for_recorder": true,
         "result_interval": 0.001
     }
 }

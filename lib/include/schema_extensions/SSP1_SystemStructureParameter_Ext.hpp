@@ -7,13 +7,13 @@
 #include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 
-#include "ssp4cpp/utils/interface.hpp"
-
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterValues.hpp"
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterMapping.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 #include "ssp4cpp/ssp.hpp"
+
+#include "ssp4sim_definitions.hpp"
 
 #include <memory>
 #include <cstring>
@@ -26,17 +26,15 @@ namespace ssp4sim::ext::ssp1::ssv
     using namespace ssp4cpp::ssp1::ssv;
     using namespace ssp4cpp::ssp1::ssm;
 
-    using DataType = ssp4cpp::fmi2::md::Type;
-
-    struct StartValue : public ssp4cpp::utils::interfaces::IString
+    struct StartValue : public types::IPrintable
     {
         std::string name;
         std::vector<std::string> mappings; // name + mappings
-        DataType type;
+        types::DataType type;
         size_t size;
         std::unique_ptr<std::byte[]> value;
 
-        StartValue(std::string name, DataType type)
+        StartValue(std::string name, types::DataType type)
         {
             this->name = name;
             this->type = type;
@@ -94,7 +92,7 @@ namespace ssp4sim::ext::ssp1::ssv
 
         void store_value(void *value)
         {
-            if (this->type == DataType::string)
+            if (this->type == types::DataType::string)
             {
                 log(ext_trace)("[{}] Storing value {}", __func__, *(std::string *)value);
                 
@@ -119,27 +117,27 @@ namespace ssp4sim::ext::ssp1::ssv
     };
 
 
-    inline DataType get_parameter_type(TParameter &par)
+    inline types::DataType get_parameter_type(TParameter &par)
     {
         if (par.Boolean.has_value())
         {
-            return DataType::boolean;
+            return types::DataType::boolean;
         }
         else if (par.Enumeration.has_value())
         {
-            return DataType::enumeration;
+            return types::DataType::enumeration;
         }
         else if (par.Integer.has_value())
         {
-            return DataType::integer;
+            return types::DataType::integer;
         }
         else if (par.Real.has_value())
         {
-            return DataType::real;
+            return types::DataType::real;
         }
         else if (par.String.has_value())
         {
-            return DataType::string;
+            return types::DataType::string;
         }
         else
         {

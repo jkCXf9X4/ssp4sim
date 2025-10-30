@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ssp4sim_definitions.hpp"
+
 #include "utils/node.hpp"
 #include "utils/map.hpp"
 #include "utils/time.hpp"
@@ -9,15 +11,12 @@
 #include "analysis_model.hpp"
 #include "analysis_connector.hpp"
 
-#include "ssp4cpp/utils/interface.hpp"
-
 #include <string>
 #include <vector>
 
 namespace ssp4sim::analysis::graph
 {
-    // Kind of unnecessary but doesn't hurt ether
-    class AnalysisGraph : public ssp4cpp::utils::interfaces::IString
+    class AnalysisGraph : public types::IPrintable
     {
     public:
         Logger log = Logger("ssp4sim.graph.AnalysisGraph", LogLevel::debug);

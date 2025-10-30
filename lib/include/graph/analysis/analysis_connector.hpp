@@ -4,13 +4,13 @@
 #include "utils/map.hpp"
 #include "utils/time.hpp"
 
-
 #include "FMI2_Enums_Ext.hpp"
 #include "SSP1_SystemStructureParameter_Ext.hpp"
 
-#include "sim.hpp"
-
 #include "cutecpp/log.hpp"
+
+
+#include "ssp4sim_definitions.hpp"
 
 #include "ssp4cpp/utils/string.hpp"
 #include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
@@ -34,11 +34,11 @@ namespace ssp4sim::analysis::graph
         std::string component_name;
         std::string connector_name;
 
-        Causality causality;
+        types::Causality causality;
 
         uint64_t value_reference;
 
-        DataType type;
+        types::DataType type;
         std::size_t size;
 
         // for start value / parameter
@@ -56,7 +56,7 @@ namespace ssp4sim::analysis::graph
         AnalysisConnector(std::string component_name,
                           std::string connector_name,
                           uint64_t value_reference,
-                          DataType type)
+                          types::DataType type)
         {
             this->component_name = component_name;
             this->connector_name = connector_name;

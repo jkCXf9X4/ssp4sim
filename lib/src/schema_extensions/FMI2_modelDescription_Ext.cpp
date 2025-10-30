@@ -1,6 +1,8 @@
 
 #include "FMI2_modelDescription_Ext.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include <optional>
 #include <vector>
 #include <string>
@@ -38,27 +40,27 @@ namespace ssp4sim::ext::fmi2
             return nullptr;
         }
 
-        DataType get_variable_type(fmi2ScalarVariable &var)
+        types::DataType get_variable_type(fmi2ScalarVariable &var)
         {
             if (var.Boolean.has_value())
             {
-                return DataType::boolean;
+                return types::DataType::boolean;
             }
             else if (var.Enumeration.has_value())
             {
-                return DataType::enumeration;
+                return types::DataType::enumeration;
             }
             else if (var.Integer.has_value())
             {
-                return DataType::integer;
+                return types::DataType::integer;
             }
             else if (var.Real.has_value())
             {
-                return DataType::real;
+                return types::DataType::real;
             }
             else if (var.String.has_value())
             {
-                return DataType::string;
+                return types::DataType::string;
             }
             else
             {

@@ -1,14 +1,18 @@
-#include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
 
 #include "data_ring_storage.hpp"
 #include "data_type.hpp"
+
+#include "ssp4sim_definitions.hpp"
+
 #include "cutecpp/log.hpp"
+
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 
 #include <iostream>
 
-using ssp4sim::utils::DataType;
 using ssp4sim::utils::RingStorage;
+using ssp4sim::types::DataType;
 
 Logger logger = Logger("RingStorage", LogLevel::debug);
 

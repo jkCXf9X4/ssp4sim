@@ -139,7 +139,7 @@ class Simulation {
   class DataStorage {
     +data: std::unique_ptr<std::byte[]>
     +positions: std::vector<std::size_t>
-    +types: std::vector<utils::DataType>
+    +types: std::vector<types::DataType>
     +names: std::vector<std::string>
     +DataStorage(areas)
     +add(name, type)

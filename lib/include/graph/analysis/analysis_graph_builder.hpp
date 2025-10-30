@@ -21,6 +21,8 @@
 
 #include "analysis_graph.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include <vector>
 #include <algorithm>
 #include <map>
@@ -81,7 +83,7 @@ namespace ssp4sim::analysis::graph
             {
                 auto connectors = ssp4sim::ext::ssp1::elements::get_connectors(
                     ssp.ssd->System.Elements.value(),
-                    {ssp4cpp::fmi2::md::Causality::input, ssp4cpp::fmi2::md::Causality::output, ssp4cpp::fmi2::md::Causality::parameter});
+                    {types::Causality::input, types::Causality::output, types::Causality::parameter});
 
                 auto mapping_start_values = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(ssp);
 
@@ -243,8 +245,8 @@ namespace ssp4sim::analysis::graph
 
                 if (source_model->maxOutputDerivativeOrder > 0 &&
                     target_model->canInterpolateInputs &&
-                    source_connector->type == utils::DataType::real &&
-                    target_connector->type == utils::DataType::real)
+                    source_connector->type == types::DataType::real &&
+                    target_connector->type == types::DataType::real)
                 {
                     source_connector->forward_derivatives = true;
                     source_connector->forward_derivatives_order = source_model->maxOutputDerivativeOrder;

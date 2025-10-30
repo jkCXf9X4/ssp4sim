@@ -3,6 +3,8 @@
 
 #include "ssp4cpp/utils/string.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include <vector>
 #include <tuple>
 #include <optional>
@@ -79,7 +81,7 @@ namespace ssp4sim::ext::ssp1
 
         IndexConnectorComponentTuples get_connectors(
             Elements &elements,
-            std::initializer_list<ssp4cpp::fmi2::md::Causality> causalities)
+            std::initializer_list<types::Causality> causalities)
         {
             auto in = get_connectors(elements);
             auto out = IndexConnectorComponentTuples();

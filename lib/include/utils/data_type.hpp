@@ -4,22 +4,22 @@
 
 #include "handler/fmi4c_adapter.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include <cstddef>
 #include <string>
 #include <stdexcept>
 
 namespace ssp4sim::utils
 {
-    using DataType = ssp4cpp::fmi2::md::Type;
-
-    inline constexpr void read_from_model_(DataType t,
+    inline constexpr void read_from_model_(types::DataType t,
                                            handler::CoSimulationModel &model,
                                            uint64_t value_reference,
                                            void *out)
     {
         switch (t)
         {
-        case DataType::real:
+        case types::DataType::real:
         {
             if (!model.read_real(value_reference, *(double *)out))
             {
@@ -27,7 +27,7 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::boolean:
+        case types::DataType::boolean:
         {
             if (!model.read_boolean(value_reference, *(int *)out))
             {
@@ -35,8 +35,8 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::integer:
-        case DataType::enumeration:
+        case types::DataType::integer:
+        case types::DataType::enumeration:
         {
             if (!model.read_integer(value_reference, *(int *)out))
             {
@@ -44,7 +44,7 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::string:
+        case types::DataType::string:
         {
             if (!model.read_string(value_reference, *(std::string *)out))
             {
@@ -52,20 +52,20 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::unknown:
+        case types::DataType::unknown:
             return;
         }
         throw std::invalid_argument("Unknown DataType");
     }
 
-    inline constexpr void write_to_model_(DataType t,
+    inline constexpr void write_to_model_(types::DataType t,
                                           handler::CoSimulationModel &model,
                                           uint64_t &value_reference,
                                           void *data)
     {
         switch (t)
         {
-        case DataType::real:
+        case types::DataType::real:
         {
             if (!model.write_real(value_reference, *(double *)data))
             {
@@ -73,7 +73,7 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::boolean:
+        case types::DataType::boolean:
         {
             if (!model.write_boolean(value_reference, *(int *)data))
             {
@@ -81,8 +81,8 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::integer:
-        case DataType::enumeration:
+        case types::DataType::integer:
+        case types::DataType::enumeration:
         {
             if (!model.write_integer(value_reference, *(int *)data))
             {
@@ -90,7 +90,7 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::string:
+        case types::DataType::string:
         {
             if (!model.write_string(value_reference, *(std::string *)data))
             {
@@ -98,7 +98,7 @@ namespace ssp4sim::utils
             }
             return;
         }
-        case DataType::unknown:
+        case types::DataType::unknown:
             return;
         }
         throw std::invalid_argument("Unknown DataType");

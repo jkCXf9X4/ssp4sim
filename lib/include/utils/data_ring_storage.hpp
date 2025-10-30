@@ -6,8 +6,6 @@
 
 #include "data_storage.hpp"
 
-#include "ssp4cpp/utils/interface.hpp"
-
 #include <string>
 #include <cstring>
 #include <vector>
@@ -26,7 +24,7 @@ namespace ssp4sim::utils
      * The buffer is not designed to store all data of the simulation but will continuously overwrite old data
      *
      */
-    class RingStorage : public ssp4cpp::utils::interfaces::IString
+    class RingStorage : public types::IPrintable
     {
 
         Logger log = Logger("ssp4sim.utils.RingStorage", LogLevel::debug);
@@ -55,7 +53,7 @@ namespace ssp4sim::utils
             data = make_unique<DataStorage>(capacity, name);
         }
 
-        uint64_t add(std::string name, utils::DataType type, int max_interpolation_order)
+        uint64_t add(std::string name, types::DataType type, int max_interpolation_order)
         {
             return data->add(name, type, max_interpolation_order);
         }

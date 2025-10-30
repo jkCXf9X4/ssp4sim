@@ -4,7 +4,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "execution.hpp"
+#include "executor.hpp"
 
 #include "invocable.hpp"
 #include "task_thread_pool.hpp"
@@ -80,7 +80,7 @@ namespace ssp4sim::graph
     public:
         Logger log = Logger("ssp4sim.execution.SerialSeidel", LogLevel::info);
 
-        SerialSeidel(std::vector<Invocable *> nodes) : SeidelBase(std::move(nodes))
+        SerialSeidel(std::vector<Invocable *> nodes) : SeidelBase(nodes)
         {
             log(info)("[{}] ", __func__);
         }
@@ -150,6 +150,8 @@ namespace ssp4sim::graph
                 log(trace)("[{}] End. completed  {}", __func__, completed);
             });
 
+            wait_for_result_collection();
+
             return step_data.end_time;
         }
     };
@@ -159,7 +161,7 @@ namespace ssp4sim::graph
     public:
         Logger log = Logger("ssp4sim.execution.ParallelSeidel", LogLevel::info);
 
-        ParallelSeidel(std::vector<Invocable *> nodes) : SeidelBase(std::move(nodes))
+        ParallelSeidel(std::vector<Invocable *> nodes) : SeidelBase(nodes)
         {
             log(info)("[{}]", __func__);
         }
@@ -181,7 +183,7 @@ namespace ssp4sim::graph
 
             step_data.valid_input_time = step_data.end_time;
 
-            throw std::runtime_error("THis is not imlemented");
+            throw std::runtime_error("This is not imlemented");
 
             // reset_counters();
 
@@ -240,6 +242,8 @@ namespace ssp4sim::graph
             // IF_LOG({
             //     log(trace)("[{}] End. launched {}, completed  {}", __func__, launched, completed);
             // });
+
+            wait_for_result_collection();
 
             return step_data.end_time;
         }

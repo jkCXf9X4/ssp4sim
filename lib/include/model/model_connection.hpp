@@ -15,19 +15,17 @@
 
 #include "fmu_handler.hpp"
 
-#include "ssp4cpp/utils/interface.hpp"
-
 #include <string>
 #include <vector>
 #include <functional>
 
 namespace ssp4sim::graph
 {
-    struct ConnectionInfo : public ssp4cpp::utils::interfaces::IString
+    struct ConnectionInfo : public types::IPrintable
     {
         static inline Logger log = Logger("ssp4sim.model.ConnectionInfo", LogLevel::info);
 
-        utils::DataType type;
+        types::DataType type;
         size_t size;
 
         utils::RingStorage *source_storage;

@@ -15,7 +15,7 @@
 
 #include "fmu_handler.hpp"
 
-#include "ssp4cpp/utils/interface.hpp"
+#include "ssp4sim_definitions.hpp"
 
 #include <string>
 #include <vector>
@@ -24,12 +24,12 @@
 namespace ssp4sim::graph
 {
 
-    class ConnectorInfo : public ssp4cpp::utils::interfaces::IString
+    class ConnectorInfo : public types::IPrintable
     {
     public:
         static inline Logger log = Logger("ssp4sim.model.ConnectorInfo_s", LogLevel::info);
 
-        utils::DataType type;
+        types::DataType type;
         size_t size;
         std::string name; // for debug
 
@@ -90,7 +90,7 @@ namespace ssp4sim::graph
                                 __func__, name, input.type.to_string(), data_type_str);
 
                     // set input area to reflect the data to ensure that next iteration correct data will be used
-                    if (input.type == DataType::string)
+                    if (input.type == types::DataType::string)
                     {
                         // Move the internal string rep, not the std::string itself
                         *(std::string *)item = *(std::string *)data_ptr;

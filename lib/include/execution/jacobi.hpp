@@ -4,7 +4,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "execution.hpp"
+#include "executor.hpp"
 #include "invocable.hpp"
 
 #include "task_thread_pool.hpp"
@@ -25,7 +25,7 @@ namespace ssp4sim::graph
 
         const bool feedthrough = utils::Config::getOr<bool>("simulation.jacobi.feedthrough", false);
 
-        JacobiSerial(std::vector<Invocable *> nodes) : ExecutionBase(std::move(nodes))
+        JacobiSerial(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {
             log(info)("[{}] Feedthrough {}", __func__, feedthrough);
         }
@@ -48,7 +48,8 @@ namespace ssp4sim::graph
             {
                 model->invoke(step);
             }
-            
+
+            wait_for_result_collection();
 
             return step_data.end_time;
         }
@@ -62,7 +63,7 @@ namespace ssp4sim::graph
         utils::ThreadPool pool;
         std::vector<std::future<void>> futures;
 
-        JacobiParallelFutures(std::vector<Invocable *> nodes, int threads) : ExecutionBase(std::move(nodes)), pool(threads)
+        JacobiParallelFutures(std::vector<Invocable *> nodes, int threads) : ExecutionBase(nodes), pool(threads)
         {
             log(info)("[{}] JacobiParallelFutures", __func__);
         }
@@ -85,6 +86,8 @@ namespace ssp4sim::graph
                 f.get();
             futures.clear();
 
+            wait_for_result_collection();
+
             return step_data.end_time;
         }
     };
@@ -94,7 +97,7 @@ namespace ssp4sim::graph
     public:
         Logger log = Logger("ssp4sim.execution.JacobiParallelTBB", LogLevel::info);
 
-        JacobiParallelTBB(std::vector<Invocable *> nodes) : ExecutionBase(std::move(nodes))
+        JacobiParallelTBB(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {
             log(info)("[{}] JacobiParallelTBB", __func__);
         }
@@ -113,6 +116,9 @@ namespace ssp4sim::graph
                           {
                               model->invoke(step);
                           });
+
+            wait_for_result_collection();
+
             return step_data.end_time;
         }
     };
@@ -124,7 +130,7 @@ namespace ssp4sim::graph
 
         utils::ThreadPool2 pool;
 
-        JacobiParallelSpin(std::vector<Invocable *> nodes, int threads) : ExecutionBase(std::move(nodes)), pool(threads)
+        JacobiParallelSpin(std::vector<Invocable *> nodes, int threads) : ExecutionBase(nodes), pool(threads)
         {
             log(info)("[{}] JacobiParallelSpin", __func__);
         }
@@ -142,7 +148,7 @@ namespace ssp4sim::graph
 
             for (auto &node : nodes)
             {
-                auto ti =utils::task_info{node, step};
+                auto ti = utils::task_info{node, step};
                 pool.enqueue(ti);
             }
 
@@ -167,6 +173,9 @@ namespace ssp4sim::graph
             IF_LOG({
                 log(info)("[{}] All threads completed", __func__);
             });
+
+            wait_for_result_collection();
+            
             return step_data.end_time;
         }
     };

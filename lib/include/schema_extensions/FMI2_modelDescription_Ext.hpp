@@ -6,6 +6,8 @@
 #include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 #include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include <vector>
 #include <string>
 #include <tuple>
@@ -16,8 +18,6 @@ namespace ssp4sim::ext::fmi2
 
     namespace model_variables
     {
-        using DataType = ssp4cpp::fmi2::md::Type;
-
         inline auto log = Logger("ssp4sim.ext.fmi2.model_variables", debug);
 
         /** @brief Retrieve a variable by index from the model variables list. */
@@ -25,7 +25,7 @@ namespace ssp4sim::ext::fmi2
 
         fmi2ScalarVariable *get_variable_by_name(ModelVariables &mv, std::string name);
 
-        DataType get_variable_type(fmi2ScalarVariable &var);
+        types::DataType get_variable_type(fmi2ScalarVariable &var);
 
         void *get_variable_start_value(fmi2ScalarVariable &var);
     }

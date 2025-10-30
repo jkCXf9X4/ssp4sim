@@ -10,6 +10,10 @@
 #include "model_fmu.hpp"
 #include "graph.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
+#include "utils/map.hpp"
+
 #include <map>
 
 namespace ssp4sim::graph
@@ -24,17 +28,18 @@ namespace ssp4sim::graph
         AnalysisGraph *analysis_graph;
         utils::DataRecorder *recorder;
 
+        std::map<std::string, std::unique_ptr<Invocable>> models;
+
         GraphBuilder(AnalysisGraph *ag, utils::DataRecorder *recorder)
         {
             this->analysis_graph = ag;
             this->recorder = recorder;
         }
 
-        std::unique_ptr<Graph> build()
+        void build()
         {
             log(trace)("[{}] init", __func__);
-            std::map<std::string, std::unique_ptr<Invocable>> models;
-
+            
             log(trace)("[{}] - Create the fmu models", __func__);
             for (auto &[ssp_resource_name, analysis_model] : analysis_graph->models)
             {
@@ -56,9 +61,9 @@ namespace ssp4sim::graph
                 for (auto &[name, connector] : analysis_model->connectors)
                 {
                     int index = -1;
-                    if (connector->causality == Causality::input)
+                    if (connector->causality == types::Causality::input)
                         index = model->input_area->add(name, connector->type, connector->forward_derivatives_order);
-                    else if (connector->causality == Causality::output)
+                    else if (connector->causality == types::Causality::output)
                         index = model->output_area->add(name, connector->type, connector->forward_derivatives_order);
 
                     ConnectorInfo info;
@@ -81,17 +86,17 @@ namespace ssp4sim::graph
                         log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, (void *)info.initial_value.get()));
                     }
 
-                    if (connector->causality == Causality::input)
+                    if (connector->causality == types::Causality::input)
                     {
                         info.storage = model->input_area.get();
                         model->inputs[name] = std::move(info);
                     }
-                    else if (connector->causality == Causality::output)
+                    else if (connector->causality == types::Causality::output)
                     {
                         info.storage = model->output_area.get();
                         model->outputs[name] = std::move(info);
                     }
-                    else if (connector->causality == Causality::parameter)
+                    else if (connector->causality == types::Causality::parameter)
                         model->parameters[name] = std::move(info);
                 }
             }
@@ -147,8 +152,19 @@ namespace ssp4sim::graph
             // This enables runtime breaking of loops
 
             log(ext_trace)("[{}] exit", __func__);
-            return std::make_unique<Graph>(std::move(models));
         }
+
+        std::unique_ptr<Graph> get_graph()
+        {
+            return std::make_unique<Graph>(utils::map_ns::map_unique_to_ref(models), recorder);
+        }
+
+        // release ownership of models
+        std::map<std::string, std::unique_ptr<Invocable>> get_models()
+        {
+            return std::move(models);
+        }
+
     };
 
 }

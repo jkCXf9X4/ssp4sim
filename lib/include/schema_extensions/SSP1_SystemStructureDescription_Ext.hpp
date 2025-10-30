@@ -2,6 +2,8 @@
 
 #include "cutecpp/log.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 
 #include <string>
@@ -32,7 +34,7 @@ namespace ssp4sim::ext::ssp1
 
         IndexConnectorComponentTuples get_connectors(
             Elements &elements,
-            std::initializer_list<ssp4cpp::fmi2::md::Causality> causalities);
+            std::initializer_list<types::Causality> causalities);
 
         // Get connections between fmus
         // return a set of <source_fmu, target_fmu> strings

@@ -3,13 +3,15 @@
 #include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 #include "FMI2_Enums_Ext.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include "data_storage.hpp"
 
 #include <string>
 #include <iostream>
 
 using ssp4sim::utils::DataStorage;
-using ssp4sim::utils::DataType;
+using ssp4sim::types::DataType;
 
 
 TEST_CASE("DataStorage2 basic allocation", "[DataStorage2]")

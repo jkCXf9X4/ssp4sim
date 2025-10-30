@@ -43,6 +43,8 @@ namespace ssp4sim
         std::unique_ptr<utils::DataRecorder> recorder;
         std::unique_ptr<graph::Graph> sim_graph;
 
+        std::map<std::string, std::unique_ptr<graph::Invocable>> nodes; 
+
         bool enable_recording = utils::Config::getOr<bool>("simulation.enable_recording", true);
         std::string result_file = utils::Config::get<std::string>("simulation.result_file");
 
@@ -76,9 +78,13 @@ namespace ssp4sim
             log(debug)(" -- {}", analysis_graph->to_string());
 
             log(info)("[{}] - Creating simulation graph", __func__);
-            sim_graph = graph::GraphBuilder(analysis_graph.get(), recorder.get()).build();
-            sim_graph->recorder = recorder.get();
+            auto graph_builder = graph::GraphBuilder(analysis_graph.get(), recorder.get());
+            graph_builder.build();
+
+            this->sim_graph = graph_builder.get_graph();
             log(debug)(" -- {}", sim_graph->to_string());
+
+            this->nodes = graph_builder.get_models(); // transfer ownership of nodes to simulation
 
             log(info)("[{}] - Init simulation graph", __func__);
             sim_graph->init();

@@ -5,6 +5,8 @@
 
 #include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 
+#include "ssp4sim_definitions.hpp"
+
 #include <string>
 
 namespace ssp4sim::ext::fmi2
@@ -14,25 +16,23 @@ namespace ssp4sim::ext::fmi2
     {
         inline auto log = Logger("ssp4sim.ext.fmi2.enums", LogLevel::debug);
 
-        using DataType = ssp4cpp::fmi2::md::Type;
-
         /**
          * @brief  Return the in-memory size (in bytes) of a single value
          *         represented by the given DataType.
          */
-        inline constexpr std::size_t get_data_type_size(DataType t)
+        inline constexpr std::size_t get_data_type_size(types::DataType t)
         {
             switch (t)
             {
-            case DataType::boolean:
-            case DataType::integer:
-            case DataType::enumeration:
+            case types::DataType::boolean:
+            case types::DataType::integer:
+            case types::DataType::enumeration:
                 return sizeof(int); // typically 4
-            case DataType::real:
+            case types::DataType::real:
                 return sizeof(double); // typically 8
-            case DataType::string:
+            case types::DataType::string:
                 return sizeof(std::string);
-            case DataType::unknown:
+            case types::DataType::unknown:
                 return 0;
             }
             // If the enum gains a new value and the switch isn’t updated,
@@ -41,18 +41,18 @@ namespace ssp4sim::ext::fmi2
         }
 
 
-        inline constexpr std::string data_type_to_string(DataType type, void *data)
+        inline constexpr std::string data_type_to_string(types::DataType type, void *data)
         {
             log(ext_trace)("[{}] init", __func__);
             switch (type)
             {
-            case DataType::real:
+            case types::DataType::real:
                 return std::format("{}" , *(double *)data);
-            case DataType::boolean:
-            case DataType::integer:
-            case DataType::enumeration:
+            case types::DataType::boolean:
+            case types::DataType::integer:
+            case types::DataType::enumeration:
                 return std::format("{}" , *(int *)data);
-            case DataType::string:
+            case types::DataType::string:
                 return  *(std::string *)data;
             default:
                 return "<bin>";

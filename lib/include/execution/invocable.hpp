@@ -1,8 +1,8 @@
 #pragma once
 
-#include "utils/node.hpp"
+#include "ssp4sim_definitions.hpp"
 
-#include "ssp4cpp/utils/interface.hpp"
+#include "utils/node.hpp"
 
 #include <cstdint>
 #include <string>
@@ -11,7 +11,7 @@
 namespace ssp4sim::graph
 {
 
-    class StepData : public ssp4cpp::utils::interfaces::IString
+    class StepData : public types::IPrintable
     {
     public:
         uint64_t start_time;
@@ -58,7 +58,7 @@ namespace ssp4sim::graph
         }
     };
 
-    class Invocable : public utils::graph::Node, public virtual ssp4cpp::utils::interfaces::IString
+    class Invocable : public utils::graph::Node, public virtual types::IPrintable
     {
     public:
         uint64_t walltime_ns = 0;
@@ -66,6 +66,8 @@ namespace ssp4sim::graph
 
         virtual void enter_init() {}
         virtual void exit_init() {}
+
+        // simple wrapper for when enter and exit is not needed
         virtual void init()
         {
             enter_init();

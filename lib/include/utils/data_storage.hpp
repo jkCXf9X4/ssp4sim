@@ -9,7 +9,7 @@
 
 #include "data_type.hpp"
 
-#include "ssp4cpp/utils/interface.hpp"
+#include "ssp4sim_definitions.hpp"
 
 #include <string>
 #include <vector>
@@ -28,7 +28,7 @@ namespace ssp4sim::utils
      * - store multiple time versions of the data to enable access backwards in time
      */
 
-    class DataStorage : public ssp4cpp::utils::interfaces::IString
+    class DataStorage : public types::IPrintable
     {
     public:
         Logger log = Logger("ssp4sim.utils.DataStorage", LogLevel::debug);
@@ -41,7 +41,7 @@ namespace ssp4sim::utils
         std::vector<std::size_t> positions; // data position relative to start; 0, 4,...
         std::vector<size_t> der_positions;  // data position relative to start; 0, 4,...
 
-        std::vector<utils::DataType> types;
+        std::vector<types::DataType> types;
         std::vector<std::string> names;
         std::vector<size_t> sizes;
         std::vector<size_t> max_interpolation_orders;
@@ -76,7 +76,7 @@ namespace ssp4sim::utils
             this->name = name;
         }
 
-        uint32_t add(std::string name, utils::DataType type, int max_interpolation_order)
+        uint32_t add(std::string name, types::DataType type, int max_interpolation_order)
         {
             index += 1;
             items += 1;
@@ -141,7 +141,7 @@ namespace ssp4sim::utils
                 // Initialize all strings with an empty string
                 for (int index = 0; index < types.size(); index++)
                 {
-                    if (types[index] == utils::DataType::string)
+                    if (types[index] == types::DataType::string)
                     {
                         log(debug)("[{}] Setting string {}:{} - {}", __func__, index, names[index], types[index].to_string());
                         auto s = (std::string*)locations[area][index];
