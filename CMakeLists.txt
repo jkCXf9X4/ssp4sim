@@ -25,15 +25,16 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++")
 
 # Faster linker
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # Prefer lld for faster link steps when supported
-    message(STATUS "Using lld")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
-    set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -fuse-ld=lld")
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    message(STATUS "Skipping lld for GCC; GCC LTO requires the GNU linker plugin")
-endif()
+## lld dos not work with flto
+# if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+#   message(STATUS "Using lld for Debug builds")
+#   foreach(var IN ITEMS
+#       CMAKE_EXE_LINKER_FLAGS_DEBUG
+#       CMAKE_SHARED_LINKER_FLAGS_DEBUG
+#       CMAKE_MODULE_LINKER_FLAGS_DEBUG)
+#     set(${var} "${${var}} -fuse-ld=lld")
+#   endforeach()
+# endif()
 
 
 # COMPILER

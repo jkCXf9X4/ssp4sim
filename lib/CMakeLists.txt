@@ -26,7 +26,13 @@ find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PUBLIC nlohmann_json::nlohmann_json)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
-  target_precompile_headers(ssp4sim_lib PRIVATE <format>)
+  target_precompile_headers(ssp4sim_lib PRIVATE
+    <format>
+    <nlohmann/json.hpp>
+    <cutecpp/log.hpp>
+    <ssp4cpp/fmu.hpp>
+    <ssp4cpp/ssp.hpp>
+  )
 endif()
 
 find_package(TBB CONFIG REQUIRED)

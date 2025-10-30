@@ -2,8 +2,6 @@
 
 #include "utils/time.hpp"
 
-#include "cutecpp/log.hpp"
-
 #include <nlohmann/json.hpp>
 
 #include <string>
