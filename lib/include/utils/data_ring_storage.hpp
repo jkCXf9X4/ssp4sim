@@ -41,188 +41,44 @@ namespace ssp4sim::utils
 
         std::string name;
 
-        RingStorage(size_t capacity, std::string name) : name(name)
-        {
-            log(ext_trace)("[{}] Constructor", __func__);
-            if (capacity == 0)
-            {
-                throw runtime_error("[RingBuffer] buffer_size != 0");
-            }
-            this->capacity = capacity;
+        RingStorage(size_t capacity, std::string name);
 
-            data = make_unique<DataStorage>(capacity, name);
-        }
+        uint64_t add(std::string name, types::DataType type, int max_interpolation_order);
 
-        uint64_t add(std::string name, types::DataType type, int max_interpolation_order)
-        {
-            return data->add(name, type, max_interpolation_order);
-        }
+        void allocate();
 
-        void allocate()
-        {
-            data->allocate();
-        }
+        int push(uint64_t time);
 
-        int push(uint64_t time)
-        {
-            auto area = push();
-            data->set_time(area, time);
-            return area;
-        }
+        int get_or_push(uint64_t time);
 
-        int get_or_push(uint64_t time)
-        {
-            auto area = get_area(time);
-            if (area != -1)
-            {
-                return area;
-            }
-            else
-            {
-                auto area = push();
-                data->set_time(area, time);
-                return area;
-            }
-        }
-
-        int64_t get_area(uint64_t time)
-        {
-            IF_LOG({
-                log(ext_trace)("[{}] init", __func__);
-            });
-
-            for (std::size_t i = 0; i < size; ++i)
-            {
-                int pos = get_pos_rev(i);
-                if (data->timestamps[pos] == time)
-                {
-                    IF_LOG({
-                        log(ext_trace)("[{}] found valid area, {}", __func__, pos);
-                    });
-
-                    return pos;
-                }
-            }
-            return -1;
-        }
+        int64_t get_area(uint64_t time);
 
         /** Retrieve the most recent element with timestamp before @p time. */
-        int64_t get_valid_area(uint64_t time)
-        {
-            IF_LOG({
-                log(ext_trace)("[{}] init", __func__);
-            });
+        int64_t get_valid_area(uint64_t time);
 
-            for (std::size_t i = 0; i < size; ++i)
-            {
-                int pos = get_pos_rev(i);
-                if (data->timestamps[pos] <= time)
-                {
-                    IF_LOG({
-                        log(ext_trace)("[{}] found valid area, {}", __func__, pos);
-                    });
+        byte *get_item(std::size_t area, std::size_t index);
 
-                    return pos;
-                }
-            }
-            return -1;
-        }
+        byte *get_derivative(std::size_t area, std::size_t index, std::size_t order);
 
-        byte *get_item(std::size_t area, std::size_t index)
-        {
-            return data->get_item(area, index);
-        }
+        byte *get_valid_item(uint64_t time, std::size_t index);
 
-        byte *get_derivative(std::size_t area, std::size_t index, std::size_t order)
-        {
-            return data->get_derivative(area, index, order);
-        }
-
-        byte *get_valid_item(uint64_t time, std::size_t index)
-        {
-            IF_LOG({
-                log(ext_trace)("[{}] Init", __func__);
-            });
-
-            auto valid_area = get_valid_area(time);
-            if (valid_area != -1)
-            {
-                IF_LOG({
-                    log(ext_trace)("[{}] Valid area found, returning the pointer", __func__);
-                });
-
-                return data->get_item(valid_area, index);
-            }
-            return nullptr;
-        }
-
-        void flag_new_data(std::size_t area)
-        {
-            data->flag_new_data(area);
-        }
+        void flag_new_data(std::size_t area);
 
     private:
-        inline bool is_empty()
-        {
-            return size == 0;
-        }
+        bool is_empty();
 
-        inline bool is_full()
-        {
-            return size == capacity;
-        }
+        bool is_full();
 
         // create new, if full it will overwrite the oldest data
-        int push()
-        {
-            IF_LOG({
-                log(ext_trace)("[{}] init", __func__);
-            });
-
-            if (is_full()) [[likely]]
-            {
-                tail = (tail + 1) % capacity;
-            }
-            else [[unlikely]]
-            {
-                size++;
-            }
-
-            // increase head
-            head = (head + 1) % capacity;
-
-            // Fix sometime when you need to feel more sad ;)
-            if (data->new_data_flags[head] == true)
-            {
-                overwrite_counter += 1;
-            }
-
-            return head;
-        }
+        int push();
 
         /* Return element at logical position `index` from the tail (oldest)     */
-        inline uint64_t get_pos(int index)
-        {
-            return (tail + index) % capacity;
-        }
+        uint64_t get_pos(int index);
 
         /* Return element at logical position `index` counting backwards from
         the head: index 0 == head, 1 == just before head, 2 == next-newest, …   */
-        inline uint64_t get_pos_rev(int index)
-        {
-            return (head + capacity - index) % capacity;
-        }
+        uint64_t get_pos_rev(int index);
 
-        virtual void print(std::ostream &os) const
-        {
-            os << "RingStorage \n{\n"
-               << "  capacity: " << capacity
-               << ", size: " << size
-               << ", head: " << head
-               << ", tail: " << tail
-               << ", overwrite_counter: " << overwrite_counter
-               << "\n  " << *data
-               << "\n}";
-        }
+        virtual void print(std::ostream &os) const override;
     };
 }

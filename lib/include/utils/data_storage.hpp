@@ -66,174 +66,26 @@ namespace ssp4sim::utils
 
         bool allocated = false;
 
-        DataStorage(int areas) : new_data_flags(areas)
-        {
-            this->areas = areas;
-        }
+        explicit DataStorage(int areas);
 
-        DataStorage(int areas, std::string name) : new_data_flags(areas)
-        {
-            this->areas = areas;
-            this->name = name;
-        }
+        DataStorage(int areas, std::string name);
 
-        uint32_t add(std::string name, types::DataType type, int max_interpolation_order)
-        {
-            index += 1;
-            items += 1;
-            auto size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
-            index_name_map[name] = index;
+        uint32_t add(std::string name, types::DataType type, int max_interpolation_order);
 
-            names.push_back(name);
-            types.push_back(type);
-            sizes.push_back(size);
-            max_interpolation_orders.push_back(max_interpolation_order);
+        void allocate();
 
-            positions.push_back(pos);
-            this->der_positions.push_back(der_pos);
+        std::byte *get_item(std::size_t area, std::size_t index) noexcept;
 
-            pos += size;
-            der_pos += max_interpolation_order * derivative_size;
+        std::byte *get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept;
 
-            return index;
-        }
+        void set_time(std::size_t area, uint64_t time) noexcept;
 
-        void allocate()
-        {
-            locations.clear();
-            der_locations.clear();
+        void flag_new_data(std::size_t area);
 
-            total_size = pos * areas;
-            data = std::make_unique<std::byte[]>(total_size);
-            std::memset(data.get(), 0, total_size);
+        int index_by_name(std::string name);
 
-            auto der_size = der_pos * areas;
-            der_data = std::make_unique<std::byte[]>(der_size);
-            std::memset(der_data.get(), 0, der_size);
+        virtual void print(std::ostream &os) const override;
 
-            timestamps.resize(areas);
-            locations.resize(areas);
-            der_locations.resize(areas);
-
-            for (int area = 0; area < areas; area++)
-            {
-                locations[area].reserve(positions.size());
-                der_locations[area].reserve(der_positions.size());
-
-                for (auto p_pos : positions)
-                {
-                    locations[area].push_back(&data[area * pos + p_pos]);
-                }
-
-                for (int i = 0; i < der_positions.size(); ++i)
-                {
-                    if (max_interpolation_orders[i] > 0)
-                    {
-                        der_locations[area].push_back(&der_data[area * der_pos + der_positions[i]]);
-                    }
-                    else
-                    {
-                        der_locations[area].push_back(nullptr);
-                    }
-                    
-                }
-                new_data_flags[area] = false;
-
-                // Initialize all strings with an empty string
-                for (int index = 0; index < types.size(); index++)
-                {
-                    if (types[index] == types::DataType::string)
-                    {
-                        log(debug)("[{}] Setting string {}:{} - {}", __func__, index, names[index], types[index].to_string());
-                        auto s = (std::string*)locations[area][index];
-                        *s = std::string("");
-                    }
-                }
-            }
-
-            allocated = true;
-        }
-
-        inline std::byte *get_item(std::size_t area, std::size_t index) noexcept
-        {
-            if (allocated) [[likely]]
-            {
-                return locations[area][index];
-            }
-            return nullptr;
-        }
-
-        inline std::byte *get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept
-        {
-            if (allocated) [[likely]]
-            {
-                return der_locations[area][index] + (order - 1) * derivative_size;
-            }
-            return nullptr;
-        }
-
-        inline void set_time(std::size_t area, uint64_t time) noexcept
-        {
-            if (allocated) [[likely]]
-            {
-                timestamps[area] = time;
-            }
-        }
-
-        inline void flag_new_data(std::size_t area)
-        {
-            if (allocated) [[likely]]
-            {
-                new_data_flags[area] = true;
-            }
-        }
-
-        int index_by_name(std::string name)
-        {
-            return index_name_map[name];
-        }
-
-        virtual void print(std::ostream &os) const
-        {
-            os << "DataStorage \n{\n"
-               << " name: " << name
-               << "  areas: " << areas
-               << ", allocated: " << allocated
-               << ", total_size: " << total_size
-               << ", pos: " << pos
-               << ", items: " << items
-               << ", index: " << index << "\n";
-
-            for (int i = 0; i < items; i++)
-            {
-                os << "  { position " << positions[i]
-                   << ", name " << names[i]
-                   << ", type " << types[i]
-                   << ", size " << sizes[i] << " }\n";
-            }
-            os << "}";
-        }
-
-        std::string export_area(int area)
-        {
-            std::ostringstream oss;
-            oss << "\nArea: \n"
-                << area;
-            for (int i = 0; i < items; i++)
-            {
-                auto item = get_item(area, i);
-                auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(types[i], item);
-                oss << "{ position " << positions[i]
-                    << ", der_position " << der_positions[i]
-                    << ", der_orders " << max_interpolation_orders[i]
-                    << ", der_loc " << (uint64_t)der_locations[area][i]
-                    << ", name: " << names[i]
-                    << ", type: " << types[i]
-                    << ", size: " << sizes[i]
-                    << ", value:" << data_type_str
-                    << " }\n";
-            }
-            return oss.str();
-        }
+        std::string export_area(int area);
     };
 }

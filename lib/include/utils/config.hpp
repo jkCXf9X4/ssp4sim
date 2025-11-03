@@ -33,41 +33,15 @@ namespace ssp4sim::utils
     class Config
     {
     public:
-        static inline nlohmann::json data_{};
+        static nlohmann::json data_;
 
         // Load (or reload) JSON config from a file path.
         // Throws std::runtime_error on I/O or parse errors.
-        static void loadFromFile(const std::string &path)
-        {
-            std::ifstream in(path);
-            if (!in)
-            {
-                throw std::runtime_error("Config: cannot open file: " + path);
-            }
-            std::ostringstream buf;
-            buf << in.rdbuf();
-            nlohmann::json parsed = nlohmann::json::parse(buf.str(),
-                                                          /* callback */ nullptr,
-                                                          /* allow exceptions */ true,
-                                                          /* ignore_comments */ true); // <-- enable comments with c++ style in json
+        static void loadFromFile(const std::string &path);
 
-            data_ = std::move(parsed);
-        }
+        static void data_available();
 
-        static void data_available()
-        {
-            if (data_.is_null())
-            {
-                throw std::runtime_error("Config: data is not loaded");
-            }
-        }
-
-        static std::string as_string()
-        {
-            data_available();
-
-            return data_.dump();
-        }
+        static std::string as_string();
 
         // Get a required value; throws if missing or type mismatch.
         template <class T>
@@ -117,55 +91,9 @@ namespace ssp4sim::utils
         }
 
         // Resolve "a.b.c" into a json node pointer (or nullptr if missing).
-        static const nlohmann::json *resolvePath(const std::string &dottedKey)
-        {
-            const nlohmann::json *cur = &data_;
-            if (dottedKey.empty())
-            {
-                return cur;
-            }
+        static const nlohmann::json *resolvePath(const std::string &dottedKey);
 
-            size_t pos = 0;
-            while (cur && pos != std::string::npos)
-            {
-                size_t dot = dottedKey.find('.', pos);
-                std::string key = (dot == std::string::npos)
-                                      ? dottedKey.substr(pos)
-                                      : dottedKey.substr(pos, dot - pos);
-
-                // Allow array indices: "servers.0.host"
-                if (!key.empty() && std::all_of(key.begin(), key.end(), ::isdigit))
-                {
-                    // numeric segment -> array index
-                    size_t idx = static_cast<size_t>(std::stoul(key));
-                    if (!cur->is_array() || idx >= cur->size())
-                    {
-                        return nullptr;
-                    }
-                    cur = &(*cur)[idx];
-                }
-                else
-                {
-                    if (!cur->is_object() || !cur->contains(key))
-                    {
-                        return nullptr;
-                    }
-                    cur = &(*cur)[key];
-                }
-
-                if (dot == std::string::npos)
-                {
-                    break;
-                }
-                pos = dot + 1;
-            }
-            return cur;
-        }
-
-        static std::string substitute_tags(std::string text)
-        {
-            return std::regex_replace(text, std::regex("\\[TIME\\]"), time::time_now_str());
-        }
+        static std::string substitute_tags(std::string text);
     };
 
 }

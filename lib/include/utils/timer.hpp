@@ -18,27 +18,11 @@ namespace ssp4sim::utils::time
 
         Logger log = Logger("ssp4cpp.common.ScopeTimer", LogLevel::debug);
 
-        ScopeTimer(std::string label) : label_(label), start_(clock::now()) {}
+        explicit ScopeTimer(std::string label);
 
-        ScopeTimer(std::string label, uint64_t *result_callback) : ScopeTimer(label)
-        {
-            result_callback_ns = result_callback;
-        }
+        ScopeTimer(std::string label, uint64_t *result_callback);
 
-        ~ScopeTimer()
-        {
-            const auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(clock::now() - start_);
-
-            // log: "<func> <label> took X µs"
-            if (result_callback_ns == nullptr)
-            {
-                log(info)("[ScopeTimer] {} took {}ns", label_, (double)dur.count() / ssp4sim::utils::time::nanoseconds_per_second);
-            }
-            else
-            {
-                *result_callback_ns = dur.count();
-            }
-        }
+        ~ScopeTimer();
 
     private:
         std::string label_;
@@ -53,17 +37,11 @@ namespace ssp4sim::utils::time
 
         // Logger log = Logger("Timer", LogLevel::debug);
 
-        Timer() : start_(clock::now()) {}
+        Timer();
 
-        uint64_t stop()
-        {
-            const auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(clock::now() - start_);
-            return dur.count();
-        }
+        uint64_t stop();
 
-        ~Timer()
-        {
-        }
+        ~Timer();
 
     private:
         clock::time_point start_;

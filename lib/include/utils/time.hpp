@@ -20,28 +20,11 @@ namespace ssp4sim::utils::time
     uint64_t constexpr seconds_per_hour = 3600;
     uint64_t constexpr hours_per_day = 24;
 
-    inline double ns_to_s(uint64_t t)
-    {
-        return static_cast<double>(t) / utils::time::nanoseconds_per_second;
-    }
+    double ns_to_s(uint64_t t);
 
-    inline uint64_t s_to_ns(double t)
-    {
-        return static_cast<uint64_t>(t * utils::time::nanoseconds_per_second);
-    }
+    uint64_t s_to_ns(double t);
 
-    inline auto time_now()
-    {
-        using namespace std::chrono;
-        return system_clock::now();
-    }
+    std::chrono::system_clock::time_point time_now();
 
-    inline auto time_now_str()
-    {
-        using namespace std::chrono;
-        auto now = system_clock::now();
-
-        // Format as YYYY-MM-DD_HH-MM-SS
-        return std::format("{:%Y-%m-%d_%H-%M-%S}", zoned_time{current_zone(), now});
-    }
+    std::string time_now_str();
 }

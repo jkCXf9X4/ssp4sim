@@ -36,39 +36,12 @@ namespace ssp4sim::utils
         bool stop = false;
 
     public:
-        ThreadPool(size_t num_threads)
-        {
-            workers.reserve(num_threads);
-            for (size_t i = 0; i < num_threads; ++i)
-            {
-                workers.emplace_back([this]
-                                     { worker_thread(); });
-            }
-            log(debug)("[{}] Threads started", __func__);
-        }
+        explicit ThreadPool(size_t num_threads);
 
         /**
          * @brief Stop all worker threads and wait for completion.
          */
-        ~ThreadPool()
-        {
-            log(debug)("[{}] Destroying threadpool", __func__);
-            stop = true;
-
-            // release all threads to ensure that they are closing down
-            // The que will always be empty when this occurs
-            task_semaphore.release(static_cast<std::ptrdiff_t>(workers.size()));
-
-            log(debug)("[{}] Waiting for all tasks to complete", __func__);
-            for (std::thread &worker : workers)
-            {
-                if (worker.joinable())
-                {
-                    worker.join();
-                }
-            }
-            log(debug)("[{}] Threadpool successfully destroyed", __func__);
-        }
+        ~ThreadPool();
 
         /**
          * @brief Queue a new task for execution.
@@ -106,39 +79,7 @@ namespace ssp4sim::utils
         /**
          * @brief Function executed by each worker thread to process tasks.
          */
-        void worker_thread()
-        {
-            while (true)
-            {
-                task_semaphore.acquire();
-
-                if (stop)
-                {
-                    break;
-                }
-
-                std::function<void()> task;
-                {
-                    std::unique_lock<std::mutex> lock(queue_mutex);
-                    if (!tasks.empty())
-                    {
-                        IF_LOG({
-                            log(debug)("[{}] Task starting", __func__);
-                        });
-                        
-                        task = std::move(tasks.front());
-                        tasks.pop();
-                    }
-                }
-
-                task();
-                IF_LOG({
-                    log(debug)("[{}] Task completed", __func__);
-                });
-            }
-
-            log(debug)("[{}] Thread finished", __func__);
-        }
+        void worker_thread();
     };
 
 } // namespace ssp4sim::utils
