@@ -29,11 +29,9 @@ namespace ssp4sim::graph
     class FmuModel final : public Invocable
     {
     public:
-        uint64_t delay = 0;
         bool is_delay_modeled = false;
 
-        uint64_t _start_time = 0;
-        uint64_t _end_time = 0;
+
 
         Logger log;
 
@@ -50,7 +48,7 @@ namespace ssp4sim::graph
 
         bool forward_derivatives = utils::Config::getOr<bool>("simulation.executor.forward_derivatives", true);
 
-        FmuModel(std::string name, handler::FmuInfo *fmu) :log(std::format("models.{}", name), LogLevel::info)
+        FmuModel(std::string name, handler::FmuInfo *fmu) : log(std::format("models.{}", name), LogLevel::info)
         {
             this->fmu = fmu;
             this->name = name;
@@ -140,15 +138,15 @@ namespace ssp4sim::graph
         }
 
         // hot path
-        inline void pre(uint64_t model_start_time, uint64_t valid_input_time)
+        inline void pre(uint64_t input_time)
         {
             IF_LOG({
-                log(trace)("[{}] Init. model_start_time {}, valid_input_time {}", __func__, model_start_time, valid_input_time);
+                log(trace)("[{}] Init. current_time {}, input_time {}", __func__, current_time, input_time);
             });
 
-            auto target_area = input_area->push(model_start_time);
+            auto target_area = input_area->push(input_time);
 
-            ConnectionInfo::retrieve_model_inputs(connections, target_area, valid_input_time);
+            ConnectionInfo::retrieve_model_inputs(connections, target_area, input_time);
 
             input_area->flag_new_data(target_area);
 
@@ -177,7 +175,7 @@ namespace ssp4sim::graph
 
             ConnectorInfo::read_values_from_model(outputs, output_area.get(), area);
 
-            if (forward_derivatives && _end_time != 0)
+            if (forward_derivatives && current_time != 0)
             {
                 auto model_timer = utils::time::Timer();
                 ConnectorInfo::fetch_output_derivatives(outputs, area);
@@ -194,51 +192,26 @@ namespace ssp4sim::graph
         {
 
             IF_LOG({
-                log(debug)("[{}] Init {}, stepdata: {}", __func__, name, step_data.to_string());
+                log(debug)("[{}] Init {}, current_time {}, stepdata: {}", __func__, name, current_time, step_data.to_string());
             });
 
-            _start_time = _end_time;
-            _end_time = step_data.end_time;
-            auto _timestep = _end_time - _start_time;
+            pre(step_data.input_time);
 
             IF_LOG({
-                log(trace)("[{}] {} start_time: {} valid_input_time: {} timestep: {} end_time: {}",
-                           __func__, this->name.c_str(), _start_time, step_data.valid_input_time, _timestep, _end_time);
+                log(debug)("[{}] Step until {}", __func__, step_data.end_time);
             });
-
-            pre(_start_time, step_data.valid_input_time);
 
             auto model_timer = utils::time::Timer();
-            IF_LOG({
-                log(debug)("[{}] Step until {}", __func__, _end_time);
-            });
-            _end_time = fmu->model->step_until(_end_time);
+            current_time = fmu->model->step_until(step_data.end_time);
             this->walltime_ns += model_timer.stop();
 
-            auto delayed_time = _end_time;
-
-            // compensate for a delay that is not included in the model
-            if (is_delay_modeled == false)
-            {
-                if (_start_time + delay > _end_time)
-                {
-                    delayed_time = _start_time + delay;
-                }
-                else
-                {
-                    IF_LOG({
-                        log(trace)("[{}] {}, A phase shift of {} will be introduced due to step size is larger than the delay",
-                                   __func__, this->name, _end_time - (_start_time + delay));
-                    });
-                }
-            }
-            post(delayed_time);
+            post(step_data.output_time);
 
             IF_LOG({
-                log(ext_trace)("[{}] Completed, delayed_time:", __func__, delayed_time);
+                log(ext_trace)("[{}] Completed, current_time:", __func__, current_time);
             });
 
-            return delayed_time;
+            return current_time;
         }
 
         // hot path

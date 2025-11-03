@@ -116,7 +116,7 @@ namespace ssp4sim::graph
                 log(ext_trace)("[{}] step data: {}", __func__, step_data.to_string());
             });
 
-            step_data.valid_input_time = step_data.end_time;
+            step_data.input_time = step_data.end_time;
 
             int completed = 0;
             reset_counters();
@@ -181,7 +181,7 @@ namespace ssp4sim::graph
                 log(ext_trace)("[{}] step data: {}", __func__, step_data.to_string());
             });
 
-            step_data.valid_input_time = step_data.end_time;
+            step_data.input_time = step_data.end_time;
 
             throw std::runtime_error("This is not imlemented");
 

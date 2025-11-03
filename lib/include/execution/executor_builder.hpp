@@ -44,17 +44,17 @@ namespace ssp4sim::graph
 
                     if (parallel_method == 1)
                     {
-                        log(info)("[{}] Running JacobiParallelTBB", __func__);
+                        log(info)("[{}] Executor: JacobiParallelTBB", __func__);
                         return std::make_unique<JacobiParallelTBB>(nodes);
                     }
                     else if (parallel_method == 2)
                     {
-                        log(info)("[{}] Running JacobiParallelSpin", __func__);
+                        log(info)("[{}] Executor: JacobiParallelSpin", __func__);
                         return std::make_unique<JacobiParallelSpin>(nodes, workers);
                     }
                     else if (parallel_method == 3)
                     {
-                        log(info)("[{}] Running JacobiParallelFutures", __func__);
+                        log(info)("[{}] Executor: JacobiParallelFutures", __func__);
                         return std::make_unique<JacobiParallelFutures>(nodes, workers);
                     }
                     else
@@ -64,7 +64,7 @@ namespace ssp4sim::graph
                 }
                 else
                 {
-                    log(info)("[{}] Running JacobiSerial", __func__);
+                    log(info)("[{}] Executor: JacobiSerial", __func__);
                     return std::make_unique<JacobiSerial>(nodes);
                 }
             }
@@ -72,18 +72,18 @@ namespace ssp4sim::graph
             {
                 if (utils::Config::getOr<bool>("simulation.executor.seidel.parallel", false))
                 {
-                    log(info)("[{}] Running ParallelSeidel", __func__);
+                    log(info)("[{}] Executor: ParallelSeidel", __func__);
                     return std::make_unique<ParallelSeidel>(nodes);
                 }
                 else
                 {
-                    log(info)("[{}] Running SerialSeidel", __func__);
+                    log(info)("[{}] Executor: SerialSeidel", __func__);
                     return std::make_unique<SerialSeidel>(nodes);
                 }
             }
             else if (executor_method == "custom_delay")
             {
-                log(info)("[{}] Running DelayExecutor", __func__);
+                log(info)("[{}] Executor: DelayExecutor", __func__);
                 return std::make_unique<DelayExecutor>(nodes);
             }
             else

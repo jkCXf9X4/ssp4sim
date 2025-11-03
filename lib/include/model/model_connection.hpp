@@ -51,7 +51,7 @@ namespace ssp4sim::graph
                << " }";
         }
 
-        static inline void retrieve_model_inputs(std::vector<ConnectionInfo> &connections, int target_area, uint64_t valid_input_time)
+        static inline void retrieve_model_inputs(std::vector<ConnectionInfo> &connections, int target_area, uint64_t input_time)
         {
             IF_LOG({
                 log(ext_trace)("[{}] Area {}", __func__, target_area);
@@ -64,7 +64,7 @@ namespace ssp4sim::graph
                     log(ext_trace)("[{}] Fetch valid data connection {}", __func__, connection.to_string());
                 });
 
-                auto source_area = connection.source_storage->get_valid_area(valid_input_time - connection.delay);
+                auto source_area = connection.source_storage->get_valid_area(input_time - connection.delay);
 
                 if (source_area != -1)
                 {
@@ -102,9 +102,9 @@ namespace ssp4sim::graph
                 }
                 else
                 {
-                    if (valid_input_time > 1)
+                    if (input_time > 1) // 1ns
                     {
-                        log(warning)("[{}] No valid data for t {}, connection: {}", __func__, valid_input_time, connection.to_string());
+                        log(warning)("[{}] No valid data for t {}, connection: {}", __func__, input_time, connection.to_string());
                     }
                 }
             }

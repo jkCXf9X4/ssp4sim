@@ -36,7 +36,7 @@ namespace ssp4sim::graph
         // hot path
         uint64_t invoke(StepData step_data) override final
         {
-            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep, step_data.start_time);
+            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             IF_LOG({
                 log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
@@ -73,7 +73,7 @@ namespace ssp4sim::graph
                 log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
             });
 
-            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep, step_data.start_time);
+            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             for (auto &node : nodes)
             {
@@ -107,7 +107,7 @@ namespace ssp4sim::graph
                 log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
             });
 
-            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep, step_data.start_time);
+            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             std::for_each(std::execution::par, nodes.begin(), nodes.end(),
                           [&](auto &model)
@@ -140,7 +140,7 @@ namespace ssp4sim::graph
                 log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
             });
 
-            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep, step_data.start_time);
+            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             pool.ready(nodes.size());
 

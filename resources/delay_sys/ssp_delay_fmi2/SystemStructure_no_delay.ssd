@@ -14,7 +14,7 @@
             </ssd:ParameterBinding>
         </ssd:ParameterBindings>
         <ssd:Elements>
-            <ssd:Component name="LET1" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="LET1" source="resources/Delay_delay_fmi2.fmu" information_delay="0.003" explicit_delay="false" 
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -82,7 +82,7 @@
                 </ssd:Connectors>
                 <ssd:ElementGeometry x1="-136" x2="-116" y1="4" y2="24" />
             </ssd:Component>
-            <ssd:Component name="LET2" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="LET2" source="resources/Delay_delay_fmi2.fmu" information_delay="0.002" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -140,7 +140,7 @@
                 </ssd:Connectors>
                 <ssd:ElementGeometry x1="-56" x2="-36" y1="10" y2="30" />
             </ssd:Component>
-            <ssd:Component name="LET3" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="LET3" source="resources/Delay_delay_fmi2.fmu" information_delay="0.005" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -198,7 +198,7 @@
                 </ssd:Connectors>
                 <ssd:ElementGeometry x1="-24" x2="-4" y1="10" y2="30" />
             </ssd:Component>
-            <ssd:Component name="LET4" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="LET4" source="resources/Delay_delay_fmi2.fmu" information_delay="0.005" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -256,7 +256,7 @@
                 </ssd:Connectors>
                 <ssd:ElementGeometry x1="8" x2="28" y1="10" y2="30" />
             </ssd:Component>
-            <ssd:Component name="LET5" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="LET5" source="resources/Delay_delay_fmi2.fmu" information_delay="0.007" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -313,7 +313,7 @@
                     </ssd:Connector>
                 </ssd:Connectors>
             </ssd:Component>
-            <ssd:Component name="C1" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="C1" source="resources/Delay_delay_fmi2.fmu" information_delay="0.001" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -330,7 +330,7 @@
                     </ssd:Connector>
                 </ssd:Connectors>
             </ssd:Component>
-            <ssd:Component name="C2" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="C2" source="resources/Delay_delay_fmi2.fmu" information_delay="0.001" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -347,7 +347,7 @@
                     </ssd:Connector>
                 </ssd:Connectors>
             </ssd:Component>
-            <ssd:Component name="C3" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="C3" source="resources/Delay_delay_fmi2.fmu" information_delay="0.002" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
@@ -364,7 +364,7 @@
                     </ssd:Connector>
                 </ssd:Connectors>
             </ssd:Component>
-            <ssd:Component name="C4" source="resources/Delay_delay_fmi2.fmu"
+            <ssd:Component name="C4" source="resources/Delay_delay_fmi2.fmu" information_delay="0.002" explicit_delay="false"
                 type="application/x-fmu-sharedlibrary">
                 <ssd:Connectors>
                     <ssd:Connector description="Delay time of output with respect to input signal"
