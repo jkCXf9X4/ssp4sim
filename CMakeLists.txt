@@ -11,14 +11,14 @@ option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
 option(SSP4SIM_BUILD_PYTHON_API "Build python api" OFF)
 
 # Use ccache if possible
-find_program(CCACHE_PROGRAM ccache)
-if(CCACHE_PROGRAM)
-    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
-    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
-    message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
-else()
-    message(STATUS "ccache not found; compiler launcher disabled")
-endif()
+# find_program(CCACHE_PROGRAM ccache)
+# if(CCACHE_PROGRAM)
+#     set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
+#     set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
+#     message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
+# else()
+#     message(STATUS "ccache not found; compiler launcher disabled")
+# endif()
 
 ## Link static
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")

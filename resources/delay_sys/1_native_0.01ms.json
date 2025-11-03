@@ -2,7 +2,7 @@
     "simulation" :
     {
         "ssp": "./resources/delay_sys/ssp_delay_fmi2",
-        "ssd": "native.ssd",
+        "ssd": "SystemStructure.ssd",
         "start_time":0.0,
         "stop_time":0.3,
         "timestep": 0.00001,

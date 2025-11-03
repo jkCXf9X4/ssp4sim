@@ -14,6 +14,6 @@ cmake --build build
 # ./build/public/ssp4sim_app/sim_app ./resources/delay_sys/native_no_delay_1ms.json
 # ./build/public/ssp4sim_app/sim_app ./resources/delay_sys/native_no_delay_2ms.json
 
-cp ./resources/delay_sys/reference/reference_system_native.csv ./results/reference_results.csv
+# cp ./resources/delay_sys/reference/reference_system_native.csv ./results/reference_results.csv
 
 python3 ./resources/delay_sys/reference/compare.py

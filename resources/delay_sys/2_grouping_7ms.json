@@ -3,15 +3,15 @@
     "simulation" :
     {
         "ssp": "./resources/delay_sys/ssp_delay_fmi2",
-        "ssd": "native.ssd",
+        "ssd": "SystemStructure.ssd",
         "start_time":0.0,
         "stop_time":0.3,
-        "timestep": 0.007,
+        "timestep": 0.006,
         "tolerance": 1e-4,
 
         "executor": 
         {
-            "method":"custom.delay",
+            "method":"custom_delay",
             
             "thread_pool_workers": 5,
             "forward_derivatives": false,
@@ -25,9 +25,9 @@
             {
                 "parallel": false
             },
-            "custom.delay":
+            "custom_delay":
             {
-                "sub_step":0.002
+                "sub_step":0.001
             }
             
         },

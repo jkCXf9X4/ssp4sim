@@ -163,7 +163,6 @@ def main() -> None:
     common_columns = set(reference_df.columns)
     common_columns.remove("sources.ramp_output")
     common_columns.remove("sources.ramp_freq_output")
-    common_columns = set([x for x in list(common_columns) if "input" not in x])
 
     for result_file in result_files:
         result_df = load_csv(result_file)
@@ -174,6 +173,10 @@ def main() -> None:
         raise RuntimeError("Common columns do not include 'time'; cannot compare datasets.")
 
     common_columns_list = ["time"] + sorted(col for col in common_columns if col != "time")
+
+    # common_columns = set([x for x in list(common_columns) if "input" not in x]) # Filter out inputs
+    common_columns_list = [x for x in common_columns_list if "output_1" not in x] # Filter out inputs
+
     print(f"Common columns: {', '.join(common_columns_list)}")
     print("Ref head():")
     print(reference_df[common_columns_list].head())

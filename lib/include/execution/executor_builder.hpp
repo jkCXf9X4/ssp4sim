@@ -81,7 +81,7 @@ namespace ssp4sim::graph
                     return std::make_unique<SerialSeidel>(nodes);
                 }
             }
-            else if (executor_method == "custom.delay")
+            else if (executor_method == "custom_delay")
             {
                 log(info)("[{}] Running DelayExecutor", __func__);
                 return std::make_unique<DelayExecutor>(nodes);

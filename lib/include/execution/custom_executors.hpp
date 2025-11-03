@@ -25,7 +25,7 @@ namespace ssp4sim::graph
         std::vector<Invocable *> g3;
         std::vector<Invocable *> g4;
 
-        uint64_t substep = utils::time::s_to_ns(utils::Config::getOr<double>("simulation.executor.custom.delay.sub_step", 0.001));
+        uint64_t substep = utils::time::s_to_ns(utils::Config::getOr<double>("simulation.executor.custom_delay.sub_step", 0.001));
 
         DelayExecutor(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {
@@ -78,7 +78,8 @@ namespace ssp4sim::graph
 
         void gauss_seidel(std::vector<Invocable *> _nodes_, StepData step_data)
         {
-            for (auto &node : nodes)
+            log(info)("New group");
+            for (auto &node : _nodes_)
             {
                 auto start = step_data.start_time;
                 while (start < step_data.end_time)
@@ -86,8 +87,6 @@ namespace ssp4sim::graph
                     node->invoke(StepData(start, start+substep, substep, start));
                     start += substep;
                 }
-
-
             }
         }
 
@@ -103,10 +102,10 @@ namespace ssp4sim::graph
             // trying to show that oder is not important
             gauss_seidel(g3, step_data);
             gauss_seidel(g1, step_data);
-
-            gauss_seidel(g2, step_data);
+            
             gauss_seidel(g4, step_data);
-
+            gauss_seidel(g2, step_data);
+            
             wait_for_result_collection();
 
             return step_data.end_time;
