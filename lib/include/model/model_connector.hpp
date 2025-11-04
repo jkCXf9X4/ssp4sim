@@ -27,11 +27,11 @@ namespace ssp4sim::graph
     class ConnectorInfo : public types::IPrintable
     {
     public:
-        static inline Logger log = Logger("ssp4sim.model.ConnectorInfo_s", LogLevel::info);
+        static Logger log;
 
         types::DataType type;
         size_t size;
-        std::string name; // for debug
+        std::string name;
 
         uint32_t index;
         uint64_t value_ref;
@@ -44,198 +44,26 @@ namespace ssp4sim::graph
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;
 
-        virtual void print(std::ostream &os) const
-        {
-            os << "ConnectorInfo { "
-               << "name: " << name
-               << ", type: " << type
-               << ", size: " << size
-               << ", index: " << index
-               << ", value_ref: " << value_ref
-               << ", forward_derivatives: " << forward_derivatives_order
-               << " }";
-        }
+        void print(std::ostream &os) const override;
 
-        static void set_start_values(std::map<std::string, ConnectorInfo> &connectors)
-        {
-            for (auto &[name, connector] : connectors)
-            {
-                if (connector.initial_value)
-                {
-                    auto data_ptr = (void *)connector.initial_value.get();
+        static void set_start_values(std::map<std::string, ConnectorInfo> &connectors);
 
-                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(connector.type, data_ptr);
-                    log(debug)("[{}] Set initial value for {}, {} : {}",
-                                __func__, name, connector.type.to_string(), data_type_str);
+        static void set_initial_input_area(ssp4sim::utils::RingStorage *input_area,
+                                           std::map<std::string, ConnectorInfo> &inputs,
+                                           uint64_t time);
 
-                    utils::write_to_model_(connector.type, *connector.fmu->model, connector.value_ref, data_ptr);
-                }
-            }
-        }
+        static void write_data_to_model(std::map<std::string, ConnectorInfo> &inputs,
+                                        ssp4sim::utils::RingStorage *storage,
+                                        int area);
 
-        static void set_initial_input_area(ssp4sim::utils::RingStorage *input_area, std::map<std::string, ConnectorInfo> &inputs, uint64_t time)
-        {
-            log(trace)("[{}] Set input start area", __func__);
-            auto area = input_area->push(time); //
+        static void read_values_from_model(std::map<std::string, ConnectorInfo> &outputs,
+                                           ssp4sim::utils::RingStorage *storage,
+                                           int area);
 
-            for (auto &[name, input] : inputs)
-            {
-                if (input.initial_value)
-                {
-                    auto data_ptr = (void *)input.initial_value.get();
-                    auto item = input_area->get_item(area, input.index);
+        static void apply_input_derivatives(std::map<std::string, ConnectorInfo> &inputs,
+                                            std::size_t area);
 
-                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, data_ptr);
-                    log(debug)("[{}] Set initial input value for {}, {} : {}",
-                                __func__, name, input.type.to_string(), data_type_str);
-
-                    // set input area to reflect the data to ensure that next iteration correct data will be used
-                    if (input.type == types::DataType::string)
-                    {
-                        // Move the internal string rep, not the std::string itself
-                        *(std::string *)item = *(std::string *)data_ptr;
-                    }
-                    else
-                    {
-                        memcpy(item, data_ptr, input.size);
-                    }
-                }
-            }
-            input_area->flag_new_data(area);
-
-            log(trace)("[{}] Input area after initialization: {}", __func__, input_area->data->export_area(area));
-        }
-
-
-        static inline void write_data_to_model(std::map<std::string, ConnectorInfo> &inputs, ssp4sim::utils::RingStorage *storage, int area)
-        {
-            IF_LOG({
-                log(debug)("[{}] Write data to model, time: {}", __func__, storage->data->timestamps[area]);
-            });
-
-            for (auto &[_, input] : inputs)
-            {
-                auto input_item = storage->get_item(area, input.index);
-
-                IF_LOG({
-                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, input_item);
-                    log(debug)("[{}] Copying input to model. {}, data: {}", __func__, input.to_string(), data_type_str);
-                });
-
-                utils::write_to_model_(input.type, *input.fmu->model, input.value_ref, (void *)input_item);
-            }
-        }
-
-        static inline void read_values_from_model(std::map<std::string, ConnectorInfo> &outputs, ssp4sim::utils::RingStorage *storage, int area)
-        {
-            IF_LOG({
-                log(debug)("[{}] Init, area {}, time {}", __func__, area, storage->data->timestamps[area]);
-            });
-
-            for (auto &[_, output] : outputs)
-            {
-                auto item = storage->get_item(area, output.index);
-                IF_LOG({
-                    log(ext_trace)("[{}] Copying ref {} ({}) to index {} ", __func__, output.value_ref, output.type.to_string(), output.index, (int64_t)item);
-                });
-
-                utils::read_from_model_(output.type, *output.fmu->model, output.value_ref, (void *)item);
-
-                IF_LOG({
-                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(output.type, item);
-                    log(debug)("[{}] Copying output from model. {}, data: {}", __func__, output.to_string(), data_type_str);
-                });
-            }
-            IF_LOG({
-                log(ext_trace)("[{}] Completed copy from model", __func__);
-            });
-        }
-
-
-        static inline void apply_input_derivatives(std::map<std::string, ConnectorInfo> &inputs, std::size_t area)
-        {
-            IF_LOG({
-                log(trace)("[{}] Init area {} ", __func__, area);
-            });
-
-            for (auto &[_, connector] : inputs)
-            {
-                if (!connector.forward_derivatives)
-                {
-                    continue;
-                }
-
-                for (int order = 1; order <= connector.forward_derivatives_order; ++order)
-                {
-                    auto der_ptr =  connector.storage->get_derivative(area, connector.index, order);
-                    if (der_ptr == nullptr)
-                    {
-                        continue;
-                    }
-
-                    double value = *reinterpret_cast<double *>(der_ptr);
-                    if (!connector.fmu->model->set_real_input_derivative(connector.value_ref, order, value))
-                    {
-                        log(warning)("[{}] Failed to set input derivative order {} for {} (status {})",
-                                    __func__,
-                                    order,
-                                    connector.name,
-                                    static_cast<int>(connector.fmu->model->last_status()));
-                    }
-                }
-            }
-            
-        }
-
-
-        static inline void fetch_output_derivatives(std::map<std::string, ConnectorInfo> &outputs, std::size_t area)
-        {
-            IF_LOG({
-                log(trace)("[{}] Init area {} ", __func__, area);
-            });
-
-            for (auto &[_, connector] : outputs)
-            {
-                // dont run at time 0.0
-                if (!connector.forward_derivatives)
-                {
-                    continue;
-                }
-
-                for (int order = 1; order <= connector.forward_derivatives_order; ++order)
-                {
-                    IF_LOG({
-                        log(trace)("[{}] get_derivative position for vr:{} name: {} order: {}", __func__, connector.value_ref, connector.name, order);
-                    });
-
-                    auto der_ptr = connector.storage->get_derivative(area, connector.index, order);
-                    if (der_ptr == nullptr)
-                    {
-                        log(warning)("[{}] Failed to find derivate item for {}", __func__, connector.name);
-                        continue;
-                    }
-                    IF_LOG({
-                        log(ext_trace)("[{}] get_derivative for {} ", __func__, connector.name);
-                    });
-
-                    double value = 0.0;
-                    if (!connector.fmu->model->get_real_output_derivative(connector.value_ref, order, value))
-                    {
-                        log(warning)("[{}] Failed to get output derivative order {} for {} (status {})",
-                                    __func__,
-                                    order,
-                                    connector.name,
-                                    static_cast<int>(connector.fmu->model->last_status()));
-                        continue;
-                    }
-                    IF_LOG({
-                        log(trace)("[{}] storing derivate for {} ", __func__, connector.name);
-                    });
-
-                    *reinterpret_cast<double *>(der_ptr) = value;
-                }
-            }
-           
-        }
+        static void fetch_output_derivatives(std::map<std::string, ConnectorInfo> &outputs,
+                                             std::size_t area);
     };
 }

@@ -23,42 +23,19 @@ namespace ssp4sim::graph
         bool use_input_time = false;
         bool use_output_time = false;
 
-        StepData() {}
+        StepData();
 
         StepData(uint64_t start_time,
                  uint64_t end_time,
-                 uint64_t timestep)
-        {
-            this->start_time = start_time;
-            this->end_time = end_time;
-            this->timestep = timestep;
-            this->input_time = this->start_time;
-            this->output_time = this->end_time;
-        }
+                 uint64_t timestep);
 
         StepData(uint64_t start_time,
                  uint64_t end_time,
                  uint64_t timestep,
                  uint64_t input_time,
-                 uint64_t output_time)
-        {
-            this->start_time = start_time;
-            this->end_time = end_time;
-            this->timestep = timestep;
-            this->input_time = input_time;
-            this->output_time = output_time;
-        }
+                 uint64_t output_time);
 
-        virtual void print(std::ostream &os) const
-        {
-            os << "StepData: \n{"
-               << " start_time: " << start_time
-               << " end_time: " << end_time
-               << " timestep: " << timestep
-               << " input_time: " << input_time
-               << " output_time: " << output_time;
-            os << " }\n";
-        }
+        void print(std::ostream &os) const override;
     };
 
     enum class TemporalType : int
@@ -82,21 +59,13 @@ namespace ssp4sim::graph
 
         uint64_t current_time = 0;
 
-        virtual void enter_init() {}
-        virtual void exit_init() {}
+        virtual void enter_init();
+        virtual void exit_init();
 
-        // simple wrapper for when enter and exit is not needed
-        virtual void init()
-        {
-            enter_init();
-            exit_init();
-        }
+        virtual void init();
 
         virtual uint64_t invoke(StepData data) = 0;
 
-        virtual void print(std::ostream &os) const
-        {
-            os << "Invocable:\n{}\n";
-        }
+        void print(std::ostream &os) const override;
     };
 }

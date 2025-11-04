@@ -23,38 +23,17 @@ namespace ssp4sim::analysis::graph
         std::string component;
         std::string variable_name;
 
-        AnalysisModelVariable() {}
+        AnalysisModelVariable();
 
-        AnalysisModelVariable(std::string component, std::string variable_name)
-        {
-            this->component = component;
-            this->variable_name = variable_name;
-            update_name();
-        }
+        AnalysisModelVariable(std::string component, std::string variable_name);
 
-        ~AnalysisModelVariable()
-        {
-            log(ext_trace)("[{}] Destroying AnalysisModelVariable", __func__);
-        }
+        ~AnalysisModelVariable();
 
-        void update_name()
-        {
-            this->name = AnalysisConnector::create_name(component, variable_name);
-        }
+        void update_name();
 
-        std::string get_connector_name()
-        {
-            return AnalysisConnector::create_name(component, variable_name);
-        }
+        std::string get_connector_name() const;
 
-        virtual void print(std::ostream &os) const
-        {
-            os << "AnalysisModelVariable {"
-               << "\nname: " << name
-               << "\ncomponent: " << component
-               << "\nvariable_name: " << variable_name
-               << "\n}\n";
-        }
+        void print(std::ostream &os) const override;
     };
 
 }

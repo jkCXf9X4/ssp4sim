@@ -31,36 +31,11 @@ namespace ssp4sim::analysis::graph
 
         AnalysisGraph(std::map<std::string, std::unique_ptr<AnalysisModel>> models_,
                       std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors_,
-                      std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_)
-            : models(std::move(models_)),
-              connectors(std::move(connectors_)),
-              connections(std::move(connections_))
+                      std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_);
 
-        {
-            auto m = ssp4sim::utils::map_ns::map_unique_to_ref(models);
-            nodes = ssp4sim::utils::map_ns::map_to_value_vector_copy(m);
-        }
+        std::vector<AnalysisModel *> get_start_nodes() const;
 
-        std::vector<AnalysisModel *> get_start_nodes() const
-        {
-            auto start_nodes = ssp4sim::utils::graph::Node::get_ancestors(nodes);
-            return start_nodes;
-        }
-
-        virtual void print(std::ostream &os) const
-        {
-            auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(ssp4sim::utils::graph::Node::cast_to_parent_ptrs(nodes));
-            
-            os << "Simulation Graph DOT:\n" 
-            << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
-            << ssp4sim::utils::graph::ssc_to_string(strong_system_graph)
-            << "\nStart nodes:\n";
-            
-            for (auto &model : get_start_nodes())
-            {
-                os << "Model: " << *model << "\n";
-            }
-        }
+        void print(std::ostream &os) const override;
 
     };
 

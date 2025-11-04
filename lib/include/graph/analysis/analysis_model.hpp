@@ -11,6 +11,11 @@
 #include <vector>
 #include <map>
 
+namespace ssp4sim::handler
+{
+    struct FmuInfo;
+}
+
 namespace ssp4sim::analysis::graph
 {
 
@@ -30,32 +35,14 @@ namespace ssp4sim::analysis::graph
         bool canInterpolateInputs = false;
         int maxOutputDerivativeOrder = 0;
 
-        AnalysisModel() {}
+        AnalysisModel();
 
-        AnalysisModel(std::string name, std::string fmu_name, handler::FmuInfo *fmu)
-        {
-            this->fmu = fmu;
-            this->name = name;
-            this->fmu_name = fmu_name;
-        }
+        AnalysisModel(std::string name, std::string fmu_name, handler::FmuInfo *fmu);
 
-        ~AnalysisModel()
-        {
-            log(ext_trace)("[{}] Destroying AnalysisModel", __func__);
-        }
+        ~AnalysisModel();
 
-        void set_interpolation_data(bool canInterpolateInputs, int maxOutputDerivativeOrder)
-        {
-            this->canInterpolateInputs = canInterpolateInputs;
-            this->maxOutputDerivativeOrder = maxOutputDerivativeOrder;
-        }
+        void set_interpolation_data(bool canInterpolateInputs, int maxOutputDerivativeOrder);
 
-        virtual void print(std::ostream &os) const
-        {
-            os << "Model { \n"
-               << "\nName: " << name
-               << "\nFmu: " << fmu_name
-               << "\n}\n";
-        }
+        void print(std::ostream &os) const override;
     };
 }

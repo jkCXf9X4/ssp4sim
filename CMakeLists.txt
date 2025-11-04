@@ -10,51 +10,61 @@ set(CMAKE_CXX_STANDARD 23)
 option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
 option(SSP4SIM_BUILD_PYTHON_API "Build python api" OFF)
 
-# Use ccache if possible
-# find_program(CCACHE_PROGRAM ccache)
-# if(CCACHE_PROGRAM)
-#     set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
-#     set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}" CACHE STRING "" FORCE)
-#     message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
-# else()
-#     message(STATUS "ccache not found; compiler launcher disabled")
-# endif()
+# Unsure how much this does SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}
+# -ffp-contract=fast -fno-math-errno -fno-trapping-math")
 
-## Link static
+# Link static
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++")
 
-# Faster linker
-## lld dos not work with flto
-# if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-#   message(STATUS "Using lld for Debug builds")
-#   foreach(var IN ITEMS
-#       CMAKE_EXE_LINKER_FLAGS_DEBUG
-#       CMAKE_SHARED_LINKER_FLAGS_DEBUG
-#       CMAKE_MODULE_LINKER_FLAGS_DEBUG)
-#     set(${var} "${${var}} -fuse-ld=lld")
-#   endforeach()
-# endif()
-
-
-# COMPILER
-
-# Optimize release builds
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG" CACHE STRING "" FORCE)
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG" CACHE STRING "" FORCE)
-
 # Debug builds keep symbols, no optimizations
-set(CMAKE_CXX_FLAGS_DEBUG "-O3 -g" CACHE STRING "" FORCE)
-set(CMAKE_C_FLAGS_DEBUG   "-O3 -g" CACHE STRING "" FORCE)
-
-# Unsure how much this does
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -ffp-contract=fast -fno-math-errno -fno-trapping-math")
-
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_definitions(_LOG_)
+
+  set(CMAKE_CXX_FLAGS_DEBUG
+      "-O2 -g"
+      CACHE STRING "" FORCE)
+  set(CMAKE_C_FLAGS_DEBUG
+      "-O2 -g"
+      CACHE STRING "" FORCE)
+
+  # Faster linker lld dos not work with flto
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    message(STATUS "Using lld for Debug builds")
+    foreach(var IN
+            ITEMS CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_SHARED_LINKER_FLAGS_DEBUG
+                  CMAKE_MODULE_LINKER_FLAGS_DEBUG)
+      set(${var} "${${var}} -fuse-ld=lld")
+    endforeach()
+  endif()
+
+  # Use ccache if possible
+  find_program(CCACHE_PROGRAM ccache)
+  if(CCACHE_PROGRAM)
+    set(CMAKE_C_COMPILER_LAUNCHER
+        "${CCACHE_PROGRAM}"
+        CACHE STRING "" FORCE)
+    set(CMAKE_CXX_COMPILER_LAUNCHER
+        "${CCACHE_PROGRAM}"
+        CACHE STRING "" FORCE)
+    message(STATUS "Using ccache: ${CCACHE_PROGRAM}")
+  else()
+    message(STATUS "ccache not found; compiler launcher disabled")
+  endif()
+
+  add_compile_definitions(_LOG_)
 endif()
 
+# Optimize release builds
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+
+  set(CMAKE_CXX_FLAGS_RELEASE
+      "${CMAKE_CXX_FLAGS_RELEASE} -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG"
+      CACHE STRING "" FORCE)
+  set(CMAKE_C_FLAGS_RELEASE
+      "${CMAKE_C_FLAGS_RELEASE} -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG"
+      CACHE STRING "" FORCE)
+
+endif()
 
 # Status
 
@@ -80,13 +90,12 @@ add_subdirectory(lib)
 # Public artifacts
 add_subdirectory(public/ssp4sim_app)
 
-if (SSP4SIM_BUILD_PYTHON_API)
-    add_subdirectory(public/python)
-ENDIF ()
+if(SSP4SIM_BUILD_PYTHON_API)
+  add_subdirectory(public/python)
+endif()
 
 # Tests
-if (SSP4SIM_BUILD_TEST)
-    message("Building tests\n")
-    add_subdirectory(tests)
-ENDIF ()
-
+if(SSP4SIM_BUILD_TEST)
+  message("Building tests\n")
+  add_subdirectory(tests)
+endif()

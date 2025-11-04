@@ -11,3 +11,6 @@
 #include "ssp4cpp/fmu.hpp"
 
 #include "nlohmann/json.hpp"
+
+#include "config.hpp"
+#include "utils/data_recorder.hpp"

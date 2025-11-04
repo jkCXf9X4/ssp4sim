@@ -32,22 +32,7 @@ namespace ssp4sim::handler
         std::unique_ptr<FmuInstance> fmi_instance;
         std::unique_ptr<CoSimulationModel> model;
 
-        FmuInfo(std::string name, ssp4cpp::Fmu *fmu)
-        {
-            this->model_name = fmu->md->modelName;
-            this->system_name = name;
-
-            this->fmu = fmu;
-
-            this->fmi_instance = std::make_unique<FmuInstance>(this->fmu->original_file, this->system_name);
-            if (!this->fmi_instance->supports_co_simulation())
-            {
-                throw std::runtime_error(std::format("FMU '{}' does not support co-simulation", this->system_name));
-            }
-            this->model = std::make_unique<CoSimulationModel>(*this->fmi_instance);
-
-            this->model_description = fmu->md.get();
-        }
+        FmuInfo(std::string name, ssp4cpp::Fmu *fmu);
         // can not be copied, has unique pointers
         FmuInfo(const FmuInfo &) = delete;
         FmuInfo &operator=(const FmuInfo &) = delete;
@@ -65,35 +50,8 @@ namespace ssp4sim::handler
 
         std::map<std::string, std::unique_ptr<FmuInfo>> fmu_info_map;
 
-        FmuHandler(ssp4cpp::Ssp *ssp)
-        {
-            this->ssp = ssp;
+        FmuHandler(ssp4cpp::Ssp *ssp);
 
-            log(debug)("[{}] Creating FMU map", __func__);
-            fmu_map = ssp4sim::ext::ssp::create_fmu_map(*ssp);
-            for (auto &[fmu_name, fmu] : fmu_map)
-            {
-                log(debug)("[{}] - FMU: {} - ", __func__, fmu_name, fmu->to_string());
-            }
-
-            // create a non owning variant to be passed around
-            fmu_ref_map = utils::map_ns::map_unique_to_ref(fmu_map);
-
-            log(debug)("[{}] Creating FMU Info map", __func__);
-            for (auto &[name, fmu] : fmu_ref_map)
-            {
-                fmu_info_map.emplace(name, make_unique<FmuInfo>(name, fmu));
-            }
-        }
-
-        void init()
-        {
-            log(trace)("[{}] Model init ", __func__);
-            for (auto &[_, fmu] : this->fmu_info_map)
-            {
-                fmu->model->instantiate(false, false);
-            }
-            log(trace)("[{}] Model init completed", __func__);
-        }
+        void init();
     };
 }
