@@ -6,7 +6,9 @@ add_library(ssp4sim_lib STATIC ${ALL_SRC})
 
 target_include_directories(
   ssp4sim_lib
-  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include
+  PUBLIC ${CMAKE_CURRENT_LIST_DIR}/public_include
+
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
          ${CMAKE_CURRENT_LIST_DIR}/include/execution
          ${CMAKE_CURRENT_LIST_DIR}/include/graph
          ${CMAKE_CURRENT_LIST_DIR}/include/graph/analysis
@@ -14,7 +16,7 @@ target_include_directories(
          ${CMAKE_CURRENT_LIST_DIR}/include/model
          ${CMAKE_CURRENT_LIST_DIR}/include/schema_extensions
          ${CMAKE_CURRENT_LIST_DIR}/include/utils
-  PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include_private)
+         )
 
 target_compile_options(ssp4sim_lib PRIVATE -Wfatal-errors)
 
