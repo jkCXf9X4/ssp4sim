@@ -2,6 +2,8 @@
 
 #include "utils/data_recorder.hpp"
 
+#include "config.hpp"
+
 
 namespace ssp4sim::graph
 {
@@ -14,6 +16,7 @@ namespace ssp4sim::graph
         {
             this->nodes[i]->id = static_cast<uint64_t>(i);
         }
+        wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
     }
 
     void ExecutionBase::set_recorder(utils::DataRecorder *dr)

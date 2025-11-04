@@ -1,10 +1,12 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
 
 #include "analysis_graph.hpp"
 #include "graph.hpp"
 
+#include "utils/data_recorder.hpp"
+
+#include "cutecpp/log.hpp"
 
 namespace ssp4sim::graph
 {

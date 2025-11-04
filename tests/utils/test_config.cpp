@@ -32,38 +32,38 @@ TEST_CASE("Config tests", "[config]")
 
     SECTION("Get required value")
     {
-        REQUIRE(Config::get<std::string>("name") == "test");
-        REQUIRE(Config::get<int>("value") == 123);
-        REQUIRE(Config::get<std::string>("nested.key") == "value");
-        REQUIRE(Config::get<std::string>("array.0") == "a");
+        REQUIRE(Config::getString("name") == "test");
+        REQUIRE(Config::getInt("value") == 123);
+        REQUIRE(Config::getString("nested.key") == "value");
+        REQUIRE(Config::getString("array.0") == "a");
     }
 
     SECTION("Get required value that does not exist")
     {
-        REQUIRE_THROWS(Config::get<std::string>("non_existent_key"));
+        REQUIRE_THROWS(Config::getString("non_existent_key"));
     }
 
     SECTION("Get required value with type mismatch")
     {
-        REQUIRE_THROWS(Config::get<int>("name"));
+        REQUIRE_THROWS(Config::getInt("name"));
     }
 
     SECTION("Get with default value")
     {
-        REQUIRE(Config::getOr<std::string>("name", "default") == "test");
-        REQUIRE(Config::getOr<int>("value", 456) == 123);
-        REQUIRE(Config::getOr<std::string>("nested.key", "default") == "value");
-        REQUIRE(Config::getOr<std::string>("array.0", "default") == "a");
+        REQUIRE(Config::getOr("name", std::string("default")) == "test");
+        REQUIRE(Config::getOr("value", 456) == 123);
+        REQUIRE(Config::getOr("nested.key", std::string("default")) == "value");
+        REQUIRE(Config::getOr("array.0", std::string("default")) == "a");
     }
 
     SECTION("Get with default value that does not exist")
     {
-        REQUIRE(Config::getOr<std::string>("non_existent_key", "default") == "default");
+        REQUIRE(Config::getOr("non_existent_key", std::string("default")) == "default");
     }
 
     SECTION("Get with default value with type mismatch")
     {
-        REQUIRE_THROWS(Config::getOr<int>("name", 456));
+        REQUIRE_THROWS(Config::getOr("name", 456));
     }
 
     SECTION("Resolve path")

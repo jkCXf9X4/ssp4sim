@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "FMI2_Enums_Ext.hpp"
+
 #include "cutecpp/log.hpp"
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterValues.hpp"

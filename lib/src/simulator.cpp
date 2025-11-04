@@ -17,7 +17,7 @@ namespace ssp4sim
         utils::Config::loadFromFile(config_path);
         log(debug)("[{}] -- Config:\n{}\n", __func__, utils::Config::as_string());
 
-        auto log_file = utils::Config::get<std::string>("simulation.log.file");
+        auto log_file = utils::Config::getString("simulation.log.file");
         log.enable_file_sink(log_file, false);
         log(info)("[{}] File log enabled, {}", __func__, log_file);
 
@@ -32,8 +32,8 @@ namespace ssp4sim
         }
 
         log(debug)("[{}] - Importing SSP", __func__);
-        auto ssp_path = utils::Config::get<std::string>("simulation.ssp");
-        auto ssd = utils::Config::getOr<std::string>("simulation.ssd", "SystemStructure.ssd");
+        auto ssp_path = utils::Config::getString("simulation.ssp");
+        auto ssd = utils::Config::getOr("simulation.ssd", std::string("SystemStructure.ssd"));
         ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path, ssd);
         log(debug)("[{}] -- SSP: {}", __func__, ssp->to_string());
 

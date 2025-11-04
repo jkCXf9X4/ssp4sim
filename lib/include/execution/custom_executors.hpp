@@ -27,7 +27,7 @@ namespace ssp4sim::graph
 
         std::vector<std::vector<Invocable *>> groups;
 
-        uint64_t substep = utils::time::s_to_ns(utils::Config::getOr<double>("simulation.executor.custom_delay.sub_step", 0.001));
+        uint64_t substep = utils::time::s_to_ns(utils::Config::getOr("simulation.executor.custom_delay.sub_step", 0.001));
 
         DelayExecutor(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {

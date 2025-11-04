@@ -1,8 +1,11 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
 
 #include "fmi4c_adapter.hpp"
+
+#include "utils/map.hpp"
+
+#include "cutecpp/log.hpp"
 
 #include <map>
 #include <memory>

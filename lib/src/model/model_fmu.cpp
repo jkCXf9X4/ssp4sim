@@ -24,7 +24,7 @@ namespace ssp4sim::graph
         this->name = std::move(name);
         input_area = std::make_unique<ssp4sim::utils::RingStorage>(10, this->name + ".input");
         output_area = std::make_unique<ssp4sim::utils::RingStorage>(40, this->name + ".output");
-        forward_derivatives = utils::Config::getOr<bool>("simulation.executor.forward_derivatives", true);
+        forward_derivatives = utils::Config::getOr("simulation.executor.forward_derivatives", true);
     }
 
     FmuModel::~FmuModel()
@@ -50,9 +50,9 @@ namespace ssp4sim::graph
         log(trace)("[{}] Input area: {}", __func__, input_area->to_string());
         log(trace)("[{}] Output area: {}", __func__, output_area->to_string());
 
-        double start_time = utils::Config::get<double>("simulation.start_time");
-        double end_time = utils::Config::get<double>("simulation.stop_time") + 10;
-        double tolerance = utils::Config::get<double>("simulation.tolerance");
+        double start_time = utils::Config::getDouble("simulation.start_time");
+        double end_time = utils::Config::getDouble("simulation.stop_time") + 10;
+        double tolerance = utils::Config::getDouble("simulation.tolerance");
 
         log(debug)("[{}] setup_experiment: {}", __func__, name);
         if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time), tolerance))

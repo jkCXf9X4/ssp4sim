@@ -21,8 +21,8 @@ namespace ssp4sim
         fmu_handler = std::make_unique<handler::FmuHandler>(this->ssp);
         recorder = std::make_unique<utils::DataRecorder>(result_file);
 
-        enable_recording = utils::Config::getOr<bool>("simulation.recording.enable", true);
-        result_file = utils::Config::get<std::string>("simulation.recording.result_file");
+        enable_recording = utils::Config::getOr("simulation.recording.enable", true);
+        result_file = utils::Config::getString("simulation.recording.result_file");
     }
 
     Simulation::~Simulation() = default;
@@ -74,9 +74,9 @@ namespace ssp4sim
 
         log(info)("[{}] Starting simulation", __func__);
 
-        uint64_t start_time = utils::time::s_to_ns(utils::Config::get<double>("simulation.start_time"));
-        uint64_t end_time = utils::time::s_to_ns(utils::Config::get<double>("simulation.stop_time"));
-        uint64_t timestep = utils::time::s_to_ns(utils::Config::get<double>("simulation.timestep"));
+        uint64_t start_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.start_time"));
+        uint64_t end_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.stop_time"));
+        uint64_t timestep = utils::time::s_to_ns(utils::Config::getDouble("simulation.timestep"));
 
         auto sim_timer = utils::time::Timer();
 

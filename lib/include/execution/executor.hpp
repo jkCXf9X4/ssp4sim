@@ -3,7 +3,7 @@
 #include "cutecpp/log.hpp"
 
 #include "invocable.hpp"
-#include "config.hpp"
+
 
 namespace ssp4sim::utils
 {
@@ -20,7 +20,7 @@ namespace ssp4sim::graph
         std::vector<Invocable *> nodes;
 
         utils::DataRecorder *recorder = nullptr;
-        const bool wait_for_recorder = utils::Config::getOr<bool>("simulation.recording.wait_for", false);
+        bool wait_for_recorder = false;
 
         ExecutionBase(std::vector<Invocable *> nodes);
 
