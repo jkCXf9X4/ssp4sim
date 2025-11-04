@@ -46,8 +46,6 @@ namespace ssp4sim::graph
         FullyImplicitly      // Not modeled
     };
 
-    using enum TemporalType;
-
     class Invocable : public utils::graph::Node, public virtual types::IPrintable
     {
     public:
