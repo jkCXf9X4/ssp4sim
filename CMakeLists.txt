@@ -10,8 +10,9 @@ set(CMAKE_CXX_STANDARD 23)
 option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
 option(SSP4SIM_BUILD_PYTHON_API "Build python api" OFF)
 
-# Unsure how much this does SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}
-# -ffp-contract=fast -fno-math-errno -fno-trapping-math")
+if (NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Debug)
+endif()
 
 # Link static
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")
@@ -19,6 +20,8 @@ set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++")
 
 # Debug builds keep symbols, no optimizations
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+
+  message("Building Debug!\n")
 
   set(CMAKE_CXX_FLAGS_DEBUG
       "-O2 -g"
@@ -56,6 +59,7 @@ endif()
 
 # Optimize release builds
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
+  message("Building Release!\n")
 
   set(CMAKE_CXX_FLAGS_RELEASE
       "${CMAKE_CXX_FLAGS_RELEASE} -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG"
