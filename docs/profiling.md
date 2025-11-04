@@ -13,6 +13,13 @@ ninjatracing build/.ninja_log > build/trace.json
 ```
 
 
+ninja -C build clean
+
+CCACHE_DISABLE=1 ninja -C build -d stats > build/build-stats.log
+
+CCACHE_DISABLE=1 ninja -C build -v > build/commands.log
+
+ninja -C build -t browse
 ## Runtime
 
 ```
@@ -29,3 +36,5 @@ perf report --dsos=sim_app  -i ./build/perf.data
 self.OMS.setCommandLineOption("--emitEvents=false")
 
 what does this oms flag do?
+
+

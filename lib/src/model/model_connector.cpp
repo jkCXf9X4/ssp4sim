@@ -1,18 +1,9 @@
 #include "model/model_connector.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
-#include "data_ring_storage.hpp"
-#include "handler/fmi4c_adapter.hpp"
-#include "handler/fmu_handler.hpp"
-#include "invocable.hpp"
-#include "ssp4sim_definitions.hpp"
-#include "utils/data_type.hpp"
-#include "utils/time.hpp"
 
-#include <cstring>
-#include <map>
-#include <string>
-#include <utility>
+#include "handler/fmu_handler.hpp"
+#include "data_ring_storage.hpp"
 
 namespace ssp4sim::graph
 {

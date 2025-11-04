@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "*.tpp": "cpp",
+        "CMakeLists.txt": "cmake",
         "ratio": "cpp",
         "array": "cpp",
         "functional": "cpp",
@@ -78,6 +79,7 @@
         "typeindex": "cpp",
         "stacktrace": "cpp",
         "bitset": "cpp",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "*.inc": "cpp"
     }
 }
