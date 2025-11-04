@@ -4,13 +4,14 @@
 #include "graph/analysis/analysis_model.hpp"
 #include "graph/analysis/analysis_connection.hpp"
 #include "model/model_fmu.hpp"
+#include "utils/data_ring_storage.hpp"
 #include "utils/map.hpp"
 
 #include <memory>
 
 namespace ssp4sim::graph
 {
-    GraphBuilder::GraphBuilder(AnalysisGraph *ag, utils::DataRecorder *recorder)
+    GraphBuilder::GraphBuilder(AnalysisGraph *ag, ssp4sim::utils::DataRecorder *recorder)
         : analysis_graph(ag), recorder(recorder)
     {
     }
@@ -133,7 +134,7 @@ namespace ssp4sim::graph
 
     std::unique_ptr<Graph> GraphBuilder::get_graph()
     {
-        return std::make_unique<Graph>(utils::map_ns::map_unique_to_ref(models), recorder);
+        return std::make_unique<Graph>(ssp4sim::utils::map_ns::map_unique_to_ref(models), recorder);
     }
 
     std::map<std::string, std::unique_ptr<Invocable>> GraphBuilder::get_models()
@@ -142,4 +143,3 @@ namespace ssp4sim::graph
     }
 
 }
-

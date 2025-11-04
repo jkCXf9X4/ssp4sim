@@ -1,23 +1,16 @@
 #pragma once
 
-#include "utils/node.hpp"
-#include "utils/map.hpp"
-#include "utils/time.hpp"
-
 #include "ssp4sim_definitions.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
+#include "cutecpp/log.hpp"
+#include "utils/data_type.hpp"
 
-#include "data_ring_storage.hpp"
-#include "data_recorder.hpp"
-#include "invocable.hpp"
-#include "config.hpp"
-
-#include "fmu_handler.hpp"
-
-#include <string>
 #include <vector>
-#include <functional>
+
+namespace ssp4sim::utils
+{
+    class RingStorage;
+}
 
 namespace ssp4sim::graph
 {
@@ -28,8 +21,8 @@ namespace ssp4sim::graph
         types::DataType type;
         size_t size;
 
-        utils::RingStorage *source_storage;
-        utils::RingStorage *target_storage;
+        ssp4sim::utils::RingStorage *source_storage;
+        ssp4sim::utils::RingStorage *target_storage;
         uint32_t source_index;
         uint32_t target_index;
 

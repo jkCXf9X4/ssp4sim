@@ -1,6 +1,7 @@
 #include "graph/analysis/analysis_connector.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
+#include "SSP1_SystemStructureParameter_Ext.hpp"
 
 #include <utility>
 

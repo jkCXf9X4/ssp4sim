@@ -21,19 +21,6 @@ namespace ssp4sim::ext::ssp
     std::map<std::string, std::unique_ptr<ssp4cpp::Fmu>> create_fmu_map(ssp4cpp::Ssp &ssp);
 
     
-    static std::vector<ssp4cpp::ssp1::ssd::TComponent *> get_resources(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd)
-    {
-        auto resources = std::vector<ssp4cpp::ssp1::ssd::TComponent *>();
-
-        if (ssd.System.Elements.has_value())
-        {
-            for (auto &comp : ssd.System.Elements.value().Components)
-            {
-                // Make sure that the object is cast as a non const
-                resources.push_back(const_cast<ssp4cpp::ssp1::ssd::TComponent *>(&comp));
-            }
-        }
-        return resources;
-    }
+    std::vector<ssp4cpp::ssp1::ssd::TComponent *> get_resources(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd);
 
 }

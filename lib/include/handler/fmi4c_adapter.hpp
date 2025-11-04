@@ -1,19 +1,10 @@
 #pragma once
 
 #include "cutecpp/log.hpp"
-#include "utils/time.hpp"
 
 #include <fmi4c.h>
 
-#include <cstdint>
-#include <cstdlib>
-#include <filesystem>
-#include <format>
-#include <mutex>
-#include <span>
-#include <stdexcept>
 #include <string>
-#include <vector>
 
 namespace ssp4sim::handler
 {

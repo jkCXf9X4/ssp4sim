@@ -3,25 +3,28 @@
 #include "execution/executor.hpp"
 #include "execution/executor_builder.hpp"
 #include "graph/graph_builder.hpp"
+#include "utils/map.hpp"
 #include "utils/data_recorder.hpp"
+
+#include "tarjan.hpp"
 
 namespace ssp4sim::graph
 {
 
-    Graph::Graph(std::map<std::string, Invocable *> node_map, utils::DataRecorder *recorder)
+    Graph::Graph(std::map<std::string, Invocable *> node_map, ssp4sim::utils::DataRecorder *recorder)
     {
         this->recorder = recorder;
         this->node_map = node_map;
-        nodes = utils::map_ns::map_to_value_vector_copy(this->node_map);
+        nodes = ssp4sim::utils::map_ns::map_to_value_vector_copy(this->node_map);
     }
 
     void Graph::print(std::ostream &os) const
     {
-        auto strong_system_graph = utils::graph::strongly_connected_components(utils::graph::Node::cast_to_parent_ptrs(nodes));
+        auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(ssp4sim::utils::graph::Node::cast_to_parent_ptrs(nodes));
 
         os << "Simulation Graph DOT:\n"
-           << utils::graph::Node::to_dot(nodes) << "\n"
-           << utils::graph::ssc_to_string(strong_system_graph) << "\n";
+           << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
+           << ssp4sim::utils::graph::ssc_to_string(strong_system_graph) << "\n";
 
         os << "node_map:\n";
         for (auto &[name, model] : node_map)

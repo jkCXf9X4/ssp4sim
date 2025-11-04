@@ -1,18 +1,6 @@
 #pragma once
 
-#include "utils/map.hpp"
-#include "utils/vector.hpp"
-#include "utils/time.hpp"
-
-#include "SSP_Ext.hpp"
-#include "SSP1_SystemStructureDescription_Ext.hpp"
-
-#include "FMI2_modelDescription_Ext.hpp"
-#include "FMI2_Enums_Ext.hpp"
-
 #include "fmu_handler.hpp"
-
-#include "data_type.hpp"
 
 #include "analysis_connection.hpp"
 #include "analysis_model.hpp"
@@ -20,13 +8,6 @@
 #include "analysis_internal.hpp"
 
 #include "analysis_graph.hpp"
-
-#include "ssp4sim_definitions.hpp"
-
-#include <list>
-#include <map>
-#include <set>
-#include <vector>
 
 namespace ssp4sim::analysis::graph
 {

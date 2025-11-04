@@ -1,27 +1,29 @@
 #pragma once
 
-#include "utils/node.hpp"
-#include "utils/map.hpp"
-#include "ssp4cpp/utils/string.hpp"
-#include "utils/time.hpp"
-#include "utils/timer.hpp"
-
 #include "ssp4sim_definitions.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
-
-#include "data_ring_storage.hpp"
-#include "data_recorder.hpp"
 #include "invocable.hpp"
-#include "config.hpp"
 
-#include "fmu_handler.hpp"
 #include "model_connection.hpp"
 #include "model_connector.hpp"
 
+#include "cutecpp/log.hpp"
+
 #include <string>
 #include <vector>
-#include <functional>
+#include <map>
+#include <memory>
+
+namespace ssp4sim::handler
+{
+    struct FmuInfo;
+}
+
+namespace ssp4sim::utils
+{
+    class RingStorage;
+    class DataRecorder;
+}
 
 namespace ssp4sim::graph
 {
@@ -33,20 +35,20 @@ namespace ssp4sim::graph
 
         Logger log;
 
-        handler::FmuInfo *fmu;
+        ssp4sim::handler::FmuInfo *fmu;
 
-        std::unique_ptr<utils::RingStorage> input_area;
-        std::unique_ptr<utils::RingStorage> output_area;
-        utils::DataRecorder *recorder;
+        std::unique_ptr<ssp4sim::utils::RingStorage> input_area;
+        std::unique_ptr<ssp4sim::utils::RingStorage> output_area;
+        ssp4sim::utils::DataRecorder *recorder;
 
         std::map<std::string, ConnectorInfo> inputs;
         std::map<std::string, ConnectorInfo> outputs;
         std::map<std::string, ConnectorInfo> parameters;
         std::vector<ConnectionInfo> connections;
 
-        bool forward_derivatives = utils::Config::getOr<bool>("simulation.executor.forward_derivatives", true);
+        bool forward_derivatives = false;
 
-        FmuModel(std::string name, handler::FmuInfo *fmu);
+        FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu);
 
         ~FmuModel();
 

@@ -2,17 +2,15 @@
 
 #include "SSP1_SystemStructureParameter_Ext.hpp"
 #include "SSP_Ext.hpp"
-#include "analysis_graph.hpp"
-#include "analysis_model.hpp"
-#include "analysis_connection.hpp"
-#include "analysis_connector.hpp"
-#include "analysis_internal.hpp"
-#include "fmu_handler.hpp"
+
 #include "utils/time.hpp"
 
 #include <format>
 #include <memory>
-#include <utility>
+// #include <utility>
+
+#include "SSP1_SystemStructureDescription_Ext.hpp"
+#include "FMI2_modelDescription_Ext.hpp"
 
 namespace ssp4sim::analysis::graph
 {

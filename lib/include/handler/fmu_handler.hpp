@@ -1,19 +1,23 @@
 #pragma once
 
-#include "utils/map.hpp"
-#include "utils/vector.hpp"
-
-#include "ssp4cpp/ssp.hpp"
-#include "ssp4cpp/fmu.hpp"
+#include "cutecpp/log.hpp"
 
 #include "fmi4c_adapter.hpp"
 
-#include <vector>
-#include <algorithm>
 #include <map>
-#include <set>
-#include <list>
-#include <format>
+#include <memory>
+#include <string>
+
+namespace ssp4cpp
+{
+    class Ssp;
+    class Fmu;
+}
+
+namespace ssp4cpp::fmi2::md
+{
+    struct fmi2ModelDescription;
+}
 
 namespace ssp4sim::handler
 {

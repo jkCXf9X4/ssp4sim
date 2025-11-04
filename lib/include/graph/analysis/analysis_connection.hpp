@@ -1,19 +1,17 @@
 #pragma once
 
 #include "utils/node.hpp"
-#include "utils/map.hpp"
-#include "ssp4cpp/utils/string.hpp"
-#include "utils/time.hpp"
+
 #include "cutecpp/log.hpp"
 
-#include "analysis_connector.hpp"
-#include "analysis_model.hpp"
-
+#include <cstdint>
 #include <string>
-#include <vector>
 
 namespace ssp4sim::analysis::graph
 {
+
+    class AnalysisConnector;
+    class AnalysisModel;
 
     class AnalysisConnection : public ssp4sim::utils::graph::Node
     {

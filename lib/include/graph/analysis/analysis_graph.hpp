@@ -2,11 +2,6 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "utils/node.hpp"
-#include "utils/map.hpp"
-#include "utils/time.hpp"
-#include "tarjan.hpp"
-
 #include "analysis_connection.hpp"
 #include "analysis_model.hpp"
 #include "analysis_connector.hpp"

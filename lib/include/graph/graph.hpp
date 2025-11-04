@@ -1,25 +1,23 @@
 #pragma once
 
 #include "cutecpp/log.hpp"
-#include "utils/map.hpp"
-#include "utils/vector.hpp"
-#include "utils/data_recorder.hpp"
-
 #include "ssp4sim_definitions.hpp"
 
 #include "invocable.hpp"
 #include "executor.hpp"
-#include "executor_builder.hpp"
 
-#include "config.hpp"
-
-#include <vector>
-#include <algorithm>
 #include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace ssp4sim::utils
+{
+    class DataRecorder;
+}
 
 namespace ssp4sim::graph
 {
-
     class Graph final : public Invocable
     {
     public:
@@ -29,11 +27,11 @@ namespace ssp4sim::graph
         std::vector<Invocable *> nodes;
 
         std::unique_ptr<ExecutionBase> executor;
-        utils::DataRecorder *recorder = nullptr;
+        ssp4sim::utils::DataRecorder *recorder = nullptr;
 
         Graph() = default;
 
-        Graph(std::map<std::string, Invocable *> node_map, utils::DataRecorder *recorder);
+        Graph(std::map<std::string, Invocable *> node_map, ssp4sim::utils::DataRecorder *recorder);
 
         void print(std::ostream &os) const override;
 

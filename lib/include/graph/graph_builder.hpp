@@ -2,23 +2,18 @@
 
 #include "cutecpp/log.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
-
 #include "analysis_graph.hpp"
-#include "data_recorder.hpp"
-
-#include "model_fmu.hpp"
 #include "graph.hpp"
 
-#include "ssp4sim_definitions.hpp"
-
-#include "utils/map.hpp"
-
-#include <map>
 
 namespace ssp4sim::graph
 {
     using AnalysisGraph = analysis::graph::AnalysisGraph;
+
+    namespace utils
+    {
+        class DataRecorder;
+    }
 
     class GraphBuilder
     {
@@ -26,11 +21,11 @@ namespace ssp4sim::graph
         Logger log = Logger("ssp4sim.graph.GraphBuilder", LogLevel::info);;
 
         AnalysisGraph *analysis_graph;
-        utils::DataRecorder *recorder;
+        ssp4sim::utils::DataRecorder *recorder;
 
         std::map<std::string, std::unique_ptr<Invocable>> models;
 
-        GraphBuilder(AnalysisGraph *ag, utils::DataRecorder *recorder);
+        GraphBuilder(AnalysisGraph *ag, ssp4sim::utils::DataRecorder *recorder);
 
         void build();
 

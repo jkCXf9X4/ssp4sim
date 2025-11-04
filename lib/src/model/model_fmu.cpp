@@ -17,13 +17,14 @@
 namespace ssp4sim::graph
 {
 
-    FmuModel::FmuModel(std::string name, handler::FmuInfo *fmu)
+    FmuModel::FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu)
         : log(std::format("models.{}", name), LogLevel::info)
     {
         this->fmu = fmu;
-        this->name = name;
-        input_area = std::make_unique<utils::RingStorage>(10, this->name + ".input");
-        output_area = std::make_unique<utils::RingStorage>(40, this->name + ".output");
+        this->name = std::move(name);
+        input_area = std::make_unique<ssp4sim::utils::RingStorage>(10, this->name + ".input");
+        output_area = std::make_unique<ssp4sim::utils::RingStorage>(40, this->name + ".output");
+        forward_derivatives = utils::Config::getOr<bool>("simulation.executor.forward_derivatives", true);
     }
 
     FmuModel::~FmuModel()
@@ -191,4 +192,3 @@ namespace ssp4sim::graph
     }
 
 }
-

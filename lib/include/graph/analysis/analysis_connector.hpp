@@ -1,28 +1,25 @@
 #pragma once
 
 #include "utils/node.hpp"
-#include "utils/map.hpp"
-#include "utils/time.hpp"
-
-#include "FMI2_Enums_Ext.hpp"
-#include "SSP1_SystemStructureParameter_Ext.hpp"
 
 #include "cutecpp/log.hpp"
-
 #include "ssp4sim_definitions.hpp"
 
-#include "ssp4cpp/utils/string.hpp"
-#include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
+#include "SSP1_SystemStructureParameter_Ext.hpp"
 
+#include <cstdint>
 #include <string>
-#include <vector>
+
+namespace ssp4sim::ext::ssp1::ssv
+{
+    struct StartValue;
+}
 
 namespace ssp4sim::analysis::graph
 {
-
+    
     class AnalysisModel;
 
-    // template class to enable constexpression invoke
     class AnalysisConnector : public ssp4sim::utils::graph::Node
     {
     public:
