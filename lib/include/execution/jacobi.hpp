@@ -17,6 +17,23 @@
 
 namespace ssp4sim::graph
 {
+class JacobiBase : public ExecutionBase
+    {
+    public:
+        Logger log = Logger("ssp4sim.execution.JacobiBase", LogLevel::info);
+
+
+        JacobiBase(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
+        {
+            log(info)("[{}] ", __func__);
+        }
+
+        void print(std::ostream &os) const override
+        {
+            os << "JacobiBase:\n{}\n";
+        }
+
+    };
 
     class JacobiSerial final : public ExecutionBase
     {
@@ -25,7 +42,10 @@ namespace ssp4sim::graph
 
         JacobiSerial(std::vector<Invocable *> nodes);
 
-        void print(std::ostream &os) const override;
+        void print(std::ostream &os) const override
+        {
+            os << "JacobiSerial:\n{}\n";
+        }
 
         uint64_t invoke(StepData step_data) override final;
     };

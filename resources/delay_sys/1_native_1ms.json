@@ -14,6 +14,7 @@
             
             "thread_pool_workers": 5,
             "forward_derivatives": false,
+            "sub_step":0.0001,
 
             "jacobi":
             {
@@ -26,7 +27,7 @@
             },
             "custom.delay":
             {
-                "sub_step":0.002
+                "parallel": false
             }
             
         },

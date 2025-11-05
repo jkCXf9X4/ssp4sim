@@ -94,7 +94,7 @@ def plot_reference(
     plt.title("Reference Signals")
     plt.legend(loc="upper right", ncol=2, fontsize="small")
     plt.grid(True, which="both", linestyle="--", linewidth=0.5)
-    plt.xlim(0, 0.12) # Set x-axis
+    plt.xlim(0.0, 0.12) # Set x-axis
     plt.ylim(-1.1, 1.1) # Set y-axis  
     plt.tight_layout()
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -174,8 +174,8 @@ def main() -> None:
 
     common_columns_list = ["time"] + sorted(col for col in common_columns if col != "time")
 
-    # common_columns = set([x for x in list(common_columns) if "input" not in x]) # Filter out inputs
-    common_columns_list = [x for x in common_columns_list if "output_1" not in x] # Filter out inputs
+    common_columns_list = set([x for x in list(common_columns_list) if "input_1" not in x]) # Filter out outputs
+    # common_columns_list = [x for x in common_columns_list if "output_1" not in x] # Filter out inputs
 
     print(f"Common columns: {', '.join(common_columns_list)}")
     print("Ref head():")

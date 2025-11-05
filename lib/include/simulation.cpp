@@ -17,12 +17,13 @@ namespace ssp4sim
     {
         this->ssp = ssp;
 
+        enable_recording = utils::Config::getOr("simulation.recording.enable", true);
+        result_file = utils::Config::getString("simulation.recording.result_file");
+
         log(info)("[{}] Creating simulation", __func__);
         fmu_handler = std::make_unique<handler::FmuHandler>(this->ssp);
         recorder = std::make_unique<utils::DataRecorder>(result_file);
 
-        enable_recording = utils::Config::getOr("simulation.recording.enable", true);
-        result_file = utils::Config::getString("simulation.recording.result_file");
     }
 
     Simulation::~Simulation() = default;

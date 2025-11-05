@@ -23,7 +23,7 @@ namespace ssp4sim::graph
         this->fmu = fmu;
         this->name = std::move(name);
         input_area = std::make_unique<ssp4sim::utils::RingStorage>(10, this->name + ".input");
-        output_area = std::make_unique<ssp4sim::utils::RingStorage>(40, this->name + ".output");
+        output_area = std::make_unique<ssp4sim::utils::RingStorage>(200, this->name + ".output");
         forward_derivatives = utils::Config::getOr("simulation.executor.forward_derivatives", true);
     }
 

@@ -4,7 +4,6 @@
 
 #include "invocable.hpp"
 
-
 namespace ssp4sim::utils
 {
     class DataRecorder;
@@ -21,6 +20,8 @@ namespace ssp4sim::graph
 
         utils::DataRecorder *recorder = nullptr;
         bool wait_for_recorder = false;
+
+        uint64_t sub_step = 0;
 
         ExecutionBase(std::vector<Invocable *> nodes);
 

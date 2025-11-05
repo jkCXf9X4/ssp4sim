@@ -5,6 +5,10 @@
 #include "config.hpp"
 
 
+#include <chrono>
+#include <thread>
+
+
 namespace ssp4sim::graph
 {
 
@@ -16,7 +20,9 @@ namespace ssp4sim::graph
         {
             this->nodes[i]->id = static_cast<uint64_t>(i);
         }
+
         wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
+        sub_step = utils::time::s_to_ns(utils::Config::getOr("simulation.executor.sub_step", utils::Config::getDouble("simulation.timestep")));
     }
 
     void ExecutionBase::set_recorder(utils::DataRecorder *dr)
@@ -29,6 +35,8 @@ namespace ssp4sim::graph
         if (wait_for_recorder && recorder)
         {
             recorder->wait_until_done();
+            std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
+            
         }
     }
 

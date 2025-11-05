@@ -6,7 +6,9 @@ cmake --build build
 ./build/public/ssp4sim_app/sim_app ./resources/delay_sys/1_native_0.01ms.json
 ./build/public/ssp4sim_app/sim_app ./resources/delay_sys/1_native_1ms.json
 ./build/public/ssp4sim_app/sim_app ./resources/delay_sys/1_native_2ms.json
+./build/public/ssp4sim_app/sim_app ./resources/delay_sys/1_native_3ms.json
 ./build/public/ssp4sim_app/sim_app ./resources/delay_sys/2_grouping_7ms.json
+./build/public/ssp4sim_app/sim_app ./resources/delay_sys/2_grouping_8ms.json
 
 
 # ./build/public/ssp4sim_app/sim_app ./resources/delay_sys/3_explicit_delay_1ms.json

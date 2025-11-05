@@ -54,7 +54,7 @@ namespace ssp4sim::utils
 
         std::uint16_t head = 0;
         std::size_t new_item_counter = 0;
-        const std::size_t rows = 50;
+        const std::size_t rows = 500;
 
         std::size_t row_size = 0;
 
@@ -63,7 +63,7 @@ namespace ssp4sim::utils
         std::unique_ptr<std::byte[]> data;
         std::vector<std::vector<bool>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
 
-        const uint64_t recording_interval = 0;
+        uint64_t recording_interval = 0;
         uint64_t last_print_time = 0;
         size_t printed_rows = 0;
 

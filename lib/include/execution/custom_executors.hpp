@@ -7,6 +7,8 @@
 #include "executor.hpp"
 #include "invocable.hpp"
 
+#include "executor_utils.hpp"
+
 #include "config.hpp"
 
 #include <assert.h>
@@ -27,11 +29,9 @@ namespace ssp4sim::graph
 
         std::vector<std::vector<Invocable *>> groups;
 
-        uint64_t substep = utils::time::s_to_ns(utils::Config::getOr("simulation.executor.custom_delay.sub_step", 0.001));
-
         DelayExecutor(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {
-            log(info)("[{}] DelayExecutor, substep: {}", __func__, substep);
+            log(info)("[{}] DelayExecutor, substep: {}", __func__, sub_step);
 
             auto source = node_from_name("Sources");
             auto let1 = node_from_name("LET1");
@@ -91,25 +91,9 @@ namespace ssp4sim::graph
                 auto macro_start = step_data.start_time + accumulated_delay;
                 auto macro_end = macro_start + step_data.timestep;
 
-                while (node->current_time < macro_end)
-                {
-                    auto substep_start = node->current_time;
-                    auto substep_end = node->current_time + substep;
+                auto s = StepData(macro_start, macro_end, sub_step);
+                invoke_sub_step(node, s, true);
 
-                    auto output = substep_start + node->delay > substep_end ? substep_start + node->delay : substep_end;
-
-                    auto s = StepData(substep_start, // start
-                                      substep_end,   // end
-                                      substep,       // step_size
-                                      substep_start, // input
-                                      output);       // output
-                    IF_LOG({
-                        log(info)("Node {}, current {} accumulated_delay: {}, step: {}",
-                                  node->name, node->current_time, accumulated_delay, s.to_string());
-                    });
-
-                    node->invoke(s);
-                }
                 accumulated_delay += node->delay;
             }
         }

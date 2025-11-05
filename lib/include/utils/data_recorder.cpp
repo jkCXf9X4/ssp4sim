@@ -4,6 +4,8 @@
 #include "utils/data_storage.hpp"
 #include "utils/time.hpp"
 
+#include "config.hpp"
+
 #include "FMI2_Enums_Ext.hpp"
 
 #include <condition_variable>
@@ -25,6 +27,9 @@ namespace ssp4sim::utils
     {
         log(ext_trace)("[{}] Constructor", __func__);
         log(debug)("[{}] Recording interval {}", __func__, recording_interval);
+        log(debug)("[{}] File {}, open {}", __func__, filename, file.is_open());
+
+        recording_interval = utils::time::s_to_ns(utils::Config::getOr("simulation.recording.interval", 1.0));
     }
 
     DataRecorder::~DataRecorder()
@@ -62,7 +67,7 @@ namespace ssp4sim::utils
 
     void DataRecorder::print_headers()
     {
-        log(ext_trace)("[{}] Init", __func__);
+        log(trace)("[{}] Init", __func__);
         file << "time";
         for (const auto &tracker : trackers)
         {
@@ -76,11 +81,11 @@ namespace ssp4sim::utils
 
     void DataRecorder::init()
     {
-        log(ext_trace)("[{}] Init", __func__);
+        log(trace)("[{}] Init", __func__);
         auto allocation_size = row_size * rows;
 
         data = std::make_unique<std::byte[]>(allocation_size);
-        log(ext_trace)("[{}] Completed allocation", __func__);
+        log(trace)("[{}] Completed allocation", __func__);
 
         updated_tracker.reserve(rows);
         for (int r = 0; r < rows; r++)
