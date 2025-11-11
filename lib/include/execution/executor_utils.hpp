@@ -39,10 +39,10 @@ namespace ssp4sim::graph
                               step_data.timestep,                                      // step_size
                               continuous_input ? substep_start : step_data.start_time, // input
                               output_time);                                            // output_time
-            IF_LOG({
-                log(info)("Node {}, current {} accumulated_delay: {}, step: {}",
-                          node->name, node->current_time, s.to_string());
-            });
+            // IF_LOG({
+            //     log(info)("Node {}, current {} accumulated_delay: {}, step: {}",
+            //               node->name, node->current_time, s.to_string());
+            // });
 
             node->invoke(s);
         }

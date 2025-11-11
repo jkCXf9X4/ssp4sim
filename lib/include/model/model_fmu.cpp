@@ -9,7 +9,6 @@
 #include "utils/time.hpp"
 #include "utils/timer.hpp"
 
-#include <format>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -18,7 +17,7 @@ namespace ssp4sim::graph
 {
 
     FmuModel::FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu)
-        : log(std::format("models.{}", name), LogLevel::info)
+        : log(Logger::format("models.{}", name), LogLevel::info)
     {
         this->fmu = fmu;
         this->name = std::move(name);
@@ -64,7 +63,7 @@ namespace ssp4sim::graph
         if (!fmu->model->enter_initialization_mode())
         {
             log(error)("[{}] enter_initialization_mode failed ", __func__);
-            throw std::runtime_error(std::format("[{}] enter_initialization_mode failed for {}", __func__, name));
+            throw std::runtime_error(Logger::format("[{}] enter_initialization_mode failed for {}", __func__, name));
         }
 
         log(ext_trace)("[{}] Set input area", __func__);
@@ -82,7 +81,7 @@ namespace ssp4sim::graph
         if (!fmu->model->exit_initialization_mode())
         {
             log(error)("[{}] exit_initialization_mode failed ", __func__);
-            throw std::runtime_error(std::format("[{}] exit_initialization_mode failed for {}", __func__, name));
+            throw std::runtime_error(Logger::format("[{}] exit_initialization_mode failed for {}", __func__, name));
         }
 
         log(ext_trace)("[{}] FmuModel init completed", __func__);

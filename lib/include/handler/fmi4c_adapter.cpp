@@ -3,10 +3,10 @@
 #include "utils/time.hpp"
 
 #include <cstdlib>
-#include <format>
 #include <stdexcept>
 #include <string>
 #include <utility>
+
 
 namespace ssp4sim::handler
 {
@@ -64,13 +64,13 @@ namespace ssp4sim::handler
         if (handle_ == nullptr)
         {
             auto message = detail::consume_last_message();
-            throw std::runtime_error(std::format("Failed to load FMU '{}': {}", fmu_path_, message.empty() ? "unknown error" : message));
+            throw std::runtime_error(Logger::format("Failed to load FMU '{}': {}", fmu_path_, message.empty() ? "unknown error" : message));
         }
 
         version_ = fmi4c_getFmiVersion(handle_);
         if (version_ != fmiVersion2)
         {
-            throw std::runtime_error(std::format("Unsupported FMI version {} for FMU '{}'", static_cast<int>(version_), fmu_path_));
+            throw std::runtime_error(Logger::format("Unsupported FMI version {} for FMU '{}'", static_cast<int>(version_), fmu_path_));
         }
     }
 
@@ -134,7 +134,7 @@ namespace ssp4sim::handler
 
         if (!instance_.supports_co_simulation())
         {
-            throw std::runtime_error(std::format("FMU '{}' does not support co-simulation", instance_.path()));
+            throw std::runtime_error(Logger::format("FMU '{}' does not support co-simulation", instance_.path()));
         }
 
         log(debug)("[{}] Instantiating FMU {}", __func__, instance_.path());
@@ -158,7 +158,7 @@ namespace ssp4sim::handler
         if (!success)
         {
             auto message = detail::consume_last_message();
-            throw std::runtime_error(std::format("Failed to instantiate FMU '{}': {}", instance_.path(), message.empty() ? "unknown error" : message));
+            throw std::runtime_error(Logger::format("Failed to instantiate FMU '{}': {}", instance_.path(), message.empty() ? "unknown error" : message));
         }
 
         return success;

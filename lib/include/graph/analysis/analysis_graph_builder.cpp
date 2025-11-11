@@ -5,9 +5,7 @@
 
 #include "utils/time.hpp"
 
-#include <format>
 #include <memory>
-// #include <utility>
 
 #include "SSP1_SystemStructureDescription_Ext.hpp"
 #include "FMI2_modelDescription_Ext.hpp"
@@ -86,7 +84,7 @@ namespace ssp4sim::analysis::graph
                         component_name, connector_name, value_reference, type);
 
                     c->causality = connector->kind;
-                    auto system_name = std::format("{}.{}", component_name, var->name);
+                    auto system_name = component_name + "." + var->name;
 
                     auto start_value = ext::fmi2::model_variables::get_variable_start_value(*var);
                     if (start_value)

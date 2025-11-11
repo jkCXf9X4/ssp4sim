@@ -1,5 +1,6 @@
 
-#include <format>
+#pragma once
+// #include <format>
 
 #include "cutecpp/log.hpp"
 

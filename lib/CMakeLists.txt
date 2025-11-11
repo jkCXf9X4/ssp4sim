@@ -24,7 +24,8 @@ find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PUBLIC nlohmann_json::nlohmann_json)
 
 if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
-  target_precompile_headers(ssp4sim_lib PRIVATE <pch.h>)
+  # Something is strange when turning this on, dont
+  #target_precompile_headers(ssp4sim_lib PRIVATE <pch.h>)
 endif()
 
 find_package(TBB CONFIG REQUIRED)

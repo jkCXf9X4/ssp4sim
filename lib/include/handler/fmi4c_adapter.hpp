@@ -5,6 +5,7 @@
 #include <fmi4c.h>
 
 #include <string>
+#include <filesystem>
 
 namespace ssp4sim::handler
 {

@@ -24,10 +24,11 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message("Building Debug!\n")
 
   set(CMAKE_CXX_FLAGS_DEBUG
-      "-O2 -g"
+      "-O1 -fno-lto -g"
       CACHE STRING "" FORCE)
+  # -ftime-report
   set(CMAKE_C_FLAGS_DEBUG
-      "-O2 -g"
+      "-O1 -fno-lto -g"
       CACHE STRING "" FORCE)
 
   # Faster linker lld dos not work with flto

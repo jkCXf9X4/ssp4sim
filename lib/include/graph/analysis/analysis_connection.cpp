@@ -2,7 +2,6 @@
 
 #include "graph/analysis/analysis_connector.hpp"
 
-#include <format>
 #include <utility>
 
 namespace ssp4sim::analysis::graph

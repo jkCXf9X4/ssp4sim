@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "cutecpp/log.hpp"
-
 #include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 
 #include "ssp4sim_definitions.hpp"
@@ -14,8 +12,6 @@ namespace ssp4sim::ext::fmi2
 
     namespace enums
     {
-        inline auto log = Logger("ssp4sim.ext.fmi2.enums", LogLevel::debug);
-
         /**
          * @brief  Return the in-memory size (in bytes) of a single value
          *         represented by the given DataType.

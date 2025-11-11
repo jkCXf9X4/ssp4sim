@@ -1,14 +1,16 @@
 
+#include "cutecpp/log.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 
-#include <format>
+#include <string>
 
 namespace ssp4sim::ext::fmi2
 {
 
     namespace enums
     {
+        inline auto log = Logger("ssp4sim.ext.fmi2.enums", LogLevel::debug);
 
         /**
          * @brief  Return the in-memory size (in bytes) of a single value
@@ -41,11 +43,11 @@ namespace ssp4sim::ext::fmi2
             switch (type)
             {
             case types::DataType::real:
-                return std::format("{}" , *(double *)data);
+                return std::to_string(*(double *)data);
             case types::DataType::boolean:
             case types::DataType::integer:
             case types::DataType::enumeration:
-                return std::format("{}" , *(int *)data);
+                return std::to_string(*(int *)data);
             case types::DataType::string:
                 return  *(std::string *)data;
             default:

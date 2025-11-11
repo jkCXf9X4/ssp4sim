@@ -4,10 +4,11 @@
 
 #include "FMI2_Enums_Ext.hpp"
 
-#include "cutecpp/log.hpp"
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterValues.hpp"
 
+#include "ssp4cpp/ssp.hpp"
+#include "cutecpp/log.hpp"
 
 namespace ssp4sim::ext::ssp1::ssv
 {

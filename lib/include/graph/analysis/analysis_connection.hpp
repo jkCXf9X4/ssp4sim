@@ -2,6 +2,7 @@
 
 #include "utils/node.hpp"
 
+#include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 #include "cutecpp/log.hpp"
 
 #include <cstdint>

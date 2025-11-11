@@ -4,7 +4,6 @@
 #include "ssp4cpp/ssp.hpp"
 #include "ssp4cpp/utils/string.hpp"
 
-#include <format>
 #include <memory>
 #include <stdexcept>
 #include <utility>
@@ -22,7 +21,7 @@ namespace ssp4sim::handler
         this->fmi_instance = std::make_unique<FmuInstance>(this->fmu->original_file, this->system_name);
         if (!this->fmi_instance->supports_co_simulation())
         {
-            throw std::runtime_error(std::format("FMU '{}' does not support co-simulation", this->system_name));
+            throw std::runtime_error(Logger::format("FMU '{}' does not support co-simulation", this->system_name));
         }
         this->model = std::make_unique<CoSimulationModel>(*this->fmi_instance);
 
