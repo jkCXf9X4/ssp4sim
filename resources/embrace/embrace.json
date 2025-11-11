@@ -2,27 +2,42 @@
     "simulation" :
     {
         "ssp": "./resources/embrace/embrace_scen.ssp",
+        "ssd": "SystemStructure.ssd",
         "start_time":0.0,
         "stop_time":1200,
         "timestep": 0.01,
         "tolerance": 1e-4,
 
-        "executor": "jacobi",
-        "thread_pool_workers": 5,
-        "forward_derivatives": true,
-        "jacobi":
+        "executor": 
         {
-            "parallel": false,
-            "feedthrough" : false,
-            "method" : 1
-        },
-        "seidel":
-        {
-            "parallel": false
+            "method":"jacobi",
+            
+            "thread_pool_workers": 5,
+            "forward_derivatives": true,
+
+            "jacobi":
+            {
+                "parallel": true,
+                "method" : 1
+            },
+            "seidel":
+            {
+                "parallel": false
+            }
+            
         },
 
-        "enable_recording": true,
-        "result_file": "./results/result.csv",
-        "result_interval": 0.25
+        "recording":
+        {
+            "enable": true,
+            "wait_for": false,
+            "interval": 0.25,
+            "result_file": "./results/embrace.csv"
+        },
+
+        "log":
+        {
+            "file": "./results/embrace.log"
+        }
     }
 }
