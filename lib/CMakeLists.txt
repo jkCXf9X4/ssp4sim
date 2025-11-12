@@ -18,6 +18,9 @@ target_include_directories(
          ${CMAKE_CURRENT_LIST_DIR}/include/utils
          )
 
+# The library is linked into shared modules (Python extension), so force PIC.
+set_target_properties(ssp4sim_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 target_compile_options(ssp4sim_lib PRIVATE -Wfatal-errors)
 
 find_package(nlohmann_json CONFIG REQUIRED)

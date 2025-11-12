@@ -71,13 +71,14 @@ ctest --test-dir build/tests currently malfunctions...
 ## Building python api
 Make sure to use the same version of python as you build for. First build the python bindings
 ```bash
-cmake -B build -S . -DSSP4SIM_BUILD_PYTHON=ON
+cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON
 cmake --build build
+
 
 python3 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
-pip install -e build/lib/python
+pip install -e ./build/public/python_api
 ```
 
 

@@ -96,7 +96,12 @@ add_subdirectory(lib)
 add_subdirectory(public/ssp4sim_app)
 
 if(SSP4SIM_BUILD_PYTHON_API)
-  add_subdirectory(public/python)
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message("Python build must be Release builds, no build will be generated"
+    message("Something with debug symbols..."
+  else()
+    add_subdirectory(public/python_api)
+  endif()
 endif()
 
 # Tests

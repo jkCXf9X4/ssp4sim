@@ -1,5 +1,2 @@
-pysspstandard
-omsimulator
-tomli
 
--e ./build/lib/python
+-e ./build/public/python_api
