@@ -4,8 +4,9 @@
         "ssp": "./resources/wingman_drone/wingman_drone.ssp",
         "ssd": "SystemStructure.ssd",
         "start_time":0.0,
-        "stop_time":2000,
-        "timestep": 1,
+        "stop_time_comment":"~3 hours",
+        "stop_time":10000,
+        "timestep": 10,
         "tolerance": 1e-4,
 
         "executor": 
@@ -30,7 +31,7 @@
         "recording":
         {
             "enable": true,
-            "wait_for": false,
+            "wait_for": true,
             "interval": 0.25,
             "result_file": "./results/wingman_drone.csv"
         },
