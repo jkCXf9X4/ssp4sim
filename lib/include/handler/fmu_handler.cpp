@@ -49,10 +49,7 @@ namespace ssp4sim::handler
     void FmuHandler::init()
     {
         log(trace)("[{}] Model init ", __func__);
-        for (auto &[_, fmu] : this->fmu_info_map)
-        {
-            fmu->model->instantiate(false, false);
-        }
+
         log(trace)("[{}] Model init completed", __func__);
     }
 

@@ -7,6 +7,9 @@
 #include <string>
 #include <utility>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
 namespace ssp4sim::handler
 {
@@ -42,7 +45,12 @@ namespace ssp4sim::handler
         }
     }
 
-    bool status_ok(fmi2Status status)
+    bool is_status_ok(fmi2Status status)
+    {
+        return status == fmi2OK;
+    }
+
+    bool assert_status_ok(fmi2Status status)
     {
         if (status == fmi2OK)
         {
@@ -120,6 +128,55 @@ namespace ssp4sim::handler
         terminate();
     }
 
+    static std::string formatWithVaList(const char *fmt, va_list args)
+    {
+        std::vector<char> buf(256);
+        int needed = vsnprintf(buf.data(), buf.size(), fmt, args);
+        if (needed < 0)
+            return "";
+
+        if (needed >= (int)buf.size())
+        {
+            buf.resize(needed + 1);
+            vsnprintf(buf.data(), buf.size(), fmt, args);
+        }
+
+        return std::string(buf.data());
+    }
+
+    static void myLogger(fmi2ComponentEnvironment env,
+                         fmi2String instanceName,
+                         fmi2Status status,
+                         fmi2String category,
+                         fmi2String message, ...)
+    {
+        va_list args;
+        va_start(args, message);
+        std::string msg = formatWithVaList(message, args);
+        va_end(args);
+
+        auto log = *((MyEnv *)env)->log;
+        log(debug)("[{}] ({}) status:{} {}", instanceName, category, std::to_string(status), msg);
+    }
+
+    static void *myAllocateMemory(size_t nobj, size_t size)
+    {
+        return calloc(nobj, size);
+    }
+
+    static void myFreeMemory(void *obj)
+    {
+        free(obj);
+    }
+
+    static void myStepFinished(fmi2ComponentEnvironment env, fmi2Status status)
+    {
+        // This is only used by Co-Simulation FMUs that do asynchronous steps.
+        // Often you can just leave it empty if you don't use that feature.
+        (void)env;
+        (void)status;
+    }
+
     bool CoSimulationModel::instantiate(bool visible, bool logging_on)
     {
         if (instantiated_)
@@ -140,13 +197,21 @@ namespace ssp4sim::handler
         log(debug)("[{}] Instantiating FMU {}", __func__, instance_.path());
         detail::ensure_message_callback_registered();
         detail::clear_last_message();
+
+        callbacks.logger = myLogger;
+        callbacks.allocateMemory = myAllocateMemory;
+        callbacks.freeMemory = myFreeMemory;
+        callbacks.stepFinished = myStepFinished;
+        env.log = std::make_unique<Logger>("fmu." + instance_.instance_name(), info);
+        callbacks.componentEnvironment = &env; // passed back as 'env' to the callbacks
+
         handle = fmi2_instantiate(instance_.raw(),
                                   fmi2CoSimulation,
-                                  nullptr,
-                                  ::calloc,
-                                  ::free,
-                                  nullptr,
-                                  nullptr,
+                                  callbacks.logger,
+                                  callbacks.allocateMemory,
+                                  callbacks.freeMemory,
+                                  callbacks.stepFinished,
+                                  callbacks.componentEnvironment,
                                   visible ? fmi2True : fmi2False,
                                   logging_on ? fmi2True : fmi2False);
 
@@ -182,15 +247,14 @@ namespace ssp4sim::handler
         double start = utils::time::ns_to_s(start_time);
         double stop = utils::time::ns_to_s(stop_time);
 
-        log(debug)("[{}] setup_experiment start:{} stop:{} tolerance:{}", __func__, start, stop, tolerance);
+        log(debug)("[{}] setup_experiment start:{} stop[{}]:{} tolerance[{}]:{}", __func__, start, stop_defined, stop, tolerance_defined, tolerance);
+
+        current_time_ = start_time;
+        log(debug)("[{}] start time:{}", __func__, current_time_);
 
         last_status_ = fmi2_setupExperiment(handle, tolerance_defined, tolerance, start, stop_defined, stop);
-        if (status_ok(last_status_))
-        {
-            current_time_ = start_time;
-            log(debug)("[{}] start:{}", __func__, current_time_);
-        }
-        return status_ok(last_status_);
+
+        return is_status_ok(last_status_);
     }
 
     bool CoSimulationModel::enter_initialization_mode()
@@ -201,7 +265,7 @@ namespace ssp4sim::handler
         }
 
         last_status_ = fmi2_enterInitializationMode(handle);
-        return status_ok(last_status_);
+        return is_status_ok(last_status_);
     }
 
     bool CoSimulationModel::exit_initialization_mode()
@@ -212,7 +276,7 @@ namespace ssp4sim::handler
         }
 
         last_status_ = fmi2_exitInitializationMode(handle);
-        return status_ok(last_status_);
+        return is_status_ok(last_status_);
     }
 
     uint64_t CoSimulationModel::step_until(uint64_t stop_time)
@@ -259,7 +323,7 @@ namespace ssp4sim::handler
         });
 
         last_status_ = fmi2_doStep(handle, current, step_value, fmi2True);
-        if (status_ok(last_status_))
+        if (assert_status_ok(last_status_))
         {
             current_time_ += step_size;
             return true;
@@ -278,7 +342,7 @@ namespace ssp4sim::handler
         last_status_ = fmi2_terminate(handle);
         fmi2_freeInstance(handle);
         instantiated_ = false;
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     uint64_t CoSimulationModel::get_simulation_time() const
@@ -296,7 +360,7 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2Integer order = static_cast<fmi2Integer>(derivative_order);
         last_status_ = fmi2_setRealInputDerivatives(handle, &vr, 1, &order, &value);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::get_real_output_derivative(uint64_t value_reference, int derivative_order, double &out)
@@ -304,28 +368,28 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2Integer order = static_cast<fmi2Integer>(derivative_order);
         last_status_ = fmi2_getRealOutputDerivatives(handle, &vr, 1, &order, &out);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::read_real(uint64_t value_reference, double &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getReal(handle, &vr, 1, &out);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::read_integer(uint64_t value_reference, int &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getInteger(handle, &vr, 1, &out);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::read_boolean(uint64_t value_reference, int &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getBoolean(handle, &vr, 1, &out);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::read_string(uint64_t value_reference, std::string &out)
@@ -333,7 +397,7 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2String value = nullptr;
         last_status_ = fmi2_getString(handle, &vr, 1, &value);
-        if (status_ok(last_status_))
+        if (assert_status_ok(last_status_))
         {
             out = std::string(value);
             return true;
@@ -351,21 +415,21 @@ namespace ssp4sim::handler
         // can be seen as an event
         fmi2Real data = 0.0;
         fmi2_getReal(handle, &vr, 1, &data);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::write_integer(uint64_t value_reference, int value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_setInteger(handle, &vr, 1, &value);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::write_boolean(uint64_t value_reference, int value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_setBoolean(handle, &vr, 1, &value);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
     bool CoSimulationModel::write_string(uint64_t value_reference, const std::string &value)
@@ -373,7 +437,7 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2String data = value.c_str();
         last_status_ = fmi2_setString(handle, &vr, 1, &data);
-        return status_ok(last_status_);
+        return assert_status_ok(last_status_);
     }
 
 }

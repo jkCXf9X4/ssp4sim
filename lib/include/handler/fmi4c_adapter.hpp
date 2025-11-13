@@ -38,12 +38,18 @@ namespace ssp4sim::handler
         fmiVersion_t version_ = fmiVersionUnknown;
     };
 
+    struct MyEnv{
+    std::unique_ptr<Logger> log = nullptr;
+    };
+
     class CoSimulationModel
     {
         FmuInstance &instance_;
         bool instantiated_ = false;
         uint64_t current_time_ = 0;
         fmi2Status last_status_ = fmi2OK;
+        MyEnv env;
+        fmi2CallbackFunctions callbacks;
 
     public:
         Logger log = Logger("ssp4sim.handler.CoSimulationModel", LogLevel::info);

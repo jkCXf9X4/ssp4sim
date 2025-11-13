@@ -70,7 +70,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
       "${CMAKE_C_FLAGS_RELEASE} -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG"
       CACHE STRING "" FORCE)
 
-  add_compile_definitions(_LOG_)
 endif()
 
 # Status

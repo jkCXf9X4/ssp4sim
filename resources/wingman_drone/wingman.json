@@ -4,8 +4,8 @@
         "ssp": "./resources/wingman_drone/wingman_drone.ssp",
         "ssd": "SystemStructure.ssd",
         "start_time":0.0,
-        "stop_time":1,
-        "timestep": 0.3,
+        "stop_time":2000,
+        "timestep": 1,
         "tolerance": 1e-4,
 
         "executor": 

@@ -45,18 +45,20 @@ namespace ssp4sim::graph
     void FmuModel::enter_init()
     {
         log(trace)("[{}] FmuModel init {}", __func__, name);
+        fmu->model->instantiate(false, false); // visible, logging on
 
         log(trace)("[{}] Input area: {}", __func__, input_area->to_string());
         log(trace)("[{}] Output area: {}", __func__, output_area->to_string());
 
         double start_time = utils::Config::getDouble("simulation.start_time");
-        double end_time = utils::Config::getDouble("simulation.stop_time") + 10;
+        double end_time = utils::Config::getDouble("simulation.stop_time");
         double tolerance = utils::Config::getDouble("simulation.tolerance");
 
         log(debug)("[{}] setup_experiment: {}", __func__, name);
         if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time), tolerance))
         {
-            log(error)("[{}] setup_experiment failed ", __func__);
+            log(error)("[{}] setup_experiment failed, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__);
+            throw std::runtime_error(Logger::format("[{}] setup_experiment failed for {}", __func__, name));
         }
 
         log(debug)("[{}] enter_initialization_mode: {}", __func__, name);
