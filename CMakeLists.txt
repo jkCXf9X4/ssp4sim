@@ -11,7 +11,7 @@ option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
 option(SSP4SIM_BUILD_PYTHON_API "Build python api" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug)
+  set(CMAKE_BUILD_TYPE Release)
 endif()
 
 # Link static
@@ -19,6 +19,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -static-libstdc++")
 
 # Debug builds keep symbols, no optimizations
+# Dont use this... its not really faster
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
   message("Building Debug!\n")
@@ -69,6 +70,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
       "${CMAKE_C_FLAGS_RELEASE} -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG"
       CACHE STRING "" FORCE)
 
+  add_compile_definitions(_LOG_)
 endif()
 
 # Status
@@ -97,8 +99,8 @@ add_subdirectory(public/ssp4sim_app)
 
 if(SSP4SIM_BUILD_PYTHON_API)
   if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message("Python build must be Release builds, no build will be generated"
-    message("Something with debug symbols..."
+    message("Python build must be Release builds, no build will be generated")
+    message("Something with debug symbols...")
   else()
     add_subdirectory(public/python_api)
   endif()

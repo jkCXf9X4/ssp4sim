@@ -1,0 +1,43 @@
+{
+    "simulation" :
+    {
+        "ssp": "./resources/wingman_drone/wingman_drone.ssp",
+        "ssd": "SystemStructure.ssd",
+        "start_time":0.0,
+        "stop_time":1,
+        "timestep": 0.3,
+        "tolerance": 1e-4,
+
+        "executor": 
+        {
+            "method":"jacobi",
+            
+            "thread_pool_workers": 5,
+            "forward_derivatives": true,
+
+            "jacobi":
+            {
+                "parallel": true,
+                "method" : 1
+            },
+            "seidel":
+            {
+                "parallel": false
+            }
+            
+        },
+
+        "recording":
+        {
+            "enable": true,
+            "wait_for": false,
+            "interval": 0.25,
+            "result_file": "./results/wingman_drone.csv"
+        },
+
+        "log":
+        {
+            "file": "./results/wingman_drone.log"
+        }
+    }
+}

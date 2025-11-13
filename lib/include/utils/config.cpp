@@ -109,7 +109,12 @@ namespace ssp4sim::utils
 
         std::ostringstream buf;
         buf << in.rdbuf();
-        nlohmann::json parsed = nlohmann::json::parse(buf.str(),
+        loadFromString(buf.str());
+    }
+
+    void Config::loadFromString(const std::string &config)
+    {
+        nlohmann::json parsed = nlohmann::json::parse(config,
                                                       /* callback */ nullptr,
                                                       /* allow exceptions */ true,
                                                       /* ignore_comments */ true);

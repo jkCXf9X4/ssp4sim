@@ -28,6 +28,7 @@ namespace ssp4sim::utils
         // Load (or reload) JSON config from a file path.
         // Throws std::runtime_error on I/O or parse errors.
         static void loadFromFile(const std::string &path);
+        static void loadFromString(const std::string &config);
 
         static void data_available();
 

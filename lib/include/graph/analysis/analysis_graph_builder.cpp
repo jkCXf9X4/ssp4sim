@@ -65,6 +65,11 @@ namespace ssp4sim::analysis::graph
                 auto connector_name = connector->name;
                 log(ext_trace)("[{}] Potential Connector: {} - {}", __func__, component_name, connector_name);
 
+                if(!fmu_handler->fmu_info_map.contains(component_name))
+                {
+                    log(error)("[{}] Fmu not found, {}", __func__, component_name);
+                    throw std::runtime_error("Fmu not found");
+                }
                 auto fmu = fmu_handler->fmu_info_map[component_name].get();
 
                 auto md = fmu->model_description;
@@ -177,6 +182,12 @@ namespace ssp4sim::analysis::graph
         log(trace)("[{}] Attaching connectors to models", __func__);
         for (auto &[name, connector] : connectors)
         {
+            if (!models.contains(connector->component_name))
+            {
+                log(error)("Attaching connector: Failed to attach connector to model, model {} not found for connector {}", connector->component_name, connector->name);
+                throw std::runtime_error("Failed to find model associated with connector ");
+            }
+
             auto model = models[connector->component_name].get();
             if (model->connectors.count(connector->name))
             {
@@ -191,12 +202,29 @@ namespace ssp4sim::analysis::graph
         {
             log(trace)("[{}] Connecting {}", __func__, connection->name);
 
+            bool source_model_exist = models.contains(connection->source_component_name);
+            bool target_model_exist = models.contains(connection->target_component_name);
+            if (!source_model_exist or !target_model_exist)
+            {
+                log(error)("Creating connection: Failed to find source or target model. Exists s: {} t: {}\n {}",
+                           source_model_exist, target_model_exist, connection->to_string());
+                throw std::runtime_error("Failed to find connection model");
+            }
+
             auto source_model = models[connection->source_component_name].get();
             auto target_model = models[connection->target_component_name].get();
-
+            
             auto source_connector_name = connection->get_source_connector_name();
             auto target_connector_name = connection->get_target_connector_name();
-
+            
+            bool source_connector_exist = connectors.contains(source_connector_name);
+            bool target_connector_exist = connectors.contains(target_connector_name);
+            if (!source_connector_exist or !target_connector_exist)
+            {
+                log(error)("Creating connection: Failed to find source or target connector. Found source: {} target: {}\n {}",
+                           source_connector_exist, target_connector_exist, connection->to_string());
+                throw std::runtime_error("Failed to find connection connector");
+            }
             auto source_connector = connectors[source_connector_name].get();
             auto target_connector = connectors[target_connector_name].get();
 

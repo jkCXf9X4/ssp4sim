@@ -45,6 +45,7 @@ namespace ssp4sim::ext::fmi2
             case types::DataType::real:
                 return std::to_string(*(double *)data);
             case types::DataType::boolean:
+                return std::to_string(*(bool*)data);
             case types::DataType::integer:
             case types::DataType::enumeration:
                 return std::to_string(*(int *)data);
