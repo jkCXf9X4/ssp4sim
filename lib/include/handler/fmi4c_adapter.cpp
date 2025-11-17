@@ -50,16 +50,6 @@ namespace ssp4sim::handler
         return status == fmi2OK;
     }
 
-    bool assert_status_ok(fmi2Status status)
-    {
-        if (status == fmi2OK)
-        {
-            return true;
-        }
-
-        throw std::runtime_error("Failed status check");
-    }
-
     FmuInstance::FmuInstance(const std::filesystem::path &path, std::string instance_name)
     {
         fmu_path_ = path.string();
@@ -293,10 +283,9 @@ namespace ssp4sim::handler
             if (!this->step(step_time))
             {
                 int status = last_status();
-                log(error)("Error! step() returned with status: {}", std::to_string(status));
                 if (status == 3)
                 {
-                    throw std::runtime_error("Execution failed");
+                    throw std::runtime_error(std::format("[{}] Model return status fmi2Error: Execution failed for model: {}", __func__, this->instance_.instance_name()));
                 }
             }
             sim_time = get_simulation_time();
@@ -323,11 +312,13 @@ namespace ssp4sim::handler
         });
 
         last_status_ = fmi2_doStep(handle, current, step_value, fmi2True);
-        if (assert_status_ok(last_status_))
+        if (is_status_ok(last_status_))
         {
             current_time_ += step_size;
             return true;
         }
+        log(error)("[{}] step(current: {}, step:{}) returned non ok, status: {} for model {}", __func__, current, step_value, std::to_string(last_status_), this->instance_.instance_name());
+
         return false;
     }
 
@@ -342,7 +333,12 @@ namespace ssp4sim::handler
         last_status_ = fmi2_terminate(handle);
         fmi2_freeInstance(handle);
         instantiated_ = false;
-        return assert_status_ok(last_status_);
+        auto terminated = is_status_ok(last_status_);
+        if (!terminated)
+        {
+            log(error)("[{}] Model {}, failed to terminate", __func__, this->instance_.instance_name());
+        }
+        return terminated;
     }
 
     uint64_t CoSimulationModel::get_simulation_time() const
@@ -360,7 +356,14 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2Integer order = static_cast<fmi2Integer>(derivative_order);
         last_status_ = fmi2_setRealInputDerivatives(handle, &vr, 1, &order, &value);
-        return assert_status_ok(last_status_);
+
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to set_real_input_derivative, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
     bool CoSimulationModel::get_real_output_derivative(uint64_t value_reference, int derivative_order, double &out)
@@ -368,28 +371,54 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2Integer order = static_cast<fmi2Integer>(derivative_order);
         last_status_ = fmi2_getRealOutputDerivatives(handle, &vr, 1, &order, &out);
-        return assert_status_ok(last_status_);
+
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to get_real_output_derivative, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
     bool CoSimulationModel::read_real(uint64_t value_reference, double &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getReal(handle, &vr, 1, &out);
-        return assert_status_ok(last_status_);
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to read_real, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
+
     }
 
     bool CoSimulationModel::read_integer(uint64_t value_reference, int &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getInteger(handle, &vr, 1, &out);
-        return assert_status_ok(last_status_);
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to read_integer, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
     bool CoSimulationModel::read_boolean(uint64_t value_reference, int &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getBoolean(handle, &vr, 1, &out);
-        return assert_status_ok(last_status_);
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to read_boolean, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
     bool CoSimulationModel::read_string(uint64_t value_reference, std::string &out)
@@ -397,11 +426,13 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2String value = nullptr;
         last_status_ = fmi2_getString(handle, &vr, 1, &value);
-        if (assert_status_ok(last_status_))
+        if (is_status_ok(last_status_))
         {
             out = std::string(value);
             return true;
         }
+
+        log(error)("[{}] Model {}, failed to read_string, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         return false;
     }
 
@@ -415,21 +446,42 @@ namespace ssp4sim::handler
         // can be seen as an event
         fmi2Real data = 0.0;
         fmi2_getReal(handle, &vr, 1, &data);
-        return assert_status_ok(last_status_);
+
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to write_real, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
     bool CoSimulationModel::write_integer(uint64_t value_reference, int value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_setInteger(handle, &vr, 1, &value);
-        return assert_status_ok(last_status_);
+        
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to write_integer, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
     bool CoSimulationModel::write_boolean(uint64_t value_reference, int value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_setBoolean(handle, &vr, 1, &value);
-        return assert_status_ok(last_status_);
+        
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to write_boolean, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
     bool CoSimulationModel::write_string(uint64_t value_reference, const std::string &value)
@@ -437,7 +489,14 @@ namespace ssp4sim::handler
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2String data = value.c_str();
         last_status_ = fmi2_setString(handle, &vr, 1, &data);
-        return assert_status_ok(last_status_);
+        
+        bool ok = is_status_ok(last_status_);
+        if (!ok)
+        {
+            log(error)("[{}] Model {}, failed to write_string, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        }
+
+        return ok;
     }
 
 }

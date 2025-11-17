@@ -3,7 +3,9 @@
 #include "executor_utils.hpp"
 
 #include <execution>
+#include <exception>
 #include <future>
+#include <mutex>
 #include <utility>
 
 namespace ssp4sim::graph
@@ -76,13 +78,32 @@ namespace ssp4sim::graph
         auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
         step.timestep = sub_step;
 
+        std::exception_ptr captured_exception;
+        std::mutex exception_mutex;
+
         std::for_each(std::execution::par, nodes.begin(), nodes.end(),
                       [&](auto &node)
                       {
-                        invoke_sub_step(node, step, false);
+                        try
+                        {
+                            invoke_sub_step(node, step, false);
+                        }
+                        catch (...)
+                        {
+                            std::scoped_lock lock(exception_mutex);
+                            if (!captured_exception)
+                            {
+                                captured_exception = std::current_exception();
+                            }
+                        }
                       });
 
         wait_for_result_collection();
+
+        if (captured_exception)
+        {
+            std::rethrow_exception(captured_exception);
+        }
 
         return step_data.end_time;
     }
@@ -137,4 +158,3 @@ namespace ssp4sim::graph
     }
 
 }
-

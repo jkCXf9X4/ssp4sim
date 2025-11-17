@@ -52,7 +52,9 @@ namespace ssp4sim::graph
         log(trace)("[{}] Output area: {}", __func__, output_area->to_string());
 
         double start_time = utils::Config::getDouble("simulation.start_time");
-        double end_time = utils::Config::getDouble("simulation.stop_time");
+        // The simulation may take one step beyond the stop_time. Some fmus may crash due to this
+        // therfore tell the fmus that stop + one step should be ok
+        double end_time = utils::Config::getDouble("simulation.stop_time") + utils::Config::getDouble("simulation.timestep");
         double tolerance = utils::Config::getDouble("simulation.tolerance");
 
         log(debug)("[{}] setup_experiment: {}", __func__, name);

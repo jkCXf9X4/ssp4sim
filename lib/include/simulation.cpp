@@ -81,8 +81,15 @@ namespace ssp4sim
 
         auto sim_timer = utils::time::Timer();
 
-        sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
-
+        try
+        {
+            sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
+        }
+        catch (const std::runtime_error& e)
+        {
+            log(error)(std::format("Simulation failed! {} ", e.what()));
+        }
+        
         auto sim_wall_time = sim_timer.stop();
 
         log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
