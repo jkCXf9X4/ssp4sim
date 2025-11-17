@@ -47,6 +47,7 @@ namespace ssp4sim::graph
         std::vector<ConnectionInfo> connections;
 
         bool forward_derivatives = false;
+        bool fmu_logging = false;
 
         FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu);
 

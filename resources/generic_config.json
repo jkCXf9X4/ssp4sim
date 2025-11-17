@@ -1,18 +1,45 @@
+
 {
     "simulation" :
     {
+        "ssp": "/home/eriro/pwa/2_work/ssp_airplane/build/ssp/aircraft.ssp",
+        "ssd": "SystemStructure.ssd",
         "start_time":0.0,
-        "end_time":2.0,
-        "timestep": 0.1,
+        "stop_time":835.0779411764706,
+        "timestep": 1.0,
+        "tolerance": 1e-4,
 
-        "executor": "jacobi",
-        "jacobi":
+        "executor": 
         {
-            "parallel": true
+            "method":"jacobi",
+            
+            "thread_pool_workers": 5,
+            "forward_derivatives": true,
+
+            "jacobi":
+            {
+                "parallel": true,
+                "method" : 1
+            },
+            "seidel":
+            {
+                "parallel": false
+            }
+            
         },
-        "seidel":
+
+        "recording":
         {
-            "parallel": true
+            "enable": true,
+            "wait_for": false,
+            "interval": 0.25,
+            "result_file": "/home/eriro/pwa/2_work/ssp_airplane/build/results/high_altitude_intercept_results.csv"
+        },
+
+        "log":
+        {
+            "file": "./build/results/sim.log",
+            "fmu": false
         }
     }
 }

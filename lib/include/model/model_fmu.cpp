@@ -24,6 +24,7 @@ namespace ssp4sim::graph
         input_area = std::make_unique<ssp4sim::utils::RingStorage>(10, this->name + ".input");
         output_area = std::make_unique<ssp4sim::utils::RingStorage>(200, this->name + ".output");
         forward_derivatives = utils::Config::getOr("simulation.executor.forward_derivatives", true);
+        fmu_logging = utils::Config::getOr("simulation.log.fmu", false);
     }
 
     FmuModel::~FmuModel()
@@ -45,7 +46,7 @@ namespace ssp4sim::graph
     void FmuModel::enter_init()
     {
         log(trace)("[{}] FmuModel init {}", __func__, name);
-        fmu->model->instantiate(false, false); // visible, logging on
+        fmu->model->instantiate(false, fmu_logging); // visible, logging on
 
         log(trace)("[{}] Input area: {}", __func__, input_area->to_string());
         log(trace)("[{}] Output area: {}", __func__, output_area->to_string());
@@ -57,14 +58,14 @@ namespace ssp4sim::graph
         log(debug)("[{}] setup_experiment: {}", __func__, name);
         if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time), tolerance))
         {
-            log(error)("[{}] setup_experiment failed, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__);
+            log(error)("[{}] setup_experiment failed for {}, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__, name);
             throw std::runtime_error(Logger::format("[{}] setup_experiment failed for {}", __func__, name));
         }
 
         log(debug)("[{}] enter_initialization_mode: {}", __func__, name);
         if (!fmu->model->enter_initialization_mode())
         {
-            log(error)("[{}] enter_initialization_mode failed ", __func__);
+            log(error)("[{}] enter_initialization_mode failed for {}", __func__, name);
             throw std::runtime_error(Logger::format("[{}] enter_initialization_mode failed for {}", __func__, name));
         }
 
@@ -82,7 +83,7 @@ namespace ssp4sim::graph
         log(debug)("[{}] exit_initialization_mode: {}", __func__, name);
         if (!fmu->model->exit_initialization_mode())
         {
-            log(error)("[{}] exit_initialization_mode failed ", __func__);
+            log(error)("[{}] exit_initialization_mode failed for {}", __func__, name);
             throw std::runtime_error(Logger::format("[{}] exit_initialization_mode failed for {}", __func__, name));
         }
 
