@@ -283,7 +283,7 @@ namespace ssp4sim::handler
             if (!this->step(step_time))
             {
                 int status = last_status();
-                if (status == 3)
+                if (status == 3 or status == 4)
                 {
                     throw std::runtime_error(std::format("[{}] Model return status fmi2Error: Execution failed for model: {}", __func__, this->instance_.instance_name()));
                 }

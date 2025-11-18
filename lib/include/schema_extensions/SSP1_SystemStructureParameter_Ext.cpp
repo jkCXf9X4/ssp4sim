@@ -184,7 +184,7 @@ namespace ssp4sim::ext::ssp1::ssv
 
                 log(debug)("[{}] Inserting parameter {} as {}", __func__, value.name, name);
                 parameter_map.insert_or_assign(name, value);
-                log(trace)("[{}] - Parameter {}, value {}", __func__, value.name, value.type.to_string());
+                log(trace)("[{}] - Parameter {} ", __func__, value.to_string());
             }
         }
         return parameter_map;

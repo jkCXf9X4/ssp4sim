@@ -75,7 +75,7 @@ cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON
 cmake --build build
 
 
-python3 -m venv venv
+python3.11 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
 pip install -e ./build/public/python_api

@@ -1,6 +1,6 @@
 
-Write tests for strings...
-
+[] The connectors should come from the FMUs and not from the ssp
+ - [] if they are not exposed they will be missed
 
 
 Analyze internal connections, this can be used for:
