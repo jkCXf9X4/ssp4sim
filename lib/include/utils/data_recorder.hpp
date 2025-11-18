@@ -61,7 +61,7 @@ namespace ssp4sim::utils
         std::map<std::uint64_t, std::uint64_t> row_time_map;
         std::map<std::uint64_t, std::uint64_t> time_row_map;
         std::unique_ptr<std::byte[]> data;
-        std::vector<std::vector<bool>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
+        std::vector<std::vector<std::atomic<bool>>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
 
         uint64_t recording_interval = 0;
         uint64_t last_print_time = 0;

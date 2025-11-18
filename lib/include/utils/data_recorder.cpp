@@ -87,19 +87,20 @@ namespace ssp4sim::utils
         data = std::make_unique<std::byte[]>(allocation_size);
         log(trace)("[{}] Completed allocation", __func__);
 
-        updated_tracker.reserve(rows);
-        for (int r = 0; r < rows; r++)
-        {
-            std::vector<bool> trackers_status;
-            trackers_status.reserve(trackers.size());
-            for (auto &t : trackers)
-            {
-                trackers_status.push_back(false);
-            }
+        const std::size_t cols = trackers.size();
 
-            updated_tracker.push_back(std::move(trackers_status));
-            reset_update_status(r);
+        updated_tracker.clear();
+        updated_tracker.reserve(rows);
+        for (std::size_t i = 0; i < rows; ++i)
+        {
+            std::vector<std::atomic<bool>> row(cols); // default-construct atoms
+            for (auto &cell : row)
+            {
+                cell.store(false);
+            }
+            updated_tracker.emplace_back(std::move(row));
         }
+
         print_headers();
     }
 
@@ -299,4 +300,3 @@ namespace ssp4sim::utils
     }
 
 }
-
