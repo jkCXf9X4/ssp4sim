@@ -47,6 +47,9 @@ The project is organized into the following directories:
 ```
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+cmake -S . -B build -DSSP4SIM_LOG_HOT_PATH=ON
+cmake -S . -B build -DSSP4SIM_LOG_HOT_PATH=OFF
 ```
 
 Possible dependencies
@@ -70,8 +73,11 @@ ctest --test-dir build/tests currently malfunctions...
 
 ## Building python api
 Make sure to use the same version of python as you build for. First build the python bindings
+The Build need to be a release build for the python api to build correctly
 ```bash
-cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON
+cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
+cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=OFF
+
 cmake --build build
 
 
