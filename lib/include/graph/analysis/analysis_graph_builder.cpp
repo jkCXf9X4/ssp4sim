@@ -52,20 +52,20 @@ namespace ssp4sim::analysis::graph
         std::map<std::string, std::unique_ptr<AnalysisConnector>> items;
         if (ssp.ssd->System.Elements.has_value())
         {
-            auto connectors = ssp4sim::ext::ssp1::elements::get_connectors(
-                ssp.ssd->System.Elements.value(),
-                {types::Causality::input, types::Causality::output, types::Causality::parameter});
 
             auto mapping_start_values = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(ssp);
 
-            for (auto &[index, connector, component] : connectors)
+            for (auto &component : ssp.ssd->System.Elements.value().Components)
             {
-                (void)index;
-                auto component_name = component->name.value();
-                auto connector_name = connector->name;
-                log(ext_trace)("[{}] Potential Connector: {} - {}", __func__, component_name, connector_name);
+                if (!component.name.has_value())
+                {
+                    log(error)("[{}] Component does not specify name attribute, Its optional but needed for this application {}", __func__);
+                    throw std::runtime_error("Component without name");
+                }
 
-                if(!fmu_handler->fmu_info_map.contains(component_name))
+                auto component_name = component.name.value();
+
+                if (!fmu_handler->fmu_info_map.contains(component_name))
                 {
                     log(error)("[{}] Fmu not found, {}", __func__, component_name);
                     throw std::runtime_error("Fmu not found");
@@ -74,28 +74,27 @@ namespace ssp4sim::analysis::graph
 
                 auto md = fmu->model_description;
 
-                log(ext_trace)("[{}] get_variable_by_name", __func__);
-                auto var = ext::fmi2::model_variables::get_variable_by_name(md->ModelVariables, connector_name);
+                auto variables = ext::fmi2::model_variables::get_variables(*md, {types::Causality::input, types::Causality::output, types::Causality::parameter});
 
-                if (var)
+                for (auto &var : variables)
                 {
-                    log(debug)("[{}] Creating Connector: {}.{}", __func__, component_name, var->name);
-                    auto value_reference = var->valueReference.value();
+                    log(debug)("[{}] Creating Connector: {}.{}", __func__, component_name, var.name);
+                    auto value_reference = var.valueReference.value();
                     log(ext_trace)("[{}] get_variable_type {}", __func__, value_reference);
-                    auto type = ext::fmi2::model_variables::get_variable_type(*var);
+                    auto type = ext::fmi2::model_variables::get_variable_type(var);
 
                     log(ext_trace)("[{}] Create AnalysisConnector", __func__);
                     auto c = std::make_unique<AnalysisConnector>(
-                        component_name, connector_name, value_reference, type);
+                        component_name, var.name, value_reference, type);
 
-                    c->causality = connector->kind;
-                    auto system_name = component_name + "." + var->name;
+                    c->causality = var.causality.value(); // it must have value to be selected in the list
+                    auto system_name = component_name + "." + var.name;
 
-                    auto start_value = ext::fmi2::model_variables::get_variable_start_value(*var);
+                    auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
                     if (start_value)
                     {
                         log(debug)("[{}] Applying start value for {}", __func__, system_name);
-                        c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(var->name, type);
+                        c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(var.name, type);
                         c->initial_value->store_value(start_value);
                     }
 
@@ -115,10 +114,6 @@ namespace ssp4sim::analysis::graph
                     }
 
                     items[c->name] = std::move(c);
-                }
-                else
-                {
-                    log(trace)("[{}] No variable found for name {}", __func__, connector_name);
                 }
             }
         }
@@ -213,10 +208,10 @@ namespace ssp4sim::analysis::graph
 
             auto source_model = models[connection->source_component_name].get();
             auto target_model = models[connection->target_component_name].get();
-            
+
             auto source_connector_name = connection->get_source_connector_name();
             auto target_connector_name = connection->get_target_connector_name();
-            
+
             bool source_connector_exist = connectors.contains(source_connector_name);
             bool target_connector_exist = connectors.contains(target_connector_name);
             if (!source_connector_exist or !target_connector_exist)

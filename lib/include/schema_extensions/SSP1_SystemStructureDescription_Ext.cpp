@@ -2,6 +2,7 @@
 #include "SSP1_SystemStructureDescription_Ext.hpp"
 
 #include "ssp4cpp/utils/string.hpp"
+#include "utils/vector.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -73,12 +74,6 @@ namespace ssp4sim::ext::ssp1
             }
         }
 
-        template <typename T, typename S>
-        bool is_in_list(T value, S list)
-        {
-            return std::find(list.begin(), list.end(), value) != list.end();
-        }
-
         IndexConnectorComponentTuples get_connectors(
             Elements &elements,
             std::initializer_list<types::Causality> causalities)
@@ -88,7 +83,7 @@ namespace ssp4sim::ext::ssp1
 
             std::copy_if(begin(in), end(in), std::back_inserter(out),
                          [causalities](IndexConnectorComponentTuple a)
-                         { return is_in_list(get<1>(a)->kind, causalities); });
+                         { return utils::list::is_in_list(get<1>(a)->kind, causalities); });
 
             reset_index(out);
 

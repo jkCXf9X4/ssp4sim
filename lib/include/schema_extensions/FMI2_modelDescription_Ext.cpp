@@ -3,6 +3,8 @@
 
 #include "ssp4sim_definitions.hpp"
 
+#include "utils/vector.hpp"
+
 #include <optional>
 #include <vector>
 #include <string>
@@ -74,23 +76,41 @@ namespace ssp4sim::ext::fmi2
             {
                 return &var.Boolean.value().start.value();
             }
-            else if (var.Enumeration.has_value()&& var.Enumeration.value().start.has_value())
+            else if (var.Enumeration.has_value() && var.Enumeration.value().start.has_value())
             {
                 return &var.Enumeration.value().start.value();
             }
-            else if (var.Integer.has_value()&& var.Integer.value().start.has_value())
+            else if (var.Integer.has_value() && var.Integer.value().start.has_value())
             {
                 return &var.Integer.value().start.value();
             }
-            else if (var.Real.has_value()&& var.Real.value().start.has_value())
+            else if (var.Real.has_value() && var.Real.value().start.has_value())
             {
                 return &var.Real.value().start.value();
             }
-            else if (var.String.has_value()&& var.String.value().start.has_value())
+            else if (var.String.has_value() && var.String.value().start.has_value())
             {
                 return &var.String.value().start.value();
             }
             return nullptr;
+        }
+
+        std::vector<fmi2ScalarVariable> get_variables(
+            fmi2ModelDescription &md,
+            std::initializer_list<types::Causality> causalities)
+        {
+            std::vector<fmi2ScalarVariable> variables;
+            for (auto &var : md.ModelVariables.ScalarVariable)
+            {
+                auto var_causality = var.causality.value_or(types::Causality::unknown);
+                
+                auto causality_present = utils::list::is_in_list(var_causality, causalities);
+                if (causality_present)
+                {
+                    variables.push_back(var); // get a copy of the item
+                }
+            }
+            return variables;
         }
     }
 
