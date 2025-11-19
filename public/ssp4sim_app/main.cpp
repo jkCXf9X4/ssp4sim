@@ -5,7 +5,7 @@
 int main(int argc, char *argv[])
 {
     auto log = Logger("main", LogLevel::debug);
-    log(ext_trace)("[{}] SSP4CPP", __func__);
+    log(info)("---SSP4SIM---", __func__);
 
     std::string config_path;
 

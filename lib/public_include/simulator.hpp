@@ -35,7 +35,7 @@ namespace ssp4sim
          *
          * @param config_path The path to the simulation configuration file.
          */
-        explicit Simulator(const std::string &config_path);
+        explicit Simulator(const std::string config_path);
 
         ~Simulator();
 
