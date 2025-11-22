@@ -35,8 +35,6 @@ namespace ssp4sim::graph
         if (wait_for_recorder && recorder)
         {
             recorder->wait_until_done();
-
-            std::this_thread::sleep_for(std::chrono::nanoseconds(1000));
         }
     }
 

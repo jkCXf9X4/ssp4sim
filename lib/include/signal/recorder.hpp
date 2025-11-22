@@ -6,6 +6,7 @@
 #include "ssp4sim_definitions.hpp"
 
 #include "signal/storage.hpp"
+#include "signal/record_tracker.hpp"
 
 #include <fstream>
 #include <mutex>
@@ -18,62 +19,6 @@
 
 namespace ssp4sim::signal
 {
-    struct Tracker
-    {
-        DataStorage *storage;
-
-        std::size_t size = 0;
-        std::size_t index = 0;
-        std::size_t row_pos = 0;
-
-        std::atomic<uint64_t> timestamp = 0;
-
-        Tracker() = default;
-
-        Tracker(const Tracker &other)
-            : storage(other.storage),
-              size(other.size),
-              index(other.index),
-              row_pos(other.row_pos),
-              timestamp(other.timestamp.load())
-        {
-        }
-
-        Tracker &operator=(const Tracker &other)
-        {
-            if (this != &other)
-            {
-                storage = other.storage;
-                size = other.size;
-                index = other.index;
-                row_pos = other.row_pos;
-                timestamp.store(other.timestamp.load());
-            }
-            return *this;
-        }
-
-        Tracker(Tracker &&other) noexcept
-            : storage(other.storage),
-              size(other.size),
-              index(other.index),
-              row_pos(other.row_pos),
-              timestamp(other.timestamp.load())
-        {
-        }
-
-        Tracker &operator=(Tracker &&other) noexcept
-        {
-            if (this != &other)
-            {
-                storage = other.storage;
-                size = other.size;
-                index = other.index;
-                row_pos = other.row_pos;
-                timestamp.store(other.timestamp.load());
-            }
-            return *this;
-        }
-    };
 
     /*
     * Solution build upon that both input and outputs are stored in the same row, if not then the output file will be incomplete....
@@ -86,7 +31,7 @@ namespace ssp4sim::signal
     class DataRecorder
     {
     public:
-        Logger log = Logger("ssp4sim.utils.DataRecorder", LogLevel::info);
+        Logger log = Logger("ssp4sim.record.DataRecorder", LogLevel::info);
 
         std::ofstream file;
         std::unique_ptr<std::thread> worker;
