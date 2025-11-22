@@ -148,7 +148,7 @@ def difference_plot(
 def main() -> None:
     script_dir = Path(__file__).resolve().parent
     reference_path = script_dir / "reference_system_native.csv"
-    results_dir = script_dir.parents[2] / "results" /"cleaned"
+    results_dir = script_dir.parents[2] / "results"
 
     result_files = sorted(results_dir.glob("*.csv"))
     if not result_files:

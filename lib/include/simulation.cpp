@@ -17,12 +17,18 @@ namespace ssp4sim
     {
         this->ssp = ssp;
 
-        enable_recording = utils::Config::getOr("simulation.recording.enable", true);
-        result_file = utils::Config::getString("simulation.recording.result_file");
-
         log(info)("[{}] Creating simulation", __func__);
         fmu_handler = std::make_unique<handler::FmuHandler>(this->ssp);
-        recorder = std::make_unique<utils::DataRecorder>(result_file);
+
+        auto enable_recording = utils::Config::getOr("simulation.recording.enable", true);
+        auto result_file = utils::Config::getOr("simulation.recording.result_file", std::string("./result/data.scv"));
+        auto recording_interval = utils::time::s_to_ns(utils::Config::getOr("simulation.recording.interval", 1.0));
+        auto wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
+
+        if (enable_recording)
+        {
+            recorder = std::make_unique<utils::DataRecorder>(result_file, recording_interval, wait_for_recorder);
+        }
 
     }
 
@@ -68,7 +74,7 @@ namespace ssp4sim
      */
     void Simulation::simulate()
     {
-        if (enable_recording)
+        if (recorder)
         {
             recorder->start_recording();
         }
@@ -94,7 +100,11 @@ namespace ssp4sim
 
         log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
 
-        recorder->stop_recording();
+        if (recorder)
+        {
+            recorder->stop_recording();
+        }
+
         log(info)("[{}] Simulation completed\n", __func__);
 
         uint64_t total_model_time = 0;

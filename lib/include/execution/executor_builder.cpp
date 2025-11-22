@@ -73,6 +73,11 @@ namespace ssp4sim::graph
             log(info)("[{}] Executor: DelayExecutor", __func__);
             return std::make_unique<DelayExecutor>(nodes);
         }
+        else if (executor_method == "custom_delay_2")
+        {
+            log(info)("[{}] Executor: DelayExecutor2", __func__);
+            return std::make_unique<DelayExecutor2>(nodes);
+        }
 
         throw std::runtime_error("Unknown executor method");
     }

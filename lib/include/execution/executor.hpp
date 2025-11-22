@@ -30,5 +30,10 @@ namespace ssp4sim::graph
         void wait_for_result_collection();
 
         void init() override;
+
+        virtual void print(std::ostream &os) const
+        {
+            os << this->name << ":\n{}\n";
+        }
     };
 }

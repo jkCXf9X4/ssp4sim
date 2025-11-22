@@ -55,7 +55,7 @@ TEST_CASE("DataRecorder initialization and cleanup", "[DataRecorder]")
 
     // Scope for the DataRecorder to ensure it's destructed properly
     {
-        DataRecorder recorder(test_filename);
+        DataRecorder recorder(test_filename, 1000, false);
         // Check if file was created
         REQUIRE(std::filesystem::exists(test_filename));
     }
@@ -72,7 +72,7 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
     const std::string test_filename = "build/test_recorder_headers.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename);
+    DataRecorder recorder(test_filename, 1000, false);
 
     DataStorage storage(2, "signals");
     storage.add("signals.real", DataType::real, 1);
@@ -102,7 +102,7 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     const std::string test_filename = "build/test_recorder_rows.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename);
+    DataRecorder recorder(test_filename, 1000, false);
 
     DataStorage storage(2, "signals");
     storage.add("signals.temperature", DataType::real, 1);
@@ -141,7 +141,7 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     const std::string test_filename = "build/test_recorder_multistorage.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename);
+    DataRecorder recorder(test_filename, 1000, false);
 
     DataStorage primary(2, "primary");
     primary.add("primary.temperature", DataType::real, 1);

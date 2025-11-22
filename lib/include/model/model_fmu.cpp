@@ -52,13 +52,15 @@ namespace ssp4sim::graph
         log(trace)("[{}] Output area: {}", __func__, output_area->to_string());
 
         double start_time = utils::Config::getDouble("simulation.start_time");
-        // The simulation may take one step beyond the stop_time. Some fmus may crash due to this
-        // therfore tell the fmus that stop + one step should be ok
-        double end_time = utils::Config::getDouble("simulation.stop_time") + utils::Config::getDouble("simulation.timestep");
+        double timestep = utils::Config::getDouble("simulation.timestep");
+        double end_time = utils::Config::getDouble("simulation.stop_time");
         double tolerance = utils::Config::getDouble("simulation.tolerance");
 
         log(debug)("[{}] setup_experiment: {}", __func__, name);
-        if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time), tolerance))
+
+        // The simulation may take one step beyond the stop_time. Some fmus may crash due to this
+        // therfore tell the fmus that stop + one step should be ok
+        if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time + timestep * 2), tolerance))
         {
             log(error)("[{}] setup_experiment failed for {}, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__, name);
             throw std::runtime_error(Logger::format("[{}] setup_experiment failed for {}", __func__, name));

@@ -22,14 +22,16 @@
 namespace ssp4sim::utils
 {
 
-    DataRecorder::DataRecorder(const std::string &filename)
+    DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
         : file(filename, std::ios::out)
     {
         log(ext_trace)("[{}] Constructor", __func__);
         log(debug)("[{}] Recording interval {}", __func__, recording_interval);
         log(debug)("[{}] File {}, open {}", __func__, filename, file.is_open());
+        log(debug)("[{}] Interval: {}, wait_for: {}", __func__, interval, wait_for);
 
-        recording_interval = utils::time::s_to_ns(utils::Config::getOr("simulation.recording.interval", 1.0));
+        recording_interval = interval;
+        wait_for_recorder = wait_for;
     }
 
     DataRecorder::~DataRecorder()

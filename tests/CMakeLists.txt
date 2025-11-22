@@ -10,10 +10,6 @@ target_link_libraries(ssp4sim_tests PUBLIC ssp4sim_lib)
 find_package(Catch2 CONFIG REQUIRED)
 target_link_libraries(ssp4sim_tests PRIVATE Catch2::Catch2WithMain)
 
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
-  target_precompile_headers(ssp4sim_tests PRIVATE <format> <catch2/catch_test_macros.hpp>)
-endif()
-
 target_link_libraries(ssp4sim_tests PRIVATE ssp4cpp::ssp4cpp)
 
 target_link_libraries(ssp4sim_tests PRIVATE cutecpp::cutecpp)

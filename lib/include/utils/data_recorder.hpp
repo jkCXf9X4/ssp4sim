@@ -26,7 +26,7 @@ namespace ssp4sim::utils
         std::size_t index = 0;
         std::size_t row_pos = 0;
 
-        uint64_t timestamp = 0;
+        std::atomic<uint64_t> timestamp = 0;
     };
 
     /*
@@ -63,11 +63,15 @@ namespace ssp4sim::utils
         std::unique_ptr<std::byte[]> data;
         std::vector<std::vector<std::atomic<bool>>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
 
-        uint64_t recording_interval = 0;
         uint64_t last_print_time = 0;
         size_t printed_rows = 0;
 
-        DataRecorder(const std::string &filename);
+        // config
+        uint64_t recording_interval = 0;
+        bool wait_for_recorder = false;
+
+
+        DataRecorder(const std::string &filename, uint64_t interval, bool wait_for);
 
         DataRecorder(const DataRecorder &) = delete;
         DataRecorder &operator=(const DataRecorder &) = delete;
