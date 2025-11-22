@@ -10,15 +10,38 @@
 
 #include "config.hpp"
 
+#include "handler/fmu_handler.hpp"
+#include "signal/recorder.hpp"
+
+#include "execution/invocable.hpp"
+#include "graph/graph.hpp"
+
+#include "cutecpp/log.hpp"
+
+#include <map>
+
 namespace ssp4sim
 {
 
-    Simulation::Simulation(ssp4cpp::Ssp *ssp)
+    struct SimulationPrivate
     {
-        this->ssp = ssp;
+        Logger log = Logger("ssp4sim.Simulation", LogLevel::info);
 
-        log(info)("[{}] Creating simulation", __func__);
-        fmu_handler = std::make_unique<handler::FmuHandler>(this->ssp);
+        ssp4cpp::Ssp *ssp;
+
+        std::unique_ptr<handler::FmuHandler> fmu_handler;
+        std::unique_ptr<signal::DataRecorder> recorder;
+        std::unique_ptr<graph::Graph> sim_graph;
+
+        std::map<std::string, std::unique_ptr<graph::Invocable>> nodes;
+    };
+
+    Simulation::Simulation(ssp4cpp::Ssp *ssp) : p(std::make_unique<SimulationPrivate>())
+    {
+        p->ssp = ssp;
+
+        p->log(info)("[{}] Creating simulation", __func__);
+        p->fmu_handler = std::make_unique<handler::FmuHandler>(p->ssp);
 
         auto enable_recording = utils::Config::getOr("simulation.recording.enable", true);
         auto result_file = utils::Config::getOr("simulation.recording.result_file", std::string("./result/data.scv"));
@@ -27,7 +50,7 @@ namespace ssp4sim
 
         if (enable_recording)
         {
-            recorder = std::make_unique<signal::DataRecorder>(result_file, recording_interval, wait_for_recorder);
+            p->recorder = std::make_unique<signal::DataRecorder>(result_file, recording_interval, wait_for_recorder);
         }
 
     }
@@ -40,29 +63,29 @@ namespace ssp4sim
      */
     void Simulation::init()
     {
-        log(info)("[{}] Initializing simulation", __func__);
+        p->log(info)("[{}] Initializing simulation", __func__);
 
-        log(info)("[{}] - Initializing fmus", __func__);
-        fmu_handler->init();
+        p->log(info)("[{}] - Initializing fmus", __func__);
+        p->fmu_handler->init();
 
-        log(info)("[{}] - Creating analysis graph", __func__);
-        auto analysis_graph = analysis::graph::AnalysisGraphBuilder(ssp, fmu_handler.get()).build();
-        log(debug)(" -- {}", analysis_graph->to_string());
+        p->log(info)("[{}] - Creating analysis graph", __func__);
+        auto analysis_graph = analysis::graph::AnalysisGraphBuilder(p->ssp, p->fmu_handler.get()).build();
+        p->log(debug)(" -- {}", analysis_graph->to_string());
 
-        log(info)("[{}] - Creating simulation graph", __func__);
-        auto graph_builder = graph::GraphBuilder(analysis_graph.get(), recorder.get());
+        p->log(info)("[{}] - Creating simulation graph", __func__);
+        auto graph_builder = graph::GraphBuilder(analysis_graph.get(), p->recorder.get());
         graph_builder.build();
 
-        this->sim_graph = graph_builder.get_graph();
-        log(debug)(" -- {}", sim_graph->to_string());
+        p->sim_graph = graph_builder.get_graph();
+        p->log(debug)(" -- {}", p->sim_graph->to_string());
 
-        this->nodes = graph_builder.get_models(); // transfer ownership of nodes to simulation
+        p->nodes = graph_builder.get_models(); // transfer ownership of nodes to simulation
 
-        log(info)("[{}] - Init simulation graph", __func__);
-        sim_graph->init();
+        p->log(info)("[{}] - Init simulation graph", __func__);
+        p->sim_graph->init();
 
-        log(info)("[{}] - Initializing recorder", __func__);
-        recorder->init();
+        p->log(info)("[{}] - Initializing recorder", __func__);
+        p->recorder->init();
     }
 
     /**
@@ -74,12 +97,12 @@ namespace ssp4sim
      */
     void Simulation::simulate()
     {
-        if (recorder)
+        if (p->recorder)
         {
-            recorder->start_recording();
+            p->recorder->start_recording();
         }
 
-        log(info)("[{}] Starting simulation", __func__);
+        p->log(info)("[{}] Starting simulation", __func__);
 
         uint64_t start_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.start_time"));
         uint64_t end_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.stop_time"));
@@ -89,31 +112,31 @@ namespace ssp4sim
 
         try
         {
-            sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
+            p->sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
         }
         catch (const std::runtime_error& e)
         {
-            log(error)(std::format("Simulation failed! {} ", e.what()));
+            p->log(error)(std::format("Simulation failed! {} ", e.what()));
         }
         
         auto sim_wall_time = sim_timer.stop();
 
-        log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
+        p->log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
 
-        if (recorder)
+        if (p->recorder)
         {
-            recorder->stop_recording();
+            p->recorder->stop_recording();
         }
 
-        log(info)("[{}] Simulation completed\n", __func__);
+        p->log(info)("[{}] Simulation completed\n", __func__);
 
         uint64_t total_model_time = 0;
-        for (auto &node : sim_graph->nodes)
+        for (auto &node : p->sim_graph->nodes)
         {
             auto model_walltime = node->walltime_ns;
-            log(info)("[{}] Model {} walltime: {}", __func__, node->name, utils::time::ns_to_s(model_walltime));
+            p->log(info)("[{}] Model {} walltime: {}", __func__, node->name, utils::time::ns_to_s(model_walltime));
             total_model_time += model_walltime;
         }
-        log(info)("[{}] Model walltime: {}", __func__, utils::time::ns_to_s(total_model_time));
+        p->log(info)("[{}] Model walltime: {}", __func__, utils::time::ns_to_s(total_model_time));
     }
 }

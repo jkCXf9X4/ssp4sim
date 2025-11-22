@@ -1,14 +1,5 @@
 #pragma once
 
-#include "handler/fmu_handler.hpp"
-#include "signal/recorder.hpp"
-
-#include "execution/invocable.hpp"
-#include "graph/graph.hpp"
-
-#include "cutecpp/log.hpp"
-
-#include <map>
 #include <memory>
 #include <string>
 
@@ -20,6 +11,8 @@ namespace ssp4cpp
 namespace ssp4sim
 {
 
+    struct SimulationPrivate;
+
     /**
      * @brief Main class for running a simulation.
      *
@@ -29,17 +22,10 @@ namespace ssp4sim
      */
     class Simulation
     {
+    private:
+        std::unique_ptr<SimulationPrivate> p;
+
     public:
-        Logger log = Logger("ssp4sim.Simulation", LogLevel::info);
-
-        ssp4cpp::Ssp *ssp;
-
-        std::unique_ptr<handler::FmuHandler> fmu_handler;
-        std::unique_ptr<signal::DataRecorder> recorder;
-        std::unique_ptr<graph::Graph> sim_graph;
-
-        std::map<std::string, std::unique_ptr<graph::Invocable>> nodes;
-
         /**
          * @brief Constructs a new Simulation object.
          *
