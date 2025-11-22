@@ -4,7 +4,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "data_storage.hpp"
+#include "signal/storage.hpp"
 
 #include <string>
 #include <cstring>
@@ -14,9 +14,9 @@
 #include <stdexcept>
 #include <iostream>
 
-namespace ssp4sim::utils
+namespace ssp4sim::signal
 {
-    using namespace std;
+    // using namespace std;
 
     /**
      * @brief Small ring buffer implementation used for timestamped data.
@@ -32,16 +32,16 @@ namespace ssp4sim::utils
     public:
         std::unique_ptr<DataStorage> data;
 
-        size_t head = 0; /* next position to write             */
-        size_t tail = 0; /* first data position      */
+        std::size_t head = 0; /* next position to write             */
+        std::size_t tail = 0; /* first data position      */
 
-        size_t capacity = 0;            /* total usable slots                 */
-        size_t size = 0;                /* current number of elements stored  */
+        std::size_t capacity = 0;            /* total usable slots                 */
+        std::size_t size = 0;                /* current number of elements stored  */
         uint64_t overwrite_counter = 0; // how many times has new data been added
 
         std::string name;
 
-        RingStorage(size_t capacity, std::string name);
+        RingStorage(std::size_t capacity, std::string name);
 
         uint64_t add(std::string name, types::DataType type, int max_interpolation_order);
 
@@ -56,11 +56,11 @@ namespace ssp4sim::utils
         /** Retrieve the most recent element with timestamp before @p time. */
         int64_t get_valid_area(uint64_t time);
 
-        byte *get_item(std::size_t area, std::size_t index);
+        std::byte *get_item(std::size_t area, std::size_t index);
 
-        byte *get_derivative(std::size_t area, std::size_t index, std::size_t order);
+        std::byte *get_derivative(std::size_t area, std::size_t index, std::size_t order);
 
-        byte *get_valid_item(uint64_t time, std::size_t index);
+        std::byte *get_valid_item(uint64_t time, std::size_t index);
 
         void flag_new_data(std::size_t area);
 

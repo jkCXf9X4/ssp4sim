@@ -4,6 +4,13 @@ file(GLOB_RECURSE ALL_SRC CONFIGURE_DEPENDS "*.hpp" "*.cpp")
 
 add_executable(ssp4sim_tests ${ALL_SRC})
 
+target_include_directories(
+  ssp4sim_tests
+  PRIVATE ${CMAKE_SOURCE_DIR}/lib/include
+          ${CMAKE_SOURCE_DIR}/lib/include/utils
+          ${CMAKE_SOURCE_DIR}/lib/include/schema_extensions
+          ${CMAKE_SOURCE_DIR}/lib/include/handler
+          ${CMAKE_SOURCE_DIR}/lib/public_include)
 
 target_link_libraries(ssp4sim_tests PUBLIC ssp4sim_lib)
 

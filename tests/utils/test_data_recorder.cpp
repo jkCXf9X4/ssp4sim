@@ -2,8 +2,8 @@
 #include "cutecpp/log.hpp"
 
 #include "utils/time.hpp"
-#include "utils/data_recorder.hpp"
-#include "utils/data_type.hpp"
+#include "signal/recorder.hpp"
+#include "utils/model.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -19,8 +19,8 @@
 #include <chrono>
 #include <vector>
 
-using ssp4sim::utils::DataRecorder;
-using ssp4sim::utils::DataStorage;
+using ssp4sim::signal::DataRecorder;
+using ssp4sim::signal::DataStorage;
 using ssp4sim::types::DataType;
 
 namespace sim_time = ssp4sim::utils::time;

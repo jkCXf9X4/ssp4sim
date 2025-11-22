@@ -4,7 +4,7 @@
 #include "analysis_graph.hpp"
 #include "graph.hpp"
 
-#include "utils/data_recorder.hpp"
+#include "signal/recorder.hpp"
 
 #include "cutecpp/log.hpp"
 
@@ -23,11 +23,11 @@ namespace ssp4sim::graph
         Logger log = Logger("ssp4sim.graph.GraphBuilder", LogLevel::info);;
 
         AnalysisGraph *analysis_graph;
-        ssp4sim::utils::DataRecorder *recorder;
+        ssp4sim::signal::DataRecorder *recorder;
 
         std::map<std::string, std::unique_ptr<Invocable>> models;
 
-        GraphBuilder(AnalysisGraph *ag, ssp4sim::utils::DataRecorder *recorder);
+        GraphBuilder(AnalysisGraph *ag, ssp4sim::signal::DataRecorder *recorder);
 
         void build();
 

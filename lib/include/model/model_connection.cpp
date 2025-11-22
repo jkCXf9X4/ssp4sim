@@ -1,8 +1,8 @@
 #include "model/model_connection.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
-#include "data_ring_storage.hpp"
-#include "utils/data_storage.hpp"
+#include "signal/ring_storage.hpp"
+#include "signal/storage.hpp"
 
 #include <cstring>
 #include <vector>

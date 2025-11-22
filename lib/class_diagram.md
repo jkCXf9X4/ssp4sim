@@ -11,7 +11,7 @@ class Simulator {
 class Simulation {
   +ssp: Ssp*
   +fmu_handler: std::unique_ptr<handler::FmuHandler>
-  +recorder: std::unique_ptr<utils::DataRecorder>
+  +recorder: std::unique_ptr<signal::DataRecorder>
   +sim_graph: std::unique_ptr<graph::Graph>
   +Simulation(ssp)
   +init()
@@ -50,7 +50,7 @@ class Simulation {
 
   class GraphBuilder {
     +analysis_graph: analysis::graph::AnalysisGraph*
-    +recorder: utils::DataRecorder*
+    +recorder: signal::DataRecorder*
     +GraphBuilder(ag, recorder)
     +build(): std::unique_ptr<Graph>
   }
@@ -58,9 +58,9 @@ class Simulation {
   class FmuModel {
     +name: std::string
     +fmu: handler::FmuInfo*
-    +input_area: std::unique_ptr<utils::RingStorage>
-    +output_area: std::unique_ptr<utils::RingStorage>
-    +recorder: utils::DataRecorder*
+    +input_area: std::unique_ptr<signal::RingStorage>
+    +output_area: std::unique_ptr<signal::RingStorage>
+    +recorder: signal::DataRecorder*
     +connections: std::vector<ConnectionInfo>
     +FmuModel(name, fmu)
     +init()

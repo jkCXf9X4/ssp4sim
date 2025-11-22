@@ -44,6 +44,8 @@ namespace ssp4sim::utils
         static int getOr(const std::string &dottedKey, int defaultValue);
         static bool getOr(const std::string &dottedKey, bool defaultValue);
 
+        static nlohmann::json *resolvePath(const std::string &dottedKey);
+
         static std::string substitute_tags(std::string text);
     };
 

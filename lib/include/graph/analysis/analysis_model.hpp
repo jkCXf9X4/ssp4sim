@@ -4,16 +4,13 @@
 
 #include "utils/node.hpp"
 
+#include "handler/fmu_handler.hpp"
+
 #include "analysis_connector.hpp"
 
 #include <string>
 #include <vector>
 #include <map>
-
-namespace ssp4sim::handler
-{
-    struct FmuInfo;
-}
 
 namespace ssp4sim::analysis::graph
 {

@@ -2,12 +2,9 @@
 
 #include "cutecpp/log.hpp"
 
-#include "invocable.hpp"
+#include "signal/recorder.hpp"
 
-namespace ssp4sim::utils
-{
-    class DataRecorder;
-}
+#include "invocable.hpp"
 
 namespace ssp4sim::graph
 {
@@ -18,14 +15,14 @@ namespace ssp4sim::graph
         // the executor should not own the nodes
         std::vector<Invocable *> nodes;
 
-        utils::DataRecorder *recorder = nullptr;
+        signal::DataRecorder *recorder = nullptr;
         bool wait_for_recorder = false;
 
         uint64_t sub_step = 0;
 
         ExecutionBase(std::vector<Invocable *> nodes);
 
-        void set_recorder(utils::DataRecorder *dr);
+        void set_recorder(signal::DataRecorder *dr);
 
         void wait_for_result_collection();
 

@@ -4,14 +4,14 @@
 #include "graph/analysis/analysis_model.hpp"
 #include "graph/analysis/analysis_connection.hpp"
 #include "model/model_fmu.hpp"
-#include "utils/data_ring_storage.hpp"
+#include "signal/ring_storage.hpp"
 #include "utils/map.hpp"
 
 #include <memory>
 
 namespace ssp4sim::graph
 {
-    GraphBuilder::GraphBuilder(AnalysisGraph *ag, ssp4sim::utils::DataRecorder *recorder)
+    GraphBuilder::GraphBuilder(AnalysisGraph *ag, ssp4sim::signal::DataRecorder *recorder)
         : analysis_graph(ag), recorder(recorder)
     {
     }

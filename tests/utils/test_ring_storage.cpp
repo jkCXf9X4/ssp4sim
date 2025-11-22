@@ -1,6 +1,6 @@
 
-#include "data_ring_storage.hpp"
-#include "data_type.hpp"
+#include "signal/ring_storage.hpp"
+#include "utils/model.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-using ssp4sim::utils::RingStorage;
+using ssp4sim::signal::RingStorage;
 using ssp4sim::types::DataType;
 
 Logger logger = Logger("RingStorage", LogLevel::debug);

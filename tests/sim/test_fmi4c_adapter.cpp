@@ -6,9 +6,11 @@
 
 #include <cmath>
 #include <filesystem>
+#include <iostream>
 #include <string>
 
 using namespace ssp4sim::handler;
+using namespace ssp4sim::handler::detail;
 
 using namespace ssp4sim::utils::time;
 

@@ -1,5 +1,11 @@
 #pragma once
 
+#include "handler/fmu_handler.hpp"
+#include "signal/recorder.hpp"
+
+#include "execution/invocable.hpp"
+#include "graph/graph.hpp"
+
 #include "cutecpp/log.hpp"
 
 #include <map>
@@ -13,21 +19,6 @@ namespace ssp4cpp
 
 namespace ssp4sim
 {
-    namespace handler
-    {
-        class FmuHandler;
-    }
-
-    namespace utils
-    {
-        class DataRecorder;
-    }
-
-    namespace graph
-    {
-        class Graph;
-        class Invocable;
-    }
 
     /**
      * @brief Main class for running a simulation.
@@ -44,7 +35,7 @@ namespace ssp4sim
         ssp4cpp::Ssp *ssp;
 
         std::unique_ptr<handler::FmuHandler> fmu_handler;
-        std::unique_ptr<utils::DataRecorder> recorder;
+        std::unique_ptr<signal::DataRecorder> recorder;
         std::unique_ptr<graph::Graph> sim_graph;
 
         std::map<std::string, std::unique_ptr<graph::Invocable>> nodes;

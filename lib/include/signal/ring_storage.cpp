@@ -1,12 +1,12 @@
-#include "utils/data_ring_storage.hpp"
+#include "signal/ring_storage.hpp"
 
-#include "utils/data_storage.hpp"
+#include "signal/storage.hpp"
 
 #include <cstring>
 #include <stdexcept>
 #include <utility>
 
-namespace ssp4sim::utils
+namespace ssp4sim::signal
 {
 
     RingStorage::RingStorage(size_t capacity, std::string name) : name(std::move(name))
@@ -92,17 +92,17 @@ namespace ssp4sim::utils
         return -1;
     }
 
-    byte *RingStorage::get_item(std::size_t area, std::size_t index)
+    std::byte *RingStorage::get_item(std::size_t area, std::size_t index)
     {
         return data->get_item(area, index);
     }
 
-    byte *RingStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order)
+    std::byte *RingStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order)
     {
         return data->get_derivative(area, index, order);
     }
 
-    byte *RingStorage::get_valid_item(uint64_t time, std::size_t index)
+    std::byte *RingStorage::get_valid_item(uint64_t time, std::size_t index)
     {
         IF_LOG({
             log(ext_trace)("[{}] Init", __func__);

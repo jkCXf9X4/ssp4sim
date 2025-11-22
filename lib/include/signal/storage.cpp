@@ -1,4 +1,4 @@
-#include "utils/data_storage.hpp"
+#include "signal/storage.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 
@@ -7,7 +7,7 @@
 #include <string>
 #include <utility>
 
-namespace ssp4sim::utils
+namespace ssp4sim::signal
 {
 
     DataStorage::DataStorage(int areas) : new_data_flags(static_cast<std::size_t>(areas))

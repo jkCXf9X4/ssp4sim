@@ -5,7 +5,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "data_storage.hpp"
+#include "signal/storage.hpp"
 
 #include <fstream>
 #include <mutex>
@@ -16,7 +16,7 @@
 #include <mutex>
 #include <condition_variable>
 
-namespace ssp4sim::utils
+namespace ssp4sim::signal
 {
     struct Tracker
     {
@@ -27,6 +27,52 @@ namespace ssp4sim::utils
         std::size_t row_pos = 0;
 
         std::atomic<uint64_t> timestamp = 0;
+
+        Tracker() = default;
+
+        Tracker(const Tracker &other)
+            : storage(other.storage),
+              size(other.size),
+              index(other.index),
+              row_pos(other.row_pos),
+              timestamp(other.timestamp.load())
+        {
+        }
+
+        Tracker &operator=(const Tracker &other)
+        {
+            if (this != &other)
+            {
+                storage = other.storage;
+                size = other.size;
+                index = other.index;
+                row_pos = other.row_pos;
+                timestamp.store(other.timestamp.load());
+            }
+            return *this;
+        }
+
+        Tracker(Tracker &&other) noexcept
+            : storage(other.storage),
+              size(other.size),
+              index(other.index),
+              row_pos(other.row_pos),
+              timestamp(other.timestamp.load())
+        {
+        }
+
+        Tracker &operator=(Tracker &&other) noexcept
+        {
+            if (this != &other)
+            {
+                storage = other.storage;
+                size = other.size;
+                index = other.index;
+                row_pos = other.row_pos;
+                timestamp.store(other.timestamp.load());
+            }
+            return *this;
+        }
     };
 
     /*
@@ -98,7 +144,7 @@ namespace ssp4sim::utils
 
         void loop();
 
-        void process_new_data(ssp4sim::utils::Tracker &tracker, utils::DataStorage *storage, std::size_t area);
+        void process_new_data(ssp4sim::signal::Tracker &tracker, signal::DataStorage *storage, std::size_t area);
 
         void wait_until_done();
     };

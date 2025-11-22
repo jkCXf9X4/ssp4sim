@@ -6,7 +6,7 @@
 #include "analysis_graph_builder.hpp"
 #include "graph_builder.hpp"
 
-#include "data_recorder.hpp"
+#include "signal/recorder.hpp"
 
 #include "config.hpp"
 
@@ -27,7 +27,7 @@ namespace ssp4sim
 
         if (enable_recording)
         {
-            recorder = std::make_unique<utils::DataRecorder>(result_file, recording_interval, wait_for_recorder);
+            recorder = std::make_unique<signal::DataRecorder>(result_file, recording_interval, wait_for_recorder);
         }
 
     }

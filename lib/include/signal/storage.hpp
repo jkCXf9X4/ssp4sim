@@ -7,7 +7,7 @@
 
 #include "FMI2_Enums_Ext.hpp"
 
-#include "data_type.hpp"
+#include "utils/model.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -19,7 +19,7 @@
 #include <atomic>
 #include <cstring>
 
-namespace ssp4sim::utils
+namespace ssp4sim::signal
 {
     /*
      * data centric storage

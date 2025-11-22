@@ -27,11 +27,11 @@ namespace ssp4sim::graph
         std::vector<Invocable *> nodes;
 
         std::unique_ptr<ExecutionBase> executor;
-        ssp4sim::utils::DataRecorder *recorder = nullptr;
+        ssp4sim::signal::DataRecorder *recorder = nullptr;
 
         Graph() = default;
 
-        Graph(std::map<std::string, Invocable *> node_map, ssp4sim::utils::DataRecorder *recorder);
+        Graph(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder);
 
         void print(std::ostream &os) const override;
 

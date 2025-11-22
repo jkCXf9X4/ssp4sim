@@ -10,7 +10,7 @@
 #include <string>
 #include <iostream>
 
-using ssp4sim::utils::DataStorage;
+using ssp4sim::signal::DataStorage;
 using ssp4sim::types::DataType;
 
 

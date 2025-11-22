@@ -1,12 +1,13 @@
-#include "utils/data_recorder.hpp"
+#include "signal/recorder.hpp"
 
-#include "cutecpp/log.hpp"
-#include "utils/data_storage.hpp"
+#include "signal/storage.hpp"
 #include "utils/time.hpp"
 
 #include "config.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
+
+#include "cutecpp/log.hpp"
 
 #include <condition_variable>
 #include <cstddef>
@@ -19,7 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace ssp4sim::utils
+namespace ssp4sim::signal
 {
 
     DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
@@ -238,7 +239,7 @@ namespace ssp4sim::utils
         log(debug)("[{}] Exiting recording thread", __func__);
     }
 
-    void DataRecorder::process_new_data(ssp4sim::utils::Tracker &tracker, utils::DataStorage *storage, std::size_t area)
+    void DataRecorder::process_new_data(ssp4sim::signal::Tracker &tracker, signal::DataStorage *storage, std::size_t area)
     {
         auto ts = storage->timestamps[area];
 

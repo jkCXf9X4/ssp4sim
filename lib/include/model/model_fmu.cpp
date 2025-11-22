@@ -1,8 +1,8 @@
 #include "model/model_fmu.hpp"
 
 #include "config.hpp"
-#include "data_recorder.hpp"
-#include "data_ring_storage.hpp"
+#include "signal/recorder.hpp"
+#include "signal/ring_storage.hpp"
 #include "handler/fmu_handler.hpp"
 #include "model/model_connection.hpp"
 #include "model/model_connector.hpp"
@@ -21,8 +21,8 @@ namespace ssp4sim::graph
     {
         this->fmu = fmu;
         this->name = std::move(name);
-        input_area = std::make_unique<ssp4sim::utils::RingStorage>(10, this->name + ".input");
-        output_area = std::make_unique<ssp4sim::utils::RingStorage>(200, this->name + ".output");
+        input_area = std::make_unique<ssp4sim::signal::RingStorage>(10, this->name + ".input");
+        output_area = std::make_unique<ssp4sim::signal::RingStorage>(200, this->name + ".output");
         forward_derivatives = utils::Config::getOr("simulation.executor.forward_derivatives", true);
         fmu_logging = utils::Config::getOr("simulation.log.fmu", false);
     }

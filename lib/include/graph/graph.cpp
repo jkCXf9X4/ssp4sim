@@ -4,14 +4,14 @@
 #include "execution/executor_builder.hpp"
 #include "graph/graph_builder.hpp"
 #include "utils/map.hpp"
-#include "utils/data_recorder.hpp"
+#include "signal/recorder.hpp"
 
 #include "tarjan.hpp"
 
 namespace ssp4sim::graph
 {
 
-    Graph::Graph(std::map<std::string, Invocable *> node_map, ssp4sim::utils::DataRecorder *recorder)
+    Graph::Graph(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder)
     {
         this->recorder = recorder;
         this->node_map = node_map;

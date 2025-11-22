@@ -9,6 +9,13 @@
 
 namespace ssp4sim::handler
 {
+    namespace detail
+    {
+        void clear_last_message();
+        void fmi4c_message_callback(const char *message);
+        std::string consume_last_message();
+    }
+
     class FmuInstance
     {
     public:

@@ -1,4 +1,4 @@
-#include "utils/data_type.hpp"
+#include "utils/model.hpp"
 
 #include "handler/fmi4c_adapter.hpp"
 

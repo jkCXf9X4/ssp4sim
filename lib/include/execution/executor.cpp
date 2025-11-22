@@ -1,6 +1,6 @@
 #include "execution/executor.hpp"
 
-#include "utils/data_recorder.hpp"
+#include "signal/recorder.hpp"
 
 #include "config.hpp"
 
@@ -25,7 +25,7 @@ namespace ssp4sim::graph
         sub_step = utils::time::s_to_ns(utils::Config::getOr("simulation.executor.sub_step", utils::Config::getDouble("simulation.timestep")));
     }
 
-    void ExecutionBase::set_recorder(utils::DataRecorder *dr)
+    void ExecutionBase::set_recorder(signal::DataRecorder *dr)
     {
         recorder = dr;
     }

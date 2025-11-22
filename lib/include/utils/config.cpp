@@ -20,7 +20,7 @@ namespace ssp4sim::utils
     namespace
     {
         // Resolve "a.b.c" into a json node pointer (or nullptr if missing).
-        nlohmann::json *resolvePath(nlohmann::json &data, const std::string &dottedKey)
+        nlohmann::json *resolvePathNode(nlohmann::json &data, const std::string &dottedKey)
         {
             nlohmann::json *cur = &data;
             if (dottedKey.empty())
@@ -81,7 +81,7 @@ namespace ssp4sim::utils
         {
             Config::data_available();
 
-            const nlohmann::json *node = resolvePath(Config::data_, dottedKey);
+            const nlohmann::json *node = resolvePathNode(Config::data_, dottedKey);
             if (!node || node->is_null())
             {
                 throw missing_key_error("Config: missing key: " + dottedKey);
@@ -97,6 +97,12 @@ namespace ssp4sim::utils
                                  "': " + std::string(e.what()));
             }
         }
+    }
+
+    nlohmann::json *Config::resolvePath(const std::string &dottedKey)
+    {
+        data_available();
+        return resolvePathNode(data_, dottedKey);
     }
 
     void Config::loadFromFile(const std::string &path)

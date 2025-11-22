@@ -16,6 +16,7 @@ target_include_directories(
          ${CMAKE_CURRENT_LIST_DIR}/include/model
          ${CMAKE_CURRENT_LIST_DIR}/include/schema_extensions
          ${CMAKE_CURRENT_LIST_DIR}/include/utils
+         ${CMAKE_CURRENT_LIST_DIR}/include/signal
          )
 
 # The library is linked into shared modules (Python extension), so force PIC.
@@ -25,11 +26,6 @@ target_compile_options(ssp4sim_lib PRIVATE -Wfatal-errors)
 
 find_package(nlohmann_json CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PUBLIC nlohmann_json::nlohmann_json)
-
-if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.16")
-  # Something is strange when turning this on, dont
-  #target_precompile_headers(ssp4sim_lib PRIVATE <pch.h>)
-endif()
 
 find_package(TBB CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE TBB::tbb TBB::tbbmalloc)

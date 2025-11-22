@@ -7,23 +7,17 @@
 #include "model_connection.hpp"
 #include "model_connector.hpp"
 
+#include "signal/ring_storage.hpp"
+#include "signal/recorder.hpp"
+
+#include "handler/fmu_handler.hpp"
+
 #include "cutecpp/log.hpp"
 
 #include <string>
 #include <vector>
 #include <map>
 #include <memory>
-
-namespace ssp4sim::handler
-{
-    struct FmuInfo;
-}
-
-namespace ssp4sim::utils
-{
-    class RingStorage;
-    class DataRecorder;
-}
 
 namespace ssp4sim::graph
 {
@@ -35,11 +29,11 @@ namespace ssp4sim::graph
 
         Logger log;
 
-        ssp4sim::handler::FmuInfo *fmu;
+        handler::FmuInfo *fmu;
 
-        std::unique_ptr<ssp4sim::utils::RingStorage> input_area;
-        std::unique_ptr<ssp4sim::utils::RingStorage> output_area;
-        ssp4sim::utils::DataRecorder *recorder;
+        std::unique_ptr<ssp4sim::signal::RingStorage> input_area;
+        std::unique_ptr<ssp4sim::signal::RingStorage> output_area;
+        signal::DataRecorder *recorder;
 
         std::map<std::string, ConnectorInfo> inputs;
         std::map<std::string, ConnectorInfo> outputs;

@@ -3,7 +3,7 @@
 #include "FMI2_Enums_Ext.hpp"
 
 #include "handler/fmu_handler.hpp"
-#include "data_ring_storage.hpp"
+#include "signal/ring_storage.hpp"
 
 namespace ssp4sim::graph
 {
@@ -39,7 +39,7 @@ namespace ssp4sim::graph
         }
     }
 
-    void ConnectorInfo::set_initial_input_area(ssp4sim::utils::RingStorage *input_area,
+    void ConnectorInfo::set_initial_input_area(ssp4sim::signal::RingStorage *input_area,
                                                std::map<std::string, ConnectorInfo> &inputs,
                                                uint64_t time)
     {
@@ -74,7 +74,7 @@ namespace ssp4sim::graph
     }
 
     void ConnectorInfo::write_data_to_model(std::map<std::string, ConnectorInfo> &inputs,
-                                            ssp4sim::utils::RingStorage *storage,
+                                            ssp4sim::signal::RingStorage *storage,
                                             int area)
     {
         IF_LOG({
@@ -95,7 +95,7 @@ namespace ssp4sim::graph
     }
 
     void ConnectorInfo::read_values_from_model(std::map<std::string, ConnectorInfo> &outputs,
-                                               ssp4sim::utils::RingStorage *storage,
+                                               ssp4sim::signal::RingStorage *storage,
                                                int area)
     {
         IF_LOG({

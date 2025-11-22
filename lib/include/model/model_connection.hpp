@@ -2,15 +2,12 @@
 
 #include "ssp4sim_definitions.hpp"
 
+#include "signal/ring_storage.hpp"
+
 #include "cutecpp/log.hpp"
-#include "utils/data_type.hpp"
+#include "utils/model.hpp"
 
 #include <vector>
-
-namespace ssp4sim::utils
-{
-    class RingStorage;
-}
 
 namespace ssp4sim::graph
 {
@@ -21,8 +18,8 @@ namespace ssp4sim::graph
         types::DataType type;
         size_t size;
 
-        ssp4sim::utils::RingStorage *source_storage;
-        ssp4sim::utils::RingStorage *target_storage;
+        ssp4sim::signal::RingStorage *source_storage;
+        ssp4sim::signal::RingStorage *target_storage;
         uint32_t source_index;
         uint32_t target_index;
 
