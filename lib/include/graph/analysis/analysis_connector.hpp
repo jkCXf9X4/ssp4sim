@@ -1,11 +1,13 @@
 #pragma once
 
+
 #include "utils/node.hpp"
 
-#include "cutecpp/log.hpp"
+#include "SSP1_SystemStructureParameter_Ext.hpp"
+
 #include "ssp4sim_definitions.hpp"
 
-#include "SSP1_SystemStructureParameter_Ext.hpp"
+#include "cutecpp/log.hpp"
 
 #include <cstdint>
 #include <string>

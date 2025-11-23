@@ -1,20 +1,19 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
 #include "ssp4sim_definitions.hpp"
 
 #include "invocable.hpp"
 #include "executor.hpp"
+
+#include "signal/recorder.hpp"
+
+#include "cutecpp/log.hpp"
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace ssp4sim::utils
-{
-    class DataRecorder;
-}
 
 namespace ssp4sim::graph
 {

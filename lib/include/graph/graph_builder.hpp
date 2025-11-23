@@ -12,10 +12,6 @@ namespace ssp4sim::graph
 {
     using AnalysisGraph = analysis::graph::AnalysisGraph;
 
-    namespace utils
-    {
-        class DataRecorder;
-    }
 
     class GraphBuilder
     {

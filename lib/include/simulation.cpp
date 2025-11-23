@@ -18,7 +18,9 @@
 
 #include "cutecpp/log.hpp"
 
+#include "ssp4cpp/fmu.hpp"
 #include <map>
+#include <memory>
 
 namespace ssp4sim
 {
