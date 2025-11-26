@@ -24,6 +24,9 @@ using ssp4sim::signal::DataStorage;
 using ssp4sim::types::DataType;
 
 namespace sim_time = ssp4sim::utils::time;
+namespace fs = std::filesystem;
+
+const fs::path project_root{SSP4SIM_PROJECT_ROOT};
 
 // Helper function to check if file exists and contains expected data
 bool check_file_contains(const std::string &filename, const std::string &expected)
@@ -41,38 +44,38 @@ bool check_file_contains(const std::string &filename, const std::string &expecte
 void remove_if_existing(std::string name)
 {
     // Remove any existing test file
-    if (std::filesystem::exists(name))
+    if (fs::exists(name))
     {
-        std::filesystem::remove(name);
+        fs::remove(name);
     }
 }
 
 TEST_CASE("DataRecorder initialization and cleanup", "[DataRecorder]")
 {
     // Use a temporary filename for testing
-    std::string test_filename = "build/test_recorder_output.csv";
+    const fs::path test_filename = project_root / "build" / "test_recorder_output.csv";
     remove_if_existing(test_filename);
 
     // Scope for the DataRecorder to ensure it's destructed properly
     {
-        DataRecorder recorder(test_filename, 1000, false);
+        DataRecorder recorder(test_filename.string(), 1000, false);
         // Check if file was created
-        REQUIRE(std::filesystem::exists(test_filename));
+        REQUIRE(fs::exists(test_filename));
     }
 
     // After destruction, file should still exist
-    REQUIRE(std::filesystem::exists(test_filename));
+    REQUIRE(fs::exists(test_filename));
 
     // Clean up the test file
-    std::filesystem::remove(test_filename);
+    fs::remove(test_filename);
 }
 
 TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
 {
-    const std::string test_filename = "build/test_recorder_headers.csv";
+    const fs::path test_filename = project_root / "build" / "test_recorder_headers.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename, 1000, false);
+    DataRecorder recorder(test_filename.string(), 1000, false);
 
     DataStorage storage(2, "signals");
     storage.add("signals.real", DataType::real, 1);
@@ -92,17 +95,17 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
     recorder.file.flush();
     recorder.file.close();
 
-    REQUIRE(check_file_contains(test_filename, "time,signals.real,signals.int"));
+    REQUIRE(check_file_contains(test_filename.string(), "time,signals.real,signals.int"));
 
-    std::filesystem::remove(test_filename);
+    fs::remove(test_filename);
 }
 
 TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecorder]")
 {
-    const std::string test_filename = "build/test_recorder_rows.csv";
+    const fs::path test_filename = project_root / "build" / "test_recorder_rows.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename, 1000, false);
+    DataRecorder recorder(test_filename.string(), 1000, false);
 
     DataStorage storage(2, "signals");
     storage.add("signals.temperature", DataType::real, 1);
@@ -130,18 +133,18 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     recorder.stop_recording();
 
     REQUIRE_FALSE(storage.new_data_flags[area]);
-    REQUIRE(check_file_contains(test_filename, "1, 42.5"));
-    REQUIRE(check_file_contains(test_filename, ", 7"));
+    REQUIRE(check_file_contains(test_filename.string(), "1, 42.5"));
+    REQUIRE(check_file_contains(test_filename.string(), ", 7"));
 
-    std::filesystem::remove(test_filename);
+    fs::remove(test_filename);
 }
 
 TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorder]")
 {
-    const std::string test_filename = "build/test_recorder_multistorage.csv";
+    const fs::path test_filename = project_root / "build" / "test_recorder_multistorage.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename, 1000, false);
+    DataRecorder recorder(test_filename.string(), 1000, false);
 
     DataStorage primary(2, "primary");
     primary.add("primary.temperature", DataType::real, 1);
@@ -205,5 +208,5 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
                                                         { return l.starts_with("1"); });
     REQUIRE(occurrences_of_timestamp == 1);
 
-    std::filesystem::remove(test_filename);
+    fs::remove(test_filename);
 }

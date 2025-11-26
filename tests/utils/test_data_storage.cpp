@@ -5,7 +5,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "data_storage.hpp"
+#include "signal/storage.hpp"
 
 #include <string>
 #include <iostream>

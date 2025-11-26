@@ -1,6 +1,8 @@
 
-[] The connectors should come from the FMUs and not from the ssp
- - [] if they are not exposed they will be missed
+Evaluate https://vcpkg.io/en/package/sqlitecpp for data persistence
+
+use in memory cache and push to sqllite for persistence
+
 
 
 Analyze internal connections, this can be used for:

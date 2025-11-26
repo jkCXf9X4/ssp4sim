@@ -4,13 +4,16 @@
 #include "utils/config.hpp"
 
 #include <fstream>
+#include <filesystem>
 
 using namespace ssp4sim::utils;
+namespace fs = std::filesystem;
 
 TEST_CASE("Config tests", "[config]")
 {
-    std::string config_file = "./tests/references/test_config.json";
-    std::string malformed_config_file = "./tests/references/malformed_test_config.json";
+    const fs::path project_root{SSP4SIM_PROJECT_ROOT};
+    const std::string config_file = (project_root / "tests" / "references" / "test_config.json").string();
+    const std::string malformed_config_file = (project_root / "tests" / "references" / "malformed_test_config.json").string();
 
     SECTION("Load from file")
     {
