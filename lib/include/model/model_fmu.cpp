@@ -2,7 +2,7 @@
 
 #include "config.hpp"
 #include "signal/recorder.hpp"
-#include "signal/ring_storage.hpp"
+#include "signal/storage.hpp"
 #include "handler/fmu_handler.hpp"
 #include "model/model_connection.hpp"
 #include "model/model_connector.hpp"
@@ -16,13 +16,15 @@
 namespace ssp4sim::graph
 {
 
-    FmuModel::FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu)
+    FmuModel::FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu, size_t maxOutputDerivativeOrder)
         : log(Logger::format("models.{}", name), LogLevel::info)
     {
         this->fmu = fmu;
         this->name = std::move(name);
-        input_area = std::make_unique<ssp4sim::signal::RingStorage>(10, this->name + ".input");
-        output_area = std::make_unique<ssp4sim::signal::RingStorage>(200, this->name + ".output");
+        this->maxOutputDerivativeOrder = maxOutputDerivativeOrder;
+        
+        input_area = std::make_unique<ssp4sim::signal::SignalStorage>(10, this->name + ".input");
+        output_area = std::make_unique<ssp4sim::signal::SignalStorage>(200, this->name + ".output");
         forward_derivatives = utils::Config::getOr("simulation.executor.forward_derivatives", true);
         fmu_logging = utils::Config::getOr("simulation.log.fmu", false);
     }
@@ -140,7 +142,7 @@ namespace ssp4sim::graph
         }
 
         IF_LOG({
-            log(trace)("[{}] Input area after pre: {}", __func__, input_area->data->export_area(target_area));
+            log(trace)("[{}] Input area after pre: {}", __func__, input_area->export_area(target_area));
         });
     }
 
@@ -163,7 +165,7 @@ namespace ssp4sim::graph
         output_area->flag_new_data(area);
 
         IF_LOG({
-            log(trace)("[{}] Output area after post: {}", __func__, output_area->data->export_area(area));
+            log(trace)("[{}] Output area after post: {}", __func__, output_area->export_area(area));
         });
     }
 

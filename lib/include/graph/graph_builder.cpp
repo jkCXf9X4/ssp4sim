@@ -4,7 +4,6 @@
 #include "graph/analysis/analysis_model.hpp"
 #include "graph/analysis/analysis_connection.hpp"
 #include "model/model_fmu.hpp"
-#include "signal/ring_storage.hpp"
 #include "utils/map.hpp"
 
 #include <memory>
@@ -23,7 +22,7 @@ namespace ssp4sim::graph
         log(trace)("[{}] - Create the fmu models", __func__);
         for (auto &[ssp_resource_name, analysis_model] : analysis_graph->models)
         {
-            auto m = std::make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu);
+            auto m = std::make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu, analysis_model->maxOutputDerivativeOrder);
             m->recorder = recorder;
             log(ext_trace)("[{}] -- New Model: {}", __func__, m->name);
 
@@ -116,8 +115,8 @@ namespace ssp4sim::graph
             auto m = static_cast<FmuModel *>(model.get());
             m->input_area->allocate();
             m->output_area->allocate();
-            recorder->add_storage(m->input_area->data.get());
-            recorder->add_storage(m->output_area->data.get());
+            recorder->add_storage(m->input_area.get());
+            recorder->add_storage(m->output_area.get());
         }
 
         log(trace)("[{}] - Create connections between models", __func__);

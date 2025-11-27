@@ -12,7 +12,7 @@ namespace ssp4sim::signal
 {
     struct Tracker
     {
-        DataStorage *storage;
+        SignalStorage *storage;
 
         std::size_t size = 0;
         std::size_t index = 0;

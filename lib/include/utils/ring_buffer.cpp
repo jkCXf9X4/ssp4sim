@@ -7,7 +7,7 @@
 namespace ssp4sim::utils
 {
 
-    RingBuffer::RingBuffer(size_t items, size_t item_size)
+    RingBuffer::RingBuffer(size_t items, size_t item_size) : timestamps(items)
     {
         log(ext_trace)("[{}] Constructor", __func__);
         if (items == 0)
@@ -19,11 +19,11 @@ namespace ssp4sim::utils
         auto total_size = items * item_size;
 
         data = std::make_unique<std::byte[]>(total_size);
+        std::memset(data.get(), 0, total_size);
 
         for (size_t i = 0; i < items; i++)
         {
-            auto position = item_size *i;
-            positions.push_back(0);
+            auto position = item_size * i;
             locations.push_back(data.get() + position);
         }
     }
@@ -48,14 +48,61 @@ namespace ssp4sim::utils
         return head;
     }
 
+    std::size_t RingBuffer::push(std::uint64_t time)
+    {
+        auto head = push();
+        timestamps[head] = time;
+        return head;
+    }
+
     std::byte *RingBuffer::get_item(std::size_t index)
     {
-        if (index >= capacity)
+        if (index >= capacity) [[unlikely]]
         {
-            log(error)("[{}] Ringbuffer, index outr of range: {}", __func__, index);
-            throw std::runtime_error("[RingBuffer] Index out of range");
+            log(error)("[{}] RingBuffer, index out of range: {}", __func__, index);
+            throw std::runtime_error("[RingBuffer][get_item] Index out of range");
         }
         return locations[index];
+    }
+
+    std::uint64_t RingBuffer::get_time(std::size_t index)
+    {
+        if (index >= capacity) [[unlikely]]
+        {
+            log(error)("[{}] RingBuffer, index out of range: {}", __func__, index);
+            throw std::runtime_error("[RingBuffer][get_time] Index out of range");
+        }
+        return timestamps[index];
+    }
+
+    std::size_t RingBuffer::find_index(uint64_t time)
+    {
+        for (std::size_t i = 0; i < nr_items; ++i)
+        {
+            int pos = get_index_from_pos_rev(i);
+            if (timestamps[pos] == time)
+            {
+                return pos;
+            }
+        }
+        return -1;
+    }
+
+    std::size_t RingBuffer::find_latest_valid_index(uint64_t time)
+    {
+        for (std::size_t i = 0; i < nr_items; ++i)
+        {
+            int pos = get_index_from_pos_rev(i);
+            if (timestamps[pos] <= time)
+            {
+                IF_LOG({
+                    log(ext_trace)("[{}] found valid area, {}", __func__, pos);
+                });
+
+                return pos;
+            }
+        }
+        return -1;
     }
 
     bool RingBuffer::is_empty()
@@ -68,19 +115,19 @@ namespace ssp4sim::utils
         return capacity == nr_items;
     }
 
-    std::size_t RingBuffer::get_index(std::size_t position)
+    std::size_t RingBuffer::get_index_from_pos(std::size_t position)
     {
         return (tail + position) % capacity;
     }
 
-    std::size_t RingBuffer::get_index_rev(std::size_t position)
+    std::size_t RingBuffer::get_index_from_pos_rev(std::size_t position)
     {
         return (head + nr_items - position) % capacity;
     }
 
     void RingBuffer::print(std::ostream &os) const
     {
-        os << "RingStorage \n{\n"
+        os << "SignalStorage \n{\n"
            << ", capacity: " << capacity
            << "  nr_items: " << nr_items
            << ", head: " << head

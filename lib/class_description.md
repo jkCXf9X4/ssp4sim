@@ -64,11 +64,8 @@ class DataRecorder {
     Collects and persists signal data during simulation runs.
 }
 
-class RingStorage {
-    Provides ring-buffer style storage for simulation signal values.
-}
 
-class DataStorage {
+class SignalStorage {
     Allocates contiguous memory areas and metadata for stored signals.
 }
 
@@ -95,11 +92,9 @@ Invocable ..> InvocableNode
 InvocableNode ..> AsyncNode
 Invocable ..> FmuModel
 FmuInfo --> FmuModel
-FmuModel --> RingStorage
+FmuModel --> SignalStorage
 AsyncNode *-- FmuModel
 
 AnalysisGraphBuilder --> AnalysisGraph
 
-RingStorage --> DataRecorder
-RingStorage *-- DataStorage
-
+SignalStorage --> DataRecorder

@@ -1,7 +1,6 @@
 #include "model/model_connection.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
-#include "signal/ring_storage.hpp"
 #include "signal/storage.hpp"
 
 #include <cstring>
@@ -40,7 +39,7 @@ namespace ssp4sim::graph
                 log(ext_trace)("[{}] Fetch valid data connection {}", __func__, connection.to_string());
             });
 
-            auto source_area = connection.source_storage->get_valid_area(input_time - connection.delay);
+            auto source_area = connection.source_storage->find_latest_valid_area(input_time - connection.delay);
 
             if (source_area != -1)
             {

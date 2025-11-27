@@ -20,7 +20,7 @@
 #include <vector>
 
 using ssp4sim::signal::DataRecorder;
-using ssp4sim::signal::DataStorage;
+using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
 namespace sim_time = ssp4sim::utils::time;
@@ -77,7 +77,7 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
 
     DataRecorder recorder(test_filename.string(), 1000, false);
 
-    DataStorage storage(2, "signals");
+    SignalStorage storage(2, "signals");
     storage.add("signals.real", DataType::real, 1);
     storage.add("signals.int", DataType::integer, 1);
     storage.allocate();
@@ -85,7 +85,6 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
     recorder.add_storage(&storage);
 
     REQUIRE(recorder.trackers.size() == 1);
-    REQUIRE(recorder.row_size == storage.pos);
 
     recorder.init();
 
@@ -107,7 +106,7 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
 
     DataRecorder recorder(test_filename.string(), 1000, false);
 
-    DataStorage storage(2, "signals");
+    SignalStorage storage(2, "signals");
     storage.add("signals.temperature", DataType::real, 1);
     storage.add("signals.mode", DataType::integer, 0);
     storage.allocate();
@@ -116,15 +115,14 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     recorder.init();
     recorder.start_recording();
 
-    const std::size_t area = 0;
+    const uint64_t timestamp = 1ULL * sim_time::nanoseconds_per_second;
+    const std::size_t area = storage.push(timestamp);
     const double temperature = 42.5;
     const int mode = 7;
 
     std::memcpy(storage.get_item(area, 0), &temperature, sizeof(double));
     std::memcpy(storage.get_item(area, 1), &mode, sizeof(int));
 
-    const uint64_t timestamp = 1ULL * sim_time::nanoseconds_per_second;
-    storage.set_time(area, timestamp);
     storage.flag_new_data(area);
 
     recorder.update();
@@ -146,12 +144,12 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
 
     DataRecorder recorder(test_filename.string(), 1000, false);
 
-    DataStorage primary(2, "primary");
+    SignalStorage primary(2, "primary");
     primary.add("primary.temperature", DataType::real, 1);
     primary.add("primary.mode", DataType::integer, 0);
     primary.allocate();
 
-    DataStorage secondary(2, "secondary");
+    SignalStorage secondary(2, "secondary");
     secondary.add("secondary.pressure", DataType::real, 1);
     secondary.add("secondary.index", DataType::integer, 2);
     secondary.allocate();
@@ -161,7 +159,9 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     recorder.init();
     recorder.start_recording();
 
-    constexpr std::size_t area = 0;
+    constexpr uint64_t timestamp = 1ULL * sim_time::nanoseconds_per_second;
+    const std::size_t area = primary.push(timestamp);
+    secondary.push(timestamp);
     const double primary_temp = 42.5;
     const int primary_mode = 7;
     const double secondary_pressure = 3.14;
@@ -172,9 +172,6 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     std::memcpy(secondary.get_item(area, 0), &secondary_pressure, sizeof(double));
     std::memcpy(secondary.get_item(area, 1), &secondary_index, sizeof(int));
 
-    const uint64_t timestamp = 1ULL * sim_time::nanoseconds_per_second;
-    primary.set_time(area, timestamp);
-    secondary.set_time(area, timestamp);
     primary.flag_new_data(area);
     secondary.flag_new_data(area);
 

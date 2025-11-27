@@ -1,23 +1,24 @@
 #pragma once
 
 
-#include "utils/node.hpp"
-#include "utils/map.hpp"
-#include "utils/time.hpp"
+// #include "utils/node.hpp"
+// #include "utils/map.hpp"
+// #include "utils/time.hpp"
+#include "utils/ring_buffer.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 
-#include "utils/model.hpp"
+// #include "utils/model.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
 #include <string>
 #include <vector>
-#include <map>
+// #include <map>
 #include <memory>
-#include <cstddef>
+// #include <cstddef>
 #include <atomic>
-#include <cstring>
+// #include <cstring>
 
 namespace ssp4sim::signal
 {
@@ -29,60 +30,59 @@ namespace ssp4sim::signal
      * - store multiple time versions of the data to enable access backwards in time
      */
 
-    class DataStorage : public types::IPrintable
+     struct SignalInfo
+     {
+        size_t index;
+        types::DataType type;
+        std::string name;
+        size_t type_size;
+        size_t max_interpolation_orders;
+        size_t total_size; // size of data and derivate
+ 
+        size_t position; // position in the item data chunk
+        size_t derivate_position; // position of the first derivate in the item data chunk
+
+     };
+
+    class SignalStorage : public types::IPrintable
     {
     public:
-        Logger log = Logger("ssp4sim.utils.DataStorage", LogLevel::debug);
+        Logger log = Logger("ssp4sim.utils.SignalStorage", LogLevel::debug);
 
-        // all data
-        std::unique_ptr<std::byte[]> data;
-        std::unique_ptr<std::byte[]> der_data;
+        std::unique_ptr<utils::RingBuffer> data;
 
-        // these are the same for each timestamp area
-        std::vector<std::size_t> positions; // data position relative to start; 0, 4,...
-        std::vector<size_t> der_positions;  // data position relative to start; 0, 4,...
+        std::vector<SignalInfo> variables;
+        size_t mem_size = 0;
 
-        std::vector<types::DataType> types;
-        std::vector<std::string> names;
-        std::vector<size_t> sizes;
-        std::vector<size_t> max_interpolation_orders;
-
-        // for retrieval of index from name
-        std::map<std::string, std::size_t> index_name_map;
-
-        std::vector<std::uint64_t> timestamps;
         std::vector<std::vector<std::byte *>> locations;     // absolute location in memory
-        std::vector<std::vector<std::byte *>> der_locations; // absolute location in memory
+        std::vector<std::vector<std::byte *>> derivate_locations; // absolute location in memory
         std::vector<std::atomic<bool>> new_data_flags;
 
-        std::size_t areas = 1;
-        std::size_t pos = 0;
-        std::size_t der_pos = 0;
-        std::size_t total_size = 0;
-        std::int32_t index = -1;
-        std::size_t items = 0;
+        std::size_t areas = 0;
         std::string name;
-        size_t derivative_size = sizeof(double);
-
         bool allocated = false;
 
-        explicit DataStorage(int areas);
+        SignalStorage(std::size_t areas, std::string name);
 
-        DataStorage(int areas, std::string name);
-
-        uint32_t add(std::string name, types::DataType type, int max_interpolation_order);
+        size_t add(std::string name, types::DataType type, size_t max_interpolation_order);
 
         void allocate();
+
+        size_t push(uint64_t time);
+
+        size_t get_or_push(uint64_t time);
+
+        size_t find_area(uint64_t time);
+
+        size_t find_latest_valid_area(uint64_t time);
+
+        std::uint64_t get_time(std::size_t area);
 
         std::byte *get_item(std::size_t area, std::size_t index) noexcept;
 
         std::byte *get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept;
 
-        void set_time(std::size_t area, uint64_t time) noexcept;
-
         void flag_new_data(std::size_t area);
-
-        int index_by_name(std::string name);
 
         virtual void print(std::ostream &os) const override;
 

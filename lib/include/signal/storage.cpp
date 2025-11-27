@@ -1,102 +1,120 @@
 #include "signal/storage.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
 
 #include <cstring>
 #include <sstream>
-#include <string>
 #include <utility>
 
 namespace ssp4sim::signal
 {
 
-    DataStorage::DataStorage(int areas) : new_data_flags(static_cast<std::size_t>(areas))
-    {
-        this->areas = static_cast<std::size_t>(areas);
-    }
+    const size_t derivative_size = sizeof(double);
 
-    DataStorage::DataStorage(int areas, std::string name) : new_data_flags(static_cast<std::size_t>(areas))
+    SignalStorage::SignalStorage(std::size_t areas, std::string name) : new_data_flags(areas)
     {
-        this->areas = static_cast<std::size_t>(areas);
+        this->areas = areas;
         this->name = std::move(name);
     }
 
-    uint32_t DataStorage::add(std::string name, types::DataType type, int max_interpolation_order)
+    size_t SignalStorage::add(std::string name, types::DataType type, size_t max_interpolation_order)
     {
-        index += 1;
-        items += 1;
-        auto size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
-        index_name_map[name] = index;
+        auto position = 0;
+        if (!variables.empty())
+        {
+            position = this->mem_size;
+        }
 
-        names.push_back(name);
-        types.push_back(type);
-        sizes.push_back(size);
-        max_interpolation_orders.push_back(static_cast<std::size_t>(max_interpolation_order));
+        SignalInfo d;
+        d.index = variables.size();
+        d.name = name;
+        d.type = type;
+        d.max_interpolation_orders = max_interpolation_order;
 
-        positions.push_back(pos);
-        der_positions.push_back(der_pos);
+        d.type_size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
+        d.total_size =  d.type_size + max_interpolation_order *derivative_size;
 
-        pos += size;
-        der_pos += static_cast<std::size_t>(max_interpolation_order) * derivative_size;
+        d.position = position;
+        d.derivate_position = position + d.type_size;
 
-        return static_cast<uint32_t>(index);
+        this->mem_size += d.total_size;
+
+        variables.push_back(std::move(d));
+
+        return variables.size() -1;
     }
 
-    void DataStorage::allocate()
+    void SignalStorage::allocate()
     {
-        locations.clear();
-        der_locations.clear();
-
-        total_size = pos * areas;
-        data = std::make_unique<std::byte[]>(total_size);
-        std::memset(data.get(), 0, total_size);
-
-        auto der_size = der_pos * areas;
-        der_data = std::make_unique<std::byte[]>(der_size);
-        std::memset(der_data.get(), 0, der_size);
-
-        timestamps.resize(areas);
-        locations.resize(areas);
-        der_locations.resize(areas);
-
-        for (std::size_t area = 0; area < areas; area++)
+        if (allocated)
         {
-            locations[area].reserve(positions.size());
-            der_locations[area].reserve(der_positions.size());
+            log(error)("[{}] Buffer can only be allocated once", __func__);
+            throw std::runtime_error("Buffer can only be allocated once");
+        }
 
-            for (auto p_pos : positions)
-            {
-                locations[area].push_back(&data[area * pos + p_pos]);
-            }
+        data = std::make_unique<utils::RingBuffer>(this->areas, this->mem_size);
 
-            for (std::size_t i = 0; i < der_positions.size(); ++i)
-            {
-                if (max_interpolation_orders[i] > 0)
-                {
-                    der_locations[area].push_back(&der_data[area * der_pos + der_positions[i]]);
-                }
-                else
-                {
-                    der_locations[area].push_back(nullptr);
-                }
-            }
-            new_data_flags[area] = false;
+        locations.clear();
+        derivate_locations.clear();
 
-            for (std::size_t idx = 0; idx < types.size(); idx++)
+        locations.resize(areas);
+        derivate_locations.resize(areas);
+
+        for (std::size_t area_index = 0; area_index < areas; area_index++)
+        {
+            std::byte * area = data->get_item(area_index);
+
+            for (auto variable : this->variables)
             {
-                if (types[idx] == types::DataType::string)
+                locations[area_index].push_back(&area[variable.position]);
+                derivate_locations[area_index].push_back(&area[variable.derivate_position]);
+
+                if (variable.type == types::DataType::string)
                 {
-                    log(debug)("[{}] Setting string {}:{} - {}", __func__, idx, names[idx], types[idx].to_string());
-                    auto s = reinterpret_cast<std::string *>(locations[area][idx]);
+                    log(debug)("[{}] Setting string {}:{} - {}", __func__, variable.index, variable.name, variable.type.to_string());
+                    auto s = reinterpret_cast<std::string *>(locations[area_index][variable.index]);
                     *s = std::string("");
                 }
             }
+
+            new_data_flags[area_index] = false;
         }
 
         allocated = true;
     }
 
-    std::byte *DataStorage::get_item(std::size_t area, std::size_t index) noexcept
+    size_t SignalStorage::push(uint64_t time)
+    {
+        return data->push(time);
+    }
+
+    size_t SignalStorage::get_or_push(uint64_t time)
+    {
+        auto area = find_area(time);
+        if (area != -1)
+        {
+            return static_cast<int>(area);
+        }
+        auto new_area = push(time);
+        return new_area;
+    }
+
+    size_t SignalStorage::find_area(uint64_t time)
+    {
+        return data->find_index(time);
+    }
+
+    size_t SignalStorage::find_latest_valid_area(uint64_t time)
+    {
+        return data->find_latest_valid_index(time);
+    }
+
+    std::uint64_t SignalStorage::get_time(std::size_t area)
+    {
+        return data->get_time(area);
+    }
+
+
+    std::byte *SignalStorage::get_item(std::size_t area, std::size_t index) noexcept
     {
         if (allocated)
         {
@@ -105,24 +123,16 @@ namespace ssp4sim::signal
         return nullptr;
     }
 
-    std::byte *DataStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept
+    std::byte *SignalStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept
     {
-        if (allocated && der_locations[area][index] != nullptr)
+        if (allocated && derivate_locations[area][index] != nullptr)
         {
-            return der_locations[area][index] + (order - 1) * derivative_size;
+            return derivate_locations[area][index] + (order - 1) * derivative_size;
         }
         return nullptr;
     }
 
-    void DataStorage::set_time(std::size_t area, uint64_t time) noexcept
-    {
-        if (allocated)
-        {
-            timestamps[area] = time;
-        }
-    }
-
-    void DataStorage::flag_new_data(std::size_t area)
+    void SignalStorage::flag_new_data(std::size_t area)
     {
         if (allocated)
         {
@@ -130,49 +140,42 @@ namespace ssp4sim::signal
         }
     }
 
-    int DataStorage::index_by_name(std::string name)
-    {
-        return index_name_map[std::move(name)];
-    }
 
-    void DataStorage::print(std::ostream &os) const
+    void SignalStorage::print(std::ostream &os) const
     {
-        os << "DataStorage \n{\n"
+        os << "SignalStorage \n{\n"
            << " name: " << name
            << "  areas: " << areas
            << ", allocated: " << allocated
-           << ", total_size: " << total_size
-           << ", pos: " << pos
-           << ", items: " << items
-           << ", index: " << index << "\n";
+           << ", total memory size: " << mem_size
+           << ", items: " << variables.size();
 
-        for (int i = 0; i < items; i++)
+        for (auto var : variables)
         {
-            os << "  { position " << positions[static_cast<std::size_t>(i)]
-               << ", name " << names[static_cast<std::size_t>(i)]
-               << ", type " << types[static_cast<std::size_t>(i)]
-               << ", size " << sizes[static_cast<std::size_t>(i)] << " }\n";
+            os << "  { position " << var.position
+               << ", name " << var.name
+               << ", type " << var.type.to_string()
+               << ", size " << var.type_size << " }\n";
         }
         os << "}";
     }
 
-    std::string DataStorage::export_area(int area)
+    std::string SignalStorage::export_area(int area)
     {
         std::ostringstream oss;
         oss << "\nArea: \n"
             << area;
-        for (int i = 0; i < items; i++)
+        for (auto var : variables)
         {
-            auto item = get_item(static_cast<std::size_t>(area), static_cast<std::size_t>(i));
-            auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(types[static_cast<std::size_t>(i)], item);
-            oss << "{ position " << positions[static_cast<std::size_t>(i)]
-                << ", der_position " << der_positions[static_cast<std::size_t>(i)]
-                << ", der_orders " << max_interpolation_orders[static_cast<std::size_t>(i)]
-                << ", der_loc " << reinterpret_cast<uint64_t>(der_locations[static_cast<std::size_t>(area)][static_cast<std::size_t>(i)])
-                << ", name: " << names[static_cast<std::size_t>(i)]
-                << ", type: " << types[static_cast<std::size_t>(i)]
-                << ", size: " << sizes[static_cast<std::size_t>(i)]
-                << ", value:" << data_type_str
+            auto item = get_item((area), var.index);
+            auto data_str = ssp4sim::ext::fmi2::enums::data_type_to_string(var.type, item);
+            oss << "{ position " << var.position
+                << ", der_position " << var.derivate_position
+                << ", der_orders " << var.max_interpolation_orders
+                << ", name: " << var.name
+                << ", type: " << var.type.to_string()
+                << ", size: " << var.type_size
+                << ", value:" << data_str
                 << " }\n";
         }
         return oss.str();

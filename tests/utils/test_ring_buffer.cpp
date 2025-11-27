@@ -4,6 +4,8 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <array>
+#include <limits>
 
 using ssp4sim::utils::RingBuffer;
 
@@ -36,8 +38,8 @@ TEST_CASE("RingBuffer push grows until full then overwrites oldest")
     REQUIRE(buffer.is_full());
     REQUIRE(buffer.nr_items == buffer.capacity);
 
-    auto previous_tail = buffer.tail;
-    auto previous_head = buffer.head;
+    const auto previous_tail = buffer.tail;
+    const auto previous_head = buffer.head;
     buffer.push();
     REQUIRE(buffer.nr_items == buffer.capacity);
     REQUIRE(buffer.tail == (previous_tail + 1) % buffer.capacity);
@@ -59,4 +61,75 @@ TEST_CASE("RingBuffer get_item provides contiguous storage and bounds checks")
     REQUIRE(*reinterpret_cast<std::uint64_t *>(buffer.get_item(1)) == 99);
 
     REQUIRE_THROWS_AS(buffer.get_item(buffer.capacity), std::runtime_error);
+}
+
+TEST_CASE("RingBuffer index helpers follow head/tail ordering")
+{
+    RingBuffer buffer(3, sizeof(int));
+
+    auto idx1 = buffer.push();
+    *reinterpret_cast<int *>(buffer.get_item(idx1)) = 10;
+
+    auto idx2 = buffer.push();
+    *reinterpret_cast<int *>(buffer.get_item(idx2)) = 20;
+
+    auto idx3 = buffer.push();
+    *reinterpret_cast<int *>(buffer.get_item(idx3)) = 30;
+
+    REQUIRE(buffer.is_full());
+    REQUIRE(buffer.nr_items == buffer.capacity);
+
+    // Reverse lookup should walk newest to oldest.
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(0))) == 30);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(1))) == 20);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(2))) == 10);
+
+    // Forward lookup uses tail-relative ordering.
+    std::array<int, 3> forward_values{
+        *reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos(0))),
+        *reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos(1))),
+        *reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos(2)))};
+    REQUIRE(forward_values == std::array<int, 3>{30, 10, 20});
+
+    // Overwrite oldest and confirm head/tail advance and value mapping update.
+    auto idx4 = buffer.push();
+    *reinterpret_cast<int *>(buffer.get_item(idx4)) = 40;
+
+    REQUIRE(buffer.is_full());
+    REQUIRE(buffer.nr_items == buffer.capacity);
+
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(0))) == 40);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(1))) == 30);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(2))) == 20);
+
+    std::array<int, 3> forward_after_overwrite{
+        *reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos(0))),
+        *reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos(1))),
+        *reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos(2)))};
+    REQUIRE(forward_after_overwrite == std::array<int, 3>{40, 20, 30});
+}
+
+TEST_CASE("RingBuffer tracks timestamps and finds valid indices")
+{
+    RingBuffer buffer(3, sizeof(int));
+
+    buffer.push(100);
+    REQUIRE(buffer.get_time(buffer.head) == 100);
+
+    buffer.push(200);
+    REQUIRE(buffer.get_time(buffer.head) == 200);
+
+    auto idx3 = buffer.push(300);
+    REQUIRE(buffer.get_time(buffer.head) == 300);
+
+    auto index_for_200 = buffer.find_index(200);
+    REQUIRE(index_for_200 != std::numeric_limits<std::size_t>::max());
+    REQUIRE(buffer.get_time(index_for_200) == 200);
+
+    REQUIRE(buffer.find_latest_valid_index(250) == index_for_200);
+    REQUIRE(buffer.find_latest_valid_index(50) == std::numeric_limits<std::size_t>::max());
+
+    buffer.push(400); // overwrites oldest timestamp
+    REQUIRE(buffer.find_index(100) == std::numeric_limits<std::size_t>::max());
+    REQUIRE(buffer.find_latest_valid_index(350) == idx3);
 }

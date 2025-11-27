@@ -69,7 +69,7 @@ namespace ssp4sim::signal
 
         ~DataRecorder();
 
-        void add_storage(DataStorage *storage);
+        void add_storage(SignalStorage *storage);
 
         void reset_update_status(std::size_t row);
 
@@ -89,7 +89,7 @@ namespace ssp4sim::signal
 
         void loop();
 
-        void process_new_data(ssp4sim::signal::Tracker &tracker, signal::DataStorage *storage, std::size_t area);
+        void process_new_data(ssp4sim::signal::Tracker &tracker, signal::SignalStorage *storage, std::size_t area);
 
         void wait_until_done();
     };

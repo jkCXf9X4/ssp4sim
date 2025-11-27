@@ -58,8 +58,8 @@ class Simulation {
   class FmuModel {
     +name: std::string
     +fmu: handler::FmuInfo*
-    +input_area: std::unique_ptr<signal::RingStorage>
-    +output_area: std::unique_ptr<signal::RingStorage>
+    +input_area: std::unique_ptr<signal::SignalStorage>
+    +output_area: std::unique_ptr<signal::SignalStorage>
     +recorder: signal::DataRecorder*
     +connections: std::vector<ConnectionInfo>
     +FmuModel(name, fmu)
@@ -128,20 +128,20 @@ class Simulation {
     +stop_recording()
   }
 
-  class RingStorage {
-    +data: std::unique_ptr<DataStorage>
+  class SignalStorage {
+    +data: std::unique_ptr<SignalStorage>
     +capacity: size_t
-    +RingStorage(capacity, name)
+    +SignalStorage(capacity, name)
     +add(name, type)
     +push(time)
   }
 
-  class DataStorage {
+  class SignalStorage {
     +data: std::unique_ptr<std::byte[]>
     +positions: std::vector<std::size_t>
     +types: std::vector<types::DataType>
     +names: std::vector<std::string>
-    +DataStorage(areas)
+    +SignalStorage(areas)
     +add(name, type)
     +allocate()
   }
@@ -170,10 +170,10 @@ Invocable ..> InvocableNode
 InvocableNode ..> AsyncNode
 Invocable ..> FmuModel
 FmuInfo --> FmuModel
-FmuModel --> RingStorage
+FmuModel --> SignalStorage
 AsyncNode *-- FmuModel
 
 AnalysisGraphBuilder --> AnalysisGraph
 
-RingStorage --> DataRecorder
-RingStorage *-- DataStorage
+SignalStorage --> DataRecorder
+SignalStorage *-- SignalStorage

@@ -40,18 +40,19 @@ namespace ssp4sim::signal
         log(ext_trace)("[{}] init", __func__);
     }
 
-    void DataRecorder::add_storage(DataStorage *storage)
+    void DataRecorder::add_storage(SignalStorage *storage)
     {
-        if (storage->items > 0)
+        auto items = storage->variables.size();
+        if (items > 0)
         {
             Tracker t;
             t.storage = storage;
-            t.size = storage->pos;
+            t.size = storage->mem_size;
             t.index = tracker_index;
             t.row_pos = row_size;
             trackers.push_back(t);
 
-            row_size += storage->pos;
+            row_size += storage->mem_size;
 
             log(trace)("[{}] Adding tracker, storage: {}", __func__, storage->name);
 
@@ -74,9 +75,9 @@ namespace ssp4sim::signal
         file << "time";
         for (const auto &tracker : trackers)
         {
-            for (const auto &name : tracker.storage->names)
+            for (const auto &var : tracker.storage->variables)
             {
-                file << ',' << name;
+                file << ',' << var.name;
             }
         }
         file << '\n';
@@ -174,14 +175,14 @@ namespace ssp4sim::signal
         file << time_value;
         for (const auto &tracker : trackers)
         {
-            for (int item = 0; item < tracker.storage->items; ++item)
+            for (auto& var : tracker.storage->variables)
             {
                 IF_LOG({
-                    log(ext_trace)("[{}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, item);
+                    log(ext_trace)("[{}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, var.name);
                 });
 
-                auto pos = tracker.storage->positions[item];
-                auto type = tracker.storage->types[item];
+                auto pos = var.position;
+                auto type = var.type;
                 file << ", ";
                 if (updated_tracker[row][tracker.index])
                 {
@@ -217,7 +218,7 @@ namespace ssp4sim::signal
             for (auto &tracker : trackers)
             {
                 IF_LOG({
-                    log(ext_trace)("[{}] Evaluating storage {} {}", __func__, tracker.storage->to_string(), tracker.storage->index);
+                    log(ext_trace)("[{}] Evaluating storage {}", __func__, tracker.storage->to_string());
                 });
 
                 for (std::size_t area = 0; area < tracker.storage->areas; ++area)
@@ -239,9 +240,9 @@ namespace ssp4sim::signal
         log(debug)("[{}] Exiting recording thread", __func__);
     }
 
-    void DataRecorder::process_new_data(ssp4sim::signal::Tracker &tracker, signal::DataStorage *storage, std::size_t area)
+    void DataRecorder::process_new_data(ssp4sim::signal::Tracker &tracker, signal::SignalStorage *storage, std::size_t area)
     {
-        auto ts = storage->timestamps[area];
+        auto ts = storage->get_time(area);
 
         if (!time_row_map.contains(ts))
         {

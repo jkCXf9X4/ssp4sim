@@ -7,7 +7,7 @@
 #include "model_connection.hpp"
 #include "model_connector.hpp"
 
-#include "signal/ring_storage.hpp"
+#include "signal/storage.hpp"
 #include "signal/recorder.hpp"
 
 #include "handler/fmu_handler.hpp"
@@ -31,8 +31,8 @@ namespace ssp4sim::graph
 
         handler::FmuInfo *fmu;
 
-        std::unique_ptr<ssp4sim::signal::RingStorage> input_area;
-        std::unique_ptr<ssp4sim::signal::RingStorage> output_area;
+        std::unique_ptr<ssp4sim::signal::SignalStorage> input_area;
+        std::unique_ptr<ssp4sim::signal::SignalStorage> output_area;
         signal::DataRecorder *recorder;
 
         std::map<std::string, ConnectorInfo> inputs;
@@ -41,9 +41,10 @@ namespace ssp4sim::graph
         std::vector<ConnectionInfo> connections;
 
         bool forward_derivatives = false;
+        size_t maxOutputDerivativeOrder = 0;
         bool fmu_logging = false;
 
-        FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu);
+        FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu, size_t maxOutputDerivativeOrder);
 
         ~FmuModel();
 

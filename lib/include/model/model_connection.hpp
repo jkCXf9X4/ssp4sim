@@ -2,7 +2,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "signal/ring_storage.hpp"
+#include "signal/storage.hpp"
 
 #include "cutecpp/log.hpp"
 #include "utils/model.hpp"
@@ -18,8 +18,8 @@ namespace ssp4sim::graph
         types::DataType type;
         size_t size;
 
-        ssp4sim::signal::RingStorage *source_storage;
-        ssp4sim::signal::RingStorage *target_storage;
+        ssp4sim::signal::SignalStorage *source_storage;
+        ssp4sim::signal::SignalStorage *target_storage;
         uint32_t source_index;
         uint32_t target_index;
 
