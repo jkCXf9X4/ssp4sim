@@ -33,7 +33,10 @@ def load_csv(path: Path) -> pd.DataFrame:
     df.columns = [col.strip().lower() for col in df.columns]
 
     for column in df.columns:
-        df[column] = pd.to_numeric(df[column], errors="ignore")
+        converted = pd.to_numeric(df[column], errors="coerce")
+        # Only replace if at least one value parsed; leave non-numeric columns intact.
+        if not converted.isna().all():
+            df[column] = converted
 
     if "time" not in df.columns:
         raise ValueError(f"'time' column missing in {path}")
@@ -173,9 +176,8 @@ def main() -> None:
         raise RuntimeError("Common columns do not include 'time'; cannot compare datasets.")
 
     common_columns_list = ["time"] + sorted(col for col in common_columns if col != "time")
-
-    common_columns_list = set([x for x in list(common_columns_list) if "input_1" not in x]) # Filter out outputs
-    # common_columns_list = [x for x in common_columns_list if "output_1" not in x] # Filter out inputs
+    # Filter out outputs while keeping a stable ordering
+    common_columns_list = [col for col in common_columns_list if "input_1" not in col]
 
     print(f"Common columns: {', '.join(common_columns_list)}")
     print("Ref head():")

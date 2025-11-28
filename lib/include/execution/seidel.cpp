@@ -55,6 +55,7 @@ namespace ssp4sim::graph
         for (auto &n : seidel_nodes)
         {
             n.nr_parents_counter = n.nr_parents;
+            n.invoked = false;
         }
     }
 
@@ -62,6 +63,7 @@ namespace ssp4sim::graph
     {
         log(info)("[{}] ", __func__);
     }
+
     // some idea that this might be more effective than looping over all items
     // Not used at the moment
     void SerialSeidel::invoke_node(SeidelNode &node, StepData step_data)
@@ -85,7 +87,7 @@ namespace ssp4sim::graph
     uint64_t SerialSeidel::invoke(StepData step_data)
     {
         IF_LOG({
-            log(ext_trace)("[{}] step data: {}", __func__, step_data.to_string());
+            log(trace)("[{}] step data: {}", __func__, step_data.to_string());
         });
 
         step_data.input_time = step_data.end_time;
@@ -101,14 +103,16 @@ namespace ssp4sim::graph
         {
             for (auto &node : seidel_nodes)
             {
-                if (node.nr_parents_counter == 0)
+                if (node.nr_parents_counter == 0 && !node.invoked)
                 {
 
                     IF_LOG({
-                        log(trace)("[{}] Starting", __func__, node.id);
+                        log(trace)("[{}] Starting {}:{}", __func__, node.id, node.node->name);
                     });
 
                     node.node->invoke(step_data);
+                    node.invoked = true;
+                    completed++;
                     for (auto c : node.node->children)
                     {
                         auto &child = seidel_nodes[((Invocable *)c)->id];
@@ -144,7 +148,7 @@ namespace ssp4sim::graph
 
         step_data.input_time = step_data.end_time;
 
-        throw std::runtime_error("This is not imlemented");
+        throw std::runtime_error("This is not implemented");
 
         // reset_counters();
 

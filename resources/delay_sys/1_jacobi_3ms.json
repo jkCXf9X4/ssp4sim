@@ -5,7 +5,7 @@
         "ssd": "SystemStructure.ssd",
         "start_time":0.0,
         "stop_time":0.3,
-        "timestep": 0.00001,
+        "timestep": 0.003,
         "tolerance": 1e-4,
 
         "executor": 
@@ -14,7 +14,7 @@
             
             "thread_pool_workers": 5,
             "forward_derivatives": false,
-            // "sub_step":0.001,
+            "sub_step":0.0001,
 
             "jacobi":
             {
@@ -37,12 +37,12 @@
             "enable": true,
             "wait_for": true,
             "interval": 0.001,
-            "result_file": "./results/1_native_0.01ms.csv"
+            "result_file": "./results/1_jacobi_3ms.csv"
         },
 
         "log":
         {
-            "file": "./results/1_native_0.01ms.log"
+            "file": "./results/1_jacobi_3ms.log"
         }
     }
 }

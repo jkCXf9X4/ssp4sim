@@ -34,13 +34,15 @@ namespace ssp4sim::graph
                 output_time = substep_start + node->delay;
             }
 
-            auto s = StepData(substep_start,                                           // start
-                              substep_end,                                             // end
-                              step_data.timestep,                                      // step_size
-                              continuous_input ? substep_start : step_data.start_time, // input
-                              output_time);                                            // output_time
+            auto valid_input_time = continuous_input ? substep_start : step_data.start_time;
+            auto s = StepData(substep_start,      // start
+                              substep_end,        // end
+                              step_data.timestep, // step_size
+                              valid_input_time,   // input
+                              output_time);       // output_time
+
             // IF_LOG({
-            //     log(info)("Node {}, current {} accumulated_delay: {}, step: {}",
+            //     node->log(info)("Node {}, Time {}, step: {}",
             //               node->name, node->current_time, s.to_string());
             // });
 
