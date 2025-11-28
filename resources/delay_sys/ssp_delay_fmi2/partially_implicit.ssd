@@ -4,7 +4,7 @@
     <ssd:System description="" name="ssp_explicit_fmi2">
         <ssd:ParameterBindings>
           <ssd:ParameterBinding
-            source="resources/init_tlm_grouping.ssv">
+            source="resources/partially_implicit.ssv">
           </ssd:ParameterBinding>
         </ssd:ParameterBindings>
         <ssd:Elements>

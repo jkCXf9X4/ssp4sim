@@ -60,7 +60,7 @@ namespace ssp4sim::graph
 
         // The simulation may take one step beyond the stop_time. Some fmus may crash due to this
         // therfore tell the fmus that stop + one step should be ok
-        if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time + timestep * 2), tolerance))
+        if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time + timestep * 10), tolerance))
         {
             log(error)("[{}] setup_experiment failed for {}, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__, name);
             throw std::runtime_error(Logger::format("[{}] setup_experiment failed for {}", __func__, name));
