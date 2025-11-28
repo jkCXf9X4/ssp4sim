@@ -6,6 +6,7 @@
 #include "ssp4sim_definitions.hpp"
 
 #include "executor.hpp"
+#include "executor_utils.hpp"
 
 #include "invocable.hpp"
 #include "task_thread_pool.hpp"
@@ -109,8 +110,9 @@ namespace ssp4sim::graph
                     IF_LOG({
                         log(trace)("[{}] Starting {}:{}", __func__, node.id, node.node->name);
                     });
+                    invoke_sub_step(node.node, step_data, true);
 
-                    node.node->invoke(step_data);
+                    // node.node->invoke(step_data);
                     node.invoked = true;
                     completed++;
                     for (auto c : node.node->children)
