@@ -10,7 +10,7 @@
 
         "executor": 
         {
-            "method":"jacobi",
+            "method":"seidel",
             
             "thread_pool_workers": 5,
             "forward_derivatives": false,
@@ -37,12 +37,12 @@
             "enable": true,
             "wait_for": true,
             "interval": 0.001,
-            "result_file": "./results/1_native_1ms.csv"
+            "result_file": "./results/1_seidel_1ms.csv"
         },
 
         "log":
         {
-            "file": "./results/1_native_1ms.log"
+            "file": "./results/1_seidel_1ms.log"
         }
     }
 }

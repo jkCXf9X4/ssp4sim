@@ -1,0 +1,49 @@
+{
+    "simulation" :
+    {
+        "ssp": "./resources/delay_sys/ssp_delay_fmi2",
+        "ssd": "SystemStructure.ssd",
+        "start_time":0.0,
+        "stop_time":0.3,
+        "timestep": 0.00001,
+        "tolerance": 1e-4,
+
+        "executor": 
+        {
+            "method":"jacobi",
+            
+            "thread_pool_workers": 5,
+            "forward_derivatives": false,
+            // "sub_step":0.001,
+
+            "jacobi":
+            {
+                "parallel": true,
+                "method" : 1
+            },
+            "seidel":
+            {
+                "parallel": false
+            },
+            "custom.delay":
+            {
+                "parallel": false
+            }
+            
+        },
+
+        "recording":
+        {
+            "enable": true,
+            "wait_for": true,
+            "interval": 0.001,
+            "result_file": "./results/1_jacobi_0.01ms.csv"
+        },
+
+        "log":
+        {
+            "file": "./results/1_jacobi_0.01ms.log"
+        }
+    }
+}
+    

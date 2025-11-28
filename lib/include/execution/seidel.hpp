@@ -20,6 +20,7 @@ namespace ssp4sim::graph
     struct SeidelNode
     {
         int id;
+        bool invoked = false;
         Invocable *node;
         std::size_t nr_parents;
         std::size_t nr_parents_counter;
