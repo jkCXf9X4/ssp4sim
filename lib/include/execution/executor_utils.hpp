@@ -34,7 +34,8 @@ namespace ssp4sim::graph
                 output_time = substep_start + node->delay;
             }
 
-            auto valid_input_time = continuous_input ? substep_start : step_data.start_time;
+            // the valid input time does not work for seidel or anything that is not limited to the start time for valid inputs
+            auto valid_input_time = continuous_input ? substep_start : step_data.input_time;
             auto s = StepData(substep_start,      // start
                               substep_end,        // end
                               step_data.timestep, // step_size

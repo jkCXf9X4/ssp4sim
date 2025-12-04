@@ -6,7 +6,6 @@
 #include "ssp4sim_definitions.hpp"
 
 #include "executor.hpp"
-#include "executor_utils.hpp"
 
 #include "invocable.hpp"
 #include "task_thread_pool.hpp"
@@ -50,6 +49,49 @@ namespace ssp4sim::graph
         // break algebraic loops here?
         // Add a delay of a minor time amount to make sure that the broken loop cant use data that is to new
     }
+        // continuous input will allow the substep to sample new data during the substep
+    inline void invoke_sub_step(Invocable *node, const StepData &step_data, bool continuous_input = false)
+    {
+        while (node->current_time < step_data.end_time)
+        {
+            auto substep_start = node->current_time;
+            auto substep_end = node->current_time + step_data.timestep;
+
+            auto output_time = substep_end;
+            if (node->delay == 0)
+            {
+                // No delay specified, just set it at the end
+                output_time = substep_end;
+            }
+            else if (substep_start + node->delay <= substep_end)
+            {
+                // if the step is shorter than the model delay, do the best of it and set it to sub_step_end
+                // evaluate if this is true, it could be set to the correct time but there is the potential
+                // that the data could be used non-deterministic if a time before substep_end is set...
+                output_time = substep_end;
+            }
+            else if (substep_start + node->delay > substep_end)
+            {
+                // if the step is longer than the model delay, set the correct time
+                output_time = substep_start + node->delay;
+            }
+
+            // the valid input time does not work for seidel or anything that is not limited to the start time for valid inputs
+            auto valid_input_time = continuous_input ? substep_start : step_data.input_time;
+            auto s = StepData(substep_start,      // start
+                              substep_end,        // end
+                              step_data.timestep, // step_size
+                              substep_start,   // input
+                              output_time);       // output_time
+
+            IF_LOG({
+                node->log(info)("Node {}, Time {}, step: {}",
+                          node->name, node->current_time, s.to_string());
+            });
+
+            node->invoke(s);
+        }
+    }
 
     void SeidelBase::reset_counters()
     {
@@ -65,22 +107,6 @@ namespace ssp4sim::graph
         log(info)("[{}] ", __func__);
     }
 
-    // some idea that this might be more effective than looping over all items
-    // Not used at the moment
-    void SerialSeidel::invoke_node(SeidelNode &node, StepData step_data)
-    {
-        node.node->invoke(step_data);
-        for (auto c : node.node->children)
-        {
-            auto &child = seidel_nodes[((Invocable *)c)->id];
-            child.nr_parents_counter -= 1;
-            if (child.nr_parents_counter == 0)
-            {
-                invoke_node(child, step_data);
-            }
-        }
-    }
-
     /**
      * Traverse the connection graph and invoke nodes when all parents have been invoked for this timestep.
      * [hot path]
@@ -91,14 +117,18 @@ namespace ssp4sim::graph
             log(trace)("[{}] step data: {}", __func__, step_data.to_string());
         });
 
-        step_data.input_time = step_data.end_time;
-
         int completed = 0;
         reset_counters();
 
         IF_LOG({
             log(trace)("[{}] Invoking nodes", __func__);
         });
+
+        auto s = StepData(step_data.start_time, // start
+                          step_data.end_time,   // end
+                          sub_step,             // step_size
+                          step_data.end_time,   // it should be able to use results from the current iteration
+                          step_data.end_time);  // output_time
 
         while (nr_of_nodes != completed)
         {
@@ -110,9 +140,10 @@ namespace ssp4sim::graph
                     IF_LOG({
                         log(trace)("[{}] Starting {}:{}", __func__, node.id, node.node->name);
                     });
-                    invoke_sub_step(node.node, step_data, true);
 
-                    // node.node->invoke(step_data);
+                    // node.node->invoke(s);
+                    invoke_sub_step(node.node, s, true);
+
                     node.invoked = true;
                     completed++;
                     for (auto c : node.node->children)

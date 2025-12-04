@@ -18,7 +18,7 @@
 
             "jacobi":
             {
-                "parallel": true,
+                "parallel": false,
                 "method" : 1
             },
             "seidel":
