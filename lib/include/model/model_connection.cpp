@@ -39,9 +39,8 @@ namespace ssp4sim::graph
                 log(ext_trace)("[{}] Fetch valid data connection {}", __func__, connection.to_string());
             });
 
-            auto source_area = connection.source_storage->find_latest_valid_area(input_time - connection.delay);
-
-            if (source_area != -1)
+            size_t source_area;
+            if (connection.source_storage->find_latest_valid_area(input_time - connection.delay, source_area))
             {
                 IF_LOG({
                     log(debug)("[{}] Valid source_storage area found, time {}", __func__, connection.source_storage->data->timestamps[source_area]);

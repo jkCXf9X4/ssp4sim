@@ -89,8 +89,8 @@ namespace ssp4sim::signal
 
     size_t SignalStorage::get_or_push(uint64_t time)
     {
-        auto area = find_area(time);
-        if (area != -1)
+        size_t area;
+        if (find_area(time, area))
         {
             return static_cast<int>(area);
         }
@@ -98,14 +98,14 @@ namespace ssp4sim::signal
         return new_area;
     }
 
-    size_t SignalStorage::find_area(uint64_t time)
+    bool SignalStorage::find_area(uint64_t time, size_t &found_index)
     {
-        return data->find_index(time);
+        return data->find_index(time, found_index);
     }
 
-    size_t SignalStorage::find_latest_valid_area(uint64_t time)
+    bool SignalStorage::find_latest_valid_area(uint64_t time, size_t &found_index)
     {
-        return data->find_latest_valid_index(time);
+        return data->find_latest_valid_index(time, found_index);
     }
 
     std::uint64_t SignalStorage::get_time(std::size_t area)

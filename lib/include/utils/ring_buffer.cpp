@@ -75,20 +75,21 @@ namespace ssp4sim::utils
         return timestamps[index];
     }
 
-    std::size_t RingBuffer::find_index(uint64_t time)
+    bool RingBuffer::find_index(uint64_t time, std::size_t &index_found)
     {
         for (std::size_t i = 0; i < nr_items; ++i)
         {
             int pos = get_index_from_pos_rev(i);
             if (timestamps[pos] == time)
             {
-                return pos;
+                index_found = pos;
+                return true;
             }
         }
-        return -1;
+        return false;
     }
 
-    std::size_t RingBuffer::find_latest_valid_index(uint64_t time)
+    bool RingBuffer::find_latest_valid_index(uint64_t time, std::size_t &index_found)
     {
         for (std::size_t i = 0; i < nr_items; ++i)
         {
@@ -99,10 +100,11 @@ namespace ssp4sim::utils
                     log(ext_trace)("[{}] found valid area, {}", __func__, pos);
                 });
 
-                return pos;
+                index_found = pos;
+                return true;
             }
         }
-        return -1;
+        return false;
     }
 
     bool RingBuffer::is_empty()

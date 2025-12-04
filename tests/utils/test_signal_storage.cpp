@@ -49,14 +49,20 @@ TEST_CASE("SignalStorage pushes timestamps and finds areas", "[SignalStorage]")
     REQUIRE(storage.get_time(second) == 200);
     REQUIRE(storage.get_time(third) == 300);
 
-    REQUIRE(storage.find_area(200) == second);
-    REQUIRE(storage.find_latest_valid_area(250) == second);
-    REQUIRE(storage.find_latest_valid_area(50) == std::numeric_limits<std::size_t>::max());
+    size_t index_found;
+    REQUIRE(storage.find_area(200, index_found) == true);
+    REQUIRE(index_found == second);
+
+    REQUIRE(storage.find_latest_valid_area(250, index_found) == true);
+    REQUIRE(index_found == second);
+    REQUIRE(storage.find_latest_valid_area(50, index_found) == false);
 
     auto fourth = storage.push(400); // overwrite oldest
     REQUIRE(storage.get_time(fourth) == 400);
-    REQUIRE(storage.find_area(100) == std::numeric_limits<std::size_t>::max());
-    REQUIRE(storage.find_latest_valid_area(350) == third);
+    REQUIRE(storage.find_area(100, index_found) == false);
+
+    REQUIRE(storage.find_latest_valid_area(350, index_found) == true);
+    REQUIRE(index_found == third);
 }
 
 TEST_CASE("SignalStorage flags new data per area", "[SignalStorage]")

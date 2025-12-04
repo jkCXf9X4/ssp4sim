@@ -116,20 +116,34 @@ TEST_CASE("RingBuffer tracks timestamps and finds valid indices")
     buffer.push(100);
     REQUIRE(buffer.get_time(buffer.head) == 100);
 
-    buffer.push(200);
+    auto idx_200 = buffer.push(200);
     REQUIRE(buffer.get_time(buffer.head) == 200);
 
     auto idx3 = buffer.push(300);
     REQUIRE(buffer.get_time(buffer.head) == 300);
 
-    auto index_for_200 = buffer.find_index(200);
-    REQUIRE(index_for_200 != std::numeric_limits<std::size_t>::max());
+    size_t index_for_200;
+    REQUIRE(buffer.find_index(200, index_for_200) == true);
+    REQUIRE(index_for_200 == idx_200);
     REQUIRE(buffer.get_time(index_for_200) == 200);
-
-    REQUIRE(buffer.find_latest_valid_index(250) == index_for_200);
-    REQUIRE(buffer.find_latest_valid_index(50) == std::numeric_limits<std::size_t>::max());
+    
+    size_t index;
+    REQUIRE(buffer.find_latest_valid_index(250, index) == true);
+    REQUIRE(index == index_for_200);
+    REQUIRE(buffer.find_latest_valid_index(50, index) == false);
 
     buffer.push(400); // overwrites oldest timestamp
-    REQUIRE(buffer.find_index(100) == std::numeric_limits<std::size_t>::max());
-    REQUIRE(buffer.find_latest_valid_index(350) == idx3);
+    REQUIRE(buffer.find_index(100, index) == false);
+    REQUIRE(buffer.find_latest_valid_index(100, index) == false);
+    REQUIRE(buffer.find_latest_valid_index(150, index) == false);
+    REQUIRE(buffer.find_latest_valid_index(350, index) == true);
+    REQUIRE(index == idx3);
+
+    buffer.push(500); // overwrites oldest timestamp
+
+    REQUIRE(buffer.find_latest_valid_index(100, index) == false);
+    REQUIRE(buffer.find_latest_valid_index(299, index) == false);
+    REQUIRE(buffer.find_latest_valid_index(300, index) == true);
+    REQUIRE(buffer.find_latest_valid_index(301, index) == true);
+
 }

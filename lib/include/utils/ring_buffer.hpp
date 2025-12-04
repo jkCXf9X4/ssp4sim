@@ -32,7 +32,7 @@ namespace ssp4sim::utils
     public:
         std::size_t item_size = 0;
         std::unique_ptr<std::byte[]> data;
-        std::vector<std::uint64_t> timestamps; 
+        std::vector<std::uint64_t> timestamps;
 
         std::vector<std::byte *> locations; // absolute location in memory for each item
 
@@ -54,9 +54,9 @@ namespace ssp4sim::utils
 
         std::uint64_t get_time(std::size_t index);
 
-        std::size_t find_index(uint64_t time);
+        bool find_index(uint64_t time, std::size_t &index_found);
 
-        std::size_t find_latest_valid_index(uint64_t time);
+        bool find_latest_valid_index(uint64_t time, std::size_t &index_found);
 
         /* Return element at logical position `index` from the tail (oldest)     */
         std::size_t get_index_from_pos(std::size_t position);

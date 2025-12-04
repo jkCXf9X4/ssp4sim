@@ -67,7 +67,7 @@ To run the tests, you first need to enable the `SSP4SIM_BUILD_TEST` option in CM
 ```bash
 cmake -B build -S . -DSSP4SIM_BUILD_TEST=ON
 cmake -B build -S . -DSSP4SIM_BUILD_TEST=OFF
-cmake --build build && ./build/tests/test_1
+cmake --build build && ./build/tests/ssp4sim_tests
 ```
 ctest --test-dir build/tests currently malfunctions...
 
