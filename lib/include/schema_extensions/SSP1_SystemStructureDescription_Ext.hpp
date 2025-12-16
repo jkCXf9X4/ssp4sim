@@ -27,8 +27,8 @@ namespace ssp4sim::ext::ssp1
     {
         inline auto log = Logger("ssp4sim.ext.ssp.ssp1.elements", LogLevel::debug);
 
-        using IndexConnectorComponentTuple = tuple<int, Connector *, TComponent *>;
-        using IndexConnectorComponentTuples = vector<IndexConnectorComponentTuple>;
+        using IndexConnectorComponentTuple = std::tuple<int, Connector *, TComponent *>;
+        using IndexConnectorComponentTuples = std::vector<IndexConnectorComponentTuple>;
 
         IndexConnectorComponentTuples get_connectors(Elements &elements);
 
@@ -38,7 +38,7 @@ namespace ssp4sim::ext::ssp1
 
         // Get connections between fmus
         // return a set of <source_fmu, target_fmu> strings
-        set<pair<string, string>> get_fmu_connections(const SystemStructureDescription &ssd);
+        std::set<std::pair<std::string, std::string>> get_fmu_connections(const SystemStructureDescription &ssd);
     }
 
 }

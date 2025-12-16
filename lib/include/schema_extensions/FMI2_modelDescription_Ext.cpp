@@ -14,7 +14,6 @@
 
 namespace ssp4sim::ext::fmi2
 {
-    using namespace std;
     using namespace ssp4cpp::fmi2::md;
 
     namespace model_variables
@@ -23,7 +22,7 @@ namespace ssp4sim::ext::fmi2
         {
             if (index < 0 || index >= mv.ScalarVariable.size())
             {
-                throw invalid_argument("Index out of range");
+                throw std::invalid_argument("Index out of range");
             }
 
             // index start at 1
@@ -66,7 +65,7 @@ namespace ssp4sim::ext::fmi2
             }
             else
             {
-                throw runtime_error("Unknown type");
+                throw std::runtime_error("Unknown type");
             }
         }
 
@@ -117,45 +116,40 @@ namespace ssp4sim::ext::fmi2
     namespace dependency
     {
 
-        vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u)
+        std::vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u)
         {
             return get_dependencies_index(u, DependenciesKind::unknown);
         }
 
         // output index, dependency index , kind
-        vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u, DependenciesKind kind)
+        std::vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u, DependenciesKind kind)
         {
-            auto result = vector<IndexDependencyCoupling>();
+            std::vector<IndexDependencyCoupling> result{};
 
-            if (!u.dependencies.has_value())
+            for (int i = 0; i < u.dependencies.size(); i++)
             {
-                return result;
-            }
-
-            for (int i = 0; i < u.dependencies.value().list.size(); i++)
-            {
-                auto dependency = u.dependencies.value().list[i];
-                auto dependency_kind = u.dependenciesKind.value().list[i];
+                auto dependency = u.dependencies[i];
+                auto dependency_kind = u.dependenciesKind[i];
 
                 if (kind == DependenciesKind::unknown || dependency_kind == kind)
                 {
-                    auto t = make_tuple(u.index, dependency, dependency_kind);
-                    result.push_back(t);
+                    auto t = std::make_tuple(u.index, dependency, dependency_kind);
+                    result.emplace_back(std::move(t));
                 }
             }
 
             return result;
         }
 
-        vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv)
+        std::vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv)
         {
             // should add 'all'
             return get_dependencies_variables(u, mv, DependenciesKind::unknown);
         }
 
-        vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv, DependenciesKind kind)
+        std::vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv, DependenciesKind kind)
         {
-            auto result = vector<VariableDependencyCoupling>();
+            auto result = std::vector<VariableDependencyCoupling>();
 
             auto dependencies = get_dependencies_index(u, kind);
 
@@ -170,9 +164,9 @@ namespace ssp4sim::ext::fmi2
             return result;
         }
 
-        vector<VariableDependencyCoupling> get_dependencies_variables(vector<Unknown> &us, ModelVariables &mv, DependenciesKind kind)
+        std::vector<VariableDependencyCoupling> get_dependencies_variables(std::vector<Unknown> &us, ModelVariables &mv, DependenciesKind kind)
         {
-            auto result = vector<VariableDependencyCoupling>();
+            auto result = std::vector<VariableDependencyCoupling>();
 
             for (auto &u : us)
             {

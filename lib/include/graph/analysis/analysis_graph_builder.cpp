@@ -36,9 +36,6 @@ namespace ssp4sim::analysis::graph
                 m->set_interpolation_data(co_sim.canInterpolateInputs.value_or(false), co_sim.maxOutputDerivativeOrder.value_or(0));
             }
 
-            m->delay = utils::time::s_to_ns(resource->information_delay.value_or(0));
-            m->is_delay_modeled = resource->explicit_delay.value_or(true);
-
             log(trace)("[{}] New Model: {}", __func__, m->name);
             models[m->name] = std::move(m);
         }

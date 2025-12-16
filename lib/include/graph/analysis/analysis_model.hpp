@@ -19,7 +19,6 @@ namespace ssp4sim::analysis::graph
     {
     public:
         uint64_t delay = 0;
-        bool is_delay_modeled = false;
 
         Logger log = Logger("ssp4sim.graph.AnalysisModel", LogLevel::info);
 

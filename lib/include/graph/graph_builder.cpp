@@ -27,8 +27,7 @@ namespace ssp4sim::graph
             log(ext_trace)("[{}] -- New Model: {}", __func__, m->name);
 
             m->delay = analysis_model->delay;
-            m->is_delay_modeled = analysis_model->is_delay_modeled;
-            log(debug)("Model: {}, delay {}, is_delay_modeled: {}", m->name, m->delay, m->is_delay_modeled);
+            log(debug)("Model: {}, delay {}", m->name, m->delay);
 
             models[analysis_model->name] = std::move(m);
         }

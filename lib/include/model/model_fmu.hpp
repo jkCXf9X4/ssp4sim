@@ -25,7 +25,6 @@ namespace ssp4sim::graph
     class FmuModel final : public Invocable
     {
     public:
-        bool is_delay_modeled = false;
 
         Logger log;
 

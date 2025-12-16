@@ -90,9 +90,9 @@ namespace ssp4sim::ext::ssp1
             return out;
         }
 
-        set<pair<string, string>> get_fmu_connections(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd)
+        std::set<std::pair<std::string, std::string>> get_fmu_connections(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd)
         {
-            auto fmu_connections = set<pair<string, string>>();
+            std::set<std::pair<std::string, std::string>> fmu_connections{};
             if (ssd.System.Connections.has_value())
             {
                 for (auto connection : ssd.System.Connections.value().Connections)

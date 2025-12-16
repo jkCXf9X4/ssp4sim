@@ -10,6 +10,8 @@
 
 #include "cutecpp/log.hpp"
 
+#include <map>
+
 namespace ssp4cpp
 {
     class Ssp;

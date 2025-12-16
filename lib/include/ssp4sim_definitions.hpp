@@ -9,7 +9,7 @@ namespace ssp4sim::types
     // types::
     using IPrintable = ssp4cpp::utils::interfaces::IPrintable;
     using Causality = ssp4cpp::fmi2::md::Causality;
-    using DataType = ssp4cpp::fmi2::md::Type;
+    using DataType = ssp4cpp::fmi2::md::FmiType;
 }
 
 

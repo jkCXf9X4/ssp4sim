@@ -53,20 +53,21 @@ namespace ssp4sim::graph
                 auto substep_start = models->current_time;
                 auto substep_end = models->current_time + step_data.timestep;
 
+                // NOTE: This probably does not work atm 
                 auto output_time = substep_end;
                 if (models->delay == 0)
                 {
                     // No delay specified, just set it at the end
                     output_time = substep_end;
                 }
-                else if (!models->is_delay_modeled && substep_start + models->delay <= substep_end)
+                else if (substep_start + models->delay <= substep_end)
                 {
                     // if the step is shorter than the model delay, do the best of it and set it to sub_step_end
                     // evaluate if this is true, it could be set to the correct time but there is the potential
                     // that the data could be used non-deterministic if a time before substep_end is set...
                     output_time = substep_end;
                 }
-                else if (!models->is_delay_modeled && substep_start + models->delay > substep_end)
+                else if (substep_start + models->delay > substep_end)
                 {
                     // if the step is longer than the model delay, set the correct time
                     output_time = substep_start + models->delay;
@@ -102,12 +103,6 @@ namespace ssp4sim::graph
                 log(warning)("Invoking node {}, {}", model->name, s.to_string());
 
                 invoke_sub_step(model, s);
-
-                if (!model->is_delay_modeled)
-                {
-                    accumulated_delay += node->delay;
-                    log(warning)("Adding delay for {}, {}", model->name, accumulated_delay);
-                }
             }
         }
     };

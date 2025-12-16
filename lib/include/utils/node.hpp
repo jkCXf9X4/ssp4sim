@@ -8,6 +8,7 @@
 #include <string>
 #include <list>
 #include <stack>
+#include <sstream>
 
 namespace ssp4sim::utils::graph
 {
