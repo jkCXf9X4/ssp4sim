@@ -9,6 +9,7 @@
 #include <vector>
 #include <string>
 #include <stacktrace>
+#include <ranges>
 
 #include <iostream>
 
@@ -126,10 +127,7 @@ namespace ssp4sim::ext::fmi2
         {
             std::vector<IndexDependencyCoupling> result{};
 
-            for (int i = 0; i < u.dependencies.size(); i++)
-            {
-                auto dependency = u.dependencies[i];
-                auto dependency_kind = u.dependenciesKind[i];
+            for (auto [dependency, dependency_kind] : std::views::zip(u.dependencies, u.dependenciesKind)) {
 
                 if (kind == DependenciesKind::unknown || dependency_kind == kind)
                 {
