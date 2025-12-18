@@ -1,39 +1,60 @@
 # Repository Guidelines
 
+After each task update and improve the documentation such as, but not limited to, readme.md or docs/
+
+Avoid monkey patching or similar, always try to find root cause for errors
+
 ## Project Structure & Module Organization
-- `lib/include` provides public headers; keep implementations in the mirrored folders under `lib/src`.
-- CLI sources sit in `public/ssp4sim_app`, and bindings in `public/python_api`; touch both when changing shared interfaces.
-- Simulation inputs live in `resources/`; treat `results/` as scratch space and leave large outputs untracked.
-- Tests mirror the library layout in `tests/{utils,sim,...}`; add fixtures next to the code under test.
+- `lib/`: core C++23 simulation engine (execution strategies, graph, utils, handlers).
+- `public/`: shipped entry points, including `public/ssp4sim_app/` and `public/python_api/`.
+- `tests/`: Catch2-based unit/integration tests (e.g., `tests/utils/test_*.cpp`).
+- `resources/`: SSP/SSD/SSM/SSV examples, reference inputs, and sample scenarios.
+- `scripts/`: helper scripts for filtering and comparing results.
+- `3rdParty/`: vendored dependencies (ssp4cpp, fmi4c, etc.).
 
 ## Build, Test, and Development Commands
-```bash
-cmake --preset=vcpkg                              # configure toolchain + deps
-cmake -S . -B build -DSSP4CPP_BUILD_TEST=ON       # configure with tests
-cmake --build build                               # build libs and apps
-./build/public/ssp4sim_app/ssp4sim_app resources/embrace/embrace.json
-cmake --build build --target test_1 && ./build/tests/test_1  # Catch2 suite
-```
-- Use the preset for reproducible dependency resolution and rerun configuration after toggling options like `SSP4CPP_BUILD_PYTHON`.
+- Configure with vcpkg preset:
+  ```bash
+  cmake --preset=vcpkg
+  ```
+- Build all targets:
+  ```bash
+  cmake --build build
+  ```
+- Run the CLI app (example):
+  ```bash
+  ./build/public/ssp4sim_app/sim_app ./resources/embrace/embrace.json
+  ```
+- Enable and run tests:
+  ```bash
+  cmake -B build -S . -DSSP4SIM_BUILD_TEST=ON
+  cmake --build build && ./build/tests/ssp4sim_tests
+  ```
+- Build Python API (release only) and install editable:
+  ```bash
+  cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
+  cmake --build build
+  python3.11 -m venv venv && . ./venv/bin/activate
+  pip install -r requirements.txt
+  pip install -e ./build/public/python_api
+  ```
 
 ## Coding Style & Naming Conventions
-- Use modern C++23 patterns with 4-space indentation, brace-on-new-line for namespaces/classes, and concise `camelCase` helper names.
-- Group includes as `<system>` then `"project"` headers, and promote shared logic into `utils`.
-- Keep declarations in `lib/include` with paired implementations in `lib/src`; add short Doxygen blocks for public APIs.
-- Python glue should follow PEP 8 and reuse `python3 -m venv venv`.
+- C++ formatting follows a 4-space indent with braces on the next line.
+- Class names use `PascalCase`; functions and files generally use `snake_case`.
+- Keep includes ordered and local headers grouped (see `lib/include/**`).
+- No enforced formatter is checked in; match surrounding style closely.
 
 ## Testing Guidelines
-- Catch2 drives the suite; name sources `test_<feature>.cpp` and tag cases (e.g., `[Node]`) for focused runs.
-- Reconfigure with `SSP4CPP_BUILD_TEST=ON`, rebuild, and execute `./build/tests/test_1` (or `ctest --test-dir build` when stable) before submitting.
-- Store fixtures in `tests/references` and reuse assets from `resources/` for deterministic inputs.
-- Cover success and failure paths; call out known gaps in the PR description if they remain.
+- Test framework: Catch2 (`tests/CMakeLists.txt`).
+- Prefer `test_*.cpp` naming and small, focused cases under `tests/utils/` or `tests/sim/`.
+- `ctest --test-dir build/tests` is noted as unreliable; run the test binary directly.
 
 ## Commit & Pull Request Guidelines
-- Favor short, imperative summaries (e.g., `Add Tarjan Graph Utilities`) similar to the existing history; wrap body text near 72 chars.
-- Optional module prefixes like `[utils]` keep the log scannable; reference issues in the footer (`Refs #123`).
-- PRs should explain intent, list manual or automated test results, and note any new resources; share screenshots or logs for CLI changes.
-- Request review once tests pass and park unfinished ideas in `todo.md` instead of leaving them undocumented.
+- Commit messages are short, imperative, sentence case (e.g., "Add substeps", "Split jacobi implementations").
+- PRs should include a clear description, the tests you ran, and reference related issues.
+- Attach before/after output or plots when changing simulation results or reference data.
 
-## Tooling & Data Tips
-- Helper scripts in `scripts/` (`compare_with_ref.py`, `plot.py`) validate outputs against `tests/references`.
-- Keep generated experiment data in `results/` and track reproducibility notes in `profiling.md` when the workflow changes.
+## Configuration & Dependencies
+- CMake presets (`CMakePresets.json`) expect vcpkg; see `vcpkg.md` for setup.
+- Optional flags: `SSP4SIM_BUILD_TEST`, `SSP4SIM_BUILD_PYTHON_API`, `SSP4SIM_LOG_HOT_PATH`.
