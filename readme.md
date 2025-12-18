@@ -27,10 +27,10 @@ The project is organized into the following directories:
 ## Getting started
 1.  Clone the repository and initialize submodules:
     ```bash
-    git clone git@github.com:jkCXf9X4/ssp4cpp.git
+    git clone git@github.com:jkCXf9X4/ssp4sim.git
     git submodule update --init --recursive 
     or
-    git clone --recursive git@github.com:jkCXf9X4/ssp4cpp.git
+    git clone --recursive git@github.com:jkCXf9X4/ssp4sim.git
     ```
 
 2.  Configure the build using the provided CMake preset (requires [vcpkg](https://github.com/microsoft/vcpkg)):
@@ -84,6 +84,7 @@ cmake --build build
 python3.11 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
+# After the python api is built
 pip install -e ./build/public/python_api
 ```
 

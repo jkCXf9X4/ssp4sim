@@ -1,5 +1,4 @@
 
--e ./build/public/python_api
 numpy
 pandas
 matplotlib
