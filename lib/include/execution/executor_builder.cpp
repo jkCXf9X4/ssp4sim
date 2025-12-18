@@ -1,9 +1,11 @@
 
 #include "config.hpp"
 #include "execution/executor_builder.hpp"
+
 #include "execution/custom_executors.hpp"
-#include "execution/jacobi.hpp"
-#include "execution/seidel.hpp"
+#include "execution/jacobi/jacobi_base.hpp"
+#include "execution/seidel/seidel_serial.hpp"
+#include "execution/seidel/seidel_parallel.hpp"
 
 #include <memory>
 #include <stdexcept>

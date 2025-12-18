@@ -1,12 +1,6 @@
 #include "execution/executor.hpp"
 
-#include "signal/recorder.hpp"
-
 #include "config.hpp"
-
-
-#include <chrono>
-#include <thread>
 
 
 namespace ssp4sim::graph

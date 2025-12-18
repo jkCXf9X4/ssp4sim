@@ -1,4 +1,4 @@
-#include "execution/jacobi.hpp"
+#include "execution/jacobi/jacobi_base.hpp"
 
 #include "executor_utils.hpp"
 

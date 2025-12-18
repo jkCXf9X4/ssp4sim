@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <string>
+#include <ostream>
 
 // Rename to execution
 namespace ssp4sim::graph
@@ -60,6 +61,7 @@ namespace ssp4sim::graph
         virtual void enter_init();
         virtual void exit_init();
 
+        // SImple wrapper for enter/exit init
         virtual void init();
 
         virtual uint64_t invoke(StepData data) = 0;

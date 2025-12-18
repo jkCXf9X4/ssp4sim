@@ -1,18 +1,12 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
-
 #include "ssp4sim_definitions.hpp"
 
-#include "executor.hpp"
-#include "config.hpp"
+#include "execution/executor.hpp"
 
-#include "jacobi.hpp"
-#include "seidel.hpp"
-#include "custom_executors.hpp"
+#include "cutecpp/log.hpp"
 
-#include <assert.h>
-#include <execution>
+#include <memory>
 
 namespace ssp4sim::graph 
 {
