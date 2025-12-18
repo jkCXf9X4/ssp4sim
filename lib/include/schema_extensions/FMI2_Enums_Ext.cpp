@@ -4,6 +4,7 @@
 #include "FMI2_Enums_Ext.hpp"
 
 #include <string>
+#include <stdexcept>
 
 namespace ssp4sim::ext::fmi2
 {

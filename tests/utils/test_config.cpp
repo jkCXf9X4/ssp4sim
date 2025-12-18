@@ -3,8 +3,8 @@
 
 #include "utils/config.hpp"
 
-#include <fstream>
 #include <filesystem>
+#include <string>
 
 using namespace ssp4sim::utils;
 namespace fs = std::filesystem;

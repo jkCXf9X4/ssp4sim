@@ -1,6 +1,8 @@
 #include "initial_value.hpp"
 
+#include <algorithm>
 #include <cstring>
+#include <utility>
 
 namespace ssp4sim::ext::ssp1::ssv
 {

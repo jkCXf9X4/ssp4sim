@@ -4,6 +4,8 @@
 
 #include <fmi4c.h>
 
+#include <cstdint>
+#include <memory>
 #include <string>
 #include <filesystem>
 

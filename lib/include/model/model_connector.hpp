@@ -9,6 +9,8 @@
 
 #include "cutecpp/log.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <map>
 #include <memory>

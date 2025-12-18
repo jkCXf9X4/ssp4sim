@@ -5,7 +5,11 @@
 
 #include "utils/time.hpp"
 
+#include <map>
 #include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
 
 #include "SSP1_SystemStructureDescription_Ext.hpp"
 #include "FMI2_modelDescription_Ext.hpp"

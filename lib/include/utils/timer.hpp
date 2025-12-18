@@ -4,6 +4,7 @@
 #include "utils/time.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <string>
 
 /**

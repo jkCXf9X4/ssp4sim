@@ -2,9 +2,8 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <cstddef>
 #include <cstdint>
-#include <cstring>
-#include <limits>
 
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;

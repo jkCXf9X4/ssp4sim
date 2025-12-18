@@ -2,11 +2,10 @@
 
 #include "executor_utils.hpp"
 
+#include <algorithm>
 #include <execution>
 #include <exception>
-#include <future>
 #include <mutex>
-#include <utility>
 
 namespace ssp4sim::graph
 {

@@ -14,7 +14,13 @@
 #include "utils/time.hpp"
 
 #include <assert.h>
+#include <algorithm>
+#include <cstdint>
 #include <execution>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ssp4sim::graph
 {

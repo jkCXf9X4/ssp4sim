@@ -4,10 +4,11 @@
 
 #include "ssp4sim_definitions.hpp"
 
+#include <cstddef>
+#include <iterator>
 #include <vector>
 #include <string>
 #include <list>
-#include <stack>
 #include <sstream>
 
 namespace ssp4sim::utils::graph

@@ -4,13 +4,15 @@
 
 #include <nlohmann/json.hpp>
 
+#include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <fstream>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <type_traits>
+#include <utility>
 
 namespace ssp4sim::utils
 {

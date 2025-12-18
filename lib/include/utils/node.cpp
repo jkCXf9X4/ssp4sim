@@ -2,9 +2,11 @@
 
 #include "utils/node.hpp"
 
-#include <map>
+#include <algorithm>
+#include <stack>
 #include <unordered_set>
 #include <unordered_map>
+#include <utility>
 
 namespace ssp4sim::utils::graph
 {

@@ -8,6 +8,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
+#include <initializer_list>
 #include <vector>
 #include <string>
 #include <tuple>

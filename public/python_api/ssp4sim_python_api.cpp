@@ -2,6 +2,8 @@
 
 #include "simulator.hpp"
 
+#include <string>
+
 namespace py = pybind11;
 
 PYBIND11_MODULE(py_ssp4sim, m) {

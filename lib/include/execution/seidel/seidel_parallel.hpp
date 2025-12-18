@@ -2,6 +2,7 @@
 
 #include "execution/seidel/seidel_base.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace ssp4sim::graph

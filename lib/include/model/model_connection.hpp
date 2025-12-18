@@ -7,6 +7,8 @@
 #include "cutecpp/log.hpp"
 #include "utils/model.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 namespace ssp4sim::graph

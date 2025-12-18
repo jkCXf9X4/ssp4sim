@@ -5,7 +5,8 @@
 #include "signal/storage.hpp"
 
 #include <atomic>
-#include <string>
+#include <cstddef>
+#include <cstdint>
 
 
 namespace ssp4sim::signal

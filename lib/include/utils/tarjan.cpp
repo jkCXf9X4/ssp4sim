@@ -1,6 +1,9 @@
 
 #include "tarjan.hpp"
 
+#include <algorithm>
+#include <sstream>
+
 namespace ssp4sim::utils::graph
 {
     void _TarjanSccImpl::strongConnect(Node *v)

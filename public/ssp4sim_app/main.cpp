@@ -2,6 +2,8 @@
 
 #include "simulator.hpp"
 
+#include <string>
+
 int main(int argc, char *argv[])
 {
     auto log = Logger("main", LogLevel::debug);

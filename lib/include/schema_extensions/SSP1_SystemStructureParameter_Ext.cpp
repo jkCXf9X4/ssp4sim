@@ -7,7 +7,11 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include <memory>
+#include <map>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ssp4sim::ext::ssp1::ssv
 {

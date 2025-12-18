@@ -2,8 +2,6 @@
 
 #include "handler/fmu_handler.hpp"
 
-#include <utility>
-
 namespace ssp4sim::analysis::graph
 {
 
@@ -36,4 +34,3 @@ namespace ssp4sim::analysis::graph
     }
 
 }
-

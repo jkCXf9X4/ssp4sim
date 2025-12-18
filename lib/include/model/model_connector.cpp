@@ -5,6 +5,7 @@
 #include "handler/fmu_handler.hpp"
 #include "signal/storage.hpp"
 
+#include <cstring>
 
 namespace ssp4sim::graph
 {

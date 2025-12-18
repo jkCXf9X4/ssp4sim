@@ -11,7 +11,6 @@
 #include "config.hpp"
 
 #include "handler/fmu_handler.hpp"
-#include "signal/recorder.hpp"
 
 #include "execution/invocable.hpp"
 #include "graph/graph.hpp"
@@ -19,8 +18,11 @@
 #include "cutecpp/log.hpp"
 
 #include "ssp4cpp/fmu.hpp"
+
+#include <cstdint>
 #include <map>
 #include <memory>
+#include <stdexcept>
 
 namespace ssp4sim
 {

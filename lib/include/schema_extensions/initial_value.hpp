@@ -6,6 +6,7 @@
 
 #include "FMI2_Enums_Ext.hpp"
 
+#include <cstddef>
 #include <vector>
 #include <string>
 #include <memory>

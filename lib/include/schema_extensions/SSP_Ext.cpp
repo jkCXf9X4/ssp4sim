@@ -1,6 +1,11 @@
 
 #include "SSP_Ext.hpp"
 
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace ssp4sim::ext::ssp
 {

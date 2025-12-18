@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <string>
 
 namespace ssp4cpp
 {

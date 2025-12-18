@@ -6,6 +6,8 @@
 #include "analysis_model.hpp"
 #include "analysis_connector.hpp"
 
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
 

@@ -5,6 +5,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
+#include <cstddef>
 #include <string>
 
 namespace ssp4sim::ext::fmi2

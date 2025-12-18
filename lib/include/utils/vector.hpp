@@ -1,6 +1,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <vector>
 
 namespace ssp4sim::utils::list

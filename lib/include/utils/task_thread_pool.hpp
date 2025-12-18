@@ -3,6 +3,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
+#include <cstddef>
 #include <functional>
 #include <future>
 #include <memory>
@@ -13,7 +14,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <cstdint>
 
 #include "cutecpp/log.hpp"
 

@@ -5,7 +5,6 @@
 #include "utils/node.hpp"
 
 #include <cstdint>
-#include <string>
 #include <ostream>
 
 // Rename to execution

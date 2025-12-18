@@ -6,9 +6,12 @@
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 
+#include <initializer_list>
 #include <string>
-#include <vector>
 #include <set>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace ssp4sim::ext::ssp1
 {

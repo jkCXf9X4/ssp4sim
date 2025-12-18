@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 
 namespace ssp4sim::signal
@@ -182,4 +183,3 @@ namespace ssp4sim::signal
     }
 
 }
-

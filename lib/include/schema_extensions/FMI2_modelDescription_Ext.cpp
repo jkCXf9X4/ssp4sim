@@ -5,13 +5,12 @@
 
 #include "utils/vector.hpp"
 
-#include <optional>
-#include <vector>
-#include <string>
-#include <stacktrace>
 #include <ranges>
-
-#include <iostream>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
 
 namespace ssp4sim::ext::fmi2
 {

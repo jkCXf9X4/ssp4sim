@@ -4,6 +4,9 @@
 
 #include "cutecpp/log.hpp"
 
+#include <cstdint>
+#include <vector>
+
 namespace ssp4sim::graph
 {
     class JacobiSerial final : public JacobiBase

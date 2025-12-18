@@ -3,9 +3,14 @@
 #include "utils/time.hpp"
 
 #include <cstdlib>
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <stdio.h>
 #include <stdlib.h>

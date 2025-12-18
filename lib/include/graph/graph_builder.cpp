@@ -6,7 +6,9 @@
 #include "model/model_fmu.hpp"
 #include "utils/map.hpp"
 
+#include <cstdint>
 #include <memory>
+#include <utility>
 
 namespace ssp4sim::graph
 {

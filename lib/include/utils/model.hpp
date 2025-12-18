@@ -7,8 +7,7 @@
 #include "ssp4sim_definitions.hpp"
 
 #include <cstddef>
-#include <string>
-#include <stdexcept>
+#include <cstdint>
 
 namespace ssp4sim::utils
 {

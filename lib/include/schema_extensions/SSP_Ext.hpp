@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <vector>
 
 namespace ssp4sim::ext::ssp
 {

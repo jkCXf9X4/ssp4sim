@@ -7,6 +7,10 @@
 
 #include "cutecpp/log.hpp"
 
+#include <cstdint>
+#include <future>
+#include <vector>
+
 namespace ssp4sim::graph
 {
     class JacobiParallelFutures final : public ExecutionBase

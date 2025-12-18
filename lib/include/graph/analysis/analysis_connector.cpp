@@ -3,8 +3,6 @@
 #include "FMI2_Enums_Ext.hpp"
 #include "SSP1_SystemStructureParameter_Ext.hpp"
 
-#include <utility>
-
 namespace ssp4sim::analysis::graph
 {
 

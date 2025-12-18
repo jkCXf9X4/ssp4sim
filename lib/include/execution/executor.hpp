@@ -6,6 +6,9 @@
 
 #include "invocable.hpp"
 
+#include <cstdint>
+#include <vector>
+
 namespace ssp4sim::graph
 {
     class ExecutionBase : public Invocable

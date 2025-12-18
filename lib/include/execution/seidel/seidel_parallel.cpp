@@ -1,14 +1,9 @@
 
 #include "execution/seidel/seidel_parallel.hpp"
 
-
-#include "task_thread_pool.hpp"
-#include "task_thread_pool2.hpp"
-
 #include "config.hpp"
 
-#include <assert.h>
-#include <execution>
+#include <stdexcept>
 
 namespace ssp4sim::graph
 {

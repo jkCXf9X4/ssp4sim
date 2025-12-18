@@ -8,6 +8,7 @@
 
 #include "analysis_connector.hpp"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>

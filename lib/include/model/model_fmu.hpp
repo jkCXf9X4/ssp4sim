@@ -14,6 +14,8 @@
 
 #include "cutecpp/log.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>

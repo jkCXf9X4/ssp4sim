@@ -3,6 +3,8 @@
 
 #include "config.hpp"
 
+#include <utility>
+
 namespace ssp4sim::graph
 {
 

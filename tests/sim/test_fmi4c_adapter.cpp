@@ -5,9 +5,11 @@
 #include <catch.hpp>
 
 #include <cmath>
+#include <cstdint>
 #include <filesystem>
-#include <iostream>
 #include <string>
+#include <stdexcept>
+#include <iostream>
 
 using namespace ssp4sim::handler;
 using namespace ssp4sim::handler::detail;

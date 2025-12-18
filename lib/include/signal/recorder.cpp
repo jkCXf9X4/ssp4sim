@@ -9,11 +9,8 @@
 
 #include "cutecpp/log.hpp"
 
-#include <condition_variable>
 #include <cstddef>
 #include <cstring>
-#include <fstream>
-#include <map>
 #include <memory>
 #include <thread>
 #include <unistd.h>

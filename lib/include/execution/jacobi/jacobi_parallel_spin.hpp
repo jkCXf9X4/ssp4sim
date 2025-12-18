@@ -6,6 +6,9 @@
 
 #include "task_thread_pool2.hpp"
 
+#include <cstdint>
+#include <vector>
+
 namespace ssp4sim::graph
 {
     class JacobiParallelSpin final : public ExecutionBase

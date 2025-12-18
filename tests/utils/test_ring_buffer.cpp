@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <array>
-#include <limits>
+#include <stdexcept>
 
 using ssp4sim::utils::RingBuffer;
 

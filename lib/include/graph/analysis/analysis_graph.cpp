@@ -7,7 +7,7 @@
 #include "tarjan.hpp"
 #include "utils/map.hpp"
 
-#include <memory>
+#include <utility>
 
 namespace ssp4sim::analysis::graph
 {
@@ -45,4 +45,3 @@ namespace ssp4sim::analysis::graph
     }
 
 }
-

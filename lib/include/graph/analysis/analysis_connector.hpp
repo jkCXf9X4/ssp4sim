@@ -9,7 +9,9 @@
 
 #include "cutecpp/log.hpp"
 
+#include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 namespace ssp4sim::ext::ssp1::ssv

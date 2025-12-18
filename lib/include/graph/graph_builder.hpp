@@ -8,6 +8,10 @@
 
 #include "cutecpp/log.hpp"
 
+#include <map>
+#include <memory>
+#include <string>
+
 namespace ssp4sim::graph
 {
     using AnalysisGraph = analysis::graph::AnalysisGraph;

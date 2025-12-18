@@ -9,6 +9,10 @@
 
 #include "analysis_graph.hpp"
 
+#include <map>
+#include <memory>
+#include <string>
+
 namespace ssp4sim::analysis::graph
 {
 
@@ -34,4 +38,3 @@ namespace ssp4sim::analysis::graph
     };
 
 }
-

@@ -9,12 +9,15 @@
 #include "signal/record_tracker.hpp"
 
 #include <fstream>
+#include <cstddef>
+#include <cstdint>
+#include <map>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <atomic>
 #include <string>
 #include <vector>
-#include <mutex>
 #include <condition_variable>
 
 namespace ssp4sim::signal

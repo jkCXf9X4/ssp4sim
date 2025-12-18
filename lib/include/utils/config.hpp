@@ -3,6 +3,7 @@
 #include "utils/time.hpp"
 
 #include <nlohmann/json_fwd.hpp>
+#include <stdexcept>
 #include <string>
 
 namespace ssp4sim::utils

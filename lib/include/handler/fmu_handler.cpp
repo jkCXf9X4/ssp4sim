@@ -7,7 +7,6 @@
 
 #include <memory>
 #include <stdexcept>
-#include <utility>
 
 namespace ssp4sim::handler
 {

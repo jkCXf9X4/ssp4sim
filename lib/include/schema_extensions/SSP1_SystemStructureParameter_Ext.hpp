@@ -11,6 +11,7 @@
 #include "cutecpp/log.hpp"
 
 #include <map>
+#include <string>
 
 namespace ssp4cpp
 {
