@@ -112,7 +112,7 @@ namespace
     {
         const fs::path project_root{SSP4SIM_PROJECT_ROOT};
 
-        const fs::path base_config = project_root / "resources" / "integrations_tests" / "it_embrace.json";
+        const fs::path base_config = project_root / "tests" / "resources" / "embrace_test_parallel.json";
         const fs::path ssp_path = project_root / "resources" / "embrace" / "embrace_scen.ssp";
         REQUIRE(fs::exists(base_config));
         REQUIRE(fs::exists(ssp_path));

@@ -3,7 +3,12 @@
 #include "execution/executor_builder.hpp"
 
 #include "execution/custom_executors.hpp"
-#include "execution/jacobi/jacobi_base.hpp"
+
+#include "execution/jacobi/jacobi_parallel_fut.hpp"
+#include "execution/jacobi/jacobi_parallel_spin.hpp"
+#include "execution/jacobi/jacobi_parallel_tbb.hpp"
+#include "execution/jacobi/jacobi_serial.hpp"
+
 #include "execution/seidel/seidel_serial.hpp"
 #include "execution/seidel/seidel_parallel.hpp"
 
