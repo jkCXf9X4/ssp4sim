@@ -62,7 +62,7 @@ namespace ssp4sim::analysis::graph
 
         static std::string create_name(const std::string &component_name, const std::string &connector_name);
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
     };
 
 }

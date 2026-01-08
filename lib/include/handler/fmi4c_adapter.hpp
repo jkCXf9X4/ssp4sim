@@ -47,8 +47,11 @@ namespace ssp4sim::handler
         fmiVersion_t version_ = fmiVersionUnknown;
     };
 
-    struct MyEnv{
-    std::unique_ptr<Logger> log = nullptr;
+    struct MyEnv
+    {
+        // it needs to be shared since the logger might live longer than the main application.
+        // Initial thoughts are that some fmus spawn internal threads...
+        std::shared_ptr<Logger> log = nullptr;
     };
 
     class CoSimulationModel

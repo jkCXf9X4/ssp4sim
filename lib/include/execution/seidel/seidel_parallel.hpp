@@ -14,9 +14,9 @@ namespace ssp4sim::graph
 
         ParallelSeidel(std::vector<Invocable *> nodes);
 
-        virtual void print(std::ostream &os) const
+        std::string to_string() const override
         {
-            os << "ParallelSeidel:\n{}\n";
+            return "ParallelSeidel:\n{}\n";
         }
 
         /**

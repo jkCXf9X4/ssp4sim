@@ -2,8 +2,6 @@
 
 #include "cutecpp/log.hpp"
 
-#include "ssp4cpp/utils/string.hpp"
-
 #include "utils/node.hpp"
 
 #include "analysis_connector.hpp"
@@ -33,7 +31,7 @@ namespace ssp4sim::analysis::graph
 
         std::string get_connector_name() const;
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
     };
 
 }

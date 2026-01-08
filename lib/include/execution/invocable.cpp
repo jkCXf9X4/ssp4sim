@@ -1,5 +1,7 @@
 #include "execution/invocable.hpp"
 
+#include <sstream>
+
 namespace ssp4sim::graph
 {
 
@@ -27,15 +29,17 @@ namespace ssp4sim::graph
         this->output_time = output_time;
     }
 
-    void StepData::print(std::ostream &os) const
+    std::string StepData::to_string() const
     {
-        os << "StepData: \n{"
-           << " start_time: " << start_time
-           << " end_time: " << end_time
-           << " timestep: " << timestep
-           << " input_time: " << input_time
-           << " output_time: " << output_time
-           << " }\n";
+        std::ostringstream oss;
+        oss << "StepData: \n{"
+            << " start_time: " << start_time
+            << " end_time: " << end_time
+            << " timestep: " << timestep
+            << " input_time: " << input_time
+            << " output_time: " << output_time
+            << " }\n";
+        return oss.str();
     }
 
     void Invocable::enter_init() {}
@@ -48,10 +52,9 @@ namespace ssp4sim::graph
         exit_init();
     }
 
-    void Invocable::print(std::ostream &os) const
+    std::string Invocable::to_string() const
     {
-        os << "Invocable:\n{}\n";
+        return "Invocable:\n{}\n";
     }
 
 }
-

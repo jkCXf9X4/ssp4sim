@@ -17,7 +17,7 @@ namespace ssp4sim::utils::graph
     /**
      * @brief Basic bidirectional graph node used throughout the project.
      */
-    class Node : public virtual types::IPrintable
+    class Node : public virtual types::IWritable
     {
         Logger log = Logger("ssp4sim.common.Node", LogLevel::ext_trace);
 
@@ -38,14 +38,7 @@ namespace ssp4sim::utils::graph
          */
         Node(const Node &other);
 
-        virtual void print(std::ostream &os) const
-        {
-            os << "Node { \n"
-               << "name: " << name << "\n"
-               << "children: " << children.size() << "\n"
-               << "parents: " << parents.size() << "\n"
-               << " }" << "\n";
-        }
+        virtual std::string to_string() const override;
 
         /* === Relationship management ======================================= */
 

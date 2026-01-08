@@ -13,7 +13,7 @@
 
 namespace ssp4sim::analysis::graph
 {
-    class AnalysisGraph : public types::IPrintable
+    class AnalysisGraph : public types::IWritable
     {
     public:
         Logger log = Logger("ssp4sim.graph.AnalysisGraph", LogLevel::debug);
@@ -32,7 +32,7 @@ namespace ssp4sim::analysis::graph
 
         std::vector<AnalysisModel *> get_start_nodes() const;
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
 
     };
 

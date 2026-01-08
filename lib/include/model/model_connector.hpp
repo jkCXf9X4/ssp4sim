@@ -18,7 +18,7 @@
 namespace ssp4sim::graph
 {
 
-    class ConnectorInfo : public types::IPrintable
+    class ConnectorInfo : public types::IWritable
     {
     public:
         static Logger log;
@@ -38,7 +38,7 @@ namespace ssp4sim::graph
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
 
         static void set_start_values(std::map<std::string, ConnectorInfo> &connectors);
 

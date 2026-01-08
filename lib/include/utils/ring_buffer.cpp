@@ -1,6 +1,7 @@
 #include "utils/ring_buffer.hpp"
 
 #include <cstring>
+#include <sstream>
 #include <stdexcept>
 
 namespace ssp4sim::utils
@@ -126,14 +127,16 @@ namespace ssp4sim::utils
         return (head + nr_items - position) % capacity;
     }
 
-    void RingBuffer::print(std::ostream &os) const
+    std::string RingBuffer::to_string() const
     {
-        os << "SignalStorage \n{\n"
-           << ", capacity: " << capacity
-           << "  nr_items: " << nr_items
-           << ", head: " << head
-           << ", tail: " << tail
-           << "\n}";
+        std::ostringstream oss;
+        oss << "SignalStorage \n{\n"
+            << ", capacity: " << capacity
+            << "  nr_items: " << nr_items
+            << ", head: " << head
+            << ", tail: " << tail
+            << "\n}";
+        return oss.str();
     }
 
 }

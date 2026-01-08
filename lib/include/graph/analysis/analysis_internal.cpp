@@ -2,6 +2,8 @@
 
 #include "graph/analysis/analysis_connector.hpp"
 
+#include <sstream>
+
 // #include <utility>
 
 namespace ssp4sim::analysis::graph
@@ -31,13 +33,15 @@ namespace ssp4sim::analysis::graph
         return AnalysisConnector::create_name(component, variable_name);
     }
 
-    void AnalysisModelVariable::print(std::ostream &os) const
+    std::string AnalysisModelVariable::to_string() const
     {
-        os << "AnalysisModelVariable {"
-           << "\nname: " << name
-           << "\ncomponent: " << component
-           << "\nvariable_name: " << variable_name
-           << "\n}\n";
+        std::ostringstream oss;
+        oss << "AnalysisModelVariable {"
+            << "\nname: " << name
+            << "\ncomponent: " << component
+            << "\nvariable_name: " << variable_name
+            << "\n}\n";
+        return oss.str();
     }
 
 }

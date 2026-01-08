@@ -9,11 +9,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace ssp4sim::graph
 {
-    struct ConnectionInfo : public types::IPrintable
+    struct ConnectionInfo : public types::IWritable
     {
         static Logger log;
 
@@ -30,7 +31,7 @@ namespace ssp4sim::graph
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
 
         static void retrieve_model_inputs(std::vector<ConnectionInfo> &connections,
                                           int target_area,

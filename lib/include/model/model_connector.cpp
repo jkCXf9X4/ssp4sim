@@ -6,22 +6,25 @@
 #include "signal/storage.hpp"
 
 #include <cstring>
+#include <sstream>
 
 namespace ssp4sim::graph
 {
 
     Logger ConnectorInfo::log = Logger("ssp4sim.model.ConnectorInfo_s", LogLevel::info);
 
-    void ConnectorInfo::print(std::ostream &os) const
+    std::string ConnectorInfo::to_string() const
     {
-        os << "ConnectorInfo { "
-           << "name: " << name
-           << ", type: " << type
-           << ", size: " << size
-           << ", index: " << index
-           << ", value_ref: " << value_ref
-           << ", forward_derivatives: " << forward_derivatives_order
-           << " }";
+        std::ostringstream oss;
+        oss << "ConnectorInfo { "
+            << "name: " << name
+            << ", type: " << type
+            << ", size: " << size
+            << ", index: " << index
+            << ", value_ref: " << value_ref
+            << ", forward_derivatives: " << forward_derivatives_order
+            << " }";
+        return oss.str();
     }
 
     void ConnectorInfo::set_start_values(std::map<std::string, ConnectorInfo> &connectors)

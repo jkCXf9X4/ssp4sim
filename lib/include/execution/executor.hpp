@@ -7,6 +7,7 @@
 #include "invocable.hpp"
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -31,9 +32,9 @@ namespace ssp4sim::graph
 
         void init() override;
 
-        virtual void print(std::ostream &os) const
+        std::string to_string() const
         {
-            os << this->name << ":\n{}\n";
+            return this->name + ":\n{}\n";
         }
     };
 }

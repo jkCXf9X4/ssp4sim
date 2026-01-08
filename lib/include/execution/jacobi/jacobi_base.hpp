@@ -22,9 +22,9 @@ class JacobiBase : public ExecutionBase
             log(info)("[{}] ", __func__);
         }
 
-        void print(std::ostream &os) const override
+        std::string to_string() const override
         {
-            os << "JacobiBase:\n{}\n";
+            return "JacobiBase:\n{}\n";
         }
 
     };

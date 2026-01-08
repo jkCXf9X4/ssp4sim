@@ -15,9 +15,9 @@ namespace ssp4sim::graph
 
         SerialSeidel(std::vector<Invocable *> nodes);
 
-        void print(std::ostream &os) const override
+        std::string to_string() const override
         {
-            os << "SerialSeidel:\n{}\n";
+            return "SerialSeidel:\n{}\n";
         }
 
         // some idea that this might be more effective than looping over all items

@@ -2,6 +2,8 @@
 
 #include "graph/analysis/analysis_connector.hpp"
 
+#include <sstream>
+
 namespace ssp4sim::analysis::graph
 {
 
@@ -43,15 +45,17 @@ namespace ssp4sim::analysis::graph
         return AnalysisConnector::create_name(target_component_name, target_connector_name);
     }
 
-    void AnalysisConnection::print(std::ostream &os) const
+    std::string AnalysisConnection::to_string() const
     {
-        os << "Connection {"
-           << "\nname: " << name
-           << "\nsource_component_name: " << source_component_name
-           << "\nsource_connector_name: " << source_connector_name
-           << "\ntarget_component_name: " << target_component_name
-           << "\ntarget_connector_name: " << target_connector_name
-           << "\n }\n";
+        std::ostringstream oss;
+        oss << "Connection {"
+            << "\nname: " << name
+            << "\nsource_component_name: " << source_component_name
+            << "\nsource_connector_name: " << source_connector_name
+            << "\ntarget_component_name: " << target_component_name
+            << "\ntarget_connector_name: " << target_connector_name
+            << "\n }\n";
+        return oss.str();
     }
 
 }

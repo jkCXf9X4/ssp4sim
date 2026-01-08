@@ -1,7 +1,5 @@
 #pragma once
 
-#include "ssp4cpp/utils/string.hpp"
-
 #include "utils/node.hpp"
 
 #include "handler/fmu_handler.hpp"
@@ -39,6 +37,6 @@ namespace ssp4sim::analysis::graph
 
         void set_interpolation_data(bool canInterpolateInputs, int maxOutputDerivativeOrder);
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
     };
 }

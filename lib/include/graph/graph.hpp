@@ -33,7 +33,7 @@ namespace ssp4sim::graph
 
         Graph(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder);
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
 
         void init();
 

@@ -20,9 +20,9 @@
 namespace ssp4sim::graph
 {
 
-    void ExecutorBuilder::print(std::ostream &os) const
+    std::string ExecutorBuilder::to_string() const
     {
-        os << "ExecutorBuilder:\n{}\n";
+        return "ExecutorBuilder:\n{}\n";
     }
 
     std::unique_ptr<ExecutionBase> ExecutorBuilder::build(std::vector<Invocable *> nodes)

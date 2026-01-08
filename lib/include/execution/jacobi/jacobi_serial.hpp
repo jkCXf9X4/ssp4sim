@@ -16,9 +16,9 @@ namespace ssp4sim::graph
 
         JacobiSerial(std::vector<Invocable *> nodes);
 
-        void print(std::ostream &os) const override
+        std::string to_string() const override
         {
-            os << "JacobiSerial:\n{}\n";
+            return "JacobiSerial:\n{}\n";
         }
 
         uint64_t invoke(StepData step_data) override final;

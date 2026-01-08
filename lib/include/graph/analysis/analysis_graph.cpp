@@ -7,6 +7,7 @@
 #include "tarjan.hpp"
 #include "utils/map.hpp"
 
+#include <sstream>
 #include <utility>
 
 namespace ssp4sim::analysis::graph
@@ -29,19 +30,21 @@ namespace ssp4sim::analysis::graph
         return start_nodes;
     }
 
-    void AnalysisGraph::print(std::ostream &os) const
+    std::string AnalysisGraph::to_string() const
     {
         auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(ssp4sim::utils::graph::Node::cast_to_parent_ptrs(nodes));
 
-        os << "Simulation Graph DOT:\n"
-           << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
-           << ssp4sim::utils::graph::ssc_to_string(strong_system_graph)
-           << "\nStart nodes:\n";
+        std::ostringstream oss;
+        oss << "Simulation Graph DOT:\n"
+            << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
+            << ssp4sim::utils::graph::ssc_to_string(strong_system_graph)
+            << "\nStart nodes:\n";
 
         for (auto &model : get_start_nodes())
         {
-            os << "Model: " << *model << "\n";
+            oss << "Model: " << model->to_string() << "\n";
         }
+        return oss.str();
     }
 
 }

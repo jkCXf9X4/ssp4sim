@@ -5,13 +5,13 @@
 #include "utils/node.hpp"
 
 #include <cstdint>
-#include <ostream>
+#include <string>
 
 // Rename to execution
 namespace ssp4sim::graph
 {
 
-    class StepData : public types::IPrintable
+    class StepData : public types::IWritable
     {
     public:
         uint64_t start_time;
@@ -35,7 +35,7 @@ namespace ssp4sim::graph
                  uint64_t input_time,
                  uint64_t output_time);
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
     };
 
     enum class TemporalType : int
@@ -46,7 +46,7 @@ namespace ssp4sim::graph
         FullyImplicitly      // Not modeled
     };
 
-    class Invocable : public utils::graph::Node, public virtual types::IPrintable
+    class Invocable : public utils::graph::Node
     {
     public:
         uint64_t walltime_ns = 0;
@@ -60,11 +60,11 @@ namespace ssp4sim::graph
         virtual void enter_init();
         virtual void exit_init();
 
-        // SImple wrapper for enter/exit init
+        // Simple wrapper for enter/exit init
         virtual void init();
 
         virtual uint64_t invoke(StepData data) = 0;
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
     };
 }

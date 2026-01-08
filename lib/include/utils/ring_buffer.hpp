@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace ssp4sim::utils
@@ -18,7 +19,7 @@ namespace ssp4sim::utils
      * Also tracks time of additions
      *
      */
-    class RingBuffer : public types::IPrintable
+    class RingBuffer : public types::IWritable
     {
 
         Logger log = Logger("ssp4sim.utils.RingBuffer", LogLevel::debug);
@@ -63,6 +64,6 @@ namespace ssp4sim::utils
 
         bool is_full();
 
-        virtual void print(std::ostream &os) const override;
+        std::string to_string() const override;
     };
 }

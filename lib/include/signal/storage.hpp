@@ -38,7 +38,7 @@ namespace ssp4sim::signal
 
      };
 
-    class SignalStorage : public types::IPrintable
+    class SignalStorage : public types::IWritable
     {
     public:
         Logger log = Logger("ssp4sim.utils.SignalStorage", LogLevel::debug);
@@ -78,7 +78,7 @@ namespace ssp4sim::signal
 
         void flag_new_data(std::size_t area);
 
-        virtual void print(std::ostream &os) const override;
+        std::string to_string() const override;
 
         std::string export_area(int area);
     };

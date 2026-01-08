@@ -197,7 +197,7 @@ namespace ssp4sim::handler
         callbacks.allocateMemory = myAllocateMemory;
         callbacks.freeMemory = myFreeMemory;
         callbacks.stepFinished = myStepFinished;
-        env.log = std::make_unique<Logger>("fmu." + instance_.instance_name(), info);
+        env.log = std::make_shared<Logger>("fmu." + instance_.instance_name(), info);
         callbacks.componentEnvironment = &env; // passed back as 'env' to the callbacks
 
         handle = fmi2_instantiate(instance_.raw(),

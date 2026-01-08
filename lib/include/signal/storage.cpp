@@ -142,23 +142,25 @@ namespace ssp4sim::signal
     }
 
 
-    void SignalStorage::print(std::ostream &os) const
+    std::string SignalStorage::to_string() const
     {
-        os << "SignalStorage \n{\n"
-           << " name: " << name
-           << "  areas: " << areas
-           << ", allocated: " << allocated
-           << ", total memory size: " << mem_size
-           << ", items: " << variables.size();
+        std::ostringstream oss;
+        oss << "SignalStorage \n{\n"
+            << " name: " << name
+            << "  areas: " << areas
+            << ", allocated: " << allocated
+            << ", total memory size: " << mem_size
+            << ", items: " << variables.size();
 
         for (auto var : variables)
         {
-            os << "  { position " << var.position
-               << ", name " << var.name
-               << ", type " << var.type.to_string()
-               << ", size " << var.type_size << " }\n";
+            oss << "  { position " << var.position
+                << ", name " << var.name
+                << ", type " << var.type.to_string()
+                << ", size " << var.type_size << " }\n";
         }
-        os << "}";
+        oss << "}";
+        return oss.str();
     }
 
     std::string SignalStorage::export_area(int area)

@@ -48,7 +48,7 @@ namespace ssp4sim::analysis::graph
 
         std::string get_target_connector_name() const;
 
-        void print(std::ostream &os) const override;
+        std::string to_string() const override;
     };
 
 }

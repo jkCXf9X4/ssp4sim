@@ -8,6 +8,8 @@
 
 #include "tarjan.hpp"
 
+#include <sstream>
+
 namespace ssp4sim::graph
 {
 
@@ -18,19 +20,21 @@ namespace ssp4sim::graph
         nodes = ssp4sim::utils::map_ns::map_to_value_vector_copy(this->node_map);
     }
 
-    void Graph::print(std::ostream &os) const
+    std::string Graph::to_string() const
     {
         auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(ssp4sim::utils::graph::Node::cast_to_parent_ptrs(nodes));
 
-        os << "Simulation Graph DOT:\n"
-           << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
-           << ssp4sim::utils::graph::ssc_to_string(strong_system_graph) << "\n";
+        std::ostringstream oss;
+        oss << "Simulation Graph DOT:\n"
+            << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
+            << ssp4sim::utils::graph::ssc_to_string(strong_system_graph) << "\n";
 
-        os << "node_map:\n";
+        oss << "node_map:\n";
         for (auto &[name, model] : node_map)
         {
-            os << "Model: " << name << "\n";
+            oss << "Model: " << name << "\n";
         }
+        return oss.str();
     }
 
     void Graph::init()

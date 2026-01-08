@@ -4,6 +4,7 @@
 #include "signal/storage.hpp"
 
 #include <cstring>
+#include <sstream>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -11,17 +12,19 @@ namespace ssp4sim::graph
 
     Logger ConnectionInfo::log = Logger("ssp4sim.model.ConnectionInfo", LogLevel::info);
 
-    void ConnectionInfo::print(std::ostream &os) const
+    std::string ConnectionInfo::to_string() const
     {
-        os << "ConnectionInfo { "
-           << "type: " << type
-           << ", size: " << size
-           << ", source_storage: " << source_storage->name
-           << ", target_storage: " << target_storage->name
-           << ", source_index: " << source_index
-           << ", target_index: " << target_index
-           << ", forward_derivatives: " << forward_derivatives_order
-           << " }";
+        std::ostringstream oss;
+        oss << "ConnectionInfo { "
+            << "type: " << type
+            << ", size: " << size
+            << ", source_storage: " << source_storage->name
+            << ", target_storage: " << target_storage->name
+            << ", source_index: " << source_index
+            << ", target_index: " << target_index
+            << ", forward_derivatives: " << forward_derivatives_order
+            << " }";
+        return oss.str();
     }
 
     void ConnectionInfo::retrieve_model_inputs(std::vector<ConnectionInfo> &connections,
@@ -91,4 +94,3 @@ namespace ssp4sim::graph
     }
 
 }
-

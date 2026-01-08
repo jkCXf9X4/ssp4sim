@@ -2,6 +2,8 @@
 
 #include "handler/fmu_handler.hpp"
 
+#include <sstream>
+
 namespace ssp4sim::analysis::graph
 {
 
@@ -25,12 +27,14 @@ namespace ssp4sim::analysis::graph
         this->maxOutputDerivativeOrder = maxDerivativeOrder;
     }
 
-    void AnalysisModel::print(std::ostream &os) const
+    std::string AnalysisModel::to_string() const
     {
-        os << "Model { \n"
-           << "\nName: " << name
-           << "\nFmu: " << fmu_name
-           << "\n}\n";
+        std::ostringstream oss;
+        oss << "Model { \n"
+            << "\nName: " << name
+            << "\nFmu: " << fmu_name
+            << "\n}\n";
+        return oss.str();
     }
 
 }

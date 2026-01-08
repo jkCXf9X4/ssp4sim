@@ -10,6 +10,7 @@
 #include "utils/timer.hpp"
 
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
@@ -38,11 +39,13 @@ namespace ssp4sim::graph
         }
     }
 
-    void FmuModel::print(std::ostream &os) const
+    std::string FmuModel::to_string() const
     {
-        os << "FmuModel { \n"
-           << "Name: " << name
-           << "\n}\n";
+        std::ostringstream oss;
+        oss << "FmuModel { \n"
+            << "Name: " << name
+            << "\n}\n";
+        return oss.str();
     }
 
     void FmuModel::enter_init()

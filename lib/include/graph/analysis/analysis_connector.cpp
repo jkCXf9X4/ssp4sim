@@ -3,6 +3,8 @@
 #include "FMI2_Enums_Ext.hpp"
 #include "SSP1_SystemStructureParameter_Ext.hpp"
 
+#include <sstream>
+
 namespace ssp4sim::analysis::graph
 {
 
@@ -37,14 +39,16 @@ namespace ssp4sim::analysis::graph
         return component_name + "." + connector_name;
     }
 
-    void AnalysisConnector::print(std::ostream &os) const
+    std::string AnalysisConnector::to_string() const
     {
-        os << "Connector {"
-           << "\nname: " << name
-           << "\nvr: " << value_reference
-           << "\ntype: " << type
-           << "\ncausality: " << causality
-           << "\n }\n";
+        std::ostringstream oss;
+        oss << "Connector {"
+            << "\nname: " << name
+            << "\nvr: " << value_reference
+            << "\ntype: " << type
+            << "\ncausality: " << causality
+            << "\n }\n";
+        return oss.str();
     }
 
 }

@@ -3,6 +3,7 @@
 #include "utils/node.hpp"
 
 #include <algorithm>
+#include <sstream>
 #include <stack>
 #include <unordered_set>
 #include <unordered_map>
@@ -20,6 +21,17 @@ namespace ssp4sim::utils::graph
           children(other.children),
           parents(other.parents)
     {
+    }
+
+    std::string Node::to_string() const
+    {
+        std::ostringstream oss;
+        oss << "Node { \n"
+            << "name: " << name << "\n"
+            << "children: " << children.size() << "\n"
+            << "parents: " << parents.size() << "\n"
+            << " }" << "\n";
+        return oss.str();
     }
 
     /* === Relationship management ======================================= */

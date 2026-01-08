@@ -3,7 +3,6 @@
 #include "SSP_Ext.hpp"
 #include "ssp4cpp/fmu.hpp"
 #include "ssp4cpp/ssp.hpp"
-#include "ssp4cpp/utils/string.hpp"
 
 #include <memory>
 #include <stdexcept>

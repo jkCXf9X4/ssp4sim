@@ -8,12 +8,13 @@
 
 #include <cstddef>
 #include <vector>
+#include <sstream>
 #include <string>
 #include <memory>
 
 namespace ssp4sim::ext::ssp1::ssv
 {
-    struct StartValue : public types::IPrintable
+    struct StartValue : public types::IWritable
     {
         std::string name;
         std::vector<std::string> mappings; // name + mappings
@@ -21,13 +22,15 @@ namespace ssp4sim::ext::ssp1::ssv
         size_t size;
         std::unique_ptr<std::byte[]> value;
 
-        virtual void print(std::ostream &os) const
+        std::string to_string() const
         {
-            os << "Model { \n"
-               << "\nName: " << name
-               << "\ntype: " << type.to_string()
-               << "\nValue: " << ext::fmi2::enums::data_type_to_string(type, value.get())
-               << "\n}\n";
+            std::ostringstream oss;
+            oss << "Model { \n"
+                << "\nName: " << name
+                << "\ntype: " << type.to_string()
+                << "\nValue: " << ext::fmi2::enums::data_type_to_string(type, value.get())
+                << "\n}\n";
+            return oss.str();
         }
 
         StartValue(std::string name, types::DataType type);
