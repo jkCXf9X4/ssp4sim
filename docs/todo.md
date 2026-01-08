@@ -4,6 +4,8 @@ Evaluate https://vcpkg.io/en/package/sqlitecpp for data persistence
 use in memory cache and push to sqllite for persistence
 
 
+[] create folder for output files, currently it crashes
+
 
 Analyze internal connections, this can be used for:
 

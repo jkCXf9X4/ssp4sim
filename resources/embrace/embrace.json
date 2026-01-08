@@ -37,7 +37,8 @@
 
         "log":
         {
-            "file": "./results/embrace.log"
+            "file": "./results/embrace.log",
+            "fmu" : true
         }
     }
 }
