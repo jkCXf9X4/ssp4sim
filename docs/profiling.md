@@ -39,3 +39,9 @@ self.OMS.setCommandLineOption("--emitEvents=false")
 what does this oms flag do?
 
 
+
+### TODO:
+
+---
+Unzip ssps prior to execution to limit multiple unzip, can be expensive
+

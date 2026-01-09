@@ -11,7 +11,7 @@
 #include <fstream>
 #include <cstddef>
 #include <cstdint>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -52,8 +52,8 @@ namespace ssp4sim::signal
 
         std::size_t row_size = 0;
 
-        std::map<std::uint64_t, std::uint64_t> row_time_map;
-        std::map<std::uint64_t, std::uint64_t> time_row_map;
+        std::unordered_map<std::uint64_t, std::uint64_t> row_time_map;
+        std::unordered_map<std::uint64_t, std::uint64_t> time_row_map;
         std::unique_ptr<std::byte[]> data;
         std::vector<std::vector<std::atomic<bool>>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
 

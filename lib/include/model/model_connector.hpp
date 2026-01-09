@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <memory>
 
 namespace ssp4sim::graph
@@ -40,24 +40,24 @@ namespace ssp4sim::graph
 
         std::string to_string() const override;
 
-        static void set_start_values(std::map<std::string, ConnectorInfo> &connectors);
+        static void set_start_values(std::unordered_map<std::string, ConnectorInfo> &connectors);
 
         static void set_initial_input_area(signal::SignalStorage *input_area,
-                                           std::map<std::string, ConnectorInfo> &inputs,
+                                           std::unordered_map<std::string, ConnectorInfo> &inputs,
                                            uint64_t time);
 
-        static void write_data_to_model(std::map<std::string, ConnectorInfo> &inputs,
+        static void write_data_to_model(std::unordered_map<std::string, ConnectorInfo> &inputs,
                                         signal::SignalStorage *storage,
                                         int area);
 
-        static void read_values_from_model(std::map<std::string, ConnectorInfo> &outputs,
+        static void read_values_from_model(std::unordered_map<std::string, ConnectorInfo> &outputs,
                                            signal::SignalStorage *storage,
                                            int area);
 
-        static void apply_input_derivatives(std::map<std::string, ConnectorInfo> &inputs,
+        static void apply_input_derivatives(std::unordered_map<std::string, ConnectorInfo> &inputs,
                                             std::size_t area);
 
-        static void fetch_output_derivatives(std::map<std::string, ConnectorInfo> &outputs,
+        static void fetch_output_derivatives(std::unordered_map<std::string, ConnectorInfo> &outputs,
                                              std::size_t area);
     };
 }

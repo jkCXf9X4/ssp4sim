@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <memory>
 
 namespace ssp4sim::graph
@@ -34,9 +34,9 @@ namespace ssp4sim::graph
         std::unique_ptr<ssp4sim::signal::SignalStorage> input_area;
         std::unique_ptr<ssp4sim::signal::SignalStorage> output_area;
 
-        std::map<std::string, ConnectorInfo> inputs;
-        std::map<std::string, ConnectorInfo> outputs;
-        std::map<std::string, ConnectorInfo> parameters;
+        std::unordered_map<std::string, ConnectorInfo> inputs;
+        std::unordered_map<std::string, ConnectorInfo> outputs;
+        std::unordered_map<std::string, ConnectorInfo> parameters;
         std::vector<ConnectionInfo> connections;
 
         bool forward_derivatives = false;

@@ -27,7 +27,7 @@ namespace ssp4sim::graph
         return oss.str();
     }
 
-    void ConnectorInfo::set_start_values(std::map<std::string, ConnectorInfo> &connectors)
+    void ConnectorInfo::set_start_values(std::unordered_map<std::string, ConnectorInfo> &connectors)
     {
         for (auto &[name, connector] : connectors)
         {
@@ -45,7 +45,7 @@ namespace ssp4sim::graph
     }
 
     void ConnectorInfo::set_initial_input_area(ssp4sim::signal::SignalStorage *input_area,
-                                               std::map<std::string, ConnectorInfo> &inputs,
+                                               std::unordered_map<std::string, ConnectorInfo> &inputs,
                                                uint64_t time)
     {
         log(trace)("[{}] Set input start area", __func__);
@@ -78,7 +78,7 @@ namespace ssp4sim::graph
         log(trace)("[{}] Input area after initialization: {}", __func__, input_area->export_area(area));
     }
 
-    void ConnectorInfo::write_data_to_model(std::map<std::string, ConnectorInfo> &inputs,
+    void ConnectorInfo::write_data_to_model(std::unordered_map<std::string, ConnectorInfo> &inputs,
                                             ssp4sim::signal::SignalStorage *storage,
                                             int area)
     {
@@ -99,7 +99,7 @@ namespace ssp4sim::graph
         }
     }
 
-    void ConnectorInfo::read_values_from_model(std::map<std::string, ConnectorInfo> &outputs,
+    void ConnectorInfo::read_values_from_model(std::unordered_map<std::string, ConnectorInfo> &outputs,
                                                ssp4sim::signal::SignalStorage *storage,
                                                int area)
     {
@@ -126,7 +126,7 @@ namespace ssp4sim::graph
         });
     }
 
-    void ConnectorInfo::apply_input_derivatives(std::map<std::string, ConnectorInfo> &inputs,
+    void ConnectorInfo::apply_input_derivatives(std::unordered_map<std::string, ConnectorInfo> &inputs,
                                                 std::size_t area)
     {
         IF_LOG({
@@ -161,7 +161,7 @@ namespace ssp4sim::graph
         }
     }
 
-    void ConnectorInfo::fetch_output_derivatives(std::map<std::string, ConnectorInfo> &outputs,
+    void ConnectorInfo::fetch_output_derivatives(std::unordered_map<std::string, ConnectorInfo> &outputs,
                                                  std::size_t area)
     {
         IF_LOG({
