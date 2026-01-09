@@ -16,6 +16,11 @@ namespace ssp4sim::graph
 {
     struct ConnectionInfo : public types::IWritable
     {
+        ConnectionInfo() = default;
+        ~ConnectionInfo(){
+            log(trace)("Destroying ConnectionInfo");
+        };
+
         static Logger log;
 
         types::DataType type;

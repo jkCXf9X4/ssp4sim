@@ -24,6 +24,7 @@ namespace ssp4sim::graph
         bool use_output_time = false;
 
         StepData();
+        ~StepData() = default;
 
         StepData(uint64_t start_time,
                  uint64_t end_time,

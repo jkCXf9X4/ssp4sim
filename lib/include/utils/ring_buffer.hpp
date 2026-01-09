@@ -37,6 +37,10 @@ namespace ssp4sim::utils
         std::size_t nr_inserts = 0; /* current number of elements stored  */
 
         RingBuffer(size_t capacity, size_t item_size);
+        
+        ~RingBuffer(){
+            log(trace)("Destroying RingBuffer");
+        }
 
         // Get the index of the next item
         std::size_t push();
