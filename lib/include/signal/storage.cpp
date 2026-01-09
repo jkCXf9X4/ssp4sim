@@ -62,7 +62,7 @@ namespace ssp4sim::signal
 
         for (std::size_t area_index = 0; area_index < areas; area_index++)
         {
-            std::byte * area = data->get_item(area_index);
+            std::byte * area = data->get_item(area_index, false);
 
             for (auto variable : this->variables)
             {

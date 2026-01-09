@@ -52,9 +52,9 @@ namespace ssp4sim::utils
         return head;
     }
 
-    std::byte *RingBuffer::get_item(std::size_t index)
+    std::byte *RingBuffer::get_item(std::size_t index, bool use_verification)
     {
-        if (!used[index]) [[unlikely]]
+        if (use_verification && !used[index]) [[unlikely]]
         {
             log(error)("[{}] RingBuffer, index not populated: {}", __func__, index);
             throw std::runtime_error("[RingBuffer][get_item] Index not populated");

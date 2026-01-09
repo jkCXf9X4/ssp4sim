@@ -44,7 +44,7 @@ namespace ssp4sim::utils
         std::size_t push(std::uint64_t time);
 
         // get data from an index, index is static from data start
-        std::byte *get_item(std::size_t index);
+        std::byte *get_item(std::size_t index, bool use_verification=true);
 
         std::uint64_t get_time(std::size_t index);
 

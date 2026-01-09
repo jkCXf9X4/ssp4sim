@@ -10,7 +10,7 @@ using ssp4sim::types::DataType;
 
 TEST_CASE("SignalStorage allocates variable and derivative layout", "[SignalStorage]")
 {
-    SignalStorage storage(2, "signals");
+    SignalStorage storage(3, "signals");
     const auto real_index = storage.add("signals.real", DataType::real, 2);
     const auto int_index = storage.add("signals.mode", DataType::integer, 0);
 
@@ -20,15 +20,17 @@ TEST_CASE("SignalStorage allocates variable and derivative layout", "[SignalStor
     const auto expected_total_size = expected_real_stride + sizeof(int32_t);
     REQUIRE(storage.mem_size == expected_total_size);
 
-    auto *area0_real = storage.get_item(0, real_index);
-    auto *area0_int = storage.get_item(0, int_index);
+    auto area0 = storage.push(100);
+    auto *area0_real = storage.get_item(area0, real_index);
+    auto *area0_int = storage.get_item(area0, int_index);
     REQUIRE(reinterpret_cast<std::byte *>(area0_int) - reinterpret_cast<std::byte *>(area0_real) == static_cast<std::ptrdiff_t>(expected_real_stride));
 
-    auto *area1_real = storage.get_item(1, real_index);
+    auto area1 = storage.push(200);
+    auto *area1_real = storage.get_item(area1, real_index);
     REQUIRE(reinterpret_cast<std::byte *>(area1_real) - reinterpret_cast<std::byte *>(area0_real) == static_cast<std::ptrdiff_t>(storage.mem_size));
 
-    auto *first_derivative = storage.get_derivative(0, real_index, 1);
-    auto *second_derivative = storage.get_derivative(0, real_index, 2);
+    auto *first_derivative = storage.get_derivative(area0, real_index, 1);
+    auto *second_derivative = storage.get_derivative(area0, real_index, 2);
     REQUIRE(first_derivative != nullptr);
     REQUIRE(second_derivative != nullptr);
     REQUIRE(second_derivative - first_derivative == static_cast<std::ptrdiff_t>(sizeof(double)));
