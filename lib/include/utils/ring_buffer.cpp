@@ -37,7 +37,7 @@ namespace ssp4sim::utils
         IF_LOG({
             log(ext_trace)("[{}] init", __func__);
         });
-        
+
         nr_inserts += 1;
         head = nr_inserts % capacity;
         used[head] = true;
@@ -74,7 +74,7 @@ namespace ssp4sim::utils
 
     bool RingBuffer::find_index(uint64_t time, std::size_t &index_found)
     {
-        for (std::size_t i = 0;i < nr_inserts && i < capacity ; ++i)
+        for (std::size_t i = 0; i < nr_inserts && i < capacity; ++i)
         {
             int pos = get_index_from_pos_rev(i);
             if (timestamps[pos] == time)
@@ -108,6 +108,11 @@ namespace ssp4sim::utils
         return false;
     }
 
+    std::size_t RingBuffer::get_index_from_pos_rev(std::size_t position)
+    {
+        return (nr_inserts - position) % capacity;
+    }
+
     bool RingBuffer::is_empty()
     {
         return nr_inserts == 0;
@@ -116,11 +121,6 @@ namespace ssp4sim::utils
     bool RingBuffer::is_full()
     {
         return nr_inserts >= capacity;
-    }
-
-    std::size_t RingBuffer::get_index_from_pos_rev(std::size_t position)
-    {
-        return (nr_inserts - position) % capacity;
     }
 
     std::string RingBuffer::to_string() const
