@@ -1,7 +1,6 @@
 #include "model/model_fmu.hpp"
 
 #include "config.hpp"
-#include "signal/recorder.hpp"
 #include "signal/storage.hpp"
 #include "handler/fmu_handler.hpp"
 #include "model/model_connection.hpp"

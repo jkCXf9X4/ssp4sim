@@ -8,7 +8,6 @@
 #include "model_connector.hpp"
 
 #include "signal/storage.hpp"
-#include "signal/recorder.hpp"
 
 #include "handler/fmu_handler.hpp"
 
@@ -34,7 +33,6 @@ namespace ssp4sim::graph
 
         std::unique_ptr<ssp4sim::signal::SignalStorage> input_area;
         std::unique_ptr<ssp4sim::signal::SignalStorage> output_area;
-        signal::DataRecorder *recorder;
 
         std::map<std::string, ConnectorInfo> inputs;
         std::map<std::string, ConnectorInfo> outputs;

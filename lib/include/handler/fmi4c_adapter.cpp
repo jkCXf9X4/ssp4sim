@@ -145,12 +145,13 @@ namespace ssp4sim::handler
                          fmi2String category,
                          fmi2String message, ...)
     {
+        auto log = *((MyEnv *)env)->log;
+
         va_list args;
         va_start(args, message);
         std::string msg = formatWithVaList(message, args);
         va_end(args);
 
-        auto log = *((MyEnv *)env)->log;
         log(debug)("[{}] ({}) status:{} {}", instanceName, category, std::to_string(status), msg);
     }
 
@@ -343,6 +344,9 @@ namespace ssp4sim::handler
         {
             log(error)("[{}] Model {}, failed to terminate", __func__, this->instance_.instance_name());
         }
+        // Some fmus send messages when they terminate, wait for this
+        usleep(100);
+        log(debug)("[{}] Terminated FMU {}", __func__, instance_.path());
         return terminated;
     }
 

@@ -34,7 +34,7 @@ namespace ssp4sim
         ssp4cpp::Ssp *ssp;
 
         std::unique_ptr<handler::FmuHandler> fmu_handler;
-        std::unique_ptr<signal::DataRecorder> recorder;
+        std::unique_ptr<signal::DataRecorder> recorder = nullptr;
         std::unique_ptr<graph::Graph> sim_graph;
 
         std::map<std::string, std::unique_ptr<graph::Invocable>> nodes;
@@ -56,7 +56,6 @@ namespace ssp4sim
         {
             p->recorder = std::make_unique<signal::DataRecorder>(result_file, recording_interval, wait_for_recorder);
         }
-
     }
 
     Simulation::~Simulation() = default;
@@ -88,8 +87,11 @@ namespace ssp4sim
         p->log(info)("[{}] - Init simulation graph", __func__);
         p->sim_graph->init();
 
-        p->log(info)("[{}] - Initializing recorder", __func__);
-        p->recorder->init();
+        if (p->recorder)
+        {
+            p->log(info)("[{}] - Initializing recorder", __func__);
+            p->recorder->init();
+        }
     }
 
     /**
@@ -118,11 +120,11 @@ namespace ssp4sim
         {
             p->sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
         }
-        catch (const std::runtime_error& e)
+        catch (const std::runtime_error &e)
         {
             p->log(error)(std::format("Simulation failed! {} ", e.what()));
         }
-        
+
         auto sim_wall_time = sim_timer.stop();
 
         p->log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));

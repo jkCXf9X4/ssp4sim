@@ -25,7 +25,6 @@ namespace ssp4sim::graph
         for (auto &[ssp_resource_name, analysis_model] : analysis_graph->models)
         {
             auto m = std::make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu, analysis_model->maxOutputDerivativeOrder);
-            m->recorder = recorder;
             log(ext_trace)("[{}] -- New Model: {}", __func__, m->name);
 
             m->delay = analysis_model->delay;
@@ -116,8 +115,11 @@ namespace ssp4sim::graph
             auto m = static_cast<FmuModel *>(model.get());
             m->input_area->allocate();
             m->output_area->allocate();
-            recorder->add_storage(m->input_area.get());
-            recorder->add_storage(m->output_area.get());
+            if (recorder)
+            {
+                recorder->add_storage(m->input_area.get());
+                recorder->add_storage(m->output_area.get());
+            }
         }
 
         log(trace)("[{}] - Create connections between models", __func__);

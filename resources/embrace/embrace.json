@@ -30,7 +30,7 @@
         "recording":
         {
             "enable": true,
-            "wait_for": true,
+            "wait_for": false,
             "interval": 0.25,
             "result_file": "./results/embrace.csv"
         },
