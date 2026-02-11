@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=68", "setuptools-scm>=8", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyssp4sim"
-version = "0.1.0"
+dynamic = ["version"]
 description = "SSP4SIM pybind11 binary module"
-requires-python = ">=3.8"
+requires-python = ">=3.11,<3.12"
 authors = [{ name = "Erik Rosenlund" }]
 
 [tool.setuptools]
@@ -16,3 +16,6 @@ include-package-data = true
 [tool.setuptools.package-data]
 # Include the compiled extension in the package
 pyssp4sim = ["*.so", "*.pyd", "*.dll", "*.dylib"]
+
+[tool.setuptools_scm]
+fallback_version = "0.0.0.dev0"

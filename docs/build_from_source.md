@@ -59,6 +59,7 @@ cmake --build build
 ## Build Python API (Editable Install)
 
 Use the same Python version for CMake and `pip`. Python API requires a Release build.
+`pyssp4sim` version is derived from Git tags (`setuptools-scm`) for source/editable installs.
 
 ```bash
 python3.11 -m venv venv
