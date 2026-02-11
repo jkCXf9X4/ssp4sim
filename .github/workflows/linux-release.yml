@@ -72,32 +72,35 @@ jobs:
           else
             WHEEL_VERSION="0.0.0.dev$(date +%Y%m%d)+$(git rev-parse --short HEAD)"
           fi
+          WHEEL_ALIAS_VERSION="0.0.0+lat"
 
-          cat > dist/ssp4sim/python/setup_release.py <<EOF
-          from setuptools import setup
-          from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+          for VERSION in "${WHEEL_VERSION}" "${WHEEL_ALIAS_VERSION}"; do
+            cat > dist/ssp4sim/python/setup_release.py <<EOF
+            from setuptools import setup
+            from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
 
-          class _BinaryWheel(_bdist_wheel):
-              def finalize_options(self):
-                  super().finalize_options()
-                  self.root_is_pure = False
+            class _BinaryWheel(_bdist_wheel):
+                def finalize_options(self):
+                    super().finalize_options()
+                    self.root_is_pure = False
 
-          setup(
-              name="pyssp4sim",
-              version="${WHEEL_VERSION}",
-              packages=["pyssp4sim"],
-              include_package_data=True,
-              package_data={"pyssp4sim": ["*.so", "*.pyd", "*.dll", "*.dylib"]},
-              cmdclass={"bdist_wheel": _BinaryWheel},
-          )
-          EOF
+            setup(
+                name="pyssp4sim",
+                version="${VERSION}",
+                packages=["pyssp4sim"],
+                include_package_data=True,
+                package_data={"pyssp4sim": ["*.so", "*.pyd", "*.dll", "*.dylib"]},
+                cmdclass={"bdist_wheel": _BinaryWheel},
+            )
+            EOF
 
-          (
-            cd dist/ssp4sim/python
-            "${VCPKG_PY}" setup_release.py bdist_wheel \
-              --dist-dir ../../ \
-              --plat-name linux_x86_64
-          )
+            (
+              cd dist/ssp4sim/python
+              "${VCPKG_PY}" setup_release.py bdist_wheel \
+                --dist-dir ../../ \
+                --plat-name linux_x86_64
+            )
+          done
 
       - name: Create release metadata and package
         run: |
@@ -108,7 +111,6 @@ jobs:
           COMMIT_SHA="$(git rev-parse HEAD)"
           PACKAGE_BASE="ssp4sim-linux-x86_64-${VERSION}"
           PACKAGE_ALIAS="ssp4sim-linux-x86_64-latest.tar.gz"
-          WHEEL_ALIAS="pyssp4sim-latest.whl"
 
           cat > dist/ssp4sim/RELEASE.txt <<EOF
           version=${VERSION}
@@ -118,18 +120,16 @@ jobs:
 
           tar -C dist -czf "dist/${PACKAGE_BASE}.tar.gz" ssp4sim
 
-          WHEEL_FILE="$(ls -1 dist/pyssp4sim-*.whl | head -n 1)"
-          if [ -z "${WHEEL_FILE}" ]; then
+          if ! ls -1 dist/pyssp4sim-*.whl >/dev/null 2>&1; then
             echo "No wheel found in dist/"
             exit 1
           fi
 
           cp -f "dist/${PACKAGE_BASE}.tar.gz" "dist/${PACKAGE_ALIAS}"
-          cp -f "${WHEEL_FILE}" "dist/${WHEEL_ALIAS}"
 
           (
             cd dist
-            sha256sum "${PACKAGE_BASE}.tar.gz" "${PACKAGE_ALIAS}" *.whl > SHA256SUMS
+            sha256sum "${PACKAGE_BASE}.tar.gz" "${PACKAGE_ALIAS}" pyssp4sim-*.whl > SHA256SUMS
           )
 
       - name: Upload build artifacts

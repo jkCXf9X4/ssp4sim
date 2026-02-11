@@ -8,7 +8,7 @@ Release artifact format (same tag/SHA):
 - `ssp4sim-linux-x86_64-<version>.tar.gz`
 - `pyssp4sim-<version>-*.whl`
 - `ssp4sim-linux-x86_64-latest.tar.gz` (alias)
-- `pyssp4sim-latest.whl` (alias)
+- `pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl` (alias)
 
 Tarball contents are installed from CMake into:
 - `bin/`
@@ -48,7 +48,7 @@ The workflow creates:
 - `dist/ssp4sim-linux-x86_64-<version>.tar.gz`
 - `dist/pyssp4sim-<version>-*.whl`
 - `dist/ssp4sim-linux-x86_64-latest.tar.gz`
-- `dist/pyssp4sim-latest.whl`
+- `dist/pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl`
 - `dist/SHA256SUMS`
 
 `RELEASE.txt` is generated before packaging and includes:
@@ -58,13 +58,13 @@ The workflow creates:
 
 ## Stage 5: Publish artifacts
 
-On push tags matching `v*`, the workflow publishes versioned assets, alias assets, and checksum file to GitHub Releases.
+On push tags matching `v*`, the workflow publishes versioned assets, tarball alias, wheel alias, and checksum file to GitHub Releases.
 
 For manual runs (`workflow_dispatch`), artifacts are uploaded to the workflow run as build artifacts.
 
 ## Stage 6: Developer consumption
 
-1. Download the alias tarball, alias wheel, and `SHA256SUMS` from the latest release.
+1. Download the alias tarball, wheel alias, and `SHA256SUMS` from the latest release.
 2. Verify checksums:
    ```bash
    sha256sum -c SHA256SUMS
@@ -80,5 +80,5 @@ For manual runs (`workflow_dispatch`), artifacts are uploaded to the workflow ru
 5. Optionally add `ssp4sim/bin` to `PATH`.
 6. Install the Python API wheel:
    ```bash
-   pip install pyssp4sim-latest.whl
+   pip install pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl
    ```
