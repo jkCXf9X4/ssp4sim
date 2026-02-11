@@ -22,7 +22,7 @@ Tagged releases (`v*`) publish dual artifacts:
 The Linux tarball contains:
 - `bin/sim_app`
 - `python/pyssp4sim` (Python API package with native extension)
-- `readme.md`, `LICENSE`, `version.txt`, `RELEASE.txt`
+- `readme.md`, `LICENSE`, `RELEASE.txt`
 
 Download and verify:
 https://github.com/jkCXf9X4/ssp4sim/releases/latest

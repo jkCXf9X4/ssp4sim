@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/version.txt" projectVersion)
-project(ssp4sim_prj VERSION ${projectVersion})
-message("ssp4sim, version: ${projectVersion}\n")
+project(ssp4sim_prj)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -86,6 +84,5 @@ install(
   FILES
     ${CMAKE_SOURCE_DIR}/readme.md
     ${CMAKE_SOURCE_DIR}/LICENSE
-    ${CMAKE_SOURCE_DIR}/version.txt
   DESTINATION .
 )

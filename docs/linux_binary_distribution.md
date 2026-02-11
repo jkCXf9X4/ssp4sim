@@ -16,7 +16,7 @@ Tarball contents are installed from CMake into:
 - `include/`
 - `python/`
 - `resources/`
-- metadata files (`readme.md`, `LICENSE`, `version.txt`, `RELEASE.txt`)
+- metadata files (`readme.md`, `LICENSE`, `RELEASE.txt`)
 
 ## Stage 2: CI build and test
 

@@ -70,8 +70,7 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             WHEEL_VERSION="${GITHUB_REF_NAME#v}"
           else
-            BASE_VERSION="$(cat version.txt)"
-            WHEEL_VERSION="${BASE_VERSION}.dev$(date +%Y%m%d)"
+            WHEEL_VERSION="0.0.0.dev$(date +%Y%m%d)+$(git rev-parse --short HEAD)"
           fi
 
           cat > dist/ssp4sim/python/setup_release.py <<EOF
