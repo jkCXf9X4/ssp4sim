@@ -24,6 +24,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             ninja-build \
+            gcc-13 \
+            g++-13 \
             autoconf \
             automake \
             autoconf-archive
@@ -35,6 +37,9 @@ jobs:
           echo "VCPKG_ROOT=${RUNNER_TEMP}/vcpkg" >> "${GITHUB_ENV}"
 
       - name: Configure
+        env:
+          CC: gcc-13
+          CXX: g++-13
         run: |
           cmake --preset=vcpkg \
             -DCMAKE_BUILD_TYPE=Release \
