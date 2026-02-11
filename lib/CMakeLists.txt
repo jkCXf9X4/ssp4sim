@@ -35,3 +35,13 @@ target_link_libraries(ssp4sim_lib PRIVATE ssp4cpp::ssp4cpp)
 target_link_libraries(ssp4sim_lib PRIVATE cutecpp::cutecpp)
 
 target_link_libraries(ssp4sim_lib PUBLIC ssp4sim::3rd::fmi4c)
+
+# install(
+#   TARGETS ssp4sim_lib
+#   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+# )
+# 
+# install(
+#   DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/public_include/
+#   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ssp4sim
+# )

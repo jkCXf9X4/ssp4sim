@@ -43,6 +43,38 @@ The project is organized into the following directories:
     cmake --build build
     ```
 
+## Linux release binaries
+Tagged releases (`v*`) publish a Linux tarball that already contains:
+- `bin/sim_app`
+- `readme.md`, `LICENSE`, `version.txt`, `RELEASE.txt`
+
+Download and run:
+```bash
+curl -L -o ssp4sim-linux.tar.gz \
+  https://github.com/<org>/<repo>/releases/latest/download/ssp4sim-linux-x86_64-vX.Y.Z.tar.gz
+
+curl -L -o SHA256SUMS \
+  https://github.com/<org>/<repo>/releases/latest/download/SHA256SUMS
+
+sha256sum -c SHA256SUMS
+
+mkdir -p $HOME/.local/opt/ssp4sim
+tar -xzf ssp4sim-linux.tar.gz -C $HOME/.local/opt
+
+$HOME/.local/opt/ssp4sim/bin/sim_app ./resources/embrace/embrace.json
+```
+
+Add to PATH:
+```bash
+export PATH="$HOME/.local/opt/ssp4sim/bin:$PATH"
+```
+
+Runtime notes:
+- Releases are currently built on Ubuntu 24.04.
+- The binary links `libstdc++` statically, but system compatibility can still depend on glibc and other runtime components.
+
+Release pipeline details: `docs/linux_binary_distribution.md`
+
 4. Release/debug
 ```
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
@@ -71,20 +103,17 @@ cmake --build build && ./build/tests/ssp4sim_tests
 ```
 ctest --test-dir build/tests currently malfunctions...
 
-## Building python api
-Make sure to use the same version of python as you build for. First build the python bindings
-The Build need to be a release build for the python api to build correctly
+## Building python api (quickest path)
+Make sure to use the same Python version for CMake and `pip`. The Python API requires a Release build.
 ```bash
-cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
-cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=OFF
-
-cmake --build build
-
-
 python3.11 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
-# After the python api is built
+
+cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
+cmake --build build
+
+# Install as a local (editable) module
 pip install -e ./build/public/python_api
 ```
 

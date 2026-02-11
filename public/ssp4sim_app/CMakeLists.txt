@@ -21,3 +21,8 @@ target_link_libraries(sim_app PRIVATE ssp4cpp::ssp4cpp)
 target_link_libraries(sim_app PRIVATE cutecpp::cutecpp)
 
 target_link_libraries(sim_app PUBLIC ssp4sim::3rd::fmi4c)
+
+install(
+  TARGETS sim_app
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

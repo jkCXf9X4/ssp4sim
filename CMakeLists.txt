@@ -7,6 +7,7 @@ message("ssp4sim, version: ${projectVersion}\n")
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+include(GNUInstallDirs)
 
 # OPTIONS
 option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
@@ -75,3 +76,16 @@ if(SSP4SIM_BUILD_TEST)
   message("Building tests\n")
   add_subdirectory(tests)
 endif()
+
+# install(
+#   DIRECTORY ${CMAKE_SOURCE_DIR}/resources
+#   DESTINATION .
+# )
+
+install(
+  FILES
+    ${CMAKE_SOURCE_DIR}/readme.md
+    ${CMAKE_SOURCE_DIR}/LICENSE
+    ${CMAKE_SOURCE_DIR}/version.txt
+  DESTINATION .
+)
