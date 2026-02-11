@@ -21,6 +21,9 @@ Tarball contents are installed from CMake into:
 ## Stage 2: CI build and test
 
 Workflow: [`.github/workflows/linux-release.yml`](../.github/workflows/linux-release.yml)
+Template inputs for generated release files:
+- [`scripts/release/setup_release.py.template`](../scripts/release/setup_release.py.template)
+- [`scripts/release/RELEASE.txt.template`](../scripts/release/RELEASE.txt.template)
 
 Runs on `ubuntu-24.04` and performs:
 - Installs required system tools for vcpkg `python3` (`autoconf`, `automake`, `autoconf-archive`, `ninja-build`)

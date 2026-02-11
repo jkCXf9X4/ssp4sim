@@ -75,24 +75,8 @@ jobs:
           WHEEL_ALIAS_VERSION="0.0.0+lat"
 
           for VERSION in "${WHEEL_VERSION}" "${WHEEL_ALIAS_VERSION}"; do
-            cat > dist/ssp4sim/python/setup_release.py <<EOF
-            from setuptools import setup
-            from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
-
-            class _BinaryWheel(_bdist_wheel):
-                def finalize_options(self):
-                    super().finalize_options()
-                    self.root_is_pure = False
-
-            setup(
-                name="pyssp4sim",
-                version="${VERSION}",
-                packages=["pyssp4sim"],
-                include_package_data=True,
-                package_data={"pyssp4sim": ["*.so", "*.pyd", "*.dll", "*.dylib"]},
-                cmdclass={"bdist_wheel": _BinaryWheel},
-            )
-            EOF
+            cp -f scripts/release/setup_release.py.template dist/ssp4sim/python/setup_release.py
+            sed -i "s|__WHEEL_VERSION__|${VERSION}|g" dist/ssp4sim/python/setup_release.py
 
             (
               cd dist/ssp4sim/python
@@ -112,11 +96,11 @@ jobs:
           PACKAGE_BASE="ssp4sim-linux-x86_64-${VERSION}"
           PACKAGE_ALIAS="ssp4sim-linux-x86_64-latest.tar.gz"
 
-          cat > dist/ssp4sim/RELEASE.txt <<EOF
-          version=${VERSION}
-          commit=${COMMIT_SHA}
-          built_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-          EOF
+          BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          cp -f scripts/release/RELEASE.txt.template dist/ssp4sim/RELEASE.txt
+          sed -i "s|__VERSION__|${VERSION}|g" dist/ssp4sim/RELEASE.txt
+          sed -i "s|__COMMIT_SHA__|${COMMIT_SHA}|g" dist/ssp4sim/RELEASE.txt
+          sed -i "s|__BUILT_AT__|${BUILT_AT}|g" dist/ssp4sim/RELEASE.txt
 
           tar -C dist -czf "dist/${PACKAGE_BASE}.tar.gz" ssp4sim
 

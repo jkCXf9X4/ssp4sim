@@ -1,0 +1,3 @@
+version=__VERSION__
+commit=__COMMIT_SHA__
+built_at=__BUILT_AT__

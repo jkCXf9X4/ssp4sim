@@ -1,0 +1,18 @@
+from setuptools import setup
+from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+
+
+class _BinaryWheel(_bdist_wheel):
+    def finalize_options(self):
+        super().finalize_options()
+        self.root_is_pure = False
+
+
+setup(
+    name="pyssp4sim",
+    version="__WHEEL_VERSION__",
+    packages=["pyssp4sim"],
+    include_package_data=True,
+    package_data={"pyssp4sim": ["*.so", "*.pyd", "*.dll", "*.dylib"]},
+    cmdclass={"bdist_wheel": _BinaryWheel},
+)
