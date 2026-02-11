@@ -56,10 +56,10 @@ The Linux tarball contains:
 Download and run:
 ```bash
 curl -L -o ssp4sim-linux.tar.gz \
-  https://github.com/<org>/<repo>/releases/latest/download/ssp4sim-linux-x86_64-vX.Y.Z.tar.gz
+  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/ssp4sim-linux-x86_64-vX.Y.Z.tar.gz
 
 curl -L -o SHA256SUMS \
-  https://github.com/<org>/<repo>/releases/latest/download/SHA256SUMS
+  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/SHA256SUMS
 
 sha256sum -c SHA256SUMS
 
@@ -95,7 +95,7 @@ cmake -S . -B build -DSSP4SIM_LOG_HOT_PATH=OFF
 ```
 
 Possible dependencies
-sudo apt install ninja-build
+sudo apt install -y ninja-build autoconf automake autoconf-archive
 
 Release!
 ```
