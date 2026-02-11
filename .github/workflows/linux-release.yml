@@ -108,6 +108,8 @@ jobs:
           fi
           COMMIT_SHA="$(git rev-parse HEAD)"
           PACKAGE_BASE="ssp4sim-linux-x86_64-${VERSION}"
+          PACKAGE_ALIAS="ssp4sim-linux-x86_64-latest.tar.gz"
+          WHEEL_ALIAS="pyssp4sim-latest.whl"
 
           cat > dist/ssp4sim/RELEASE.txt <<EOF
           version=${VERSION}
@@ -116,9 +118,19 @@ jobs:
           EOF
 
           tar -C dist -czf "dist/${PACKAGE_BASE}.tar.gz" ssp4sim
+
+          WHEEL_FILE="$(ls -1 dist/pyssp4sim-*.whl | head -n 1)"
+          if [ -z "${WHEEL_FILE}" ]; then
+            echo "No wheel found in dist/"
+            exit 1
+          fi
+
+          cp -f "dist/${PACKAGE_BASE}.tar.gz" "dist/${PACKAGE_ALIAS}"
+          cp -f "${WHEEL_FILE}" "dist/${WHEEL_ALIAS}"
+
           (
             cd dist
-            sha256sum "${PACKAGE_BASE}.tar.gz" *.whl > SHA256SUMS
+            sha256sum "${PACKAGE_BASE}.tar.gz" "${PACKAGE_ALIAS}" *.whl > SHA256SUMS
           )
 
       - name: Upload build artifacts

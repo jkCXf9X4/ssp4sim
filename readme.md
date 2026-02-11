@@ -16,6 +16,8 @@ Builds upon the [SSP4CPP](https://github.com/jkCXf9X4/ssp4cpp) XML deserializer
 Tagged releases (`v*`) publish dual artifacts:
 - Linux bundle: `ssp4sim-linux-x86_64-vX.Y.Z.tar.gz`
 - Python wheel: `pyssp4sim-X.Y.Z-*.whl`
+- Linux alias: `ssp4sim-linux-x86_64-latest.tar.gz`
+- Wheel alias: `pyssp4sim-latest.whl`
 
 The Linux tarball contains:
 - `bin/sim_app`
@@ -26,16 +28,16 @@ Download and verify:
 https://github.com/jkCXf9X4/ssp4sim/releases/latest
 
 ```bash
-curl -L -o ssp4sim-linux.tar.gz \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/ssp4sim-linux-x86_64-vX.Y.Z.tar.gz
+curl -fLO \
+  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/ssp4sim-linux-x86_64-latest.tar.gz
 
-curl -L -o SHA256SUMS \
+curl -fLO \
   https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/SHA256SUMS
 
 sha256sum -c SHA256SUMS
 
 mkdir -p $HOME/.local/opt/ssp4sim
-tar -xzf ssp4sim-linux.tar.gz -C $HOME/.local/opt
+tar -xzf ssp4sim-linux-x86_64-latest.tar.gz -C $HOME/.local/opt
 ```
 
 Add to PATH:
@@ -76,9 +78,8 @@ Simulation input is controlled via a JSON file passed to `sim_app` as its single
 Install Python API from a release wheel:
 
 ```bash
-pip install ./pyssp4sim-X.Y.Z-*.whl
-
-pip install https://github.com/jkCXf9X4/ssp4sim/releases/download/vX.Y.Z/pyssp4sim-0.1.0-cp311-cp311-linux_x86_64.whl
+pip install \
+  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-latest.whl
 ```
 
 Usage:
