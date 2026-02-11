@@ -48,7 +48,7 @@ cmake -S . -B build -DSSP4SIM_LOG_HOT_PATH=OFF
 
 ## Build And Run Tests
 
-`ctest --test-dir build/tests` is currently unreliable. Run the test binary directly:
+`ctest --test-dir build/tests` is currently unreliable. Run the `build/tests/ssp4sim_tests` binary directly:
 
 ```bash
 cmake -B build -S . -DSSP4SIM_BUILD_TEST=ON
@@ -64,7 +64,7 @@ Use the same Python version for CMake and `pip`. Python API requires a Release b
 ```bash
 python3.11 -m venv venv
 . ./venv/bin/activate
-pip install -r requirements.txt
+pip install -r ./requirements.txt
 
 cmake -B build -S . \
   -DSSP4SIM_BUILD_PYTHON_API=ON \

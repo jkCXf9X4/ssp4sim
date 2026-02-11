@@ -22,7 +22,7 @@ Tagged releases (`v*`) publish dual artifacts:
 The Linux tarball contains:
 - `bin/sim_app`
 - `python/pyssp4sim` (Python API package with native extension)
-- `readme.md`, `LICENSE`, `RELEASE.txt`
+- [`readme.md`](readme.md), [`LICENSE`](LICENSE), `RELEASE.txt`
 
 Download and verify:
 https://github.com/jkCXf9X4/ssp4sim/releases/latest
@@ -66,12 +66,12 @@ Runtime notes:
 ## Configuration
 Simulation input is controlled via a JSON file passed to `sim_app` as its single argument.
 
-- Full key reference and supported values: `docs/configuration.md`
+- Full key reference and supported values: [docs/configuration.md](docs/configuration.md)
 
-- Example config: `resources/embrace/embrace.json`
-- Example config: `resources/f16/config.json`
-- Example config: `resources/generic_config.json`
-- Example config set: `resources/delay_sys/*.json`
+- Example config: [resources/embrace/embrace.json](resources/embrace/embrace.json)
+- Example config: [resources/f16/config.json](resources/f16/config.json)
+- Example config: [resources/generic_config.json](resources/generic_config.json)
+- Example config set: [resources/delay_sys/](resources/delay_sys/)
 
 ## Python API
 
@@ -94,15 +94,15 @@ sim.simulate()
 
 ## Documentation
 
-- Build from source: `docs/build_from_source.md`
-- Development workflows: `docs/development.md`
-- Configuration reference: `docs/configuration.md`
-- Linux release pipeline: `docs/linux_binary_distribution.md`
-- Profiling: `docs/profiling.md`
-- Logging guidelines: `docs/logging_guidlines.md`
+- [Build from source](docs/build_from_source.md)
+- [Development workflows](docs/development.md)
+- [Configuration reference](docs/configuration.md)
+- [Linux release pipeline](docs/linux_binary_distribution.md)
+- [Profiling](docs/profiling.md)
+- [Logging guidelines](docs/logging_guidlines.md)
 
 ## Contributing
-Contributions are welcome. Development details are in `docs/development.md`.
+Contributions are welcome. Development details are in [docs/development.md](docs/development.md).
 
 ## License
 This project is released under the MIT license. See [LICENSE](LICENSE) for details.

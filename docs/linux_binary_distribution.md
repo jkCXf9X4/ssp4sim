@@ -16,11 +16,11 @@ Tarball contents are installed from CMake into:
 - `include/`
 - `python/`
 - `resources/`
-- metadata files (`readme.md`, `LICENSE`, `RELEASE.txt`)
+- metadata files ([`readme.md`](../readme.md), [`LICENSE`](../LICENSE), `RELEASE.txt`)
 
 ## Stage 2: CI build and test
 
-Workflow: `.github/workflows/linux-release.yml`
+Workflow: [`.github/workflows/linux-release.yml`](../.github/workflows/linux-release.yml)
 
 Runs on `ubuntu-24.04` and performs:
 - Installs required system tools for vcpkg `python3` (`autoconf`, `automake`, `autoconf-archive`, `ninja-build`)
@@ -37,10 +37,10 @@ cmake --install build --prefix dist/ssp4sim
 ```
 
 Install rules are defined in:
-- `CMakeLists.txt`
-- `lib/CMakeLists.txt`
-- `public/ssp4sim_app/CMakeLists.txt`
-- `public/python_api/CMakeLists.txt`
+- [`CMakeLists.txt`](../CMakeLists.txt)
+- [`lib/CMakeLists.txt`](../lib/CMakeLists.txt)
+- [`public/ssp4sim_app/CMakeLists.txt`](../public/ssp4sim_app/CMakeLists.txt)
+- [`public/python_api/CMakeLists.txt`](../public/python_api/CMakeLists.txt)
 
 ## Stage 4: Package artifacts
 

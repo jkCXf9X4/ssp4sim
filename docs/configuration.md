@@ -102,7 +102,7 @@ Notes:
 
 ## Reference Examples
 
-- `resources/embrace/embrace.json`
-- `resources/f16/config.json`
-- `resources/generic_config.json`
-- `resources/delay_sys/*.json`
+- [`resources/embrace/embrace.json`](../resources/embrace/embrace.json)
+- [`resources/f16/config.json`](../resources/f16/config.json)
+- [`resources/generic_config.json`](../resources/generic_config.json)
+- [`resources/delay_sys/`](../resources/delay_sys/)
