@@ -35,3 +35,20 @@ add_custom_command(
             $<TARGET_FILE:py_ssp4sim>
             ${CMAKE_CURRENT_BINARY_DIR}/pyssp4sim/$<TARGET_FILE_NAME:py_ssp4sim>
 )
+
+install(
+  TARGETS py_ssp4sim
+  LIBRARY DESTINATION python/pyssp4sim
+  RUNTIME DESTINATION python/pyssp4sim
+  ARCHIVE DESTINATION python/pyssp4sim
+)
+
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
+  DESTINATION python/pyssp4sim
+)
+
+install(
+  FILES ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml
+  DESTINATION python
+)

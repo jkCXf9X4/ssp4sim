@@ -4,11 +4,16 @@ This repository now provides a Linux-only release pipeline for distributing preb
 
 ## Stage 1: Distribution target
 
-Release artifact format:
+Release artifact format (same tag/SHA):
 - `ssp4sim-linux-x86_64-<version>.tar.gz`
+- `pyssp4sim-<version>-*.whl`
 
 Tarball contents are installed from CMake into:
 - `bin/`
+- `lib/`
+- `include/`
+- `python/`
+- `resources/`
 - metadata files (`readme.md`, `LICENSE`, `version.txt`, `RELEASE.txt`)
 
 ## Stage 2: CI build and test
@@ -16,7 +21,8 @@ Tarball contents are installed from CMake into:
 Workflow: `.github/workflows/linux-release.yml`
 
 Runs on `ubuntu-24.04` and performs:
-- Configure (`cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON`)
+- Installs required system tools for vcpkg `python3` (`autoconf`, `automake`, `autoconf-archive`, `ninja-build`)
+- Configure (`cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON -DVCPKG_MANIFEST_FEATURES=python-api`)
 - Build (`cmake --build build --config Release`)
 - Test (`./build/tests/ssp4sim_tests`)
 
@@ -31,11 +37,13 @@ Install rules are defined in:
 - `CMakeLists.txt`
 - `lib/CMakeLists.txt`
 - `public/ssp4sim_app/CMakeLists.txt`
+- `public/python_api/CMakeLists.txt`
 
 ## Stage 4: Package artifacts
 
 The workflow creates:
 - `dist/ssp4sim-linux-x86_64-<version>.tar.gz`
+- `dist/pyssp4sim-<version>-*.whl`
 - `dist/SHA256SUMS`
 
 `RELEASE.txt` is generated before packaging and includes:
@@ -45,13 +53,13 @@ The workflow creates:
 
 ## Stage 5: Publish artifacts
 
-On push tags matching `v*`, the workflow publishes the tarball and checksum file to GitHub Releases.
+On push tags matching `v*`, the workflow publishes tarball, wheel, and checksum file to GitHub Releases.
 
 For manual runs (`workflow_dispatch`), artifacts are uploaded to the workflow run as build artifacts.
 
 ## Stage 6: Developer consumption
 
-1. Download the tarball and `SHA256SUMS` from the release.
+1. Download the tarball, wheel, and `SHA256SUMS` from the release.
 2. Verify checksums:
    ```bash
    sha256sum -c SHA256SUMS
@@ -65,3 +73,7 @@ For manual runs (`workflow_dispatch`), artifacts are uploaded to the workflow ru
    ./ssp4sim/bin/sim_app ./ssp4sim/resources/embrace/embrace.json
    ```
 5. Optionally add `ssp4sim/bin` to `PATH`.
+6. Install the Python API wheel:
+   ```bash
+   pip install pyssp4sim-<version>-*.whl
+   ```

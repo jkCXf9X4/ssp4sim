@@ -19,6 +19,15 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install system build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            ninja-build \
+            autoconf \
+            automake \
+            autoconf-archive
+
       - name: Set up vcpkg
         run: |
           git clone https://github.com/microsoft/vcpkg "${RUNNER_TEMP}/vcpkg"
@@ -29,16 +38,60 @@ jobs:
         run: |
           cmake --preset=vcpkg \
             -DCMAKE_BUILD_TYPE=Release \
-            -DSSP4SIM_BUILD_TEST=ON
+            -DSSP4SIM_BUILD_TEST=ON \
+            -DSSP4SIM_BUILD_PYTHON_API=ON \
+            -DVCPKG_MANIFEST_FEATURES=python-api
 
       - name: Build
         run: cmake --build build --config Release
+
+      - name: Verify Python API artifact exists
+        run: ls -l build/public/python_api/pyssp4sim
 
       - name: Run tests
         run: ./build/tests/ssp4sim_tests
 
       - name: Install to staging directory
         run: cmake --install build --prefix dist/ssp4sim
+
+      - name: Build Python wheel from staged package
+        run: |
+          VCPKG_PY="$(readlink -f build/vcpkg_installed/x64-linux/tools/python3/python3.11)"
+          "${VCPKG_PY}" -m ensurepip --upgrade
+          "${VCPKG_PY}" -m pip install --upgrade pip setuptools wheel
+
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            WHEEL_VERSION="${GITHUB_REF_NAME#v}"
+          else
+            BASE_VERSION="$(cat version.txt)"
+            WHEEL_VERSION="${BASE_VERSION}.dev$(date +%Y%m%d)"
+          fi
+
+          cat > dist/ssp4sim/python/setup_release.py <<EOF
+          from setuptools import setup
+          from wheel.bdist_wheel import bdist_wheel as _bdist_wheel
+
+          class _BinaryWheel(_bdist_wheel):
+              def finalize_options(self):
+                  super().finalize_options()
+                  self.root_is_pure = False
+
+          setup(
+              name="pyssp4sim",
+              version="${WHEEL_VERSION}",
+              packages=["pyssp4sim"],
+              include_package_data=True,
+              package_data={"pyssp4sim": ["*.so", "*.pyd", "*.dll", "*.dylib"]},
+              cmdclass={"bdist_wheel": _BinaryWheel},
+          )
+          EOF
+
+          (
+            cd dist/ssp4sim/python
+            "${VCPKG_PY}" setup_release.py bdist_wheel \
+              --dist-dir ../../ \
+              --plat-name linux_x86_64
+          )
 
       - name: Create release metadata and package
         run: |
@@ -58,7 +111,7 @@ jobs:
           tar -C dist -czf "dist/${PACKAGE_BASE}.tar.gz" ssp4sim
           (
             cd dist
-            sha256sum "${PACKAGE_BASE}.tar.gz" > SHA256SUMS
+            sha256sum "${PACKAGE_BASE}.tar.gz" *.whl > SHA256SUMS
           )
 
       - name: Upload build artifacts
@@ -67,6 +120,7 @@ jobs:
           name: linux-release-bundle
           path: |
             dist/*.tar.gz
+            dist/*.whl
             dist/SHA256SUMS
 
       - name: Publish GitHub release assets
@@ -75,4 +129,5 @@ jobs:
         with:
           files: |
             dist/*.tar.gz
+            dist/*.whl
             dist/SHA256SUMS

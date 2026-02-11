@@ -3,9 +3,16 @@
     "nlohmann-json",
     "catch2",
     "tbb",
-    "pybind11",
     "libzip",
     "pugixml",
     "kissnet"
-  ]
+  ],
+  "features": {
+    "python-api": {
+      "description": "Dependencies required to build the Python API module",
+      "dependencies": [
+        "pybind11"
+      ]
+    }
+  }
 }

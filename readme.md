@@ -44,8 +44,13 @@ The project is organized into the following directories:
     ```
 
 ## Linux release binaries
-Tagged releases (`v*`) publish a Linux tarball that already contains:
+Tagged releases (`v*`) publish dual artifacts from the same commit/tag:
+- Linux bundle: `ssp4sim-linux-x86_64-vX.Y.Z.tar.gz`
+- Python wheel: `pyssp4sim-X.Y.Z-*.whl`
+
+The Linux tarball contains:
 - `bin/sim_app`
+- `python/pyssp4sim` (Python API package with native extension)
 - `readme.md`, `LICENSE`, `version.txt`, `RELEASE.txt`
 
 Download and run:
@@ -75,7 +80,12 @@ Runtime notes:
 
 Release pipeline details: `docs/linux_binary_distribution.md`
 
-4. Release/debug
+Install Python API from release wheel:
+```bash
+pip install ./pyssp4sim-X.Y.Z-*.whl
+```
+
+## Release/debug
 ```
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -86,6 +96,13 @@ cmake -S . -B build -DSSP4SIM_LOG_HOT_PATH=OFF
 
 Possible dependencies
 sudo apt install ninja-build
+
+Release!
+```
+  git tag v0.1.1
+  git push origin v0.1.1
+
+```
 
 ## Running examples
 After building, you can run the SSP simulation engine:
@@ -110,7 +127,7 @@ python3.11 -m venv venv
 . ./venv/bin/activate
 pip install -r requirements.txt
 
-cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
+cmake -B build -S . -DSSP4SIM_BUILD_PYTHON_API=ON -DVCPKG_MANIFEST_FEATURES=python-api -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
 cmake --build build
 
 # Install as a local (editable) module
