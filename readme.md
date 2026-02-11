@@ -111,6 +111,16 @@ After building, you can run the SSP simulation engine:
 ```
 This will run a simple simulation using one of the example ssps.
 
+## Configuration
+Simulation input is controlled via a JSON file passed to `sim_app` as its single argument.
+
+- Full key reference and supported values: `docs/configuration.md`
+- Ready-to-run examples:
+  - `resources/embrace/embrace.json`
+  - `resources/f16/config.json`
+  - `resources/generic_config.json`
+  - `resources/delay_sys/*.json`
+
 ## Running tests
 To run the tests, you first need to enable the `SSP4SIM_BUILD_TEST` option in CMake:
 ```bash
