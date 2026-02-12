@@ -17,8 +17,8 @@ namespace ssp4sim::graph
         uint64_t start_time;
         uint64_t end_time;
         uint64_t timestep;
-        uint64_t input_time = 0;
-        uint64_t output_time = 0;
+        uint64_t input_time = 0; // get data from this time
+        uint64_t output_time = 0; // set output to this time
 
         bool use_input_time = false;
         bool use_output_time = false;
@@ -50,13 +50,18 @@ namespace ssp4sim::graph
     class Invocable : public utils::graph::Node
     {
     public:
-        uint64_t walltime_ns = 0;
+        uint64_t walltime_ns = 0; // measurement of runtime
         uint64_t id = 0;
 
         TemporalType temporal_type = TemporalType::Algebraic;
         uint64_t delay = 0;
 
         uint64_t current_time = 0;
+
+        bool realtime =false;
+        uint64_t realtime_start_reference;
+
+        void enable_realtime(uint64_t realtime_start_reference);
 
         virtual void enter_init();
         virtual void exit_init();

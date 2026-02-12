@@ -24,6 +24,7 @@ namespace ssp4sim::utils::time
     uint64_t s_to_ns(double t);
 
     std::chrono::system_clock::time_point time_now();
+    uint64_t time_now_ns();
 
     std::string time_now_str();
 }

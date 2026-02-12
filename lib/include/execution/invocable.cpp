@@ -52,6 +52,12 @@ namespace ssp4sim::graph
         exit_init();
     }
 
+    void Invocable::enable_realtime(uint64_t realtime_start_reference)
+    {
+        this->realtime_start_reference = realtime_start_reference;
+        this->realtime = true;
+    }
+
     std::string Invocable::to_string() const
     {
         return "Invocable:\n{}\n";

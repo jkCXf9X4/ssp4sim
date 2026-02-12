@@ -27,6 +27,7 @@ This document describes how `ssp4sim` builds and consumes the input JSON configu
     "stop_time": 10.0,
     "timestep": 0.1,
     "tolerance": 1e-4,
+    "realtime":false,
     "executor": {
       "method": "jacobi",
       "thread_pool_workers": 5,
@@ -61,6 +62,7 @@ This document describes how `ssp4sim` builds and consumes the input JSON configu
 | `simulation.stop_time` | `double` | Yes | - | Seconds. |
 | `simulation.timestep` | `double` | Yes | - | Seconds. |
 | `simulation.tolerance` | `double` | Yes | - | FMU experiment tolerance. |
+| `simulation.realtime` | `bool` | No | `false` | Sync to computer clock |
 
 ### `simulation.executor.*`
 

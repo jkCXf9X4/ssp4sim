@@ -113,8 +113,14 @@ namespace ssp4sim
         uint64_t start_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.start_time"));
         uint64_t end_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.stop_time"));
         uint64_t timestep = utils::time::s_to_ns(utils::Config::getDouble("simulation.timestep"));
+        bool realtime = utils::Config::getOr("simulation.realtime", false);
 
         auto sim_timer = utils::time::Timer();
+
+        if(realtime)
+        {
+            p->sim_graph->enable_realtime(utils::time::time_now_ns());
+        }
 
         try
         {

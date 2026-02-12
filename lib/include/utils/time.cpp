@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <string>
 
+#include <time.h>
+
 #include "cutecpp/log.hpp"
 
 namespace ssp4sim::utils::time
@@ -23,6 +25,13 @@ namespace ssp4sim::utils::time
     {
         using namespace std::chrono;
         return system_clock::now();
+    }
+
+    uint64_t time_now_ns()
+    {
+        timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        return uint64_t(ts.tv_sec) * 1'000'000'000ull + ts.tv_nsec;
     }
 
     std::string time_now_str()

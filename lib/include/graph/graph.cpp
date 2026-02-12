@@ -4,11 +4,14 @@
 #include "execution/executor_builder.hpp"
 #include "graph/graph_builder.hpp"
 #include "utils/map.hpp"
+#include "utils/time.hpp"
 #include "signal/recorder.hpp"
 
 #include "tarjan.hpp"
 
 #include <sstream>
+#include <thread>
+#include <chrono>
 
 namespace ssp4sim::graph
 {
@@ -50,13 +53,25 @@ namespace ssp4sim::graph
 
     uint64_t Graph::invoke(StepData step_data)
     {
+        using clock = std::chrono::steady_clock;
         IF_LOG({
             log(trace)("[{}] Invoking Graph, full step: {}", __func__, step_data.to_string());
         });
 
+        // macro step
+        // ponder if this should be included in the executor...
+        // will most likely be reused by several so might be placed as utils
+
         auto t = step_data.start_time;
         while (t < step_data.end_time)
         {
+            if (realtime)
+            {
+                auto target = clock::time_point(std::chrono::nanoseconds(realtime_start_reference + t));
+                std::this_thread::sleep_until(target);
+                log(info)("[{}] Realtime: {}", __func__, t);
+            }
+
             auto s = StepData(t, t + step_data.timestep, step_data.timestep);
 
             IF_LOG({
@@ -67,6 +82,7 @@ namespace ssp4sim::graph
 
             t += step_data.timestep;
         }
+
         return t;
     }
 
