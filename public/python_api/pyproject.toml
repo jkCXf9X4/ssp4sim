@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pyssp4sim"
 dynamic = ["version"]
-description = "SSP4SIM pybind11 binary module"
-requires-python = ">=3.11,<3.12"
+description = "SSP4SIM abi3 binary module"
+requires-python = ">=3.9"
 authors = [{ name = "Erik Rosenlund" }]
 
 [tool.setuptools]

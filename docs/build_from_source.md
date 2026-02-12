@@ -60,17 +60,14 @@ cmake --build build
 
 Use the same Python version for CMake and `pip`. Python API requires a Release build.
 `pyssp4sim` version is derived from Git tags (`setuptools-scm`) for source/editable installs.
+The native module is built against CPython Limited API (`Py_LIMITED_API=0x03090000`) and produces an `abi3` extension.
 
 ```bash
 python3.11 -m venv venv
 . ./venv/bin/activate
 pip install -r ./requirements.txt
 
-cmake -B build -S . \
-  -DSSP4SIM_BUILD_PYTHON_API=ON \
-  -DVCPKG_MANIFEST_FEATURES=python-api \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DSSP4SIM_LOG_HOT_PATH=OFF
+cmake -B build -S .  -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
 
 cmake --build build
 pip install -e ./build/public/python_api

@@ -7,6 +7,10 @@ class _BinaryWheel(_bdist_wheel):
         super().finalize_options()
         self.root_is_pure = False
 
+    def get_tag(self):
+        _, _, plat = super().get_tag()
+        return ("cp39", "abi3", plat)
+
 
 setup(
     name="pyssp4sim",

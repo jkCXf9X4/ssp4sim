@@ -8,6 +8,7 @@
 
 #include <filesystem>
 #include <exception>
+#include <stdexcept>
 
 namespace ssp4sim
 {
@@ -29,7 +30,7 @@ namespace ssp4sim
         if (!std::filesystem::exists(config_path))
         {
             p->log(error)("Config file does not exist");
-            return;
+            throw std::runtime_error("Config file does not exist: " + config_path);
         }
 
         utils::Config::loadFromFile(config_path);
@@ -63,12 +64,20 @@ namespace ssp4sim
 
     void Simulator::init()
     {
+        if (!p || !p->sim)
+        {
+            throw std::runtime_error("Simulator is not initialized");
+        }
         p->log(info)("[{}] Initializing Simulator\n", __func__);
         p->sim->init();
     }
 
     void Simulator::simulate()
     {
+        if (!p || !p->sim)
+        {
+            throw std::runtime_error("Simulator is not initialized");
+        }
         p->log(info)("[{}] Starting Simulator\n", __func__);
         p->sim->simulate();
     }

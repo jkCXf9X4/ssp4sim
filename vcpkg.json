@@ -5,14 +5,7 @@
     "tbb",
     "libzip",
     "pugixml",
-    "kissnet"
-  ],
-  "features": {
-    "python-api": {
-      "description": "Dependencies required to build the Python API module",
-      "dependencies": [
-        "pybind11"
-      ]
-    }
-  }
+    "kissnet",
+    "python3"
+  ]
 }

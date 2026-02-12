@@ -8,7 +8,7 @@ Release artifact format (same tag/SHA):
 - `ssp4sim-linux-x86_64-<version>.tar.gz`
 - `pyssp4sim-<version>-*.whl`
 - `ssp4sim-linux-x86_64-latest.tar.gz` (alias)
-- `pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl` (alias)
+- `pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl` (alias)
 
 Tarball contents are installed from CMake into:
 - `bin/`
@@ -51,7 +51,7 @@ The workflow creates:
 - `dist/ssp4sim-linux-x86_64-<version>.tar.gz`
 - `dist/pyssp4sim-<version>-*.whl`
 - `dist/ssp4sim-linux-x86_64-latest.tar.gz`
-- `dist/pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl`
+- `dist/pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl`
 - `dist/SHA256SUMS`
 
 `RELEASE.txt` is generated before packaging and includes:
@@ -83,5 +83,5 @@ For manual runs (`workflow_dispatch`), artifacts are uploaded to the workflow ru
 5. Optionally add `ssp4sim/bin` to `PATH`.
 6. Install the Python API wheel:
    ```bash
-   pip install pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl
+   pip install pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
    ```

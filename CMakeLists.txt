@@ -9,7 +9,6 @@ include(GNUInstallDirs)
 
 # OPTIONS
 option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
-option(SSP4SIM_BUILD_PYTHON_API "Build python api" OFF)
 option(SSP4SIM_LOG_HOT_PATH "Include logging in hot path" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -59,26 +58,13 @@ add_subdirectory(lib)
 
 # Public artifacts
 add_subdirectory(public/ssp4sim_app)
-
-if(SSP4SIM_BUILD_PYTHON_API)
-  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    message("Python build must be Release builds, no build will be generated")
-    message("Something with debug symbols...")
-  else()
-    add_subdirectory(public/python_api)
-  endif()
-endif()
+add_subdirectory(public/python_api)
 
 # Tests
 if(SSP4SIM_BUILD_TEST)
   message("Building tests\n")
   add_subdirectory(tests)
 endif()
-
-# install(
-#   DIRECTORY ${CMAKE_SOURCE_DIR}/resources
-#   DESTINATION .
-# )
 
 install(
   FILES

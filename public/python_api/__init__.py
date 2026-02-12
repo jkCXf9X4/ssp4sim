@@ -1,6 +1,4 @@
-# from .py_ssp4cpp import *
-
-# Re-export everything from the native module so users can `import pyssp4cpp`
+# Re-export everything from the native module so users can `import pyssp4sim`
 from . import py_ssp4sim as _native
 
 # Export all public attrs from the extension at the package top-level

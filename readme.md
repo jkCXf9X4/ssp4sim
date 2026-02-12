@@ -17,7 +17,7 @@ Tagged releases (`v*`) publish dual artifacts:
 - Linux bundle: `ssp4sim-linux-x86_64-vX.Y.Z.tar.gz`
 - Python wheel: `pyssp4sim-X.Y.Z-*.whl`
 - Linux alias: `ssp4sim-linux-x86_64-latest.tar.gz`
-- Wheel alias: `pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl`
+- Wheel alias: `pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl`
 
 The Linux tarball contains:
 - `bin/sim_app`
@@ -79,21 +79,21 @@ Install Python API from a release wheel:
 
 ```bash
 pip install \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl
+  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
 ```
 
 Note: This alias wheel uses a constant version and can be cached by `pip`. For upgrades, use:
 ```bash
 pip install --upgrade --force-reinstall --no-cache-dir \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0+lat-cp311-cp311-linux_x86_64.whl
+  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
 ```
 
 Usage:
 
 ```python
-import py_ssp4sim
+import pyssp4sim
 
-sim = py_ssp4sim.Simulator("./resources/embrace/embrace.json")
+sim = pyssp4sim.Simulator("./resources/embrace/embrace.json")
 sim.init()
 sim.simulate()
 ```
