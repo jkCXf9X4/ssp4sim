@@ -10,4 +10,6 @@ namespace ssp4sim::utils::io
      * @brief Write a string to a file, overwriting any existing content.
      */
     void save_string(const std::string &filename, const std::string &content);
+
+    void create_parent_folder(const std::string &path);
 }

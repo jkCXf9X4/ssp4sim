@@ -8,10 +8,10 @@ This guide covers local builds of `ssp4sim` for CLI, tests, and Python API.
 - A C++23-capable compiler
 - [vcpkg](https://github.com/microsoft/vcpkg) configured for this repository
 
-Known system packages needed by vcpkg builds:
+Known packages needed by vcpkg builds:
 
 ```bash
-sudo apt install -y ninja-build autoconf automake autoconf-archive
+sudo apt install -y ninja-build autoconf automake autoconf-archive cmake build-essential pkg-config
 ```
 
 ## Clone
