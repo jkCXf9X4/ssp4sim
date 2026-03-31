@@ -98,6 +98,17 @@ sim.init()
 sim.simulate()
 ```
 
+## This will not support csv or other non tool repeatable sulutions
+Since each tool implemets its own solution, its not repeatable between simulaiton engines without sufficient metadata or standardization
+
+A portable fmu should be used to supply the input variables.
+This enables:
+ - portabillity
+ - repeatabillity
+ - controlled derivatives
+ - signal derivative continuity
+
+
 ## Documentation
 
 - [Build from source](docs/build_from_source.md)
