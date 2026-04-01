@@ -58,6 +58,8 @@ namespace ssp4sim::signal
 
         SignalStorage(std::size_t areas, std::string name);
 
+        ~SignalStorage();
+
         size_t add(std::string name, types::DataType type, size_t max_interpolation_order);
 
         void allocate();

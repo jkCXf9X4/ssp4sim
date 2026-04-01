@@ -60,9 +60,9 @@ namespace ssp4sim::graph
 
                 if (connector->initial_value)
                 {
-                    info.initial_value = connector->initial_value->get_value();
+                    info.initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(*connector->initial_value);
 
-                    log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, static_cast<void *>(info.initial_value.get())));
+                    log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr()));
                 }
 
                 if (connector->causality == types::Causality::input)

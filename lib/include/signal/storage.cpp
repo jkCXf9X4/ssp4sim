@@ -2,6 +2,8 @@
 
 
 #include <cstring>
+#include <memory>
+#include <new>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -17,13 +19,30 @@ namespace ssp4sim::signal
         this->name = std::move(name);
     }
 
+    SignalStorage::~SignalStorage()
+    {
+        if (!allocated)
+        {
+            return;
+        }
+
+        for (std::size_t area_index = 0; area_index < areas; area_index++)
+        {
+            for (const auto &variable : variables)
+            {
+                if (variable.type == types::DataType::string)
+                {
+                    auto value_ptr = reinterpret_cast<std::string *>(locations[area_index][variable.index]);
+                    std::destroy_at(value_ptr);
+                }
+            }
+        }
+    }
+
+
     size_t SignalStorage::add(std::string name, types::DataType type, size_t max_interpolation_order)
     {
-        auto position = 0;
-        if (!variables.empty())
-        {
-            position = this->mem_size;
-        }
+        auto position = this->mem_size;
 
         SignalInfo d;
         d.index = variables.size();
@@ -73,7 +92,7 @@ namespace ssp4sim::signal
                 {
                     log(debug)("[{}] Setting string {}:{} - {}", __func__, variable.index, variable.name, variable.type.to_string());
                     auto s = reinterpret_cast<std::string *>(locations[area_index][variable.index]);
-                    *s = std::string("");
+                    std::construct_at(s);
                 }
             }
 

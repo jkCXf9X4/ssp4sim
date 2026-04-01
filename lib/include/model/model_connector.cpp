@@ -36,7 +36,7 @@ namespace ssp4sim::graph
                 continue;
             }
 
-            auto data_ptr = static_cast<void *>(connector.initial_value.get());
+            auto data_ptr = connector.initial_value->raw_ptr();
             auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(connector.type, data_ptr);
             log(debug)("[{}] Set initial value for {}, {} : {}", __func__, name, connector.type.to_string(), data_type_str);
 
@@ -58,7 +58,7 @@ namespace ssp4sim::graph
                 continue;
             }
 
-            auto data_ptr = static_cast<void *>(input.initial_value.get());
+            auto data_ptr = input.initial_value->raw_ptr();
             auto item = input_area->get_item(area, input.index);
 
             auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, data_ptr);

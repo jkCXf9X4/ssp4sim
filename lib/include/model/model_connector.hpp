@@ -6,6 +6,7 @@
 
 #include "signal/storage.hpp"
 #include "handler/fmu_handler.hpp"
+#include "schema_extensions/initial_value.hpp"
 
 #include "cutecpp/log.hpp"
 
@@ -33,7 +34,7 @@ namespace ssp4sim::graph
         handler::FmuInfo *fmu;
         signal::SignalStorage *storage;
 
-        std::unique_ptr<std::byte[]> initial_value;
+        std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value;
 
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;

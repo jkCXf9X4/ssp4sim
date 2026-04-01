@@ -1,76 +1,86 @@
 #include "initial_value.hpp"
 
-#include <algorithm>
-#include <cstring>
+#include <stdexcept>
+#include <type_traits>
 #include <utility>
 
 namespace ssp4sim::ext::ssp1::ssv
 {
     StartValue::StartValue(std::string name, types::DataType type)
+        : name(std::move(name)), type(type)
     {
-        this->name = name;
-        this->type = type;
-        this->size = fmi2::enums::get_data_type_size(type);
-        this->value = std::make_unique<std::byte[]>(this->size);
+        mappings.push_back(this->name);
 
-        mappings.push_back(name);
-    }
-
-    // copystructor
-    StartValue::StartValue(const StartValue &other)
-    {
-        name = other.name;
-        type = other.type;
-        size = other.size;
-        if (other.value)
+        switch (this->type)
         {
-            value = std::make_unique<std::byte[]>(size);
-            std::memcpy(value.get(), other.value.get(), size);
+        case types::DataType::real:
+            value = 0.0;
+            break;
+        case types::DataType::boolean:
+        case types::DataType::integer:
+        case types::DataType::enumeration:
+            value = 0;
+            break;
+        case types::DataType::string:
+            value = std::string();
+            break;
+        case types::DataType::unknown:
+            value = std::monostate();
+            break;
         }
     }
 
-    // Copy assignment operator
-    StartValue &StartValue::operator=(const StartValue &other)
+    std::string StartValue::to_string() const
     {
-        if (this == &other) // self-assignment check
-            return *this;
-
-        name = other.name;
-        mappings = other.mappings;
-        type = other.type;
-        size = other.size;
-
-        if (other.value)
-        {
-            value = std::make_unique<std::byte[]>(size);
-            std::copy(other.value.get(), other.value.get() + size, value.get());
-        }
-        else
-        {
-            value.reset();
-        }
-
-        return *this;
+        std::ostringstream oss;
+        oss << "Model { \n"
+            << "\nName: " << name
+            << "\ntype: " << type.to_string()
+            << "\nValue: " << ext::fmi2::enums::data_type_to_string(type, const_cast<void *>(raw_ptr()))
+            << "\n}\n";
+        return oss.str();
     }
 
-    std::unique_ptr<std::byte[]> StartValue::get_value()
+    void StartValue::store_value(void *raw_value)
     {
-        auto v = std::make_unique<std::byte[]>(size);
-        std::memcpy(v.get(), value.get(), size);
-        return std::move(v);
-    }
-
-    void StartValue::store_value(void *value)
-    {
-        if (this->type == types::DataType::string)
+        switch (type)
         {
-            auto s = (std::string *)this->value.get();
-            *s = *(std::string *)value;
-        }
-        else
-        {
-            memcpy((void *)this->value.get(), value, this->size);
+        case types::DataType::real:
+            value = *reinterpret_cast<double *>(raw_value);
+            break;
+        case types::DataType::boolean:
+        case types::DataType::integer:
+        case types::DataType::enumeration:
+            value = *reinterpret_cast<int *>(raw_value);
+            break;
+        case types::DataType::string:
+            value = *reinterpret_cast<std::string *>(raw_value);
+            break;
+        case types::DataType::unknown:
+            value = std::monostate();
+            break;
         }
     }
 
+    void *StartValue::raw_ptr()
+    {
+        if (std::holds_alternative<std::monostate>(value))
+        {
+            return nullptr;
+        }
+
+        return std::visit([](auto &v) -> void *
+                          { return &v; }, value);
+    }
+
+    const void *StartValue::raw_ptr() const
+    {
+        if (std::holds_alternative<std::monostate>(value))
+        {
+            return nullptr;
+        }
+
+        return std::visit([](const auto &v) -> const void *
+                          { return &v; }, value);
+    }
 }
