@@ -13,6 +13,41 @@ namespace ssp4sim::signal
 
     const size_t derivative_size = sizeof(double);
 
+    namespace
+    {
+        inline std::size_t align_up(std::size_t value, std::size_t alignment)
+        {
+            if (alignment <= 1)
+            {
+                return value;
+            }
+            const auto remainder = value % alignment;
+            if (remainder == 0)
+            {
+                return value;
+            }
+            return value + (alignment - remainder);
+        }
+
+        inline std::size_t get_value_alignment(types::DataType type)
+        {
+            switch (type)
+            {
+            case types::DataType::real:
+                return alignof(double);
+            case types::DataType::boolean:
+            case types::DataType::integer:
+            case types::DataType::enumeration:
+                return alignof(int);
+            case types::DataType::string:
+                return alignof(std::string);
+            case types::DataType::unknown:
+                return alignof(std::byte);
+            }
+            return alignof(std::byte);
+        }
+    }
+
     SignalStorage::SignalStorage(std::size_t areas, std::string name) : new_data_flags(areas)
     {
         this->areas = areas;
@@ -42,8 +77,6 @@ namespace ssp4sim::signal
 
     size_t SignalStorage::add(std::string name, types::DataType type, size_t max_interpolation_order)
     {
-        auto position = this->mem_size;
-
         SignalInfo d;
         d.index = variables.size();
         d.name = name;
@@ -51,12 +84,23 @@ namespace ssp4sim::signal
         d.max_interpolation_orders = max_interpolation_order;
 
         d.type_size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
-        d.total_size =  d.type_size + max_interpolation_order *derivative_size;
+        const auto value_alignment = get_value_alignment(type);
 
-        d.position = position;
-        d.derivate_position = position + d.type_size;
+        d.position = align_up(this->mem_size, value_alignment);
+        if (max_interpolation_order > 0)
+        {
+            d.derivate_position = align_up(d.position + d.type_size, alignof(double));
+        }
+        else
+        {
+            d.derivate_position = d.position + d.type_size;
+        }
 
-        this->mem_size += d.total_size;
+        const auto end_position = d.derivate_position + max_interpolation_order * derivative_size;
+        d.total_size = end_position - d.position;
+
+        constexpr std::size_t area_alignment = alignof(std::max_align_t);
+        this->mem_size = align_up(end_position, area_alignment);
 
         variables.push_back(std::move(d));
 
@@ -145,10 +189,32 @@ namespace ssp4sim::signal
 
     std::byte *SignalStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept
     {
-        if (allocated && derivate_locations[area][index] != nullptr)
+        if (!allocated)
+        {
+            return nullptr;
+        }
+
+        if (order == 0)
+        {
+            return nullptr;
+        }
+
+        if (index >= variables.size())
+        {
+            return nullptr;
+        }
+
+        const auto max_order = variables[index].max_interpolation_orders;
+        if (max_order == 0 || order > max_order)
+        {
+            return nullptr;
+        }
+
+        if (derivate_locations[area][index] != nullptr)
         {
             return derivate_locations[area][index] + (order - 1) * derivative_size;
         }
+
         return nullptr;
     }
 
