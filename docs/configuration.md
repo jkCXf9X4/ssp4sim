@@ -94,7 +94,7 @@ Notes:
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
 | `simulation.log.file` | `string` | Yes | - | File sink path (`[TIME]` supported). |
-| `simulation.log.fmu` | `bool` | No | `false` | Enables FMU-level logging during instantiate/setup/step. |
+| `simulation.log.fmu` | `bool` | No | `false` | Enables FMU-level logging during instantiate/setup/step/terminate. Long multi-line FMU log messages are supported. |
 
 ## Validation Behavior
 

@@ -10,7 +10,6 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <vector>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -131,20 +130,26 @@ namespace ssp4sim::handler
         terminate();
     }
 
-    static std::string formatWithVaList(const char *fmt, va_list args)
+    namespace detail
     {
-        std::vector<char> buf(256);
-        int needed = vsnprintf(buf.data(), buf.size(), fmt, args);
-        if (needed < 0)
-            return "";
-
-        if (needed >= (int)buf.size())
+        static std::string format_with_va_list(const char *fmt, va_list args)
         {
-            buf.resize(needed + 1);
-            vsnprintf(buf.data(), buf.size(), fmt, args);
-        }
+            if (fmt == nullptr)
+            {
+                return "";
+            }
 
-        return std::string(buf.data());
+            char *buf = nullptr;
+            const int written = vasprintf(&buf, fmt, args);
+            if (written < 0 || buf == nullptr)
+            {
+                return "";
+            }
+
+            std::string formatted(buf, static_cast<std::size_t>(written));
+            free(buf);
+            return formatted;
+        }
     }
 
     static void myLogger(fmi2ComponentEnvironment env,
@@ -157,7 +162,7 @@ namespace ssp4sim::handler
 
         va_list args;
         va_start(args, message);
-        std::string msg = formatWithVaList(message, args);
+        std::string msg = detail::format_with_va_list(message, args);
         va_end(args);
 
         log(debug)("[{}] ({}) status:{} {}", instanceName, category, std::to_string(status), msg);
