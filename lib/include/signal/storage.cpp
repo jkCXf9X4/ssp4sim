@@ -13,6 +13,9 @@ namespace ssp4sim::signal
 
     const size_t derivative_size = sizeof(double);
 
+    // is the alignment solution to complex?
+    // can it just align all to the largest alignas? 
+    // 
     namespace
     {
         inline std::size_t align_up(std::size_t value, std::size_t alignment)
