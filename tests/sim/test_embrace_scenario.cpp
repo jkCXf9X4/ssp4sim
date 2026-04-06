@@ -16,6 +16,19 @@ namespace
 {
     namespace fs = std::filesystem;
 
+    fs::path first_existing_path(std::initializer_list<fs::path> candidates)
+    {
+        for (const auto &candidate : candidates)
+        {
+            if (fs::exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return *candidates.begin();
+    }
+
     std::vector<std::string> splitCsvLine(const std::string& line)
     {
         std::vector<std::string> fields;
@@ -113,7 +126,10 @@ namespace
         const fs::path project_root{SSP4SIM_PROJECT_ROOT};
 
         const fs::path base_config = project_root / "tests" / "resources" / "embrace_test_parallel.json";
-        const fs::path ssp_path = project_root / "resources" / "embrace" / "embrace_scen.ssp";
+        const fs::path ssp_path = first_existing_path({
+            project_root / "resources" / "embrace" / "embrace_scen.ssp",
+            project_root / "resources" / "embrace" / "embrace_scen",
+        });
         REQUIRE(fs::exists(base_config));
         REQUIRE(fs::exists(ssp_path));
 

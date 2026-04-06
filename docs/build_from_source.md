@@ -56,6 +56,8 @@ cmake --build build
 ./build/tests/ssp4sim_tests
 ```
 
+Some test fixtures are stored as expanded FMU/SSP directories instead of `.fmu`/`.ssp` archives to make resource diffs and version handling easier. Tests should accept either layout when resolving fixture paths.
+
 ## Build Python API (Editable Install)
 
 Use the same Python version for CMake and `pip`. Python API requires a Release build.

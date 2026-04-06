@@ -24,16 +24,36 @@ namespace
         return root;
     }
 
+    std::filesystem::path first_existing_path(std::initializer_list<std::filesystem::path> candidates)
+    {
+        for (const auto &candidate : candidates)
+        {
+            if (std::filesystem::exists(candidate))
+            {
+                return candidate;
+            }
+        }
+
+        return *candidates.begin();
+    }
+
     std::filesystem::path scenario_fmu_path()
     {
-        auto path = repository_root() / "resources" / "scenario" / "scenario.fmu";
+        auto path = first_existing_path({
+            repository_root() / "resources" / "scenario" / "scenario.fmu",
+            repository_root() / "resources" / "scenario" / "scenario",
+            repository_root() / "resources" / "scenario" / "scenario_parameter" / "resources" / "0001_scenario",
+        });
         REQUIRE(std::filesystem::exists(path));
         return path;
     }
 
     std::filesystem::path atmos_fmu_path()
     {
-        auto path = repository_root() / "resources" / "embrace" / "atmos" / "0004_Atmos.fmu";
+        auto path = first_existing_path({
+            repository_root() / "resources" / "embrace" / "atmos" / "0004_Atmos.fmu",
+            repository_root() / "resources" / "embrace" / "embrace_scen" / "resources" / "0004_Atmos",
+        });
         REQUIRE(std::filesystem::exists(path));
         return path;
     }
@@ -73,7 +93,9 @@ TEST_CASE("FmuInstance surfaces load failures", "[fmi4c_adapter]")
     }
     catch (const std::runtime_error &ex)
     {
-        REQUIRE(std::string(ex.what()).find("Failed to load FMU") != std::string::npos);
+        const std::string message = ex.what();
+        REQUIRE((message.find("Failed to load FMU") != std::string::npos ||
+                 message.find("FMU path is not a unziped directory") != std::string::npos));
     }
 }
 
