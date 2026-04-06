@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<ssm:ParameterMapping
+  xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+  xmlns:ssm="http://ssp-standard.org/SSP1/SystemStructureParameterMapping"
+  version="1.0">
+  <ssm:MappingEntry
+    source="scenario_input"
+    target="scenario.scenario_input" />
+  <ssm:MappingEntry
+    source="Mach_start"
+    target="ECS_HW.fd.Ma_start" />
+  <ssm:MappingEntry
+    source="Mach_start"
+    target="Consumer.fd.Ma_start" />
+  <ssm:MappingEntry
+    source="Alt_start"
+    target="ECS_HW.fd.Alt_start" />
+  <ssm:MappingEntry
+    source="Alt_start"
+    target="Consumer.fd.Alt_start" />
+</ssm:ParameterMapping>

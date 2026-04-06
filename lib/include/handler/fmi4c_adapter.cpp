@@ -57,13 +57,21 @@ namespace ssp4sim::handler
 
     FmuInstance::FmuInstance(const std::filesystem::path &path, std::string instance_name)
     {
+        if (!std::filesystem::is_directory(path))
+        {
+            throw std::runtime_error(Logger::format("FMU path is not a unziped directory '{}': {}", instance_name,  path.string()));
+        }
+
         fmu_path_ = path.string();
+
         instance_name_ = std::move(instance_name);
 
         log(debug)("[{}] Loading FMU {}", __func__, fmu_path_);
         detail::ensure_message_callback_registered();
         detail::clear_last_message();
-        handle_ = fmi4c_loadFmu(fmu_path_.c_str(), instance_name_.c_str());
+        
+        handle_ = fmi4c_loadUnzippedFmu(instance_name_.c_str(), fmu_path_.c_str());
+
         if (handle_ == nullptr)
         {
             auto message = detail::consume_last_message();

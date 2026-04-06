@@ -17,7 +17,7 @@ namespace ssp4sim::handler
 
         this->fmu = fmu;
 
-        this->fmi_instance = std::make_unique<FmuInstance>(this->fmu->original_file, this->system_name);
+        this->fmi_instance = std::make_unique<FmuInstance>(this->fmu->dir, this->system_name);
         if (!this->fmi_instance->supports_co_simulation())
         {
             throw std::runtime_error(Logger::format("FMU '{}' does not support co-simulation", this->system_name));
