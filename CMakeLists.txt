@@ -23,11 +23,17 @@ set(CMAKE_SHARED_LINKER_FLAGS " -static-libstdc++")
 set(CMAKE_CXX_FLAGS_DEBUG "-O1 -fno-lto -g" CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_DEBUG   "-O1 -fno-lto -g" CACHE STRING "" FORCE)
 
+# TODO: stay with the compatibility if possible. Update dependencies if possible, 
+# Max compatibility
+# -march=x86-64 -mtune=generic 
+# Max performance ( not a huge difference...) 
+# -march=native
+
 set(CMAKE_CXX_FLAGS_RELEASE
-    " -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG"
+    " -flto=auto -O3 -g -march=x86-64 -mtune=generic -fno-omit-frame-pointer -DNDEBUG"
     CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_RELEASE
-    " -flto=auto -O3 -g -march=native -fno-omit-frame-pointer -DNDEBUG"
+    " -flto=auto -O3 -g -march=x86-64 -mtune=generic -fno-omit-frame-pointer -DNDEBUG"
     CACHE STRING "" FORCE)
 
 if(SSP4SIM_LOG_HOT_PATH)
