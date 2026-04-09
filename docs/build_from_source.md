@@ -1,8 +1,10 @@
 # Build From Source
 
-This guide covers local builds of `ssp4sim` for CLI, tests, and Python API.
+This guide covers local build, test, and run commands for `ssp4sim`.
 
-## Prerequisites
+## Prepare A Source Build Environment
+
+Prerequisites:
 
 - CMake (with presets support)
 - A C++23-capable compiler
@@ -14,7 +16,7 @@ Known packages needed by vcpkg builds:
 sudo apt install -y ninja-build autoconf automake autoconf-archive cmake build-essential pkg-config
 ```
 
-## Clone
+Clone the repository:
 
 ```bash
 git clone --recursive git@github.com:jkCXf9X4/ssp4sim.git

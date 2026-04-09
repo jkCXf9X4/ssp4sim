@@ -12,9 +12,10 @@ This page collects development-oriented workflows for contributors.
 
 ## Core Development Loop
 
-1. Configure and build using [docs/build_from_source.md](build_from_source.md).
-2. Run tests with `./build/tests/ssp4sim_tests`.
-3. Run an example scenario:
+1. Set up the environment using [docs/build_from_source.md](build_from_source.md).
+2. Configure and build using [docs/build_from_source.md](build_from_source.md).
+3. Run tests with `./build/tests/ssp4sim_tests`.
+4. Run an example scenario:
    - `./build/public/ssp4sim_app/sim_app ./resources/embrace/embrace.json`
 
 ## Configuration Work
