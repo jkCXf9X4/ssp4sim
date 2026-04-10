@@ -79,12 +79,6 @@ exec "${CONTAINER_RUNTIME}" run \
     --user "$(id -u):$(id -g)" \
     "${USERNS_ARGS[@]}" \
     --env HOME="${CONTAINER_HOME}" \
-    --env CC=/usr/bin/gcc-13 \
-    --env CXX=/usr/bin/g++-13 \
-    --env AR=/usr/bin/gcc-ar-13 \
-    --env RANLIB=/usr/bin/gcc-ranlib-13 \
-    --env NM=/usr/bin/gcc-nm-13 \
-    --workdir /work \
     "${ENV_ARGS[@]}" \
     "${VOLUME_ARGS[@]}" \
     "${IMAGE_NAME}" \

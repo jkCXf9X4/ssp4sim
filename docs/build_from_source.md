@@ -47,11 +47,6 @@ Container file overview:
 
 The shell script bind-mounts the host repository root into the container at `/work`, so edits in either place affect the same files on the host. It does not create a separate host mount point:
 
-```bash
-cmake --preset=vcpkg
-cmake --build build
-```
-
 When the shell helper uses Podman, it now starts the container with `--userns keep-id` so the bind-mounted repository remains writable as your host user. If you still see `Permission denied` under `/work`, verify you launched the shell via the helper script instead of a manual `podman run`.
 
 The Linux release workflow now builds and uses this same container image in GitHub Actions instead of duplicating the native toolchain setup in workflow YAML. Native Linux build-environment changes should therefore be made in the `Containerfile`, not redefined separately in CI.
