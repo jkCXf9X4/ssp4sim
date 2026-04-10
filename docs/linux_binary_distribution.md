@@ -25,7 +25,7 @@ Template inputs for generated release files:
 - [`scripts/release/setup_release.py.template`](../scripts/release/setup_release.py.template)
 - [`scripts/release/RELEASE.txt.template`](../scripts/release/RELEASE.txt.template)
 
-Runs on `ubuntu-24.04` and performs:
+Runs on `ubuntu-22.04` and performs:
 - Installs required system tools for vcpkg `python3` (`autoconf`, `automake`, `autoconf-archive`, `ninja-build`)
 - Installs and uses `gcc-13`/`g++-13` for C++23 `<format>` support
 - Configure (`cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON -DVCPKG_MANIFEST_FEATURES=python-api`)

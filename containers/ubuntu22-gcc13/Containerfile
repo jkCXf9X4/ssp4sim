@@ -1,0 +1,60 @@
+FROM ubuntu:22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Base runtime tools:
+# - certificates/curl/git for fetching sources and dependencies
+# - add-apt-repository support so GCC 13 can be installed on Ubuntu 22.04
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    gnupg \
+    lsb-release \
+    software-properties-common \
+    unzip \
+    zip \
+    && add-apt-repository ppa:ubuntu-toolchain-r/test \
+    \
+    # Build toolchain and common native build dependencies used by this repo
+    # and by vcpkg ports resolved from vcpkg.json.
+    && apt-get update && apt-get install -y --no-install-recommends \
+    autoconf \
+    automake \
+    autoconf-archive \
+    cmake \
+    gcc-13 \
+    g++-13 \
+    linux-libc-dev \
+    libtbb-dev \
+    make \
+    ninja-build \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install vcpkg in a shared location and make it writable for the non-root
+# user we run as inside the interactive container shell.
+RUN git clone https://github.com/microsoft/vcpkg /opt/vcpkg \
+    && /opt/vcpkg/bootstrap-vcpkg.sh -disableMetrics \
+    && chmod -R a+rwX /opt/vcpkg
+
+# Register the GCC 13 LTO plugin for plain binutils. GitHub-hosted runners
+# already provide a working bfd plugin setup, but this slimmer container image
+# otherwise inherits Ubuntu's default symlink, which may point at an older GCC
+# plugin and break `ar`/`ranlib` when release builds use `-flto`.
+RUN mkdir -p /usr/lib/bfd-plugins \
+    && ln -sf /usr/lib/gcc/x86_64-linux-gnu/13/liblto_plugin.so /usr/lib/bfd-plugins/liblto_plugin.so
+
+# Make the intended compiler and binutils wrappers explicit so tools
+# configured inside the container pick the GCC 13 toolchain consistently.
+ENV CC=/usr/bin/gcc-13
+ENV CXX=/usr/bin/g++-13
+ENV AR=/usr/bin/gcc-ar-13
+ENV RANLIB=/usr/bin/gcc-ranlib-13
+ENV NM=/usr/bin/gcc-nm-13
+ENV VCPKG_ROOT=/opt/vcpkg
+
+# Helper scripts mount the repository at /work and open a shell here.
+WORKDIR /work
+
+CMD ["/bin/bash"]

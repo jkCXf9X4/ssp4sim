@@ -29,6 +29,35 @@ If you already cloned without submodules:
 git submodule update --init --recursive
 ```
 
+## Build Container Workflow
+
+The repository includes a build container based on Ubuntu 22.04 with GCC 13 that mirrors the verified environment in [`.github/workflows/linux-release.yml`](../.github/workflows/linux-release.yml):
+
+```bash
+./containers/build_ubuntu22_gcc13_container.sh
+./containers/shell_ubuntu22_gcc13_container.sh
+```
+
+Container file overview:
+
+- `containers/ubuntu22-gcc13/Containerfile` defines the reusable Ubuntu 22.04 + GCC 13 image and installs `vcpkg`.
+- `containers/build_ubuntu22_gcc13_container.sh` builds that image with Podman or Docker.
+- `containers/shell_ubuntu22_gcc13_container.sh` opens an interactive shell with the repository bind-mounted at `/work`.
+- `containers/run_ubuntu22_gcc13_container.sh` runs a non-interactive command in the same container image and is used by CI.
+
+The shell script bind-mounts the host repository root into the container at `/work`, so edits in either place affect the same files on the host. It does not create a separate host mount point:
+
+```bash
+cmake --preset=vcpkg
+cmake --build build
+```
+
+When the shell helper uses Podman, it now starts the container with `--userns keep-id` so the bind-mounted repository remains writable as your host user. If you still see `Permission denied` under `/work`, verify you launched the shell via the helper script instead of a manual `podman run`.
+
+The Linux release workflow now builds and uses this same container image in GitHub Actions instead of duplicating the native toolchain setup in workflow YAML. Native Linux build-environment changes should therefore be made in the `Containerfile`, not redefined separately in CI.
+
+The container keeps the toolchain aligned with the release workflow, but still uses the repository's current `vcpkg.json` and CMake options.
+
 ## Configure And Build
 
 Use the repository preset:
@@ -71,7 +100,7 @@ python3.11 -m venv venv
 . ./venv/bin/activate
 pip install -r ./requirements.txt
 
-cmake -B build -S .  -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_LOG_HOT_PATH=OFF
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_PYTHON_API=ON -DSSP4SIM_LOG_HOT_PATH=OFF
 
 cmake --build build
 pip install -e ./build/public/python_api

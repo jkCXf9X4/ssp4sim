@@ -9,6 +9,7 @@ include(GNUInstallDirs)
 
 # OPTIONS
 option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
+option(SSP4SIM_BUILD_PYTHON_API "Build Python API" OFF)
 option(SSP4SIM_LOG_HOT_PATH "Include logging in hot path" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -64,7 +65,9 @@ add_subdirectory(lib)
 
 # Public artifacts
 add_subdirectory(public/ssp4sim_app)
-add_subdirectory(public/python_api)
+if(SSP4SIM_BUILD_PYTHON_API)
+  add_subdirectory(public/python_api)
+endif()
 
 # Tests
 if(SSP4SIM_BUILD_TEST)

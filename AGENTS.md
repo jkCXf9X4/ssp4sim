@@ -58,4 +58,4 @@ Avoid monkey patching or similar, always try to find root cause for errors
 ## Configuration & Dependencies
 - CMake presets (`CMakePresets.json`) expect vcpkg; see `vcpkg.md` for setup.
 - Optional flags: `SSP4SIM_BUILD_TEST`, `SSP4SIM_BUILD_PYTHON_API`, `SSP4SIM_LOG_HOT_PATH`.
-- vcpkg manifest feature `python-api` is required when building `public/python_api`.
+- vcpkg manifest feature `python-api` is required when `SSP4SIM_BUILD_PYTHON_API=ON`.
