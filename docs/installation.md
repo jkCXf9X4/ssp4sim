@@ -40,6 +40,12 @@ Add the CLI app to `PATH`:
 export PATH="$HOME/.local/opt/ssp4sim/bin:$PATH"
 ```
 
+Verify the installed CLI version:
+
+```bash
+sim_app --version
+```
+
 Runtime notes:
 
 - Releases are currently built on Ubuntu 22.04.

@@ -36,8 +36,14 @@ or, when running from a source checkout:
 ./build/public/ssp4sim_app/sim_app ./resources/embrace/embrace.json
 ```
 
+Show the embedded CLI version:
+
+```bash
+sim_app --version
+```
+
 ## Configuration
-Simulation input is controlled via a JSON file passed to `sim_app` as its single argument.
+Simulation input is controlled via a JSON file passed to `sim_app` as its single positional argument.
 
 - Full key reference and supported values: [docs/configuration.md](docs/configuration.md)
 

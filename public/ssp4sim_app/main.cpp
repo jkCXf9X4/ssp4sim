@@ -2,10 +2,30 @@
 
 #include "simulator.hpp"
 
+#include <iostream>
 #include <string>
+
+#ifndef SSP4SIM_APP_VERSION
+#define SSP4SIM_APP_VERSION "unknown"
+#endif
+
+namespace
+{
+    void print_usage(const char *program_name)
+    {
+        std::cerr << "Usage: " << program_name << " <config.json>\n"
+                  << "       " << program_name << " --version\n";
+    }
+}
 
 int main(int argc, char *argv[])
 {
+    if (argc == 2 && std::string(argv[1]) == "--version")
+    {
+        std::cout << SSP4SIM_APP_VERSION << '\n';
+        return 0;
+    }
+
     auto log = Logger("main", LogLevel::debug);
     log(info)("---SSP4SIM---", __func__);
 
@@ -18,7 +38,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        log(error)("Need an argument for the config to execute");
+        print_usage(argv[0]);
+        log(error)("Need a config path or --version");
         return 1;
     }
 
