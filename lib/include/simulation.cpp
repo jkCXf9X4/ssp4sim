@@ -16,6 +16,7 @@
 #include "graph/graph.hpp"
 
 #include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4cpp/fmu.hpp"
 
@@ -31,7 +32,7 @@ namespace ssp4sim
 
     struct SimulationPrivate
     {
-        Logger log = Logger("ssp4sim.Simulation", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulation", quill::LogLevel::Info);
 
         ssp4cpp::Ssp *ssp;
 
@@ -46,7 +47,7 @@ namespace ssp4sim
     {
         p->ssp = ssp;
 
-        p->log(info)("[{}] Creating simulation", __func__);
+        LOG_INFO(p->log,"[{func}] Creating simulation", __func__);
         p->fmu_handler = std::make_unique<handler::FmuHandler>(p->ssp);
 
         auto enable_recording = utils::Config::getOr("simulation.recording.enable", true);
@@ -69,30 +70,30 @@ namespace ssp4sim
      */
     void Simulation::init()
     {
-        p->log(info)("[{}] Initializing simulation", __func__);
+        LOG_INFO(p->log,"[{func}] Initializing simulation", __func__);
 
-        p->log(info)("[{}] - Initializing fmus", __func__);
+        LOG_INFO(p->log,"[{func}] - Initializing fmus", __func__);
         p->fmu_handler->init();
 
-        p->log(info)("[{}] - Creating analysis graph", __func__);
+        LOG_INFO(p->log,"[{func}] - Creating analysis graph", __func__);
         auto analysis_graph = analysis::graph::AnalysisGraphBuilder(p->ssp, p->fmu_handler.get()).build();
-        p->log(debug)(" -- {}", analysis_graph->to_string());
+        LOG_DEBUG(p->log, " -- {}", analysis_graph->to_string());
 
-        p->log(info)("[{}] - Creating simulation graph", __func__);
+        LOG_INFO(p->log,"[{func}] - Creating simulation graph", __func__);
         auto graph_builder = graph::GraphBuilder(analysis_graph.get(), p->recorder.get());
         graph_builder.build();
 
         p->sim_graph = graph_builder.get_graph();
-        p->log(debug)(" -- {}", p->sim_graph->to_string());
+        LOG_DEBUG(p->log, " -- {}", p->sim_graph->to_string());
 
         p->nodes = graph_builder.get_models(); // transfer ownership of nodes to simulation
 
-        p->log(info)("[{}] - Init simulation graph", __func__);
+        LOG_INFO(p->log,"[{func}] - Init simulation graph", __func__);
         p->sim_graph->init();
 
         if (p->recorder)
         {
-            p->log(info)("[{}] - Initializing recorder", __func__);
+            LOG_INFO(p->log,"[{func}] - Initializing recorder", __func__);
             p->recorder->init();
         }
     }
@@ -111,7 +112,7 @@ namespace ssp4sim
             p->recorder->start_recording();
         }
 
-        p->log(info)("[{}] Starting simulation", __func__);
+        LOG_INFO(p->log,"[{func}] Starting simulation", __func__);
 
         uint64_t start_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.start_time"));
         uint64_t end_time = utils::time::s_to_ns(utils::Config::getDouble("simulation.stop_time"));
@@ -131,27 +132,27 @@ namespace ssp4sim
         }
         catch (const std::runtime_error &e)
         {
-            p->log(error)(std::format("Simulation failed! {} ", e.what()));
+            LOG_ERROR(p->log, "Simulation failed! {}", e.what());
         }
 
         auto sim_wall_time = sim_timer.stop();
 
-        p->log(info)("[{}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
+        LOG_INFO(p->log,"[{func}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
 
         if (p->recorder)
         {
             p->recorder->stop_recording();
         }
 
-        p->log(info)("[{}] Simulation completed\n", __func__);
+        LOG_INFO(p->log,"[{func}] Simulation completed\n", __func__);
 
         uint64_t total_model_time = 0;
         for (auto &node : p->sim_graph->nodes)
         {
             auto model_walltime = node->walltime_ns;
-            p->log(info)("[{}] Model {} walltime: {}", __func__, node->name, utils::time::ns_to_s(model_walltime));
+            LOG_INFO(p->log,"[{func}] Model {} walltime: {}", __func__, node->name, utils::time::ns_to_s(model_walltime));
             total_model_time += model_walltime;
         }
-        p->log(info)("[{}] Model walltime: {}", __func__, utils::time::ns_to_s(total_model_time));
+        LOG_INFO(p->log,"[{func}] Model walltime: {}", __func__, utils::time::ns_to_s(total_model_time));
     }
 }

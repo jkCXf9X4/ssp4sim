@@ -39,11 +39,10 @@
         "log":
         {
             "file": "./results/embrace.log",
-            "fmu" : "Debug",
-            "level_terminal" : "Warning",
-            "level_file" : "Debug",
-            "level_json" : "Debug",
-            "level_cutelog" : "Debug"
+            "fmu" : true,
+            "level_terminal" : "info",
+            "level_file" : "info",
+            "level_json" : "tracel1"
         }
     }
 }
