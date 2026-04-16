@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription fmiVersion="2.0" modelName="EmbraceBoundaryConditions"
+    guid="56440bdf-bcbb-5e7c-ac56-22ba9dc96012" generationTool="pyfmu-csv"
+    variableNamingConvention="structured">
+    <CoSimulation modelIdentifier="EmbraceBoundaryConditions"
+        canHandleVariableCommunicationStepSize="true" />
+    <ModelVariables>
+        <ScalarVariable name="csv_path" valueReference="0" variability="tunable"
+            causality="parameter">
+            <String start="data/CONOPS.csv" />
+        </ScalarVariable>
+        <ScalarVariable name="Alt" valueReference="1" variability="continuous" causality="output">
+            <Real />
+        </ScalarVariable>
+        <ScalarVariable name="Mach" valueReference="2" variability="continuous" causality="output">
+            <Real />
+        </ScalarVariable>
+        <ScalarVariable name="heatLoad" valueReference="3" variability="continuous"
+            causality="output">
+            <Real />
+        </ScalarVariable>
+        <ScalarVariable name="WGT_ON_WHL" valueReference="4" variability="continuous"
+            causality="output">
+            <Real />
+        </ScalarVariable>
+        <ScalarVariable name="Aircraft_state" valueReference="5" variability="continuous"
+            causality="output">
+            <Real />
+        </ScalarVariable>
+    </ModelVariables>
+    <ModelStructure>
+        <Outputs>
+            <Unknown index="2" />
+            <Unknown index="3" />
+            <Unknown index="4" />
+            <Unknown index="5" />
+            <Unknown index="6" />
+        </Outputs>
+    </ModelStructure>
+</fmiModelDescription>

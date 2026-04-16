@@ -6,6 +6,7 @@
     "libzip",
     "pugixml",
     "kissnet",
-    "python3"
+    "python3",
+    "quill"
   ]
 }

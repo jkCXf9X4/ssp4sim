@@ -1,0 +1,12 @@
+{
+  "model_name": "dcmotor",
+  "description": "This model is an OMSimulator test-suite SSP for a DC motor composed from electrical, mechanical, and stimulus FMUs.",
+  "intended_use": "Validating composite-system simulation, SSP parsing/export workflows, and signal exchange across coupled physical domains.",
+  "source": {
+    "ssp": [
+      "3rd_party/OMSimulator/testsuite/resources/dcmotor"
+    ],
+    "fmu": [],
+    "results": []
+  }
+}
