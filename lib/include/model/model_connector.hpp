@@ -8,7 +8,7 @@
 
 #include "signal/storage.hpp"
 #include "handler/fmu_handler.hpp"
-#include "schema_extensions/initial_value.hpp"
+#include "model/initial_value.hpp"
 
 #include <cstddef>
 #include <cstdint>
