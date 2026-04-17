@@ -40,9 +40,9 @@ namespace ssp4sim
         auto log_file = utils::Config::getString("simulation.log.file");
 
         ssp4cpp::utils::log::init_logging();
-        ssp4cpp::utils::log::add_console(quill::loglevel_from_string(utils::Config::getString("simulation.log.level_terminal")));
-        ssp4cpp::utils::log::add_file_sink(log_file, quill::loglevel_from_string(utils::Config::getString("simulation.log.level_file")));
-        ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(utils::Config::getString("simulation.log.level_json")));
+        ssp4cpp::utils::log::add_console(quill::loglevel_from_string(utils::Config::getOr("simulation.log.level_terminal", "info")));
+        ssp4cpp::utils::log::add_file_sink(log_file, quill::loglevel_from_string(utils::Config::getOr("simulation.log.level_file", "info")));
+        ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(utils::Config::getOr("simulation.log.level_json", "tracel1")));
         // Do not construct any objects using a logger before this point, they wont get any sinks.
         
         p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");

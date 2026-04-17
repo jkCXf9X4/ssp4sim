@@ -169,7 +169,7 @@ namespace ssp4sim::utils
         return get_value<bool>(dottedKey);
     }
 
-    std::string Config::getOr(const std::string &dottedKey, const std::string &defaultValue)
+    std::string Config::getOr(const std::string &dottedKey, std::string_view defaultValue)
     {
         try
         {
@@ -177,7 +177,19 @@ namespace ssp4sim::utils
         }
         catch (const missing_key_error &)
         {
-            return defaultValue;
+            return std::string(defaultValue);
+        }
+    }
+
+    std::string Config::getOr(const std::string &dottedKey, const char *defaultValue)
+    {
+        try
+        {
+            return getString(dottedKey);
+        }
+        catch (const missing_key_error &)
+        {
+            return std::string(defaultValue);
         }
     }
 

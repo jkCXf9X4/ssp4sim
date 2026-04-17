@@ -40,7 +40,8 @@ namespace ssp4sim::utils
         static int getInt(const std::string &dottedKey);
         static bool getBool(const std::string &dottedKey);
 
-        static std::string getOr(const std::string &dottedKey, const std::string &defaultValue);
+        static std::string getOr(const std::string &dottedKey, std::string_view defaultValue);
+        static std::string getOr(const std::string &dottedKey, const char *defaultValue);
         static double getOr(const std::string &dottedKey, double defaultValue);
         static int getOr(const std::string &dottedKey, int defaultValue);
         static bool getOr(const std::string &dottedKey, bool defaultValue);
