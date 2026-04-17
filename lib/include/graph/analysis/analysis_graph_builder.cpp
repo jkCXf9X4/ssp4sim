@@ -18,7 +18,7 @@ namespace ssp4sim::analysis::graph
 {
 
     AnalysisGraphBuilder::AnalysisGraphBuilder(ssp4cpp::Ssp *ssp, handler::FmuHandler *fmu_handler)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisGraphBuilder", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisGraphBuilder")),
           ssp(ssp),
           fmu_handler(fmu_handler)
     {

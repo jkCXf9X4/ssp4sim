@@ -15,7 +15,7 @@ namespace ssp4sim::ext::ssp
         {
             // Cache this logger locally so we avoid eager header initialization.
             static ssp4cpp::utils::log::Logger* logger =
-                ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp", quill::LogLevel::TraceL1);
+                ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp");
             return logger;
         }
     }

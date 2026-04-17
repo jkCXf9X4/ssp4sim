@@ -24,7 +24,7 @@ namespace ssp4sim::graph
     {
     public:
         ConnectorInfo()
-            : log(ssp4cpp::utils::log::make_logger("ssp4sim.model.ConnectorInfo", quill::LogLevel::TraceL1))
+            : log(ssp4cpp::utils::log::make_logger("ssp4sim.model.ConnectorInfo"))
         {
         }
 

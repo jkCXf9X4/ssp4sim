@@ -11,7 +11,7 @@ namespace ssp4sim::utils
 {
 
     ThreadPool2::ThreadPool2(size_t num_threads)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.ThreadPool2", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.ThreadPool2")),
           dones(num_threads)
     {
         workers.reserve(num_threads);

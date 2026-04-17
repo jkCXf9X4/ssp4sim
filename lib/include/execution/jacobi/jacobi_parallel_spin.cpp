@@ -7,7 +7,7 @@ namespace ssp4sim::graph
 
     JacobiParallelSpin::JacobiParallelSpin(std::vector<Invocable *> nodes, int threads)
         : ExecutionBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelSpin", quill::LogLevel::TraceL1)),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelSpin")),
           pool(threads)
     {
         LOG_INFO(log, "[{}] JacobiParallelSpin", __func__);

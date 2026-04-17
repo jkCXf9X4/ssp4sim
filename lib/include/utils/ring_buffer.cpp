@@ -11,7 +11,7 @@ namespace ssp4sim::utils
     // use with care...
 
     RingBuffer::RingBuffer(size_t capacity, size_t item_size)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.RingBuffer", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.RingBuffer")),
           timestamps(capacity),
           used(capacity)
     {

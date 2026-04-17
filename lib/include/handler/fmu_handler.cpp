@@ -29,7 +29,7 @@ namespace ssp4sim::handler
     }
 
     FmuHandler::FmuHandler(ssp4cpp::Ssp *ssp)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuHandler", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuHandler")),
           ssp(ssp)
     {
         LOG_DEBUG(log, "[{}] Creating FMU map", __func__);

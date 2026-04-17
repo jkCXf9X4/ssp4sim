@@ -9,7 +9,7 @@ namespace ssp4sim::graph
 {
     ParallelSeidel::ParallelSeidel(std::vector<Invocable *> nodes)
         : SeidelBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ParallelSeidel", quill::LogLevel::TraceL1))
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ParallelSeidel"))
     {
         LOG_INFO(log, "[{}]", __func__);
     }

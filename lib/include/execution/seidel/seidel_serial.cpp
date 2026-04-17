@@ -7,7 +7,7 @@ namespace ssp4sim::graph
 {
     SerialSeidel::SerialSeidel(std::vector<Invocable *> nodes)
         : SeidelBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.SerialSeidel", quill::LogLevel::TraceL1))
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.SerialSeidel"))
     {
         LOG_INFO(log, "[{}] ", __func__);
     }

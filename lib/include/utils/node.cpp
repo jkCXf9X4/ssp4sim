@@ -13,17 +13,17 @@ namespace ssp4sim::utils::graph
 {
 
     Node::Node()
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.common.Node", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.common.Node")),
           name("")
     {}
 
     Node::Node(std::string name)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.common.Node", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.common.Node")),
           name(std::move(name))
     {}
 
     Node::Node(const Node &other)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.common.Node", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.common.Node")),
           name(other.name),
           children(other.children),
           parents(other.parents)

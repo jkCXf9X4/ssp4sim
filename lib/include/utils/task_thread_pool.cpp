@@ -9,7 +9,7 @@ namespace ssp4sim::utils
 {
 
     ThreadPool::ThreadPool(size_t num_threads)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.ThreadPool", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.ThreadPool"))
     {
         workers.reserve(num_threads);
         for (size_t i = 0; i < num_threads; ++i)

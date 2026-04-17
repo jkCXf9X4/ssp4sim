@@ -45,7 +45,7 @@ namespace ssp4sim
         ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(utils::Config::getString("simulation.log.level_json")));
         // Do not construct any objects using a logger before this point, they wont get any sinks.
         
-        p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator", quill::LogLevel::TraceL1);
+        p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");
 
         LOG_DEBUG(p->log, "[{}] - Importing SSP", __func__);
         auto ssp_path = utils::Config::getString("simulation.ssp");

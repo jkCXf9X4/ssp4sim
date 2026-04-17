@@ -31,7 +31,7 @@ namespace ssp4sim
 
     struct SimulationPrivate
     {
-        ssp4cpp::utils::log::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulation", quill::LogLevel::TraceL1);
+        ssp4cpp::utils::log::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulation");
 
         ssp4cpp::Ssp *ssp;
 

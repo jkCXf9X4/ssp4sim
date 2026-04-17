@@ -19,7 +19,7 @@ namespace ssp4sim::signal
 {
 
     DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.record.DataRecorder", quill::LogLevel::TraceL1)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.record.DataRecorder")),
           file(filename, std::ios::out)
     {
         LOG_TRACE_L2(log, "[{}] Constructor", __func__);

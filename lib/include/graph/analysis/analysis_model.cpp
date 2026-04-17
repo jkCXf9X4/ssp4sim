@@ -8,12 +8,12 @@ namespace ssp4sim::analysis::graph
 {
 
     AnalysisModel::AnalysisModel()
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModel", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModel"))
     {
     }
 
     AnalysisModel::AnalysisModel(std::string name, std::string fmu_name, handler::FmuInfo *fmu)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModel", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModel"))
     {
         this->fmu = fmu;
         this->name = name;

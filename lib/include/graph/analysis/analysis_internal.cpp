@@ -10,12 +10,12 @@ namespace ssp4sim::analysis::graph
 {
 
     AnalysisModelVariable::AnalysisModelVariable()
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable"))
     {
     }
 
     AnalysisModelVariable::AnalysisModelVariable(std::string component, std::string variable_name)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable"))
     {
         this->component = component;
         this->variable_name = variable_name;

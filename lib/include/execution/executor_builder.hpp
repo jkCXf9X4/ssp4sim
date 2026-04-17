@@ -19,7 +19,7 @@ namespace ssp4sim::graph
         ssp4cpp::utils::log::Logger* log = nullptr;
 
         ExecutorBuilder()
-            : log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.Delay", quill::LogLevel::TraceL1))
+            : log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.Delay"))
         {
         }
 

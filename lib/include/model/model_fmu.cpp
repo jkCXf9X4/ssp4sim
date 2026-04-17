@@ -18,7 +18,7 @@ namespace ssp4sim::graph
 {
 
     FmuModel::FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu, size_t maxOutputDerivativeOrder)
-        : log(ssp4cpp::utils::log::make_logger(std::format("models.{}", name), quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger(std::format("models.{}", name)))
     {
         this->fmu = fmu;
         this->name = std::move(name);

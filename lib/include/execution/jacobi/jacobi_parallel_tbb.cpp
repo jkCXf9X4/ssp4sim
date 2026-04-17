@@ -11,7 +11,7 @@ namespace ssp4sim::graph
 {
     JacobiParallelTBB::JacobiParallelTBB(std::vector<Invocable *> nodes)
         : ExecutionBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelTBB", quill::LogLevel::TraceL1))
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelTBB"))
     {
         LOG_INFO(log, "[{}] JacobiParallelTBB", __func__);
     }

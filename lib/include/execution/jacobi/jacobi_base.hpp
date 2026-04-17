@@ -19,7 +19,7 @@ class JacobiBase : public ExecutionBase
 
         JacobiBase(std::vector<Invocable *> nodes)
             : ExecutionBase(nodes),
-              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiBase", quill::LogLevel::TraceL1))
+              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiBase"))
         {
             LOG_INFO(log, "[{}] ", __func__);
         }

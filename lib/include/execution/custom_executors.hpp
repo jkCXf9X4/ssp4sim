@@ -34,7 +34,7 @@ namespace ssp4sim::graph
 
         DelayExecutorBase(std::vector<Invocable *> nodes)
             : ExecutionBase(nodes),
-              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.DelayExecutor", quill::LogLevel::TraceL1))
+              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.DelayExecutor"))
         {
             this->name = "DelayExecutor";
             LOG_INFO(log, "[{}] substep: {}", __func__, sub_step);

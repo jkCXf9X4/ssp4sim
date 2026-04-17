@@ -9,7 +9,7 @@ namespace ssp4sim::analysis::graph
 {
 
     AnalysisConnector::AnalysisConnector()
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnector", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnector"))
     {
     }
 
@@ -17,7 +17,7 @@ namespace ssp4sim::analysis::graph
                                          std::string connector_name,
                                          uint64_t value_reference,
                                          types::DataType type)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnector", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnector"))
     {
         this->component_name = component_name;
         this->connector_name = connector_name;

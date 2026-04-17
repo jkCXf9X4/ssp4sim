@@ -56,7 +56,7 @@ namespace ssp4sim::handler
     }
 
     FmuInstance::FmuInstance(const std::filesystem::path &path, std::string instance_name)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuInstance", quill::LogLevel::TraceL1))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuInstance"))
     {
         if (!std::filesystem::is_directory(path))
         {
@@ -125,7 +125,7 @@ namespace ssp4sim::handler
 
     CoSimulationModel::CoSimulationModel(FmuInstance &instance)
         : instance_(instance),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.CoSimulationModel", quill::LogLevel::TraceL1))
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.CoSimulationModel"))
     {
     }
 
@@ -215,7 +215,7 @@ namespace ssp4sim::handler
         callbacks.allocateMemory = myAllocateMemory;
         callbacks.freeMemory = myFreeMemory;
         callbacks.stepFinished = myStepFinished;
-        env.log = ssp4cpp::utils::log::make_logger("fmu." + instance_.instance_name(), quill::LogLevel::TraceL1);
+        env.log = ssp4cpp::utils::log::make_logger("fmu." + instance_.instance_name());
         callbacks.componentEnvironment = &env; // passed back as 'env' to the callbacks
 
         handle = fmi2_instantiate(instance_.raw(),
