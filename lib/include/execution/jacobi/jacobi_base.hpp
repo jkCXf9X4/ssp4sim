@@ -6,7 +6,7 @@
 #include "executor.hpp"
 #include "invocable.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <vector>
 
@@ -15,11 +15,13 @@ namespace ssp4sim::graph
 class JacobiBase : public ExecutionBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.JacobiBase", LogLevel::info);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
-        JacobiBase(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
+        JacobiBase(std::vector<Invocable *> nodes)
+            : ExecutionBase(nodes),
+              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiBase"))
         {
-            log(info)("[{}] ", __func__);
+            LOG_INFO(log, "[{}] ", __func__);
         }
 
         std::string to_string() const override

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -19,9 +19,8 @@ namespace ssp4sim::utils::graph
      */
     class Node : public virtual types::IWritable
     {
-        Logger log = Logger("ssp4sim.common.Node", LogLevel::ext_trace);
-
     public:
+        ssp4cpp::utils::log::Logger* log = nullptr;
         std::string name;
         std::vector<Node *> children = {};
         std::vector<Node *> parents = {};
@@ -131,7 +130,7 @@ namespace ssp4sim::utils::graph
             {
                 if (n->is_orphan())
                 {
-                    // log(ext_trace)("[{}] Deleting {}", __func__, n->name);
+                    // LOG_TRACE_L2(log, "[{}] Deleting {}", __func__, n->name);
                     delete n;
                 }
                 else

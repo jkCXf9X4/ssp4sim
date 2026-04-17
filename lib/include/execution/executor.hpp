@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "signal/recorder.hpp"
 
@@ -15,7 +15,7 @@ namespace ssp4sim::graph
     class ExecutionBase : public Invocable
     {
     public:
-        Logger log = Logger("ssp4sim.execution.ExecutionBase", LogLevel::info);
+        ssp4cpp::utils::log::Logger* log = nullptr;
         // the executor should not own the nodes
         std::vector<Invocable *> nodes;
 

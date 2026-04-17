@@ -8,7 +8,7 @@
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureParameterValues.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <map>
 #include <string>
@@ -20,8 +20,6 @@ namespace ssp4cpp
 
 namespace ssp4sim::ext::ssp1::ssv
 {
-    inline auto log = Logger("ssp4sim.ext.ssp.ssp1.ssv", LogLevel::info);
-
     types::DataType get_parameter_type(ssp4cpp::ssp1::ssv::TParameter &par);
 
     void *get_parameter_value(ssp4cpp::ssp1::ssv::TParameter &par);

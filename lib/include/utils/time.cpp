@@ -2,11 +2,12 @@
 
 #include <chrono>
 #include <cstdint>
+#include <format>
 #include <string>
 
 #include <time.h>
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 namespace ssp4sim::utils::time
 {
@@ -38,7 +39,7 @@ namespace ssp4sim::utils::time
     {
         using namespace std::chrono;
         auto now = system_clock::now();
-        return Logger::format("{:%Y-%m-%d_%H-%M-%S}", zoned_time{current_zone(), now});
+        return std::format("{:%Y-%m-%d_%H-%M-%S}", zoned_time{current_zone(), now});
     }
 
 }

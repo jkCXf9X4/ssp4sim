@@ -11,6 +11,7 @@ It currently supports SSP1.0 and FMI2.0 models.
 See the [SSP standard](https://ssp-standard.org) for more information about the file format.
 
 Builds upon the [SSP4CPP](https://github.com/jkCXf9X4/ssp4cpp) XML deserializer
+and uses [Quill](https://github.com/odygrd/quill) for logging.
 
 ## Installation
 

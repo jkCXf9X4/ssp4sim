@@ -9,6 +9,7 @@ namespace ssp4sim::utils
 {
 
     ThreadPool::ThreadPool(size_t num_threads)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.ThreadPool"))
     {
         workers.reserve(num_threads);
         for (size_t i = 0; i < num_threads; ++i)
@@ -16,17 +17,17 @@ namespace ssp4sim::utils
             workers.emplace_back([this]
                                  { worker_thread(); });
         }
-        log(debug)("[{}] Threads started", __func__);
+        LOG_DEBUG(log, "[{}] Threads started", __func__);
     }
 
     ThreadPool::~ThreadPool()
     {
-        log(debug)("[{}] Destroying threadpool", __func__);
+        LOG_DEBUG(log, "[{}] Destroying threadpool", __func__);
         stop = true;
 
         task_semaphore.release(static_cast<std::ptrdiff_t>(workers.size()));
 
-        log(debug)("[{}] Waiting for all tasks to complete", __func__);
+        LOG_DEBUG(log, "[{}] Waiting for all tasks to complete", __func__);
         for (std::thread &worker : workers)
         {
             if (worker.joinable())
@@ -34,7 +35,7 @@ namespace ssp4sim::utils
                 worker.join();
             }
         }
-        log(debug)("[{}] Threadpool successfully destroyed", __func__);
+        LOG_DEBUG(log, "[{}] Threadpool successfully destroyed", __func__);
     }
 
     void ThreadPool::worker_thread()
@@ -54,7 +55,7 @@ namespace ssp4sim::utils
                 if (!tasks.empty())
                 {
                     IF_LOG({
-                        log(debug)("[{}] Task starting", __func__);
+                        LOG_DEBUG(log, "[{}] Task starting", __func__);
                     });
 
                     task = std::move(tasks.front());
@@ -66,12 +67,12 @@ namespace ssp4sim::utils
             {
                 task();
                 IF_LOG({
-                    log(debug)("[{}] Task completed", __func__);
+                    LOG_DEBUG(log, "[{}] Task completed", __func__);
                 });
             }
         }
 
-        log(debug)("[{}] Thread finished", __func__);
+        LOG_DEBUG(log, "[{}] Thread finished", __func__);
     }
 
 }

@@ -5,7 +5,7 @@
 
 #include "task_thread_pool.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstdint>
 #include <future>
@@ -16,7 +16,7 @@ namespace ssp4sim::graph
     class JacobiParallelFutures final : public ExecutionBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.JacobiParallelFutures", LogLevel::info);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         utils::ThreadPool pool;
         std::vector<std::future<void>> futures;

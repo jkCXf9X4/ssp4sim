@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -23,7 +23,7 @@ namespace ssp4sim::utils
     {
 
     public:
-        Logger log = Logger("ssp4sim.utils.RingBuffer", LogLevel::debug);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::size_t item_size = 0;
         std::unique_ptr<std::byte[]> data;
@@ -39,7 +39,7 @@ namespace ssp4sim::utils
         RingBuffer(size_t capacity, size_t item_size);
         
         ~RingBuffer(){
-            log(trace)("Destroying RingBuffer");
+            LOG_TRACE_L1(log, "Destroying RingBuffer");
         }
 
         // Get the index of the next item

@@ -1,5 +1,5 @@
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 
@@ -11,7 +11,13 @@ namespace ssp4sim::ext::fmi2
 
     namespace enums
     {
-        inline auto log = Logger("ssp4sim.ext.fmi2.enums", LogLevel::debug);
+        ssp4cpp::utils::log::Logger *log()
+        {
+            // Cache this logger locally so we avoid eager header initialization.
+            static ssp4cpp::utils::log::Logger *logger =
+                ssp4cpp::utils::log::make_logger("ssp4sim.ext.fmi2.enums");
+            return logger;
+        }
 
         /**
          * @brief  Return the in-memory size (in bytes) of a single value
@@ -37,21 +43,22 @@ namespace ssp4sim::ext::fmi2
             throw std::invalid_argument("Unknown DataType");
         }
 
-
         std::string data_type_to_string(types::DataType type, void *data)
         {
-            log(ext_trace)("[{}] init", __func__);
+            IF_LOG({
+                LOG_TRACE_L2(log(), "[{func}] init", __func__);
+            });
             switch (type)
             {
             case types::DataType::real:
                 return std::to_string(*(double *)data);
             case types::DataType::boolean:
-                return std::to_string(*(bool*)data);
+                return std::to_string(*(bool *)data);
             case types::DataType::integer:
             case types::DataType::enumeration:
                 return std::to_string(*(int *)data);
             case types::DataType::string:
-                return  *(std::string *)data;
+                return *(std::string *)data;
             default:
                 return "<bin>";
             }

@@ -1,4 +1,4 @@
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "simulator.hpp"
 
@@ -26,20 +26,20 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    auto log = Logger("main", LogLevel::debug);
-    log(info)("---SSP4SIM---", __func__);
+    ssp4cpp::utils::log::Logger* log = ssp4cpp::utils::log::simple_logger();
+    LOG_INFO(log, "---SSP4SIM---");
 
     std::string config_path;
 
     if (argc == 2)
     {
         config_path = std::string(argv[1]);
-        log(info)("[{}] Config: {}", __func__, config_path);
+        LOG_INFO(log, "[{}] Config: {}", __func__, config_path);
     }
     else
     {
         print_usage(argv[0]);
-        log(error)("Need a config path or --version");
+        LOG_ERROR(log, "Need a config path or --version");
         return 1;
     }
 
@@ -48,6 +48,6 @@ int main(int argc, char *argv[])
     sim.init();
     sim.simulate();
 
-    log(ext_trace)("[{}] exit", __func__);
+    LOG_TRACE_L1(log, "[{}] exit", __func__);
     return 0;
 }

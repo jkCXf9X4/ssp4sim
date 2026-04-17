@@ -51,7 +51,9 @@ namespace ssp4sim::signal
         }
     }
 
-    SignalStorage::SignalStorage(std::size_t areas, std::string name) : new_data_flags(areas)
+    SignalStorage::SignalStorage(std::size_t areas, std::string name)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.SignalStorage")),
+          new_data_flags(areas)
     {
         this->areas = areas;
         this->name = std::move(name);
@@ -114,7 +116,7 @@ namespace ssp4sim::signal
     {
         if (allocated)
         {
-            log(error)("[{}] Buffer can only be allocated once", __func__);
+            LOG_ERROR(log, "[{}] Buffer can only be allocated once", __func__);
             throw std::runtime_error("Buffer can only be allocated once");
         }
 
@@ -137,7 +139,7 @@ namespace ssp4sim::signal
 
                 if (variable.type == types::DataType::string)
                 {
-                    log(debug)("[{}] Setting string {}:{} - {}", __func__, variable.index, variable.name, variable.type.to_string());
+                    LOG_DEBUG(log, "[{}] Setting string {}:{} - {}", __func__, variable.index, variable.name, variable.type.to_string());
                     auto s = reinterpret_cast<std::string *>(locations[area_index][variable.index]);
                     std::construct_at(s);
                 }

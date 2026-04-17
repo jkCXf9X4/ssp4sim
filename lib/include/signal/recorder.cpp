@@ -7,8 +7,6 @@
 
 #include "FMI2_Enums_Ext.hpp"
 
-#include "cutecpp/log.hpp"
-
 #include <cstddef>
 #include <cstring>
 #include <memory>
@@ -21,12 +19,13 @@ namespace ssp4sim::signal
 {
 
     DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
-        : file(filename, std::ios::out)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.record.DataRecorder")),
+          file(filename, std::ios::out)
     {
-        log(ext_trace)("[{}] Constructor", __func__);
-        log(debug)("[{}] Recording interval {}", __func__, recording_interval);
-        log(debug)("[{}] File {}, open {}", __func__, filename, file.is_open());
-        log(debug)("[{}] Interval: {}, wait_for: {}", __func__, interval, wait_for);
+        LOG_TRACE_L2(log, "[{}] Constructor", __func__);
+        LOG_DEBUG(log, "[{}] Recording interval {}", __func__, recording_interval);
+        LOG_DEBUG(log, "[{}] File {}, open {}", __func__, filename, file.is_open());
+        LOG_DEBUG(log, "[{}] Interval: {}, wait_for: {}", __func__, interval, wait_for);
 
         recording_interval = interval;
         wait_for_recorder = wait_for;
@@ -34,7 +33,7 @@ namespace ssp4sim::signal
 
     DataRecorder::~DataRecorder()
     {
-        log(ext_trace)("[{}] init", __func__);
+        LOG_TRACE_L2(log, "[{}] init", __func__);
     }
 
     void DataRecorder::add_storage(SignalStorage *storage)
@@ -51,7 +50,7 @@ namespace ssp4sim::signal
 
             row_size += storage->mem_size;
 
-            log(trace)("[{}] Adding tracker, storage: {}", __func__, storage->name);
+            LOG_TRACE_L1(log, "[{}] Adding tracker, storage: {}", __func__, storage->name);
 
             tracker_index++;
         }
@@ -59,7 +58,7 @@ namespace ssp4sim::signal
 
     void DataRecorder::reset_update_status(std::size_t row)
     {
-        log(ext_trace)("[{}] Init", __func__);
+        LOG_TRACE_L1(log, "[{}] Init", __func__);
         for (auto &t : trackers)
         {
             updated_tracker[row][t.index] = false;
@@ -68,7 +67,7 @@ namespace ssp4sim::signal
 
     void DataRecorder::print_headers()
     {
-        log(trace)("[{}] Init", __func__);
+        LOG_TRACE_L1(log, "[{}] Init", __func__);
         file << "time";
         for (const auto &tracker : trackers)
         {
@@ -82,11 +81,11 @@ namespace ssp4sim::signal
 
     void DataRecorder::init()
     {
-        log(trace)("[{}] Init", __func__);
+        LOG_TRACE_L1(log, "[{}] Init", __func__);
         auto allocation_size = row_size * rows;
 
         data = std::make_unique<std::byte[]>(allocation_size);
-        log(trace)("[{}] Completed allocation", __func__);
+        LOG_TRACE_L1(log, "[{}] Completed allocation", __func__);
 
         const std::size_t cols = trackers.size();
 
@@ -107,7 +106,7 @@ namespace ssp4sim::signal
 
     void DataRecorder::start_recording()
     {
-        log(info)("[{}] Starting recording", __func__);
+        LOG_INFO(log, "[{}] Starting recording", __func__);
         running = true;
         worker = std::make_unique<std::thread>([this]()
                                                { loop(); });
@@ -116,7 +115,7 @@ namespace ssp4sim::signal
 
     void DataRecorder::stop_recording()
     {
-        log(info)("[{}] Stop recording", __func__);
+        LOG_INFO(log, "[{}] Stop recording", __func__);
         if (!running)
         {
             return;
@@ -164,7 +163,7 @@ namespace ssp4sim::signal
     void DataRecorder::print_row(uint16_t row)
     {
         IF_LOG({
-            log(trace)("[{}] Row: {}", __func__, row);
+            LOG_TRACE_L1(log, "[{}] Row: {}", __func__, row);
         });
 
         auto time_value = utils::time::ns_to_s(row_time_map[row]);
@@ -175,7 +174,7 @@ namespace ssp4sim::signal
             for (auto& var : tracker.storage->variables)
             {
                 IF_LOG({
-                    log(ext_trace)("[{}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, var.name);
+                    LOG_TRACE_L2(log, "[{}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, var.name);
                 });
 
                 auto pos = var.position;
@@ -199,23 +198,23 @@ namespace ssp4sim::signal
 
     void DataRecorder::update()
     {
-        log(ext_trace)("[{}] Notifying recording to update", __func__);
+        LOG_TRACE_L1(log, "[{}] Notifying recording to update", __func__);
     }
 
     void DataRecorder::loop()
     {
-        log(debug)("[{}] Starting recording thread", __func__);
+        LOG_DEBUG(log, "[{}] Starting recording thread", __func__);
 
         while (running)
         {
             IF_LOG({
-                log(ext_trace)("[{}] Looking for new content to write to file", __func__);
+                LOG_TRACE_L2(log, "[{}] Looking for new content to write to file", __func__);
             });
 
             for (auto &tracker : trackers)
             {
                 IF_LOG({
-                    log(ext_trace)("[{}] Evaluating storage {}", __func__, tracker.storage->to_string());
+                    LOG_TRACE_L3(log, "[{}] Evaluating storage {}", __func__, tracker.storage->to_string());
                 });
 
                 for (std::size_t area = 0; area < tracker.storage->areas; ++area)
@@ -224,7 +223,7 @@ namespace ssp4sim::signal
                     if (storage->new_data_flags[area])
                     {
                         IF_LOG({
-                            log(trace)("[{}] Found new data; area: {}", __func__, area);
+                            LOG_TRACE_L1(log, "[{}] Found new data; area: {}", __func__, area);
                         });
 
                         process_new_data(tracker, storage, area);
@@ -234,7 +233,7 @@ namespace ssp4sim::signal
             }
         }
 
-        log(debug)("[{}] Exiting recording thread", __func__);
+        LOG_DEBUG(log, "[{}] Exiting recording thread", __func__);
     }
 
     void DataRecorder::process_new_data(ssp4sim::signal::Tracker &tracker, signal::SignalStorage *storage, std::size_t area)
@@ -244,7 +243,7 @@ namespace ssp4sim::signal
         if (!time_row_map.contains(ts))
         {
             IF_LOG({
-                log(trace)("[{}] New print time: {}, last_print_time {}", __func__, ts, last_print_time);
+                LOG_TRACE_L1(log, "[{}] New print time: {}, last_print_time {}", __func__, ts, last_print_time);
             });
 
             last_print_time += recording_interval;
@@ -253,7 +252,7 @@ namespace ssp4sim::signal
             if (new_item_counter >= rows)
             {
                 IF_LOG({
-                    log(trace)("[{}] Row already in use, print and reset. {}", __func__, head);
+                    LOG_TRACE_L1(log, "[{}] Row already in use, print and reset. {}", __func__, head);
                 });
 
                 print_row(head);
@@ -265,7 +264,7 @@ namespace ssp4sim::signal
             row_time_map[head] = ts;
             time_row_map[ts] = head;
             IF_LOG({
-                log(trace)("[{}] New row [{}] with time [{}]", __func__, head, ts);
+                LOG_TRACE_L1(log, "[{}] New row [{}] with time [{}]", __func__, head, ts);
             });
         }
 
@@ -273,7 +272,7 @@ namespace ssp4sim::signal
         {
             auto row = time_row_map[ts];
             IF_LOG({
-                log(trace)("[{}] Copying new data; row {}, size: {}", __func__, row, tracker.size);
+                LOG_TRACE_L1(log, "[{}] Copying new data; row {}, size: {}", __func__, row, tracker.size);
             });
 
             std::memcpy(get_data_pos(row, tracker.row_pos), storage->locations[area][0], tracker.size);

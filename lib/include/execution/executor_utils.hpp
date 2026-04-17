@@ -1,7 +1,5 @@
 #pragma once
 
-// #include "cutecpp/log.hpp"
-
 #include "invocable.hpp"
 
 namespace ssp4sim::graph
@@ -42,10 +40,10 @@ namespace ssp4sim::graph
                               valid_input_time,   // input
                               output_time);       // output_time
 
-            // IF_LOG({
-            //     node->log(info)("Node {}, Time {}, step: {}",
-            //               node->name, node->current_time, s.to_string());
-            // });
+            IF_LOG({
+                LOG_TRACE_L3(node->log, "Node {}, Time {}, step: {}",
+                          node->name, node->current_time, s.to_string());
+            });
 
             node->invoke(s);
         }

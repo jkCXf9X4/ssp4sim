@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 #include "utils/time.hpp"
 
 #include <chrono>
@@ -17,11 +17,7 @@ namespace ssp4sim::utils::time
     public:
         using clock = std::chrono::steady_clock;
 
-        Logger log = Logger("ssp4cpp.common.ScopeTimer", LogLevel::debug);
-
-        explicit ScopeTimer(std::string label);
-
-        ScopeTimer(std::string label, uint64_t *result_callback);
+        ScopeTimer(std::string label, uint64_t *result_callback, ssp4cpp::utils::log::Logger *log);
 
         ~ScopeTimer();
 
@@ -29,6 +25,7 @@ namespace ssp4sim::utils::time
         std::string label_;
         clock::time_point start_;
         uint64_t *result_callback_ns = nullptr;
+        ssp4cpp::utils::log::Logger *log;
     };
 
     class Timer
@@ -36,7 +33,7 @@ namespace ssp4sim::utils::time
     public:
         using clock = std::chrono::steady_clock;
 
-        // Logger log = Logger("Timer", LogLevel::debug);
+        // ssp4cpp::utils::log::Logger* log = nullptr;
 
         Timer();
 

@@ -7,9 +7,11 @@
 
 namespace ssp4sim::graph
 {
-    ParallelSeidel::ParallelSeidel(std::vector<Invocable *> nodes) : SeidelBase(nodes)
+    ParallelSeidel::ParallelSeidel(std::vector<Invocable *> nodes)
+        : SeidelBase(nodes),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ParallelSeidel"))
     {
-        log(info)("[{}]", __func__);
+        LOG_INFO(log, "[{}]", __func__);
     }
 
     /**
@@ -19,7 +21,7 @@ namespace ssp4sim::graph
     uint64_t ParallelSeidel::invoke(StepData step_data)
     {
         IF_LOG({
-            log(ext_trace)("[{}] step data: {}", __func__, step_data.to_string());
+            LOG_TRACE_L1(log, "[{}] step data: {}", __func__, step_data.to_string());
         });
 
         step_data.input_time = step_data.end_time;
@@ -33,7 +35,7 @@ namespace ssp4sim::graph
         // int completed = 0;
 
         // IF_LOG({
-        //     log(trace)("[{}] Invoking all start nodes", __func__);
+        //     LOG_TRACE_L1(log, "[{}] Invoking all start nodes", __func__);
         // });
 
         // for (auto &sn : start_nodes)
@@ -45,7 +47,7 @@ namespace ssp4sim::graph
         // while (launched != completed)
         // {
         //     IF_LOG({
-        //         log(trace)("[{}] Waiting for nodes to finish. launched {}, completed  {}", __func__, launched, completed);
+        //         LOG_TRACE_L1(log, "[{}] Waiting for nodes to finish. launched {}, completed  {}", __func__, launched, completed);
         //     });
 
         //     shared_state->sem.acquire();
@@ -60,7 +62,7 @@ namespace ssp4sim::graph
         //     auto &finished_node = seidel_nodes[msg.worker_id];
 
         //     IF_LOG({
-        //         log(trace)("[{}] Node finished: {}", __func__, finished_node.node->name);
+        //         LOG_TRACE_L1(log, "[{}] Node finished: {}", __func__, finished_node.node->name);
         //     });
 
         //     // enqueue children whose all parents are invoked
@@ -72,7 +74,7 @@ namespace ssp4sim::graph
         //         if (child.nr_parents_counter == 0)
         //         {
         //             IF_LOG({
-        //                 log(debug)("[{}] Node ready, invoking: {}", __func__, child.node->name);
+        //                 LOG_DEBUG(log, "[{}] Node ready, invoking: {}", __func__, child.node->name);
         //             });
 
         //             child.node->async_invoke(step_data);
@@ -81,7 +83,7 @@ namespace ssp4sim::graph
         //     }
         // }
         // IF_LOG({
-        //     log(trace)("[{}] End. launched {}, completed  {}", __func__, launched, completed);
+        //     LOG_TRACE_L1(log, "[{}] End. launched {}, completed  {}", __func__, launched, completed);
         // });
 
         wait_for_result_collection();

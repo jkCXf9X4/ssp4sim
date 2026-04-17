@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -17,19 +17,13 @@ namespace ssp4sim::ext::ssp1
 {
     using namespace ssp4cpp::ssp1::ssd;
 
-    inline auto log = Logger("ssp4sim.ext.ssp.ssp1", LogLevel::debug);
-
     namespace ssd
     {
-        inline auto log = Logger("ssp4sim.ext.ssp.ssp1.ssd", LogLevel::debug);
-
         std::vector<TComponent *> get_resources(const SystemStructureDescription &ssd);
     }
 
     namespace elements
     {
-        inline auto log = Logger("ssp4sim.ext.ssp.ssp1.elements", LogLevel::debug);
-
         using IndexConnectorComponentTuple = std::tuple<int, Connector *, TComponent *>;
         using IndexConnectorComponentTuples = std::vector<IndexConnectorComponentTuple>;
 

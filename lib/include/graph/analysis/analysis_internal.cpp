@@ -9,9 +9,13 @@
 namespace ssp4sim::analysis::graph
 {
 
-    AnalysisModelVariable::AnalysisModelVariable() = default;
+    AnalysisModelVariable::AnalysisModelVariable()
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable"))
+    {
+    }
 
     AnalysisModelVariable::AnalysisModelVariable(std::string component, std::string variable_name)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable"))
     {
         this->component = component;
         this->variable_name = variable_name;
@@ -20,7 +24,7 @@ namespace ssp4sim::analysis::graph
 
     AnalysisModelVariable::~AnalysisModelVariable()
     {
-        log(ext_trace)("[{}] Destroying AnalysisModelVariable", __func__);
+        LOG_TRACE_L1(log, "[{}] Destroying AnalysisModelVariable", __func__);
     }
 
     void AnalysisModelVariable::update_name()

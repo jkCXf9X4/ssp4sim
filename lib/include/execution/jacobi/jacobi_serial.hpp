@@ -2,7 +2,7 @@
 
 #include "execution/jacobi/jacobi_base.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -12,7 +12,7 @@ namespace ssp4sim::graph
     class JacobiSerial final : public JacobiBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.JacobiSerial", LogLevel::info);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         JacobiSerial(std::vector<Invocable *> nodes);
 

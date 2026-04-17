@@ -6,7 +6,7 @@
 #include "executor.hpp"
 #include "invocable.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstddef>
 #include <vector>
@@ -26,7 +26,7 @@ namespace ssp4sim::graph
     class SeidelBase : public ExecutionBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.SeidelBase", LogLevel::info);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         const int nr_of_nodes = 0;
         std::vector<SeidelNode> seidel_nodes;

@@ -6,15 +6,17 @@ namespace ssp4sim::graph
 {
 
     JacobiParallelSpin::JacobiParallelSpin(std::vector<Invocable *> nodes, int threads)
-        : ExecutionBase(nodes), pool(threads)
+        : ExecutionBase(nodes),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelSpin")),
+          pool(threads)
     {
-        log(info)("[{}] JacobiParallelSpin", __func__);
+        LOG_INFO(log, "[{}] JacobiParallelSpin", __func__);
     }
 
     uint64_t JacobiParallelSpin::invoke(StepData step_data)
     {
         IF_LOG({
-            log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
+            LOG_DEBUG(log, "[{}] stepdata: {}", __func__, step_data.to_string());
         });
 
         auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
@@ -28,7 +30,7 @@ namespace ssp4sim::graph
         }
 
         IF_LOG({
-            log(info)("[{}] Spinning until all threads are done", __func__);
+            LOG_INFO(log, "[{}] Spinning until all threads are done", __func__);
         });
 
         bool all_done = false;
@@ -46,7 +48,7 @@ namespace ssp4sim::graph
         }
 
         IF_LOG({
-            log(info)("[{}] All threads completed", __func__);
+            LOG_INFO(log, "[{}] All threads completed", __func__);
         });
 
         wait_for_result_collection();

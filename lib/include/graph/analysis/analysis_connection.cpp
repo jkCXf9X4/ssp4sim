@@ -7,7 +7,13 @@
 namespace ssp4sim::analysis::graph
 {
 
+    AnalysisConnection::AnalysisConnection()
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnection"))
+    {
+    }
+
     AnalysisConnection::AnalysisConnection(ssp4cpp::ssp1::ssd::Connection *connection)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnection"))
     {
         source_component_name = connection->startElement.value();
         source_connector_name = connection->startConnector;
@@ -19,7 +25,7 @@ namespace ssp4sim::analysis::graph
 
     AnalysisConnection::~AnalysisConnection()
     {
-        log(ext_trace)("[{}] Destroying AnalysisConnection", __func__);
+        LOG_TRACE_L1(log, "[{}] Destroying AnalysisConnection", __func__);
     }
 
     void AnalysisConnection::update_name()

@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 #include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
@@ -19,8 +19,6 @@ namespace ssp4sim::ext::fmi2
 
     namespace model_variables
     {
-        inline auto log = Logger("ssp4sim.ext.fmi2.model_variables", debug);
-
         /** @brief Retrieve a variable by index from the model variables list. */
         fmi2ScalarVariable *get_variable(ModelVariables &mv, int index);
 
@@ -37,8 +35,6 @@ namespace ssp4sim::ext::fmi2
 
     namespace dependency
     {
-        inline auto log = Logger("ssp4sim.ext.fmi2.dependency", debug);
-
         using IndexDependencyCoupling = std::tuple<int, int, DependenciesKind>;
         using VariableDependencyCoupling = std::tuple<fmi2ScalarVariable *, fmi2ScalarVariable *, DependenciesKind>;
 

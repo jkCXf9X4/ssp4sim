@@ -4,9 +4,6 @@
 #include "simulation.hpp"
 #include "ssp4cpp/ssp.hpp"
 #include "ssp4cpp/utils/log.hpp"
-#include "quill/SimpleSetup.h"
-
-#include "cutecpp/log.hpp"
 
 #include <filesystem>
 #include <exception>
@@ -16,7 +13,7 @@ namespace ssp4sim
 {
     struct SimulatorPrivate
     {
-        quill::Logger* log;
+        ssp4cpp::utils::log::Logger* log;
 
         std::unique_ptr<ssp4cpp::Ssp> ssp;
         std::unique_ptr<Simulation> sim;
@@ -26,14 +23,13 @@ namespace ssp4sim
     Simulator::Simulator(const std::string config_path)
         : p(std::make_unique<SimulatorPrivate>())
     {
-        ssp4cpp::utils::log::init_logging();
-        p->log = quill::simple_logger();
+        p->log = ssp4cpp::utils::log::simple_logger();
         LOG_INFO(p->log, "[{}] Setting up Simulator", __func__);
 
         LOG_INFO(p->log, "[{}] - Loading config: {}", __func__, config_path);
         if (!std::filesystem::exists(config_path))
         {
-            LOGV_ERROR(p->log, "Config file does not exist", config_path);
+            LOG_ERROR(p->log, "Config file does not exist: {}", config_path);
             throw std::runtime_error("Config file does not exist: " + config_path);
         }
         
@@ -43,12 +39,13 @@ namespace ssp4sim
 
         auto log_file = utils::Config::getString("simulation.log.file");
 
+        ssp4cpp::utils::log::init_logging();
         ssp4cpp::utils::log::add_console(quill::loglevel_from_string(utils::Config::getString("simulation.log.level_terminal")));
         ssp4cpp::utils::log::add_file_sink(log_file, quill::loglevel_from_string(utils::Config::getString("simulation.log.level_file")));
         ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(utils::Config::getString("simulation.log.level_json")));
         // Do not construct any objects using a logger before this point, they wont get any sinks.
         
-        p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator", quill::LogLevel::TraceL1);
+        p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");
 
         LOG_DEBUG(p->log, "[{}] - Importing SSP", __func__);
         auto ssp_path = utils::Config::getString("simulation.ssp");

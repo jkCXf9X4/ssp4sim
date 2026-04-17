@@ -8,12 +8,16 @@
 namespace ssp4sim::analysis::graph
 {
 
-    AnalysisConnector::AnalysisConnector() = default;
+    AnalysisConnector::AnalysisConnector()
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnector"))
+    {
+    }
 
     AnalysisConnector::AnalysisConnector(std::string component_name,
                                          std::string connector_name,
                                          uint64_t value_reference,
                                          types::DataType type)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnector"))
     {
         this->component_name = component_name;
         this->connector_name = connector_name;
@@ -26,7 +30,7 @@ namespace ssp4sim::analysis::graph
 
     AnalysisConnector::~AnalysisConnector()
     {
-        log(ext_trace)("[{}] Destroying AnalysisConnector", __func__);
+        LOG_TRACE_L1(log, "[{}] Destroying AnalysisConnector", __func__);
     }
 
     void AnalysisConnector::update_name()

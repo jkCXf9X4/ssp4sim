@@ -3,7 +3,7 @@
 #include "utils/node.hpp"
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstdint>
 #include <string>
@@ -19,7 +19,7 @@ namespace ssp4sim::analysis::graph
     public:
         uint64_t delay = 0;
 
-        Logger log = Logger("ssp4sim.graph.AnalysisConnection", LogLevel::debug);
+        ssp4cpp::utils::log::Logger* log = nullptr;
         std::string source_component_name;
         std::string source_connector_name;
         std::string target_component_name;
@@ -31,7 +31,7 @@ namespace ssp4sim::analysis::graph
         AnalysisModel *source_model;
         AnalysisModel *target_model;
 
-        AnalysisConnection() = default;
+        AnalysisConnection();
 
         AnalysisConnection(ssp4cpp::ssp1::ssd::Connection *connection);
 

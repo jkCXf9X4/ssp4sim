@@ -1,10 +1,11 @@
 #pragma once
 
+#include "ssp4cpp/utils/log.hpp"
+
 #include "ssp4sim_definitions.hpp"
 
 #include "signal/storage.hpp"
 
-#include "cutecpp/log.hpp"
 #include "utils/model.hpp"
 
 #include <cstddef>
@@ -16,12 +17,14 @@ namespace ssp4sim::graph
 {
     struct ConnectionInfo : public types::IWritable
     {
-        ConnectionInfo() = default;
+        ConnectionInfo()
+            : log(ssp4cpp::utils::log::make_logger("ssp4sim.ConnectionInfo"))
+        {
+        }
         ~ConnectionInfo(){
-            log(trace)("Destroying ConnectionInfo");
         };
 
-        static Logger log;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         types::DataType type;
         size_t size;

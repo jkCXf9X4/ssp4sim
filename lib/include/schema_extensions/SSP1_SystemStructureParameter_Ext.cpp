@@ -15,6 +15,16 @@
 
 namespace ssp4sim::ext::ssp1::ssv
 {
+    namespace
+    {
+        ssp4cpp::utils::log::Logger* log()
+        {
+            // Cache this logger locally so we avoid eager header initialization.
+            static ssp4cpp::utils::log::Logger* logger =
+                ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1.ssv");
+            return logger;
+        }
+    }
 
     types::DataType get_parameter_type(ssp4cpp::ssp1::ssv::TParameter &par)
     {
@@ -71,14 +81,14 @@ namespace ssp4sim::ext::ssp1::ssv
 
     std::vector<StartValue> get_start_values(std::vector<ssp4cpp::ParameterBindings> &bindings)
     {
-        log(trace)("[{}] Init", __func__);
+        LOG_TRACE_L1(log(), "[{}] Init", __func__);
 
         std::vector<StartValue> start_values;
         for (auto &binding : bindings)
         {
             for (auto &parameter : binding.ssv->Parameters.Parameters)
             {
-                log(trace)("[{}] - Store values, {}", __func__, parameter.name);
+                LOG_TRACE_L1(log(), "[{}] - Store values, {}", __func__, parameter.name);
                 StartValue start_value(parameter.name, get_parameter_type(parameter));
                 start_value.store_value(get_parameter_value(parameter));
 
@@ -88,7 +98,7 @@ namespace ssp4sim::ext::ssp1::ssv
                     {
                         if (start_value.name == map.source)
                         {
-                            log(trace)("[{}] Add mapping for {} - {}", __func__, parameter.name, map.target);
+                            LOG_TRACE_L1(log(), "[{}] Add mapping for {} - {}", __func__, parameter.name, map.target);
                             start_value.mappings.push_back(map.target);
                         }
                     }
@@ -104,17 +114,17 @@ namespace ssp4sim::ext::ssp1::ssv
         std::map<std::string, StartValue> parameter_map;
         for (auto &value : start_values)
         {
-            log(trace)("[{}] - Parameter {}, {}", __func__, value.name, value.type.to_string());
+            LOG_TRACE_L1(log(), "[{}] - Parameter {}, {}", __func__, value.name, value.type.to_string());
             for (auto name : value.mappings)
             {
                 if (parameter_map.contains(name))
                 {
-                    log(warning)("[{}] Overwriting parameter start value for, {}", __func__, name);
+                    LOG_WARNING(log(), "[{}] Overwriting parameter start value for, {}", __func__, name);
                 }
 
-                log(debug)("[{}] Inserting parameter {} as {}", __func__, value.name, name);
+                LOG_DEBUG(log(), "[{}] Inserting parameter {} as {}", __func__, value.name, name);
                 parameter_map.insert_or_assign(name, value);
-                log(trace)("[{}] - Parameter {} ", __func__, value.to_string());
+                LOG_TRACE_L1(log(), "[{}] - Parameter {} ", __func__, value.to_string());
             }
         }
         return parameter_map;

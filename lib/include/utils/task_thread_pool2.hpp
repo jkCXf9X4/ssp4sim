@@ -12,7 +12,7 @@
 #include <thread>
 #include <vector>
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 namespace ssp4sim::utils
 {
@@ -27,7 +27,7 @@ namespace ssp4sim::utils
     class ThreadPool2
     {
     private:
-        Logger log = Logger("ssp4sim.utils.ThreadPool2", LogLevel::info);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::mutex mtx;
         std::condition_variable cv;

@@ -19,8 +19,6 @@ target_link_libraries(ssp4sim_tests PRIVATE Catch2::Catch2WithMain)
 
 target_link_libraries(ssp4sim_tests PRIVATE ssp4cpp::ssp4cpp)
 
-target_link_libraries(ssp4sim_tests PRIVATE cutecpp::cutecpp)
-
 target_link_libraries(ssp4sim_tests PUBLIC ssp4sim::3rd::fmi4c)
 
 target_compile_definitions(ssp4sim_tests PRIVATE SSP4SIM_PROJECT_ROOT="${CMAKE_SOURCE_DIR}")

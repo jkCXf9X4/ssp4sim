@@ -8,11 +8,13 @@ This policy defines standards for application logging to ensure:
 * Clear separation of log levels to avoid noise.
 * Compliance with data protection requirements.
 
+Implementation note: SSP4SIM uses Quill as the logging backend.
+
 ---
 
 ## 2. Log Levels and Usage
 
-### 🔹 **EXT_TRACE** (Extremely Detailed)
+### 🔹 **TRACE_L2** (Extremely Detailed)
 
 * **Purpose:** Extremely fine-grained logs for debugging at the deepest level.
 * **When to use:**
@@ -21,7 +23,7 @@ This policy defines standards for application logging to ensure:
   * Debugging complex algorithms or edge cases.
 * **Notes:** Rarely enabled in production; can generate huge volumes.
 
-### 🔹 **TRACE** (Very Detailed)
+### 🔹 **TRACE_L1** (Very Detailed)
 
 * **Purpose:** Very fine-grained logs for debugging at the deepest level.
 * **When to use:**
@@ -79,7 +81,7 @@ This policy defines standards for application logging to ensure:
 
 ---
 
-### 🔹 **FATAL**
+### 🔹 **CRITICAL**
 
 * **Purpose:** Severe issues that cause the system (or major parts of it) to stop functioning.
 * **When to use:**
@@ -116,6 +118,20 @@ This policy defines standards for application logging to ensure:
 
    * WARN, ERROR, and FATAL logs should be tracked in monitoring systems.
    * FATAL logs must trigger **alerts** immediately.
+
+8. **Initialization order**:
+
+   * Avoid header-initialized logger members when sinks are configured at runtime.
+   * Prefer constructing `quill::Logger*` members in constructors after logging has been configured.
+
+9. **Hot path logging**:
+
+   * Avoid `INFO`, `WARNING`, or higher-volume `DEBUG` logging inside step, substep, executor, thread-pool, or recorder inner loops.
+   * Use `IF_LOG({ ... })` for detailed execution tracing so hot-path logs can be compiled out with `SSP4SIM_LOG_HOT_PATH=OFF`.
+   * Quill queue growth messages indicate frontend threads are producing logs faster than the backend can drain them. Treat that as a signal to reduce log volume on the hot path first.
+   * The shared `ssp4cpp::utils::log` wrapper owns Quill startup. Do not call `quill::simple_logger()` directly, since it can start Quill with the library defaults before SSP4SIM applies its hot-path backend configuration.
+   * Use `ssp4cpp::utils::log::Logger*` for stored logger pointers and helper signatures. The wrapper now uses a custom Quill frontend type.
+   * The current Quill profile favors lower frontend latency by preallocating the thread-local queue before the first log event, running the backend in busy-poll mode (`sleep_duration=0`, `enable_yield_when_idle=true`), disabling timestamp grace-period ordering, and flushing sinks less often. This improves throughput on heavily logged execution paths at the cost of higher backend CPU usage.
 
 ---
 

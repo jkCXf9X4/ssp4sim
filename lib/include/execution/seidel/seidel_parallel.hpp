@@ -10,7 +10,7 @@ namespace ssp4sim::graph
     class ParallelSeidel final : public SeidelBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.ParallelSeidel", LogLevel::info);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         ParallelSeidel(std::vector<Invocable *> nodes);
 

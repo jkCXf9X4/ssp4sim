@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4cpp/ssp.hpp"
 #include "ssp4cpp/fmu.hpp"
@@ -12,8 +12,6 @@
 
 namespace ssp4sim::ext::ssp
 {
-    inline auto log = Logger("ssp4sim.ext.ssp", LogLevel::info);
-
     std::map<std::string, std::string> get_resource_map(ssp4cpp::Ssp &ssp);
 
     /**

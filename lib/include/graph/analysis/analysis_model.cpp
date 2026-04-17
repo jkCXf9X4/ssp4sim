@@ -7,9 +7,13 @@
 namespace ssp4sim::analysis::graph
 {
 
-    AnalysisModel::AnalysisModel() = default;
+    AnalysisModel::AnalysisModel()
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModel"))
+    {
+    }
 
     AnalysisModel::AnalysisModel(std::string name, std::string fmu_name, handler::FmuInfo *fmu)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModel"))
     {
         this->fmu = fmu;
         this->name = name;
@@ -18,7 +22,7 @@ namespace ssp4sim::analysis::graph
 
     AnalysisModel::~AnalysisModel()
     {
-        log(ext_trace)("[{}] Destroying AnalysisModel", __func__);
+        LOG_TRACE_L1(log, "[{}] Destroying AnalysisModel", __func__);
     }
 
     void AnalysisModel::set_interpolation_data(bool canInterpolateInputs, int maxDerivativeOrder)

@@ -41,7 +41,7 @@ namespace ssp4sim::signal
     class SignalStorage : public types::IWritable
     {
     public:
-        Logger log = Logger("ssp4sim.utils.SignalStorage", LogLevel::debug);
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::unique_ptr<utils::RingBuffer> data;
 

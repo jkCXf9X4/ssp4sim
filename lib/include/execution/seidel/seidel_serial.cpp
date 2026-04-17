@@ -5,9 +5,11 @@
 
 namespace ssp4sim::graph
 {
-    SerialSeidel::SerialSeidel(std::vector<Invocable *> nodes) : SeidelBase(nodes)
+    SerialSeidel::SerialSeidel(std::vector<Invocable *> nodes)
+        : SeidelBase(nodes),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.SerialSeidel"))
     {
-        log(info)("[{}] ", __func__);
+        LOG_INFO(log, "[{}] ", __func__);
     }
 
     /**
@@ -17,14 +19,14 @@ namespace ssp4sim::graph
     uint64_t SerialSeidel::invoke(StepData step_data)
     {
         IF_LOG({
-            log(trace)("[{}] step data: {}", __func__, step_data.to_string());
+            LOG_TRACE_L1(log, "[{}] step data: {}", __func__, step_data.to_string());
         });
 
         int completed = 0;
         reset_counters();
 
         IF_LOG({
-            log(trace)("[{}] Invoking nodes", __func__);
+            LOG_TRACE_L1(log, "[{}] Invoking nodes", __func__);
         });
 
         auto s = StepData(step_data.start_time, // start
@@ -41,7 +43,7 @@ namespace ssp4sim::graph
                 {
 
                     IF_LOG({
-                        log(trace)("[{}] Starting {}:{}", __func__, node.id, node.node->name);
+                        LOG_TRACE_L2(log, "[{}] Starting {}:{}", __func__, node.id, node.node->name);
                     });
 
                     node.node->invoke(s);
@@ -58,7 +60,7 @@ namespace ssp4sim::graph
         }
 
         IF_LOG({
-            log(trace)("[{}] End. completed  {}", __func__, completed);
+            LOG_TRACE_L1(log, "[{}] End. completed  {}", __func__, completed);
         });
 
         wait_for_result_collection();

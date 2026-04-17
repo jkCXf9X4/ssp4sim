@@ -8,11 +8,10 @@
 
 namespace ssp4sim::utils::time
 {
-
-    ScopeTimer::ScopeTimer(std::string label) : label_(std::move(label)), start_(clock::now()) {}
-
-    ScopeTimer::ScopeTimer(std::string label, uint64_t *result_callback) : ScopeTimer(std::move(label))
+    
+    ScopeTimer::ScopeTimer(std::string label, uint64_t *result_callback, ssp4cpp::utils::log::Logger* log) : label_(std::move(label)), start_(clock::now())
     {
+        this->log = log;
         result_callback_ns = result_callback;
     }
 
@@ -20,11 +19,12 @@ namespace ssp4sim::utils::time
     {
         const auto dur = std::chrono::duration_cast<std::chrono::nanoseconds>(clock::now() - start_);
 
-        if (result_callback_ns == nullptr)
+        if (this->log != nullptr)
         {
-            log(info)("[ScopeTimer] {} took {}ns", label_, (double)dur.count() / ssp4sim::utils::time::nanoseconds_per_second);
+            LOG_INFO(log, "[ScopeTimer] {} took {}ns", label_, (double)dur.count() / ssp4sim::utils::time::nanoseconds_per_second);
         }
-        else
+
+        if (result_callback_ns != nullptr)
         {
             *result_callback_ns = static_cast<uint64_t>(dur.count());
         }
