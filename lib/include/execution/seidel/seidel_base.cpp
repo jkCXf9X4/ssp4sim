@@ -10,8 +10,8 @@ namespace ssp4sim::graph
 
     SeidelBase::SeidelBase(std::vector<Invocable *> _nodes_) : ExecutionBase(std::move(_nodes_)), nr_of_nodes(nodes.size()), seidel_nodes(nr_of_nodes)
     {
-        log(info)("[{}] ", __func__);
-        log(trace)("[{}] nr_of_nodes {}, seidel_nodes {}", __func__, nr_of_nodes, seidel_nodes.size());
+        LOG_INFO(log, "[{}] ", __func__);
+        LOG_DEBUG(log, "[{}] nr_of_nodes {}, seidel_nodes {}", __func__, nr_of_nodes, seidel_nodes.size());
 
         for (auto &node : this->nodes)
         {
@@ -23,10 +23,10 @@ namespace ssp4sim::graph
             n.nr_parents = node->parents.size();
             n.nr_parents_counter = n.nr_parents;
 
-            log(ext_trace)("[{}] Assigning SeidelNode {}", __func__, id);
+            LOG_TRACE_L1(log, "[{}] Assigning SeidelNode {}", __func__, id);
         }
 
-        log(info)("[{}] Evaluating start nodes", __func__);
+        LOG_INFO(log, "[{}] Evaluating start nodes", __func__);
         for (auto &node : this->seidel_nodes)
         {
             if (node.node->nr_parents() == 0)

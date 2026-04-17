@@ -7,7 +7,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -29,7 +29,7 @@ namespace ssp4sim::analysis::graph
     public:
         uint64_t delay = 0;
 
-        Logger log = Logger("ssp4sim.graph.AnalysisConnector", LogLevel::debug);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnector", quill::LogLevel::TraceL1);
 
         std::string component_name;
         std::string connector_name;

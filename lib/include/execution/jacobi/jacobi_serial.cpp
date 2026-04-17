@@ -7,7 +7,7 @@ namespace ssp4sim::graph
 
     JacobiSerial::JacobiSerial(std::vector<Invocable *> nodes) : JacobiBase(nodes)
     {
-        log(info)("[{}] ", __func__);
+        LOG_INFO(log, "[{}] ", __func__);
     }
 
     uint64_t JacobiSerial::invoke(StepData step_data)
@@ -15,7 +15,7 @@ namespace ssp4sim::graph
         auto step = StepData(step_data.start_time, step_data.end_time, sub_step, step_data.start_time, step_data.end_time);
 
         IF_LOG({
-            log(debug)("[{}] stepdata: {}", __func__, step_data.to_string());
+            LOG_DEBUG(log, "[{}] stepdata: {}", __func__, step_data.to_string());
         });
 
         for (auto &node : this->nodes)

@@ -8,11 +8,13 @@ This policy defines standards for application logging to ensure:
 * Clear separation of log levels to avoid noise.
 * Compliance with data protection requirements.
 
+Implementation note: SSP4SIM uses Quill as the logging backend.
+
 ---
 
 ## 2. Log Levels and Usage
 
-### 🔹 **EXT_TRACE** (Extremely Detailed)
+### 🔹 **TRACE_L2** (Extremely Detailed)
 
 * **Purpose:** Extremely fine-grained logs for debugging at the deepest level.
 * **When to use:**
@@ -21,7 +23,7 @@ This policy defines standards for application logging to ensure:
   * Debugging complex algorithms or edge cases.
 * **Notes:** Rarely enabled in production; can generate huge volumes.
 
-### 🔹 **TRACE** (Very Detailed)
+### 🔹 **TRACE_L1** (Very Detailed)
 
 * **Purpose:** Very fine-grained logs for debugging at the deepest level.
 * **When to use:**
@@ -79,7 +81,7 @@ This policy defines standards for application logging to ensure:
 
 ---
 
-### 🔹 **FATAL**
+### 🔹 **CRITICAL**
 
 * **Purpose:** Severe issues that cause the system (or major parts of it) to stop functioning.
 * **When to use:**

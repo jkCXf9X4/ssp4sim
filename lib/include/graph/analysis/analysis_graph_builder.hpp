@@ -19,7 +19,7 @@ namespace ssp4sim::analysis::graph
     class AnalysisGraphBuilder
     {
     public:
-        Logger log = Logger("ssp4sim.graph.AnalysisGraphBuilder", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisGraphBuilder", quill::LogLevel::TraceL1);
 
         ssp4cpp::Ssp *ssp;
         handler::FmuHandler *fmu_handler;

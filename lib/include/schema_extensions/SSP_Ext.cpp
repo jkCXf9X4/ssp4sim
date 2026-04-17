@@ -16,7 +16,7 @@ namespace ssp4sim::ext::ssp
         for (auto &resource : get_resources(*ssp.ssd))
         {
             auto name = resource->name.value_or("null");
-            log(trace)("Resource {} : {}", name, resource->source);
+            LOG_TRACE_L1(log, "Resource {} : {}", name, resource->source);
 
             resources[name] = resource->source;
         }
@@ -33,16 +33,16 @@ namespace ssp4sim::ext::ssp
         for (auto &resource : get_resources(*ssp.ssd))
         {
             auto name = resource->name.value_or("null");
-            log(trace)("Resource {}", name);
+            LOG_TRACE_L1(log, "Resource {}", name);
 
             auto fmu = std::make_unique<ssp4cpp::Fmu>(ssp.dir / resource->source);
             items[name] = std::move(fmu);
         }
 
-        log(trace)("FMUs");
+        LOG_TRACE_L1(log, "FMUs");
         for (auto &[name, fmu] : items)
         {
-            log(trace)("{} : {}", name, fmu->to_string());
+            LOG_TRACE_L1(log, "{} : {}", name, fmu->to_string());
         }
         return items;
     }

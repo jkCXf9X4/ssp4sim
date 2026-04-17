@@ -12,7 +12,7 @@ namespace ssp4sim::utils
 
     RingBuffer::RingBuffer(size_t capacity, size_t item_size) : timestamps(capacity), used(capacity)
     {
-        log(ext_trace)("[{}] Constructor", __func__);
+        LOG_TRACE_L2(log, "[{}] Constructor", __func__);
         if (capacity == 0)
         {
             throw std::runtime_error("[RingBuffer] buffer_size != 0");
@@ -35,7 +35,7 @@ namespace ssp4sim::utils
     std::size_t RingBuffer::push()
     {
         IF_LOG({
-            log(ext_trace)("[{}] init", __func__);
+            LOG_TRACE_L2(log, "[{}] init", __func__);
         });
 
         nr_inserts += 1;
@@ -56,7 +56,7 @@ namespace ssp4sim::utils
     {
         if (use_verification && !used[index]) [[unlikely]]
         {
-            log(error)("[{}] RingBuffer, index not populated: {}", __func__, index);
+            LOG_ERROR(log, "[{}] RingBuffer, index not populated: {}", __func__, index);
             throw std::runtime_error("[RingBuffer][get_item] Index not populated");
         }
         return locations[index];
@@ -66,7 +66,7 @@ namespace ssp4sim::utils
     {
         if (!used[index]) [[unlikely]]
         {
-            log(error)("[{}] RingBuffer, index not populated: {}", __func__, index);
+            LOG_ERROR(log, "[{}] RingBuffer, index not populated: {}", __func__, index);
             throw std::runtime_error("[RingBuffer][get_time] Index not populated");
         }
         return timestamps[index];
@@ -80,7 +80,7 @@ namespace ssp4sim::utils
             if (timestamps[pos] == time)
             {
                 IF_LOG({
-                    log(trace)("[{}] found valid index, {}", __func__, pos);
+                    LOG_TRACE_L1(log, "[{}] found valid index, {}", __func__, pos);
                 });
 
                 index_found = pos;
@@ -98,7 +98,7 @@ namespace ssp4sim::utils
             if (timestamps[pos] <= time)
             {
                 IF_LOG({
-                    log(trace)("[{}] found valid area, {}", __func__, pos);
+                    LOG_TRACE_L1(log, "[{}] found valid area, {}", __func__, pos);
                 });
 
                 index_found = pos;

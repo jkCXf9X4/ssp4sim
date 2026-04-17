@@ -11,7 +11,7 @@
 
 #include "handler/fmu_handler.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -27,7 +27,7 @@ namespace ssp4sim::graph
     {
     public:
 
-        Logger log;
+        quill::Logger* log = nullptr;
 
         handler::FmuInfo *fmu;
 

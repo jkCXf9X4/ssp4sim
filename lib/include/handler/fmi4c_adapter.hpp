@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <fmi4c.h>
 
@@ -21,7 +21,7 @@ namespace ssp4sim::handler
     class FmuInstance
     {
     public:
-        Logger log = Logger("ssp4sim.handler.FmuInstance", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuInstance", quill::LogLevel::TraceL1);
 
         FmuInstance(const std::filesystem::path &path, std::string instance_name);
 
@@ -51,7 +51,7 @@ namespace ssp4sim::handler
     {
         // it needs to be shared since the logger might live longer than the main application.
         // Initial thoughts are that some fmus spawn internal threads...
-        std::shared_ptr<Logger> log = nullptr;
+        quill::Logger* log = nullptr;
     };
 
     class CoSimulationModel
@@ -64,7 +64,7 @@ namespace ssp4sim::handler
         fmi2CallbackFunctions callbacks;
 
     public:
-        Logger log = Logger("ssp4sim.handler.CoSimulationModel", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.handler.CoSimulationModel", quill::LogLevel::TraceL1);
 
         CoSimulationModel(FmuInstance &instance);
 

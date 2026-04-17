@@ -26,7 +26,7 @@ namespace ssp4sim::analysis::graph
 
     AnalysisConnector::~AnalysisConnector()
     {
-        log(ext_trace)("[{}] Destroying AnalysisConnector", __func__);
+        LOG_TRACE_L1(log, "[{}] Destroying AnalysisConnector", __func__);
     }
 
     void AnalysisConnector::update_name()

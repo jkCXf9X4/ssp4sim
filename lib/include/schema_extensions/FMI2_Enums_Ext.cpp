@@ -1,5 +1,5 @@
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 
@@ -11,7 +11,7 @@ namespace ssp4sim::ext::fmi2
 
     namespace enums
     {
-        inline auto log = Logger("ssp4sim.ext.fmi2.enums", LogLevel::debug);
+        inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.fmi2.enums", quill::LogLevel::TraceL1);
 
         /**
          * @brief  Return the in-memory size (in bytes) of a single value
@@ -40,7 +40,7 @@ namespace ssp4sim::ext::fmi2
 
         std::string data_type_to_string(types::DataType type, void *data)
         {
-            log(ext_trace)("[{}] init", __func__);
+            LOG_TRACE_L1(log, "[{}] init", __func__);
             switch (type)
             {
             case types::DataType::real:

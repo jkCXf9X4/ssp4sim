@@ -5,7 +5,7 @@
 
 #include "utils/map.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <map>
 #include <memory>
@@ -48,7 +48,7 @@ namespace ssp4sim::handler
     class FmuHandler
     {
     public:
-        Logger log = Logger("ssp4sim.handler.FmuHandler", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuHandler", quill::LogLevel::TraceL1);
 
         ssp4cpp::Ssp *ssp;
 

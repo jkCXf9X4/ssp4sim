@@ -22,7 +22,7 @@ namespace ssp4sim::utils::time
 
         if (result_callback_ns == nullptr)
         {
-            log(info)("[ScopeTimer] {} took {}ns", label_, (double)dur.count() / ssp4sim::utils::time::nanoseconds_per_second);
+            LOG_INFO(log, "[ScopeTimer] {} took {}ns", label_, (double)dur.count() / ssp4sim::utils::time::nanoseconds_per_second);
         }
         else
         {

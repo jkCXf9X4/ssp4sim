@@ -6,7 +6,7 @@
 
 #include "signal/recorder.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <map>
 #include <memory>
@@ -20,7 +20,7 @@ namespace ssp4sim::graph
     class GraphBuilder
     {
     public:
-        Logger log = Logger("ssp4sim.graph.GraphBuilder", LogLevel::info);;
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder", quill::LogLevel::TraceL1);;
 
         AnalysisGraph *analysis_graph;
         ssp4sim::signal::DataRecorder *recorder;

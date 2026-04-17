@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -28,14 +28,14 @@ namespace ssp4sim::graph
     class DelayExecutorBase : public ExecutionBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.DelayExecutor", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.DelayExecutor", quill::LogLevel::TraceL1);
 
         std::vector<std::vector<Invocable *>> groups;
 
         DelayExecutorBase(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
         {
             this->name = "DelayExecutor";
-            log(info)("[{}] substep: {}", __func__, sub_step);
+            LOG_INFO(log, "[{}] substep: {}", __func__, sub_step);
         }
 
         Invocable *node_from_name(ExecutionBase *executor, std::string name)
@@ -47,7 +47,7 @@ namespace ssp4sim::graph
                     return node;
                 }
             }
-            executor->log(error)("[{}] In {} node: {} not found", __func__, executor->name, name);
+            LOG_ERROR(executor->log, "[{}] In {} node: {} not found", __func__, executor->name, name);
             throw std::runtime_error("Node not found");
         }
 
@@ -86,7 +86,7 @@ namespace ssp4sim::graph
                                   output_time);       // output_time
 
                 IF_LOG({
-                    log(info)("models {}, Time {}, step: {}",
+                    LOG_INFO(log, "models {}, Time {}, step: {}",
                               models->name, models->current_time, s.to_string());
                 });
 
@@ -96,17 +96,17 @@ namespace ssp4sim::graph
 
         void gauss_seidel(std::vector<Invocable *> &_nodes_, StepData &step_data, uint64_t sub_step, int delay = 0)
         {
-            log(info)("New group");
+            LOG_INFO(log, "New group");
             int accumulated_delay = delay;
             for (auto &node : _nodes_)
             {
                 auto model = (FmuModel *)node;
-                log(warning)("accumulated_delay {}", accumulated_delay);
+                LOG_WARNING(log, "accumulated_delay {}", accumulated_delay);
                 auto macro_start = step_data.start_time + accumulated_delay;
                 auto macro_end = macro_start + step_data.timestep;
 
                 auto s = StepData(macro_start, macro_end, sub_step, macro_end, macro_end);
-                log(warning)("Invoking node {}, {}", model->name, s.to_string());
+                LOG_WARNING(log, "Invoking node {}, {}", model->name, s.to_string());
 
                 invoke_sub_step(model, s);
             }
@@ -124,7 +124,7 @@ namespace ssp4sim::graph
         DelayExecutor(std::vector<Invocable *> nodes) : DelayExecutorBase(nodes)
         {
             this->name = "DelayExecutor";
-            log(info)("[{}] substep: {}", __func__, sub_step);
+            LOG_INFO(log, "[{}] substep: {}", __func__, sub_step);
 
             auto source = node_from_name(this, "Sources");
             auto let1 = node_from_name(this, "LET1");
@@ -164,7 +164,7 @@ namespace ssp4sim::graph
             auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             IF_LOG({
-                log(debug)("[{}] {} stepdata: {}", __func__, name, step_data.to_string());
+                LOG_DEBUG(log, "[{}] {} stepdata: {}", __func__, name, step_data.to_string());
             });
 
             std::for_each(std::execution::par, groups.begin(), groups.end(),
@@ -191,7 +191,7 @@ namespace ssp4sim::graph
         DelayExecutorPartial(std::vector<Invocable *> nodes) : DelayExecutorBase(nodes)
         {
             name = "DelayExecutorPartial";
-            log(info)("[{}] substep: {}", __func__, sub_step);
+            LOG_INFO(log, "[{}] substep: {}", __func__, sub_step);
 
             auto source = node_from_name(this, "Sources");
             auto let1 = node_from_name(this, "LET1");
@@ -226,7 +226,7 @@ namespace ssp4sim::graph
             auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             IF_LOG({
-                log(debug)("[{}] {} stepdata: {}", __func__, name, step_data.to_string());
+                LOG_DEBUG(log, "[{}] {} stepdata: {}", __func__, name, step_data.to_string());
             });
 
             auto one_ms = utils::time::nanoseconds_per_millisecond;

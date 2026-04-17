@@ -3,7 +3,7 @@
 #include "utils/node.hpp"
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstdint>
 #include <string>
@@ -19,7 +19,7 @@ namespace ssp4sim::analysis::graph
     public:
         uint64_t delay = 0;
 
-        Logger log = Logger("ssp4sim.graph.AnalysisConnection", LogLevel::debug);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnection", quill::LogLevel::TraceL1);
         std::string source_component_name;
         std::string source_connector_name;
         std::string target_component_name;

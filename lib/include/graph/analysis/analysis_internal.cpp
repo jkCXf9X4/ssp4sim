@@ -20,7 +20,7 @@ namespace ssp4sim::analysis::graph
 
     AnalysisModelVariable::~AnalysisModelVariable()
     {
-        log(ext_trace)("[{}] Destroying AnalysisModelVariable", __func__);
+        LOG_TRACE_L1(log, "[{}] Destroying AnalysisModelVariable", __func__);
     }
 
     void AnalysisModelVariable::update_name()

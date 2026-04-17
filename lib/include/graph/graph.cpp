@@ -42,12 +42,12 @@ namespace ssp4sim::graph
 
     void Graph::init()
     {
-        log(trace)("[{}] Initializing Graph", __func__);
+        LOG_DEBUG(log, "[{}] Initializing Graph", __func__);
 
         executor = ExecutorBuilder().build(nodes);
         executor->set_recorder(recorder);
 
-        log(trace)("[{}] - Initializing executor ", __func__);
+        LOG_DEBUG(log, "[{}] - Initializing executor ", __func__);
         executor->init();
     }
 
@@ -55,7 +55,7 @@ namespace ssp4sim::graph
     {
         using clock = std::chrono::steady_clock;
         IF_LOG({
-            log(trace)("[{}] Invoking Graph, full step: {}", __func__, step_data.to_string());
+            LOG_DEBUG(log, "[{}] Invoking Graph, full step: {}", __func__, step_data.to_string());
         });
 
         // macro step
@@ -69,13 +69,13 @@ namespace ssp4sim::graph
             {
                 auto target = clock::time_point(std::chrono::nanoseconds(realtime_start_reference + t));
                 std::this_thread::sleep_until(target);
-                log(info)("[{}] Realtime: {}", __func__, t);
+                LOG_INFO(log, "[{}] Realtime: {}", __func__, t);
             }
 
             auto s = StepData(t, t + step_data.timestep, step_data.timestep);
 
             IF_LOG({
-                log(debug)("[{}] Graph executing step: {}", __func__, s.to_string());
+                LOG_TRACE_L1(log, "[{}] Graph executing step: {}", __func__, s.to_string());
             });
 
             executor->invoke(s);

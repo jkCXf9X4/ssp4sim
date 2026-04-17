@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "execution/jacobi/jacobi_base.hpp"
 
@@ -14,7 +14,7 @@ namespace ssp4sim::graph
     class JacobiParallelSpin final : public ExecutionBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.JacobiParallelSpin", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelSpin", quill::LogLevel::TraceL1);
 
         utils::ThreadPool2 pool;
 

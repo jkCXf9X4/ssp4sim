@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 namespace ssp4sim::utils
 {
@@ -26,7 +26,7 @@ namespace ssp4sim::utils
     class ThreadPool
     {
     private:
-        Logger log = Logger("ssp4sim.utils.ThreadPool", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.utils.ThreadPool", quill::LogLevel::TraceL1);
 
         std::mutex queue_mutex;
         std::vector<std::thread> workers;
@@ -54,7 +54,7 @@ namespace ssp4sim::utils
         {
             using return_type = std::invoke_result_t<F>;
             IF_LOG({
-                log(debug)("[{}] Enqueueing task", __func__);
+                LOG_DEBUG(log, "[{}] Enqueueing task", __func__);
             });
 
             auto task = std::make_shared<std::packaged_task<return_type()>>(std::forward<F>(f));
@@ -69,7 +69,7 @@ namespace ssp4sim::utils
             // notify a worker that one task is available
             task_semaphore.release();
             IF_LOG({
-                log(debug)("[{}] Task queued", __func__);
+                LOG_DEBUG(log, "[{}] Task queued", __func__);
             });
 
             return res;

@@ -1,10 +1,11 @@
 #pragma once
 
+#include "ssp4cpp/utils/log.hpp"
+
 #include "ssp4sim_definitions.hpp"
 
 #include "signal/storage.hpp"
 
-#include "cutecpp/log.hpp"
 #include "utils/model.hpp"
 
 #include <cstddef>
@@ -18,10 +19,9 @@ namespace ssp4sim::graph
     {
         ConnectionInfo() = default;
         ~ConnectionInfo(){
-            log(trace)("Destroying ConnectionInfo");
         };
 
-        static Logger log;
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ConnectionInfo", quill::LogLevel::TraceL1);
 
         types::DataType type;
         size_t size;

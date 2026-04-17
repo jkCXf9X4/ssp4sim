@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 #include "utils/time.hpp"
 
 #include "ssp4sim_definitions.hpp"
@@ -34,7 +34,7 @@ namespace ssp4sim::signal
     class DataRecorder
     {
     public:
-        Logger log = Logger("ssp4sim.record.DataRecorder", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.record.DataRecorder", quill::LogLevel::TraceL1);
 
         std::ofstream file;
         std::unique_ptr<std::thread> worker;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ssp4cpp/utils/log.hpp"
+
 #include "ssp4sim_definitions.hpp"
 
 #include "utils/model.hpp"
@@ -7,8 +9,6 @@
 #include "signal/storage.hpp"
 #include "handler/fmu_handler.hpp"
 #include "schema_extensions/initial_value.hpp"
-
-#include "cutecpp/log.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -18,12 +18,11 @@
 
 namespace ssp4sim::graph
 {
+    
 
     class ConnectorInfo : public types::IWritable
     {
     public:
-        static Logger log;
-
         types::DataType type;
         size_t size;
         std::string name;
@@ -33,6 +32,8 @@ namespace ssp4sim::graph
 
         handler::FmuInfo *fmu;
         signal::SignalStorage *storage;
+
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.model.ConnectorInfo", quill::LogLevel::TraceL1);
 
         std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value;
 

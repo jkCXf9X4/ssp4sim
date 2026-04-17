@@ -4,7 +4,7 @@
 
 #include "execution/executor.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <memory>
 #include <string>
@@ -16,7 +16,7 @@ namespace ssp4sim::graph
     class ExecutorBuilder : public types::IWritable
     {
     public:
-        Logger log = Logger("ssp4sim.execution.Delay", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.Delay", quill::LogLevel::TraceL1);
 
         ExecutorBuilder() = default;
 

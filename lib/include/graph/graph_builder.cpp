@@ -19,21 +19,21 @@ namespace ssp4sim::graph
 
     void GraphBuilder::build()
     {
-        log(trace)("[{}] init", __func__);
+        LOG_DEBUG(log, "[{}] init", __func__);
 
-        log(trace)("[{}] - Create the fmu models", __func__);
+        LOG_DEBUG(log, "[{}] - Create the fmu models", __func__);
         for (auto &[ssp_resource_name, analysis_model] : analysis_graph->models)
         {
             auto m = std::make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu, analysis_model->maxOutputDerivativeOrder);
-            log(ext_trace)("[{}] -- New Model: {}", __func__, m->name);
+            LOG_TRACE_L1(log, "[{}] -- New Model: {}", __func__, m->name);
 
             m->delay = analysis_model->delay;
-            log(debug)("Model: {}, delay {}", m->name, m->delay);
+            LOG_DEBUG(log, "Model: {}, delay {}", m->name, m->delay);
 
             models[analysis_model->name] = std::move(m);
         }
 
-        log(trace)("[{}] - Create the data storage areas within the model", __func__);
+        LOG_DEBUG(log, "[{}] - Create the data storage areas within the model", __func__);
         for (auto &[_, analysis_model] : analysis_graph->models)
         {
             auto model = static_cast<FmuModel *>(models[analysis_model->name].get());
@@ -62,7 +62,7 @@ namespace ssp4sim::graph
                 {
                     info.initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(*connector->initial_value);
 
-                    log(debug)("[{}] -- Store start value for {} : {}", __func__, info.name, ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr()));
+                    LOG_TRACE_L1(log, "[{}] -- Store start value for {} : {}", __func__, info.name, ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr()));
                 }
 
                 if (connector->causality == types::Causality::input)
@@ -82,7 +82,7 @@ namespace ssp4sim::graph
             }
         }
 
-        log(trace)("[{}] - Hand the information regarding the connections over to the model", __func__);
+        LOG_DEBUG(log, "[{}] - Hand the information regarding the connections over to the model", __func__);
         for (auto &[_, connection] : analysis_graph->connections)
         {
             auto source_model = static_cast<FmuModel *>(models[connection->source_model->name].get());
@@ -104,12 +104,12 @@ namespace ssp4sim::graph
             con_info.forward_derivatives_order = source_connector.forward_derivatives_order;
 
             con_info.delay = connection->delay;
-            log(debug)("Connection: {}, delay {}", connection->name, connection->delay);
+            LOG_TRACE_L1(log, "Connection: {}, delay {}", connection->name, connection->delay);
 
             target_model->connections.push_back(std::move(con_info));
         }
 
-        log(trace)("[{}] - Allocate the input/output areas", __func__);
+        LOG_DEBUG(log, "[{}] - Allocate the input/output areas", __func__);
         for (auto &[ssp_resource_name, model] : models)
         {
             auto m = static_cast<FmuModel *>(model.get());
@@ -122,7 +122,7 @@ namespace ssp4sim::graph
             }
         }
 
-        log(trace)("[{}] - Create connections between models", __func__);
+        LOG_DEBUG(log, "[{}] - Create connections between models", __func__);
         for (auto &[_, analysis_model] : analysis_graph->models)
         {
             for (auto &child : analysis_model->children)
@@ -131,7 +131,7 @@ namespace ssp4sim::graph
             }
         }
 
-        log(ext_trace)("[{}] exit", __func__);
+        LOG_DEBUG(log, "[{}] exit", __func__);
     }
 
     std::unique_ptr<Graph> GraphBuilder::get_graph()

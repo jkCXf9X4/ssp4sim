@@ -6,7 +6,7 @@
 #include "ssp4cpp/utils/log.hpp"
 #include "quill/SimpleSetup.h"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <filesystem>
 #include <exception>
@@ -33,7 +33,7 @@ namespace ssp4sim
         LOG_INFO(p->log, "[{}] - Loading config: {}", __func__, config_path);
         if (!std::filesystem::exists(config_path))
         {
-            LOGV_ERROR(p->log, "Config file does not exist", config_path);
+            LOG_ERROR(p->log, "Config file does not exist: {}", config_path);
             throw std::runtime_error("Config file does not exist: " + config_path);
         }
         

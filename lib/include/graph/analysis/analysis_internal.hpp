@@ -1,6 +1,6 @@
 #pragma once
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include "utils/node.hpp"
 
@@ -17,7 +17,7 @@ namespace ssp4sim::analysis::graph
         uint64_t delay = 0;
 
     public:
-        Logger log = Logger("ssp4sim.graph.AnalysisModelVariable", LogLevel::debug);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable", quill::LogLevel::TraceL1);
         std::string component;
         std::string variable_name;
 

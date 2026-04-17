@@ -7,7 +7,7 @@
 
 #include "signal/recorder.hpp"
 
-#include "cutecpp/log.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <cstdint>
 #include <map>
@@ -21,7 +21,7 @@ namespace ssp4sim::graph
     class Graph final : public Invocable
     {
     public:
-        Logger log = Logger("ssp4sim.graph.Graph", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.Graph", quill::LogLevel::TraceL1);
 
         std::map<std::string, Invocable*> node_map;
         std::vector<Invocable *> nodes;

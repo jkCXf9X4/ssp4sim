@@ -15,7 +15,6 @@
 #include "execution/invocable.hpp"
 #include "graph/graph.hpp"
 
-#include "cutecpp/log.hpp"
 #include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4cpp/fmu.hpp"
@@ -32,7 +31,7 @@ namespace ssp4sim
 
     struct SimulationPrivate
     {
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulation", quill::LogLevel::Info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulation", quill::LogLevel::TraceL1);
 
         ssp4cpp::Ssp *ssp;
 

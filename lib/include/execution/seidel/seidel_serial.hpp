@@ -11,7 +11,7 @@ namespace ssp4sim::graph
     class SerialSeidel final : public SeidelBase
     {
     public:
-        Logger log = Logger("ssp4sim.execution.SerialSeidel", LogLevel::info);
+        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.SerialSeidel", quill::LogLevel::TraceL1);
 
         SerialSeidel(std::vector<Invocable *> nodes);
 

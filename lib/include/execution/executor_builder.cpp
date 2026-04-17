@@ -38,17 +38,17 @@ namespace ssp4sim::graph
 
                 if (parallel_method == 1)
                 {
-                    log(info)("[{}] Executor: JacobiParallelTBB", __func__);
+                    LOG_INFO(log, "[{}] Executor: JacobiParallelTBB", __func__);
                     return std::make_unique<JacobiParallelTBB>(nodes);
                 }
                 else if (parallel_method == 2)
                 {
-                    log(info)("[{}] Executor: JacobiParallelSpin", __func__);
+                    LOG_INFO(log, "[{}] Executor: JacobiParallelSpin", __func__);
                     return std::make_unique<JacobiParallelSpin>(nodes, workers);
                 }
                 else if (parallel_method == 3)
                 {
-                    log(info)("[{}] Executor: JacobiParallelFutures", __func__);
+                    LOG_INFO(log, "[{}] Executor: JacobiParallelFutures", __func__);
                     return std::make_unique<JacobiParallelFutures>(nodes, workers);
                 }
                 else
@@ -58,7 +58,7 @@ namespace ssp4sim::graph
             }
             else
             {
-                log(info)("[{}] Executor: JacobiSerial", __func__);
+                LOG_INFO(log, "[{}] Executor: JacobiSerial", __func__);
                 return std::make_unique<JacobiSerial>(nodes);
             }
         }
@@ -66,23 +66,23 @@ namespace ssp4sim::graph
         {
             if (utils::Config::getOr("simulation.executor.seidel.parallel", false))
             {
-                log(info)("[{}] Executor: ParallelSeidel", __func__);
+                LOG_INFO(log, "[{}] Executor: ParallelSeidel", __func__);
                 return std::make_unique<ParallelSeidel>(nodes);
             }
             else
             {
-                log(info)("[{}] Executor: SerialSeidel", __func__);
+                LOG_INFO(log, "[{}] Executor: SerialSeidel", __func__);
                 return std::make_unique<SerialSeidel>(nodes);
             }
         }
         else if (executor_method == "custom_delay")
         {
-            log(info)("[{}] Executor: DelayExecutor", __func__);
+            LOG_INFO(log, "[{}] Executor: DelayExecutor", __func__);
             return std::make_unique<DelayExecutor>(nodes);
         }
         else if (executor_method == "custom_delay_partial")
         {
-            log(info)("[{}] Executor: DelayExecutorPartial", __func__);
+            LOG_INFO(log, "[{}] Executor: DelayExecutorPartial", __func__);
             return std::make_unique<DelayExecutorPartial>(nodes);
         }
 
