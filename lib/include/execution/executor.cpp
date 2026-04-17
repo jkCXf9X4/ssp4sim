@@ -44,7 +44,7 @@ namespace ssp4sim::graph
             model->enter_init();
         }
 
-        LOG_WARNING(log, "[{}] TODO: Implement direct feedthrough", __func__);
+        LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{}] TODO: Implement direct feedthrough", __func__);
 
         // direct feedthrough evaluation should come between these.
         // Doing direct feedthrough for all variables will overwrite inputs with outputs that are unset

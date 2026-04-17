@@ -124,6 +124,12 @@ Implementation note: SSP4SIM uses Quill as the logging backend.
    * Avoid header-initialized logger members when sinks are configured at runtime.
    * Prefer constructing `quill::Logger*` members in constructors after logging has been configured.
 
+9. **Hot path logging**:
+
+   * Avoid `INFO`, `WARNING`, or higher-volume `DEBUG` logging inside step, substep, executor, thread-pool, or recorder inner loops.
+   * Use `IF_LOG({ ... })` for detailed execution tracing so hot-path logs can be compiled out with `SSP4SIM_LOG_HOT_PATH=OFF`.
+   * Quill queue growth messages indicate frontend threads are producing logs faster than the backend can drain them. Treat that as a signal to reduce log volume on the hot path first.
+
 ---
 
 ## 4. Environment Guidelines

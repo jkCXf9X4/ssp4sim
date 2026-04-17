@@ -12,8 +12,6 @@
 
 namespace ssp4sim::ext::ssp
 {
-    inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp", quill::LogLevel::TraceL1);
-
     std::map<std::string, std::string> get_resource_map(ssp4cpp::Ssp &ssp);
 
     /**

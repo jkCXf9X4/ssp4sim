@@ -88,8 +88,8 @@ namespace ssp4sim::graph
                                   output_time);       // output_time
 
                 IF_LOG({
-                    LOG_INFO(log, "models {}, Time {}, step: {}",
-                              models->name, models->current_time, s.to_string());
+                    LOG_TRACE_L1(log, "models {}, Time {}, step: {}",
+                                 models->name, models->current_time, s.to_string());
                 });
 
                 models->invoke(s);
@@ -98,17 +98,21 @@ namespace ssp4sim::graph
 
         void gauss_seidel(std::vector<Invocable *> &_nodes_, StepData &step_data, uint64_t sub_step, int delay = 0)
         {
-            LOG_INFO(log, "New group");
+            IF_LOG({
+                LOG_TRACE_L1(log, "New group");
+            });
             int accumulated_delay = delay;
             for (auto &node : _nodes_)
             {
                 auto model = (FmuModel *)node;
-                LOG_WARNING(log, "accumulated_delay {}", accumulated_delay);
                 auto macro_start = step_data.start_time + accumulated_delay;
                 auto macro_end = macro_start + step_data.timestep;
 
                 auto s = StepData(macro_start, macro_end, sub_step, macro_end, macro_end);
-                LOG_WARNING(log, "Invoking node {}, {}", model->name, s.to_string());
+                IF_LOG({
+                    LOG_TRACE_L1(log, "accumulated_delay {}", accumulated_delay);
+                    LOG_TRACE_L1(log, "Invoking node {}, {}", model->name, s.to_string());
+                });
 
                 invoke_sub_step(model, s);
             }

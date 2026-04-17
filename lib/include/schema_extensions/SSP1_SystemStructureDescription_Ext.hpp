@@ -17,19 +17,13 @@ namespace ssp4sim::ext::ssp1
 {
     using namespace ssp4cpp::ssp1::ssd;
 
-    inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1", quill::LogLevel::TraceL1);
-
     namespace ssd
     {
-        inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1.ssd", quill::LogLevel::TraceL1);
-
         std::vector<TComponent *> get_resources(const SystemStructureDescription &ssd);
     }
 
     namespace elements
     {
-        inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1.elements", quill::LogLevel::TraceL1);
-
         using IndexConnectorComponentTuple = std::tuple<int, Connector *, TComponent *>;
         using IndexConnectorComponentTuples = std::vector<IndexConnectorComponentTuple>;
 

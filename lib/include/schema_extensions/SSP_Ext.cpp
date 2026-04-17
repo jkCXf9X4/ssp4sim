@@ -9,6 +9,17 @@
 
 namespace ssp4sim::ext::ssp
 {
+    namespace
+    {
+        quill::Logger* log()
+        {
+            // Cache this logger locally so we avoid eager header initialization.
+            static quill::Logger* logger =
+                ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp", quill::LogLevel::TraceL1);
+            return logger;
+        }
+    }
+
     std::map<std::string, std::string> get_resource_map(ssp4cpp::Ssp &ssp)
     {
         auto resources = std::map<std::string, std::string>();
@@ -16,7 +27,7 @@ namespace ssp4sim::ext::ssp
         for (auto &resource : get_resources(*ssp.ssd))
         {
             auto name = resource->name.value_or("null");
-            LOG_TRACE_L1(log, "Resource {} : {}", name, resource->source);
+            LOG_TRACE_L1(log(), "Resource {} : {}", name, resource->source);
 
             resources[name] = resource->source;
         }
@@ -33,16 +44,16 @@ namespace ssp4sim::ext::ssp
         for (auto &resource : get_resources(*ssp.ssd))
         {
             auto name = resource->name.value_or("null");
-            LOG_TRACE_L1(log, "Resource {}", name);
+            LOG_TRACE_L1(log(), "Resource {}", name);
 
             auto fmu = std::make_unique<ssp4cpp::Fmu>(ssp.dir / resource->source);
             items[name] = std::move(fmu);
         }
 
-        LOG_TRACE_L1(log, "FMUs");
+        LOG_TRACE_L1(log(), "FMUs");
         for (auto &[name, fmu] : items)
         {
-            LOG_TRACE_L1(log, "{} : {}", name, fmu->to_string());
+            LOG_TRACE_L1(log(), "{} : {}", name, fmu->to_string());
         }
         return items;
     }

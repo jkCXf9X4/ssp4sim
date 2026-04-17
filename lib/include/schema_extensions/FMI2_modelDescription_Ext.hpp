@@ -19,8 +19,6 @@ namespace ssp4sim::ext::fmi2
 
     namespace model_variables
     {
-        inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.fmi2.model_variables", quill::LogLevel::TraceL1);
-
         /** @brief Retrieve a variable by index from the model variables list. */
         fmi2ScalarVariable *get_variable(ModelVariables &mv, int index);
 
@@ -37,8 +35,6 @@ namespace ssp4sim::ext::fmi2
 
     namespace dependency
     {
-        inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.fmi2.dependency", quill::LogLevel::TraceL1);
-
         using IndexDependencyCoupling = std::tuple<int, int, DependenciesKind>;
         using VariableDependencyCoupling = std::tuple<fmi2ScalarVariable *, fmi2ScalarVariable *, DependenciesKind>;
 

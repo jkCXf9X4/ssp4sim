@@ -4,9 +4,6 @@
 #include "simulation.hpp"
 #include "ssp4cpp/ssp.hpp"
 #include "ssp4cpp/utils/log.hpp"
-#include "quill/SimpleSetup.h"
-
-#include "ssp4cpp/utils/log.hpp"
 
 #include <filesystem>
 #include <exception>
@@ -26,8 +23,7 @@ namespace ssp4sim
     Simulator::Simulator(const std::string config_path)
         : p(std::make_unique<SimulatorPrivate>())
     {
-        ssp4cpp::utils::log::init_logging();
-        p->log = quill::simple_logger();
+        p->log = ssp4cpp::utils::log::simple_logger();
         LOG_INFO(p->log, "[{}] Setting up Simulator", __func__);
 
         LOG_INFO(p->log, "[{}] - Loading config: {}", __func__, config_path);
@@ -43,6 +39,7 @@ namespace ssp4sim
 
         auto log_file = utils::Config::getString("simulation.log.file");
 
+        ssp4cpp::utils::log::init_logging();
         ssp4cpp::utils::log::add_console(quill::loglevel_from_string(utils::Config::getString("simulation.log.level_terminal")));
         ssp4cpp::utils::log::add_file_sink(log_file, quill::loglevel_from_string(utils::Config::getString("simulation.log.level_file")));
         ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(utils::Config::getString("simulation.log.level_json")));

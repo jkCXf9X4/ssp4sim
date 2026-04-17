@@ -20,8 +20,6 @@ namespace ssp4cpp
 
 namespace ssp4sim::ext::ssp1::ssv
 {
-    inline quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1.ssv", quill::LogLevel::TraceL1);
-
     types::DataType get_parameter_type(ssp4cpp::ssp1::ssv::TParameter &par);
 
     void *get_parameter_value(ssp4cpp::ssp1::ssv::TParameter &par);

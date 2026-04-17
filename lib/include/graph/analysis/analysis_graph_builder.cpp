@@ -101,7 +101,7 @@ namespace ssp4sim::analysis::graph
                         c->initial_value->store_value(start_value);
                     }
 
-                    LOG_WARNING(log, "[{}] TODO: Internal SSP parameterset should overwrite the fmu", __func__);
+                    LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{}] TODO: Internal SSP parameterset should overwrite the fmu", __func__);
 
                     if (mapping_start_values.contains(system_name))
                     {
@@ -144,7 +144,7 @@ namespace ssp4sim::analysis::graph
 
     std::map<std::string, std::unique_ptr<AnalysisModelVariable>> AnalysisGraphBuilder::create_model_variables(std::map<std::string, ssp4cpp::Fmu *> &fmu_map)
     {
-        LOG_WARNING(log, "[{}] init, deprecated", __func__);
+        LOG_WARNING_LIMIT_EVERY_N(10000, log, "[{}] init, deprecated", __func__);
         std::map<std::string, std::unique_ptr<AnalysisModelVariable>> items;
         for (auto &[name, fmu] : fmu_map)
         {
