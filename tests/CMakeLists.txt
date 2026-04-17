@@ -8,6 +8,7 @@ target_include_directories(
   ssp4sim_tests
   PRIVATE ${CMAKE_SOURCE_DIR}/lib/include
           ${CMAKE_SOURCE_DIR}/lib/include/utils
+          ${CMAKE_SOURCE_DIR}/lib/include/model
           ${CMAKE_SOURCE_DIR}/lib/include/schema_extensions
           ${CMAKE_SOURCE_DIR}/lib/include/handler
           ${CMAKE_SOURCE_DIR}/lib/public_include)

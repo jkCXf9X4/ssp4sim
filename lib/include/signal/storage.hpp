@@ -4,7 +4,6 @@
 
 #include "FMI2_Enums_Ext.hpp"
 
-
 #include "ssp4sim_definitions.hpp"
 
 #include <cstddef>
@@ -24,32 +23,43 @@ namespace ssp4sim::signal
      * - store multiple time versions of the data to enable access backwards in time
      */
 
-     struct SignalInfo
-     {
+    struct SignalInfo
+    {
         size_t index;
         types::DataType type;
         std::string name;
         size_t type_size;
         size_t max_interpolation_orders;
         size_t total_size; // size of data and derivate
- 
-        size_t position; // position in the item data chunk
-        size_t derivate_position; // position of the first derivate in the item data chunk
 
-     };
+        size_t position;          // position in the item data chunk
+        size_t derivate_position; // position of the first derivate in the item data chunk
+    };
+
+    class SignalStorage; // Forward
+
+    struct NewDataEvent
+    {
+        SignalStorage *storage = nullptr;
+        std::size_t area = 0;
+        uint64_t timestamp = 0;
+    };
+    using Callback = void (*)(NewDataEvent);
 
     class SignalStorage : public types::IWritable
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger *log = nullptr;
 
         std::unique_ptr<utils::RingBuffer> data;
 
         std::vector<SignalInfo> variables;
         size_t mem_size = 0;
 
-        std::vector<std::vector<std::byte *>> locations;     // absolute location in memory
+        std::vector<std::vector<std::byte *>> locations;          // absolute location in memory
         std::vector<std::vector<std::byte *>> derivate_locations; // absolute location in memory
+
+        Callback new_data_callback = nullptr;
         std::vector<std::atomic<bool>> new_data_flags;
 
         std::size_t areas = 0;
@@ -77,6 +87,8 @@ namespace ssp4sim::signal
         std::byte *get_item(std::size_t area, std::size_t index) noexcept;
 
         std::byte *get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept;
+
+        void register_callback(Callback cb);
 
         void flag_new_data(std::size_t area);
 

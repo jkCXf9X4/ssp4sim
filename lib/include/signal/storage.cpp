@@ -1,6 +1,5 @@
 #include "signal/storage.hpp"
 
-
 #include <cstring>
 #include <memory>
 #include <new>
@@ -14,8 +13,8 @@ namespace ssp4sim::signal
     const size_t derivative_size = sizeof(double);
 
     // is the alignment solution to complex?
-    // can it just align all to the largest alignas? 
-    // 
+    // can it just align all to the largest alignas?
+    //
     namespace
     {
         inline std::size_t align_up(std::size_t value, std::size_t alignment)
@@ -79,7 +78,6 @@ namespace ssp4sim::signal
         }
     }
 
-
     size_t SignalStorage::add(std::string name, types::DataType type, size_t max_interpolation_order)
     {
         SignalInfo d;
@@ -109,7 +107,7 @@ namespace ssp4sim::signal
 
         variables.push_back(std::move(d));
 
-        return variables.size() -1;
+        return variables.size() - 1;
     }
 
     void SignalStorage::allocate()
@@ -130,7 +128,7 @@ namespace ssp4sim::signal
 
         for (std::size_t area_index = 0; area_index < areas; area_index++)
         {
-            std::byte * area = data->get_item(area_index, false);
+            std::byte *area = data->get_item(area_index, false);
 
             for (auto variable : this->variables)
             {
@@ -182,7 +180,6 @@ namespace ssp4sim::signal
         return data->get_time(area);
     }
 
-
     std::byte *SignalStorage::get_item(std::size_t area, std::size_t index) noexcept
     {
         if (allocated)
@@ -223,14 +220,28 @@ namespace ssp4sim::signal
         return nullptr;
     }
 
+    void SignalStorage::register_callback(Callback cb)
+    {
+        new_data_callback = std::move(cb);
+    }
+
     void SignalStorage::flag_new_data(std::size_t area)
     {
         if (allocated)
         {
             new_data_flags[area] = true;
+
+            // Prep for non flag solution
+            if (new_data_callback)
+            {
+                auto t = NewDataEvent();
+                t.area = area;
+                t.storage = this;
+                t.timestamp = get_time(area);
+                new_data_callback(t);
+            }
         }
     }
-
 
     std::string SignalStorage::to_string() const
     {

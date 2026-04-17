@@ -1,10 +1,35 @@
-
+##
 Evaluate https://vcpkg.io/en/package/sqlitecpp for data persistence
 
 use in memory cache and push to sqllite for persistence
 
 
-[] create folder for output files, currently it crashes
+Replacing busy-polling plus flag-scanning with event-driven handoff
+    When FmuModel::pre or post publish a small snapshot descriptor or packed sample into a bounded queue.
+
+    async: simulation never waits.
+    step_snapshot: simulation waits only until a snapshot block is enqueued.
+
+    How to avoid copying the data?
+
+
+  - Separate capture from serialization:
+    Recorder thread 1 collects snapshots into blocks.
+    Writer thread 2 serializes blocks to CSV.
+
+
+  - do not require per-step disk durability; only complete final results are required.
+  - CSV remains the user-facing artifact, but internal staging may be binary or block-oriented.
+
+
+Possible configuration items
+
+    simulation.recording.consistency = async|step_snapshot
+    simulation.recording.capture = outputs|inputs_and_outputs
+    simulation.recording.queue_capacity = <int> bounded, default sized for a few seconds of samples
+
+
+---
 
 
 Analyze internal connections, this can be used for:
@@ -20,6 +45,8 @@ in Jacobi
 
 Move the set inputs / retrieve outputs outside the fmu_model to enable this
 
+
+---
 
 Check out 
 
@@ -43,3 +70,10 @@ iteration loop:
   perform convergence check
 
 CAn this be used for co-simulation?
+
+
+---
+
+std::byte *SignalStorage::get_item(std::size_t area, std::size_t index) noexcept
+
+is slow, create a flat vector to limit the number of pointer directions

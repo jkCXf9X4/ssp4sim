@@ -39,14 +39,3 @@ self.OMS.setCommandLineOption("--emitEvents=false")
 what does this oms flag do?
 
 
-
-### TODO:
-
----
-Unzip ssps prior to execution to limit multiple unzip, can be expensive
-
----
-
-std::byte *SignalStorage::get_item(std::size_t area, std::size_t index) noexcept
-
-is slow, create a flat vector to limit the number of pointer directions
