@@ -19,7 +19,7 @@ namespace ssp4sim::utils::graph
      */
     class Node : public virtual types::IWritable
     {
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.common.Node", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
     public:
         std::string name;

@@ -23,7 +23,7 @@ namespace ssp4sim::utils
     {
 
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.utils.RingBuffer", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         std::size_t item_size = 0;
         std::unique_ptr<std::byte[]> data;

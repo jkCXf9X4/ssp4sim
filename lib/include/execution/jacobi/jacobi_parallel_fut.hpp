@@ -16,7 +16,7 @@ namespace ssp4sim::graph
     class JacobiParallelFutures final : public ExecutionBase
     {
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelFutures", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         utils::ThreadPool pool;
         std::vector<std::future<void>> futures;

@@ -51,7 +51,9 @@ namespace ssp4sim::signal
         }
     }
 
-    SignalStorage::SignalStorage(std::size_t areas, std::string name) : new_data_flags(areas)
+    SignalStorage::SignalStorage(std::size_t areas, std::string name)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.SignalStorage", quill::LogLevel::TraceL1)),
+          new_data_flags(areas)
     {
         this->areas = areas;
         this->name = std::move(name);

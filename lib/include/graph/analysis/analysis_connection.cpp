@@ -7,7 +7,13 @@
 namespace ssp4sim::analysis::graph
 {
 
+    AnalysisConnection::AnalysisConnection()
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnection", quill::LogLevel::TraceL1))
+    {
+    }
+
     AnalysisConnection::AnalysisConnection(ssp4cpp::ssp1::ssd::Connection *connection)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnection", quill::LogLevel::TraceL1))
     {
         source_component_name = connection->startElement.value();
         source_connector_name = connection->startConnector;

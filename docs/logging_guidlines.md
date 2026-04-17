@@ -119,6 +119,11 @@ Implementation note: SSP4SIM uses Quill as the logging backend.
    * WARN, ERROR, and FATAL logs should be tracked in monitoring systems.
    * FATAL logs must trigger **alerts** immediately.
 
+8. **Initialization order**:
+
+   * Avoid header-initialized logger members when sinks are configured at runtime.
+   * Prefer constructing `quill::Logger*` members in constructors after logging has been configured.
+
 ---
 
 ## 4. Environment Guidelines

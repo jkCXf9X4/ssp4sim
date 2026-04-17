@@ -23,6 +23,11 @@ namespace ssp4sim::graph
     class ConnectorInfo : public types::IWritable
     {
     public:
+        ConnectorInfo()
+            : log(ssp4cpp::utils::log::make_logger("ssp4sim.model.ConnectorInfo", quill::LogLevel::TraceL1))
+        {
+        }
+
         types::DataType type;
         size_t size;
         std::string name;
@@ -33,7 +38,7 @@ namespace ssp4sim::graph
         handler::FmuInfo *fmu;
         signal::SignalStorage *storage;
 
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.model.ConnectorInfo", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value;
 

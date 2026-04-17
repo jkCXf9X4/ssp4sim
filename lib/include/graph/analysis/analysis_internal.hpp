@@ -17,7 +17,7 @@ namespace ssp4sim::analysis::graph
         uint64_t delay = 0;
 
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisModelVariable", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
         std::string component;
         std::string variable_name;
 

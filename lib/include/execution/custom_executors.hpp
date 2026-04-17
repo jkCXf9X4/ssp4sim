@@ -28,11 +28,13 @@ namespace ssp4sim::graph
     class DelayExecutorBase : public ExecutionBase
     {
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.DelayExecutor", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         std::vector<std::vector<Invocable *>> groups;
 
-        DelayExecutorBase(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
+        DelayExecutorBase(std::vector<Invocable *> nodes)
+            : ExecutionBase(nodes),
+              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.DelayExecutor", quill::LogLevel::TraceL1))
         {
             this->name = "DelayExecutor";
             LOG_INFO(log, "[{}] substep: {}", __func__, sub_step);

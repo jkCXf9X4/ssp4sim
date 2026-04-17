@@ -16,7 +16,8 @@ namespace ssp4sim::analysis::graph
     AnalysisGraph::AnalysisGraph(std::map<std::string, std::unique_ptr<AnalysisModel>> models_,
                                  std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors_,
                                  std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_)
-        : models(std::move(models_)),
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisGraph", quill::LogLevel::TraceL1)),
+          models(std::move(models_)),
           connectors(std::move(connectors_)),
           connections(std::move(connections_))
     {

@@ -13,7 +13,9 @@
 namespace ssp4sim::graph
 {
     GraphBuilder::GraphBuilder(AnalysisGraph *ag, ssp4sim::signal::DataRecorder *recorder)
-        : analysis_graph(ag), recorder(recorder)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder", quill::LogLevel::TraceL1)),
+          analysis_graph(ag),
+          recorder(recorder)
     {
     }
 

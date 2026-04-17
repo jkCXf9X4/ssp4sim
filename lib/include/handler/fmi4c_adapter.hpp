@@ -21,7 +21,7 @@ namespace ssp4sim::handler
     class FmuInstance
     {
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuInstance", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         FmuInstance(const std::filesystem::path &path, std::string instance_name);
 
@@ -64,7 +64,7 @@ namespace ssp4sim::handler
         fmi2CallbackFunctions callbacks;
 
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.handler.CoSimulationModel", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         CoSimulationModel(FmuInstance &instance);
 

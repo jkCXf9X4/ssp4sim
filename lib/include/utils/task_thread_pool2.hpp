@@ -27,7 +27,7 @@ namespace ssp4sim::utils
     class ThreadPool2
     {
     private:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.utils.ThreadPool2", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         std::mutex mtx;
         std::condition_variable cv;

@@ -48,7 +48,7 @@ namespace ssp4sim::handler
     class FmuHandler
     {
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuHandler", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         ssp4cpp::Ssp *ssp;
 

@@ -28,7 +28,9 @@ namespace ssp4sim::handler
         this->model_description = fmu->md.get();
     }
 
-    FmuHandler::FmuHandler(ssp4cpp::Ssp *ssp) : ssp(ssp)
+    FmuHandler::FmuHandler(ssp4cpp::Ssp *ssp)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuHandler", quill::LogLevel::TraceL1)),
+          ssp(ssp)
     {
         LOG_DEBUG(log, "[{}] Creating FMU map", __func__);
         fmu_map = ssp4sim::ext::ssp::create_fmu_map(*ssp);

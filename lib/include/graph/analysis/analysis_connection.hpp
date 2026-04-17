@@ -19,7 +19,7 @@ namespace ssp4sim::analysis::graph
     public:
         uint64_t delay = 0;
 
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnection", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
         std::string source_component_name;
         std::string source_connector_name;
         std::string target_component_name;
@@ -31,7 +31,7 @@ namespace ssp4sim::analysis::graph
         AnalysisModel *source_model;
         AnalysisModel *target_model;
 
-        AnalysisConnection() = default;
+        AnalysisConnection();
 
         AnalysisConnection(ssp4cpp::ssp1::ssd::Connection *connection);
 

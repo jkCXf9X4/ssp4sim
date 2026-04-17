@@ -17,11 +17,14 @@ namespace ssp4sim::graph
 {
     struct ConnectionInfo : public types::IWritable
     {
-        ConnectionInfo() = default;
+        ConnectionInfo()
+            : log(ssp4cpp::utils::log::make_logger("ssp4sim.ConnectionInfo", quill::LogLevel::TraceL1))
+        {
+        }
         ~ConnectionInfo(){
         };
 
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.ConnectionInfo", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         types::DataType type;
         size_t size;

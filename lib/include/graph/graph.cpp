@@ -17,6 +17,7 @@ namespace ssp4sim::graph
 {
 
     Graph::Graph(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.Graph", quill::LogLevel::TraceL1))
     {
         this->recorder = recorder;
         this->node_map = node_map;

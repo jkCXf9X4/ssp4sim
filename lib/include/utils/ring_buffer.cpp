@@ -10,7 +10,10 @@ namespace ssp4sim::utils
     // There are almost no bound checks in this class
     // use with care...
 
-    RingBuffer::RingBuffer(size_t capacity, size_t item_size) : timestamps(capacity), used(capacity)
+    RingBuffer::RingBuffer(size_t capacity, size_t item_size)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.RingBuffer", quill::LogLevel::TraceL1)),
+          timestamps(capacity),
+          used(capacity)
     {
         LOG_TRACE_L2(log, "[{}] Constructor", __func__);
         if (capacity == 0)

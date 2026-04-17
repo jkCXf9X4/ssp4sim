@@ -8,7 +8,11 @@
 namespace ssp4sim::graph
 {
 
-    SeidelBase::SeidelBase(std::vector<Invocable *> _nodes_) : ExecutionBase(std::move(_nodes_)), nr_of_nodes(nodes.size()), seidel_nodes(nr_of_nodes)
+    SeidelBase::SeidelBase(std::vector<Invocable *> _nodes_)
+        : ExecutionBase(std::move(_nodes_)),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.SeidelBase", quill::LogLevel::TraceL1)),
+          nr_of_nodes(nodes.size()),
+          seidel_nodes(nr_of_nodes)
     {
         LOG_INFO(log, "[{}] ", __func__);
         LOG_DEBUG(log, "[{}] nr_of_nodes {}, seidel_nodes {}", __func__, nr_of_nodes, seidel_nodes.size());

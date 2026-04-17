@@ -20,7 +20,7 @@ namespace ssp4sim::graph
     class GraphBuilder
     {
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder", quill::LogLevel::TraceL1);;
+        quill::Logger* log = nullptr;;
 
         AnalysisGraph *analysis_graph;
         ssp4sim::signal::DataRecorder *recorder;

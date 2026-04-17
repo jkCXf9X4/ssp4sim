@@ -56,6 +56,7 @@ namespace ssp4sim::handler
     }
 
     FmuInstance::FmuInstance(const std::filesystem::path &path, std::string instance_name)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuInstance", quill::LogLevel::TraceL1))
     {
         if (!std::filesystem::is_directory(path))
         {
@@ -122,7 +123,9 @@ namespace ssp4sim::handler
 
     // CoSimulationModel ----------------------------
 
-    CoSimulationModel::CoSimulationModel(FmuInstance &instance) : instance_(instance)
+    CoSimulationModel::CoSimulationModel(FmuInstance &instance)
+        : instance_(instance),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.CoSimulationModel", quill::LogLevel::TraceL1))
     {
     }
 

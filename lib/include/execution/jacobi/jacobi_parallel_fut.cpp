@@ -5,7 +5,9 @@
 namespace ssp4sim::graph
 {
     JacobiParallelFutures::JacobiParallelFutures(std::vector<Invocable *> nodes, int threads)
-        : ExecutionBase(nodes), pool(threads)
+        : ExecutionBase(nodes),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelFutures", quill::LogLevel::TraceL1)),
+          pool(threads)
     {
         LOG_INFO(log, "[{}] JacobiParallelFutures", __func__);
     }

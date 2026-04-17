@@ -13,7 +13,7 @@ namespace ssp4sim::graph
     class JacobiParallelTBB final : public ExecutionBase
     {
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelTBB", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
         JacobiParallelTBB(std::vector<Invocable *> nodes);
 

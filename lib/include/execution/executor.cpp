@@ -8,7 +8,9 @@
 namespace ssp4sim::graph
 {
 
-    ExecutionBase::ExecutionBase(std::vector<Invocable *> nodes) : nodes(std::move(nodes))
+    ExecutionBase::ExecutionBase(std::vector<Invocable *> nodes)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ExecutionBase", quill::LogLevel::TraceL1)),
+          nodes(std::move(nodes))
     {
         LOG_TRACE_L1(log, "[{}] Setting up shared state", __func__);
 

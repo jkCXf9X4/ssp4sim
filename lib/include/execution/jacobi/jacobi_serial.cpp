@@ -5,7 +5,9 @@
 namespace ssp4sim::graph
 {
 
-    JacobiSerial::JacobiSerial(std::vector<Invocable *> nodes) : JacobiBase(nodes)
+    JacobiSerial::JacobiSerial(std::vector<Invocable *> nodes)
+        : JacobiBase(nodes),
+          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiSerial", quill::LogLevel::TraceL1))
     {
         LOG_INFO(log, "[{}] ", __func__);
     }

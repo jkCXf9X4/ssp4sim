@@ -15,9 +15,11 @@ namespace ssp4sim::graph
 class JacobiBase : public ExecutionBase
     {
     public:
-        quill::Logger* log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiBase", quill::LogLevel::TraceL1);
+        quill::Logger* log = nullptr;
 
-        JacobiBase(std::vector<Invocable *> nodes) : ExecutionBase(nodes)
+        JacobiBase(std::vector<Invocable *> nodes)
+            : ExecutionBase(nodes),
+              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiBase", quill::LogLevel::TraceL1))
         {
             LOG_INFO(log, "[{}] ", __func__);
         }
