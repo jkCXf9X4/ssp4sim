@@ -30,28 +30,25 @@ namespace ssp4sim::graph
                                                int target_area,
                                                uint64_t input_time)
     {
-        IF_LOG({
-            LOG_TRACE_L2(log, "[{}] Area {}", __func__, target_area);
-            LOG_TRACE_L1(log, "[{}] Copy connections", __func__);
-        });
-
         for (auto &connection : connections)
         {
             IF_LOG({
-                LOG_TRACE_L2(log, "[{}] Fetch valid data connection {}", __func__, connection.to_string());
+                LOG_TRACE_L2(connection.log, "[{}] Area {}", __func__, target_area);
+                LOG_TRACE_L1(connection.log, "[{}] Copy connections", __func__);
+                LOG_TRACE_L2(connection.log, "[{}] Fetch valid data connection {}", __func__, connection.to_string());
             });
 
             size_t source_area;
             if (connection.source_storage->find_latest_valid_area(input_time - connection.delay, source_area))
             {
                 IF_LOG({
-                    LOG_DEBUG(log, "[{}] Valid source_storage area found, time {}", __func__, connection.source_storage->data->timestamps[source_area]);
+                    LOG_DEBUG(connection.log, "[{}] Valid source_storage area found, time {}", __func__, connection.source_storage->data->timestamps[source_area]);
                 });
 
                 auto source_item = connection.source_storage->get_item(static_cast<std::size_t>(source_area), connection.source_index);
                 IF_LOG({
                     auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(connection.type, source_item);
-                    LOG_TRACE_L1(log, "[{}] Found valid item, copying data to target area: {}", __func__, data_type_str);
+                    LOG_TRACE_L1(connection.log, "[{}] Found valid item, copying data to target area: {}", __func__, data_type_str);
                 });
 
                 auto target_item = connection.target_storage->get_item(static_cast<std::size_t>(target_area), connection.target_index);
@@ -60,7 +57,7 @@ namespace ssp4sim::graph
                 if (connection.forward_derivatives)
                 {
                     IF_LOG({
-                        LOG_TRACE_L2(log, "[{}] Copying derivatives {}", __func__, connection.to_string());
+                        LOG_TRACE_L2(connection.log, "[{}] Copying derivatives {}", __func__, connection.to_string());
                     });
 
                     for (int order = 1; order <= connection.forward_derivatives_order; ++order)
@@ -72,7 +69,7 @@ namespace ssp4sim::graph
                                                                                     connection.target_index,
                                                                                     order);
                         IF_LOG({
-                            LOG_TRACE_L2(log, "[{}] Copying derivatives {} -> {}", __func__, reinterpret_cast<uint64_t>(source_der), reinterpret_cast<uint64_t>(target_der));
+                            LOG_TRACE_L2(connection.log, "[{}] Copying derivatives {} -> {}", __func__, reinterpret_cast<uint64_t>(source_der), reinterpret_cast<uint64_t>(target_der));
                         });
 
                         if (source_der != nullptr && target_der != nullptr)

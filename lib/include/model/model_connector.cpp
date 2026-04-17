@@ -116,7 +116,7 @@ namespace ssp4sim::graph
             });
         }
         IF_LOG({
-            LOG_TRACE_L1(log, "[{}] Completed copy from model", __func__);
+            LOG_TRACE_L1(storage->log, "[{}] Completed copy from model", __func__);
         });
     }
 
@@ -155,12 +155,12 @@ namespace ssp4sim::graph
     void ConnectorInfo::fetch_output_derivatives(std::unordered_map<std::string, ConnectorInfo> &outputs,
                                                  std::size_t area)
     {
-        IF_LOG({
-            LOG_TRACE_L1(log, "[{}] Init area {}", __func__, area);
-        });
-
         for (auto &[_, connector] : outputs)
         {
+            IF_LOG({
+                LOG_TRACE_L1(connector.log, "[{}] Init area {}", __func__, area);
+            });
+
             if (!connector.forward_derivatives)
             {
                 continue;
@@ -169,7 +169,7 @@ namespace ssp4sim::graph
             for (int order = 1; order <= connector.forward_derivatives_order; ++order)
             {
                 IF_LOG({
-                    LOG_TRACE_L1(log, "[{}] get_derivative position for vr:{} name: {} order: {}",
+                    LOG_TRACE_L1(connector.log, "[{}] get_derivative position for vr:{} name: {} order: {}",
                                __func__,
                                connector.value_ref,
                                connector.name,

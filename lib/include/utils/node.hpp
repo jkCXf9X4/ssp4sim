@@ -19,9 +19,8 @@ namespace ssp4sim::utils::graph
      */
     class Node : public virtual types::IWritable
     {
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
     public:
+        ssp4cpp::utils::log::Logger* log = nullptr;
         std::string name;
         std::vector<Node *> children = {};
         std::vector<Node *> parents = {};

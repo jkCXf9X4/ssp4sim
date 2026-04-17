@@ -130,7 +130,7 @@ Implementation note: SSP4SIM uses Quill as the logging backend.
    * Use `IF_LOG({ ... })` for detailed execution tracing so hot-path logs can be compiled out with `SSP4SIM_LOG_HOT_PATH=OFF`.
    * Quill queue growth messages indicate frontend threads are producing logs faster than the backend can drain them. Treat that as a signal to reduce log volume on the hot path first.
    * The shared `ssp4cpp::utils::log` wrapper owns Quill startup. Do not call `quill::simple_logger()` directly, since it can start Quill with the library defaults before SSP4SIM applies its hot-path backend configuration.
-   * Use `ssp4cpp::utils::log::Logger*` for stored logger pointers and helper signatures. The wrapper now uses a custom Quill frontend type
+   * Use `ssp4cpp::utils::log::Logger*` for stored logger pointers and helper signatures. The wrapper now uses a custom Quill frontend type.
    * The current Quill profile favors lower frontend latency by preallocating the thread-local queue before the first log event, running the backend in busy-poll mode (`sleep_duration=0`, `enable_yield_when_idle=true`), disabling timestamp grace-period ordering, and flushing sinks less often. This improves throughput on heavily logged execution paths at the cost of higher backend CPU usage.
 
 ---
