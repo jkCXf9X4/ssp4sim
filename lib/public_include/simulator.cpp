@@ -13,7 +13,7 @@ namespace ssp4sim
 {
     struct SimulatorPrivate
     {
-        quill::Logger* log;
+        ssp4cpp::utils::log::Logger* log;
 
         std::unique_ptr<ssp4cpp::Ssp> ssp;
         std::unique_ptr<Simulation> sim;

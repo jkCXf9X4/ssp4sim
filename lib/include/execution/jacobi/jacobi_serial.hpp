@@ -12,7 +12,7 @@ namespace ssp4sim::graph
     class JacobiSerial final : public JacobiBase
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         JacobiSerial(std::vector<Invocable *> nodes);
 

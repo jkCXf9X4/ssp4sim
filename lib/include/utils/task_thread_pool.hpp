@@ -26,7 +26,7 @@ namespace ssp4sim::utils
     class ThreadPool
     {
     private:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::mutex queue_mutex;
         std::vector<std::thread> workers;

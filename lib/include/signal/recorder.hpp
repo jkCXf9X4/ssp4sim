@@ -34,7 +34,7 @@ namespace ssp4sim::signal
     class DataRecorder
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::ofstream file;
         std::unique_ptr<std::thread> worker;

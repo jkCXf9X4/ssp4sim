@@ -48,7 +48,7 @@ namespace ssp4sim::handler
     class FmuHandler
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         ssp4cpp::Ssp *ssp;
 

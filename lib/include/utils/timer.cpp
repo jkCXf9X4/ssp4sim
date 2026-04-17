@@ -9,7 +9,7 @@
 namespace ssp4sim::utils::time
 {
     
-    ScopeTimer::ScopeTimer(std::string label, uint64_t *result_callback, quill::Logger* log) : label_(std::move(label)), start_(clock::now())
+    ScopeTimer::ScopeTimer(std::string label, uint64_t *result_callback, ssp4cpp::utils::log::Logger* log) : label_(std::move(label)), start_(clock::now())
     {
         this->log = log;
         result_callback_ns = result_callback;

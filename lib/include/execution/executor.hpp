@@ -15,7 +15,7 @@ namespace ssp4sim::graph
     class ExecutionBase : public Invocable
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
         // the executor should not own the nodes
         std::vector<Invocable *> nodes;
 

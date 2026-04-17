@@ -11,10 +11,10 @@ namespace ssp4sim::ext::fmi2
 
     namespace enums
     {
-        quill::Logger* log()
+        ssp4cpp::utils::log::Logger* log()
         {
             // Cache this logger locally so we avoid eager header initialization.
-            static quill::Logger* logger =
+            static ssp4cpp::utils::log::Logger* logger =
                 ssp4cpp::utils::log::make_logger("ssp4sim.ext.fmi2.enums", quill::LogLevel::TraceL1);
             return logger;
         }

@@ -24,7 +24,7 @@ namespace ssp4sim::graph
         ~ConnectionInfo(){
         };
 
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         types::DataType type;
         size_t size;

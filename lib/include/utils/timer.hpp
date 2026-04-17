@@ -17,7 +17,7 @@ namespace ssp4sim::utils::time
     public:
         using clock = std::chrono::steady_clock;
 
-        ScopeTimer(std::string label, uint64_t *result_callback, quill::Logger *log);
+        ScopeTimer(std::string label, uint64_t *result_callback, ssp4cpp::utils::log::Logger *log);
 
         ~ScopeTimer();
 
@@ -25,7 +25,7 @@ namespace ssp4sim::utils::time
         std::string label_;
         clock::time_point start_;
         uint64_t *result_callback_ns = nullptr;
-        quill::Logger *log;
+        ssp4cpp::utils::log::Logger *log;
     };
 
     class Timer
@@ -33,7 +33,7 @@ namespace ssp4sim::utils::time
     public:
         using clock = std::chrono::steady_clock;
 
-        // quill::Logger* log = nullptr;
+        // ssp4cpp::utils::log::Logger* log = nullptr;
 
         Timer();
 

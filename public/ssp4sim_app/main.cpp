@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    quill::Logger* log = ssp4cpp::utils::log::simple_logger();
+    ssp4cpp::utils::log::Logger* log = ssp4cpp::utils::log::simple_logger();
     LOG_INFO(log, "---SSP4SIM---");
 
     std::string config_path;

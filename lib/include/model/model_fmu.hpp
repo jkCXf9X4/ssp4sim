@@ -27,7 +27,7 @@ namespace ssp4sim::graph
     {
     public:
 
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         handler::FmuInfo *fmu;
 

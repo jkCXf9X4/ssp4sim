@@ -14,7 +14,7 @@ namespace ssp4sim::graph
     class JacobiParallelSpin final : public ExecutionBase
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         utils::ThreadPool2 pool;
 

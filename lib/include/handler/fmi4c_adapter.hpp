@@ -21,7 +21,7 @@ namespace ssp4sim::handler
     class FmuInstance
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         FmuInstance(const std::filesystem::path &path, std::string instance_name);
 
@@ -51,7 +51,7 @@ namespace ssp4sim::handler
     {
         // it needs to be shared since the logger might live longer than the main application.
         // Initial thoughts are that some fmus spawn internal threads...
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
     };
 
     class CoSimulationModel
@@ -64,7 +64,7 @@ namespace ssp4sim::handler
         fmi2CallbackFunctions callbacks;
 
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         CoSimulationModel(FmuInstance &instance);
 

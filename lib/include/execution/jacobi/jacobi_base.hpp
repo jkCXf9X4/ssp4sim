@@ -15,7 +15,7 @@ namespace ssp4sim::graph
 class JacobiBase : public ExecutionBase
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         JacobiBase(std::vector<Invocable *> nodes)
             : ExecutionBase(nodes),

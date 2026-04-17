@@ -26,7 +26,7 @@ namespace ssp4sim::graph
     class SeidelBase : public ExecutionBase
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         const int nr_of_nodes = 0;
         std::vector<SeidelNode> seidel_nodes;

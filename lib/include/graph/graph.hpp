@@ -21,7 +21,7 @@ namespace ssp4sim::graph
     class Graph final : public Invocable
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::map<std::string, Invocable*> node_map;
         std::vector<Invocable *> nodes;

@@ -19,7 +19,7 @@ namespace ssp4sim::analysis::graph
     public:
         uint64_t delay = 0;
 
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::string fmu_name;
         handler::FmuInfo *fmu;

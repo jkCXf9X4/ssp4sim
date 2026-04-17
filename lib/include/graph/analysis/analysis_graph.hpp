@@ -16,7 +16,7 @@ namespace ssp4sim::analysis::graph
     class AnalysisGraph : public types::IWritable
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::map<std::string, std::unique_ptr<AnalysisModel>> models;
         std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors;

@@ -19,7 +19,7 @@ namespace ssp4sim::analysis::graph
     class AnalysisGraphBuilder
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         ssp4cpp::Ssp *ssp;
         handler::FmuHandler *fmu_handler;

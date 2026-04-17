@@ -28,7 +28,7 @@ namespace ssp4sim::graph
     class DelayExecutorBase : public ExecutionBase
     {
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::vector<std::vector<Invocable *>> groups;
 

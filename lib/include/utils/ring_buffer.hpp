@@ -23,7 +23,7 @@ namespace ssp4sim::utils
     {
 
     public:
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::size_t item_size = 0;
         std::unique_ptr<std::byte[]> data;

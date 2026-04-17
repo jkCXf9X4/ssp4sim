@@ -38,7 +38,7 @@ namespace ssp4sim::graph
         handler::FmuInfo *fmu;
         signal::SignalStorage *storage;
 
-        quill::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value;
 
