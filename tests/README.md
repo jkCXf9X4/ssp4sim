@@ -1,16 +1,15 @@
 
 ## High-Level SSP Tests
 
-The dedicated pytest suite for the checked-in SSP fixtures lives under
-`tests/high_level/`.
+The C++ high-level reference sweep lives in `tests/lib/high_level/`.
 
-Run it from the nested repository root:
+Run it with:
 
 ```bash
-cd tests/reference_ssp
-pytest
+./build/tests/lib/ssp4sim_tests "[references]"
 ```
 
-The suite validates both archive structure and a Python API smoke test for the
-unpacked SSP directories that are currently known to initialize through
-`pyssp4sim`.
+The test iterates the unpacked SSP fixtures under
+`tests/reference_ssp/build/models/*/ssp` and simulates each co-simulation SSP.
+Model-exchange fixtures are excluded because the current runtime only supports
+co-simulation FMUs.

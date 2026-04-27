@@ -22,6 +22,17 @@ namespace ssp4sim::ext::ssp1
 {
     using namespace ssp4cpp::ssp1::ssd;
 
+    namespace
+    {
+        ssp4cpp::utils::log::Logger* log()
+        {
+            // Cache this logger locally so we avoid eager header initialization.
+            static ssp4cpp::utils::log::Logger* logger =
+                ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1.ssv");
+            return logger;
+        }
+    }
+
     namespace ssd
     {
         std::vector<TComponent *> get_resources(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd)
@@ -95,6 +106,11 @@ namespace ssp4sim::ext::ssp1
             {
                 for (auto connection : ssd.System.Connections.value().Connections)
                 {
+                    if (!connection.startElement.has_value() || !connection.endElement.has_value())
+                    {
+                        LOG_WARNING_LIMIT_EVERY_N(100000, log() , "[{}] Start or endvalue missing for {}", __func__, connection.to_string());
+                        continue;
+                    }
                     auto p = std::make_pair(connection.startElement.value(), connection.endElement.value());
                     fmu_connections.insert(p);
                 }

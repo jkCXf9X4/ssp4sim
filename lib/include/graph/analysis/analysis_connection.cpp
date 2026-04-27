@@ -15,6 +15,11 @@ namespace ssp4sim::analysis::graph
     AnalysisConnection::AnalysisConnection(ssp4cpp::ssp1::ssd::Connection *connection)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisConnection"))
     {
+        if (!connection->startElement.has_value() || !connection->endElement.has_value())
+        {
+            throw std::runtime_error("System-boundary connections are not analysis connections");
+        }
+
         source_component_name = connection->startElement.value();
         source_connector_name = connection->startConnector;
         target_component_name = connection->endElement.value();

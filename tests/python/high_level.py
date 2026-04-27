@@ -31,6 +31,20 @@ GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
 REFERENCE_SSP_ROOT = SSP4SIM_ROOT / "tests" / "reference_ssp" / "build" / "models"
 
 
+
+def test_embrace_local(
+    tmp_path
+) -> None:
+    # resources/embrace/embrace.json
+    config = SSP4SIM_ROOT / "resources" / "embrace" / "embrace.json"
+    print(config)
+    sim = pyssp4sim.Simulator(config.as_posix())
+    sim.init()
+    sim.simulate()
+
+
+# ssp_references tests
+
 def write_config(ssp_root: Path, workdir: Path) -> Path:
     config = json.loads(GENERIC_CONFIG_PATH.read_text())
     simulation = config["simulation"]
@@ -39,7 +53,7 @@ def write_config(ssp_root: Path, workdir: Path) -> Path:
 
     simulation["ssp"] = str(ssp_root)
     simulation["ssd"] = "SystemStructure.ssd"
-    recording["enable"] = False
+    recording["enable"] = True
     recording["result_file"] = str(workdir / "results.csv")
     log_config["file"] = str(workdir / "sim.log")
 
@@ -53,25 +67,14 @@ def init_simulator(ssp_root: Path, workdir: Path):
     config_path = write_config(ssp_root, workdir)
     simulator = pyssp4sim.Simulator(str(config_path))
     simulator.init()
+    simulator.simulate()
     return simulator
 
 
-# def test_embrace(
-#     tmp_path
-# ) -> None:
-#     name = "signal_step_gain"
-#     workdir = SSP4SIM_ROOT / "build" / "pytest" / name
-#     simulator = init_simulator(REFERENCE_SSP_ROOT / name / "ssp", workdir)
-#     assert simulator is not None
-
-
-def test_embrace_local(
+def test_references(
     tmp_path
 ) -> None:
-    # resources/embrace/embrace.json
-    config = SSP4SIM_ROOT / "resources" / "embrace" / "embrace.json"
-    print(config)
-    sim = pyssp4sim.Simulator(config.as_posix())
-    sim.init()
-    sim.simulate()
-
+    name = "pyfmu_csv_source_sink"
+    workdir = SSP4SIM_ROOT / "build" / "pytest" / name
+    simulator = init_simulator(REFERENCE_SSP_ROOT / name / "ssp", workdir)
+    assert simulator is not None

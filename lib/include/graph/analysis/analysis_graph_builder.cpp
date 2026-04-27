@@ -132,6 +132,12 @@ namespace ssp4sim::analysis::graph
         {
             for (auto &connection : ssp.ssd->System.Connections.value().Connections)
             {
+                // System boundary connections, pass over for now
+                if (!connection.startElement.has_value() || !connection.endElement.has_value())
+                {
+                    LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{}] System level connections are not supported as of now", __func__);
+                    continue;
+                }
                 auto c = std::make_unique<AnalysisConnection>(&connection);
                 LOG_TRACE_L1(log, "[{}] New Connection: {}", __func__, c->name);
                 c->delay = utils::time::s_to_ns(connection.information_delay.value_or(0));
