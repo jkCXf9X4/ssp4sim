@@ -39,11 +39,7 @@ namespace
 
     std::filesystem::path scenario_fmu_path()
     {
-        auto path = first_existing_path({
-            repository_root() / "resources" / "scenario" / "scenario.fmu",
-            repository_root() / "resources" / "scenario" / "scenario",
-            repository_root() / "resources" / "scenario" / "scenario_parameter" / "resources" / "0001_scenario",
-        });
+        auto path = first_existing_path({repository_root() / "tests"  / "reference_ssp" / "build" / "models" / "scenario" / "ssp" / "resources" / "0001_scenario"});
         REQUIRE(std::filesystem::exists(path));
         return path;
     }
@@ -265,25 +261,22 @@ TEST_CASE("Atmos FMU reports solver events via EventCounter", "[fmi4c_adapter][f
         double new_mach = mach_derivative * time;
 
         // There must be a read after the last write for some fmus...
-        // Or there is a solver restart 
-        // can be seen as an event 
-        // its now incorporated into the write_real 
+        // Or there is a solver restart
+        // can be seen as an event
+        // its now incorporated into the write_real
 
         model.write_real(kMachVr, new_mach);
         model.set_real_input_derivative(kMachVr, 1, mach_derivative);
 
-
         model.write_real(kAltVr, new_altitude);
         model.set_real_input_derivative(kAltVr, 1, altitude_derivative);
 
-
-        
         if (model.last_status() != fmi2OK)
         {
             std::cout << "setRealInputDerivatives supported: " << std::endl;
             std::cout << "derivative_status_ok" << std::endl;
         }
-        
+
         model.step(s_to_ns(step));
         model.read_real(kEventCounterVr, event_counter);
 

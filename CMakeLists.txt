@@ -72,7 +72,7 @@ endif()
 # Tests
 if(SSP4SIM_BUILD_TEST)
   message("Building tests\n")
-  add_subdirectory(tests)
+  add_subdirectory(tests/lib)
 endif()
 
 install(
