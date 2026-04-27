@@ -74,12 +74,12 @@ cmake -S . -B build -DSSP4SIM_LOG_HOT_PATH=OFF
 
 ## Build And Run Tests
 
-`ctest --test-dir build/tests` is currently unreliable. Run the `build/tests/ssp4sim_tests` binary directly:
+`ctest --test-dir build/tests` is currently unreliable. Run the `./build/tests/lib/ssp4sim_tests` binary directly:
 
 ```bash
 cmake -B build -S . -DSSP4SIM_BUILD_TEST=ON
 cmake --build build
-./build/tests/ssp4sim_tests
+./build/tests/lib/ssp4sim_tests
 ```
 
 Some test fixtures are stored as expanded FMU/SSP directories instead of `.fmu`/`.ssp` archives to make resource diffs and version handling easier. Tests should accept either layout when resolving fixture paths.

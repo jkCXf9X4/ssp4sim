@@ -8,6 +8,8 @@ import pytest
 
 pyssp4sim = pytest.importorskip("pyssp4sim")
 
+from pathlib import Path
+
 def find_upwards(start: Path, target: str) -> Path:
     """
     Walk upwards from `start` until a file or directory named `target` is found.
@@ -22,29 +24,11 @@ def find_upwards(start: Path, target: str) -> Path:
 
     raise FileNotFoundError(f"Could not find '{target}' in any parent directory")
 
+
 SSP4SIM_ROOT = find_upwards(Path(__file__), "__SSP4SIM_ROOT__")
 
 GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
-TEMP_PATH = SSP4SIM_ROOT / "build" / "pytest" 
-
-REFERENCE_SSP_ROOT = SSP4SIM_ROOT / "tests" / "reference_ssp" / "build" / "models" 
-SMOKE_TEST_MODELS = {
-    "BouncingBall",
-    "Dahlquist",
-    "Resource",
-    "Stair",
-    "VanDerPol",
-    "embrace",
-    "pyfmu_csv_source_sink",
-}
-
-# import pyssp4sim
-
-
-# sim = pyssp4sim.Simulator("./resources/embrace/embrace.json")
-# sim.init()
-# sim.simulate()
-
+REFERENCE_SSP_ROOT = SSP4SIM_ROOT / "tests" / "reference_ssp" / "build" / "models"
 
 
 def write_config(ssp_root: Path, workdir: Path) -> Path:
@@ -72,10 +56,22 @@ def init_simulator(ssp_root: Path, workdir: Path):
     return simulator
 
 
-def test_embrace(
+# def test_embrace(
+#     tmp_path
+# ) -> None:
+#     name = "signal_step_gain"
+#     workdir = SSP4SIM_ROOT / "build" / "pytest" / name
+#     simulator = init_simulator(REFERENCE_SSP_ROOT / name / "ssp", workdir)
+#     assert simulator is not None
+
+
+def test_embrace_local(
     tmp_path
 ) -> None:
-    name = "embrace"
-    workdir = TEMP_PATH / name
-    simulator = init_simulator(REFERENCE_SSP_ROOT / name, workdir)
-    assert simulator is not None
+    # resources/embrace/embrace.json
+    config = SSP4SIM_ROOT / "resources" / "embrace" / "embrace.json"
+    print(config)
+    sim = pyssp4sim.Simulator(config.as_posix())
+    sim.init()
+    sim.simulate()
+

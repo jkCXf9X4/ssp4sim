@@ -30,7 +30,7 @@ Runs on `ubuntu-22.04` and performs:
 - Installs and uses `gcc-13`/`g++-13` for C++23 `<format>` support
 - Configure (`cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON -DVCPKG_MANIFEST_FEATURES=python-api`)
 - Build (`cmake --build build --config Release`)
-- Test (`./build/tests/ssp4sim_tests`)
+- Test (`./build/tests/lib/ssp4sim_tests`)
 
 ## Stage 3: Install to staging directory
 

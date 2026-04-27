@@ -47,7 +47,7 @@ jobs:
       - name: Run tests
         run: |
           ./containers/run_ubuntu22_gcc13_container.sh -- \
-            ./build/tests/ssp4sim_tests
+            ./build/tests/lib/ssp4sim_tests
 
       - name: Install to staging directory
         run: |

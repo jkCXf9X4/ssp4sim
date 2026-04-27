@@ -28,7 +28,7 @@ Avoid monkey patching or similar, always try to find root cause for errors
 - Enable and run tests:
   ```bash
   cmake -B build -S . -DSSP4SIM_BUILD_TEST=ON
-  cmake --build build && ./build/tests/ssp4sim_tests
+  cmake --build build && ./build/tests/lib/ssp4sim_tests
   ```
 - Build Python API (release only) and install editable:
   ```bash
