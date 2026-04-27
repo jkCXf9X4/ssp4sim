@@ -15,7 +15,7 @@ namespace ssp4sim::graph
           seidel_nodes(nr_of_nodes)
     {
         LOG_INFO(log, "[{func}] ", __func__);
-        LOG_DEBUG(log, "[{func}] nr_of_nodes {}, seidel_nodes {}", __func__, nr_of_nodes, seidel_nodes.size());
+        LOG_DEBUG(log, "[{func}] nr_of_nodes {nr_of_nodes}, seidel_nodes {seidel_nodes}", __func__, nr_of_nodes, seidel_nodes.size());
 
         for (auto &node : this->nodes)
         {

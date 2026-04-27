@@ -61,20 +61,20 @@ namespace ssp4sim::graph
         double end_time = utils::Config::getDouble("simulation.stop_time");
         double tolerance = utils::Config::getDouble("simulation.tolerance");
 
-        LOG_DEBUG(log, "[{func}] setup_experiment: {}", __func__, name);
+        LOG_DEBUG(log, "[{func}] setup_experiment: {model}", __func__, name);
 
         // The simulation may take one step beyond the stop_time. Some fmus may crash due to this
         // therfore tell the fmus that stop + one step should be ok
         if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time + timestep * 10), tolerance))
         {
-            LOG_ERROR(log, "[{func}] setup_experiment failed for {}, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__, name);
+            LOG_ERROR(log, "[{func}] setup_experiment failed for {model}, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__, name);
             throw std::runtime_error(std::format("[{}] setup_experiment failed for {}", __func__, name));
         }
 
-        LOG_DEBUG(log, "[{func}] enter_initialization_mode: {}", __func__, name);
+        LOG_DEBUG(log, "[{func}] enter_initialization_mode: {model}", __func__, name);
         if (!fmu->model->enter_initialization_mode())
         {
-            LOG_ERROR(log, "[{func}] enter_initialization_mode failed for {}", __func__, name);
+            LOG_ERROR(log, "[{func}] enter_initialization_mode failed for {model}", __func__, name);
             throw std::runtime_error(std::format("[{}] enter_initialization_mode failed for {}", __func__, name));
         }
 
@@ -88,11 +88,11 @@ namespace ssp4sim::graph
 
     void FmuModel::exit_init()
     {
-        LOG_TRACE_L1(log, "[{func}] FmuModel init {}", __func__, name);
-        LOG_DEBUG(log, "[{func}] exit_initialization_mode: {}", __func__, name);
+        LOG_TRACE_L1(log, "[{func}] FmuModel init {name}", __func__, name);
+        LOG_DEBUG(log, "[{func}] exit_initialization_mode: {name}", __func__, name);
         if (!fmu->model->exit_initialization_mode())
         {
-            LOG_ERROR(log, "[{func}] exit_initialization_mode failed for {}", __func__, name);
+            LOG_ERROR(log, "[{func}] exit_initialization_mode failed for {name}", __func__, name);
             throw std::runtime_error(std::format("[{}] exit_initialization_mode failed for {}", __func__, name));
         }
 
@@ -106,7 +106,7 @@ namespace ssp4sim::graph
         auto target_area = input_area->get_or_push(start);
 
         IF_LOG({
-            LOG_INFO(log, "[{func}] Propagating at start_time {}, input_area {} timestamp {}", __func__, start, target_area, input_area->data->timestamps[target_area]);
+            LOG_INFO(log, "[{func}] Propagating at start_time {start_time}, input_area {input_area} timestamp {timestamp}", __func__, start, target_area, input_area->data->timestamps[target_area]);
         });
 
         ConnectionInfo::retrieve_model_inputs(connections, target_area, start);
@@ -116,7 +116,7 @@ namespace ssp4sim::graph
         auto area = output_area->get_or_push(start);
 
         IF_LOG({
-            LOG_INFO(log, "[{func}] Propagating at start_time {}, output area {} timestamp {}", __func__, start, area, output_area->data->timestamps[area]);
+            LOG_INFO(log, "[{func}] Propagating at start_time {start}, output area {area} timestamp {timestamp}", __func__, start, area, output_area->data->timestamps[area]);
         });
 
         ConnectorInfo::read_values_from_model(outputs, output_area.get(), area);
@@ -126,7 +126,7 @@ namespace ssp4sim::graph
     void FmuModel::pre(uint64_t input_time)
     {
         IF_LOG({
-            LOG_TRACE_L1(log, "[{func}] Init. current_time {}, input_time {}", __func__, current_time, input_time);
+            LOG_TRACE_L1(log, "[{func}] Init. current_time {current_time}, input_time {input_time}", __func__, current_time, input_time);
         });
 
         auto target_area = input_area->push(input_time);
@@ -145,7 +145,7 @@ namespace ssp4sim::graph
         }
 
         IF_LOG({
-            LOG_TRACE_L1(log, "[{func}] Input area after pre: {}", __func__, input_area->export_area(target_area));
+            LOG_TRACE_L1(log, "[{func}] Input area after pre: {input_area}", __func__, input_area->export_area(target_area));
         });
     }
 
@@ -168,20 +168,20 @@ namespace ssp4sim::graph
         output_area->flag_new_data(area);
 
         IF_LOG({
-            LOG_TRACE_L1(log, "[{func}] Output area after post: {}", __func__, output_area->export_area(area));
+            LOG_TRACE_L1(log, "[{func}] Output area after post: {area}", __func__, output_area->export_area(area));
         });
     }
 
     uint64_t FmuModel::step(StepData step_data)
     {
         IF_LOG({
-            LOG_DEBUG(log, "[{func}] Init {}, current_time {}, stepdata: {}", __func__, name, current_time, step_data.to_string());
+            LOG_DEBUG(log, "[{func}] Init {name}, current_time {current_time}, stepdata: {stepdata}", __func__, name, current_time, step_data.to_string());
         });
 
         pre(step_data.input_time);
 
         IF_LOG({
-            LOG_DEBUG(log, "[{func}] Step until {}", __func__, step_data.end_time);
+            LOG_DEBUG(log, "[{func}] Step until {end_time}", __func__, step_data.end_time);
         });
 
         auto model_timer = utils::time::Timer();

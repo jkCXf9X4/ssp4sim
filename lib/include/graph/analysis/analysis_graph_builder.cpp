@@ -42,7 +42,7 @@ namespace ssp4sim::analysis::graph
                 m->set_interpolation_data(co_sim.canInterpolateInputs.value_or(false), co_sim.maxOutputDerivativeOrder.value_or(0));
             }
 
-            LOG_DEBUG(log, "[{func}] New Model: {}", __func__, m->name);
+            LOG_DEBUG(log, "[{func}] New Model: {model}", __func__, m->name);
             models[m->name] = std::move(m);
         }
         LOG_TRACE_L1(log, "[{func}] exit", __func__);
@@ -62,7 +62,7 @@ namespace ssp4sim::analysis::graph
             {
                 if (!component.name.has_value())
                 {
-                    LOG_ERROR(log, "[{func}] Component does not specify name attribute, Its optional but needed for this application {}", __func__);
+                    LOG_ERROR(log, "[{func}] Component does not specify name attribute, Its optional but needed for this application {component}", __func__);
                     throw std::runtime_error("Component without name");
                 }
 
@@ -70,7 +70,7 @@ namespace ssp4sim::analysis::graph
 
                 if (!fmu_handler->fmu_info_map.contains(component_name))
                 {
-                    LOG_ERROR(log, "[{func}] Fmu not found, {}", __func__, component_name);
+                    LOG_ERROR(log, "[{func}] Fmu not found, {component}", __func__, component_name);
                     throw std::runtime_error("Fmu not found");
                 }
                 auto fmu = fmu_handler->fmu_info_map[component_name].get();
@@ -81,7 +81,7 @@ namespace ssp4sim::analysis::graph
 
                 for (auto &var : variables)
                 {
-                    LOG_DEBUG(log, "[{func}] Creating Connector: {}.{}", __func__, component_name, var.name);
+                    LOG_DEBUG(log, "[{func}] Creating Connector: {component}.{variable}", __func__, component_name, var.name);
                     auto value_reference = var.valueReference.value();
                     LOG_TRACE_L1(log, "[{func}] get_variable_type {}", __func__, value_reference);
                     auto type = ext::fmi2::model_variables::get_variable_type(var);
@@ -96,7 +96,7 @@ namespace ssp4sim::analysis::graph
                     auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
                     if (start_value)
                     {
-                        LOG_DEBUG(log, "[{func}] Applying start value for {}", __func__, system_name);
+                        LOG_DEBUG(log, "[{func}] Applying start value for {name}", __func__, system_name);
                         c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(var.name, type);
                         c->initial_value->store_value(start_value);
                     }
@@ -105,7 +105,7 @@ namespace ssp4sim::analysis::graph
 
                     if (mapping_start_values.contains(system_name))
                     {
-                        LOG_DEBUG(log, "[{func}] Applying parameterset value to {}, {}", __func__, system_name, type.to_string());
+                        LOG_DEBUG(log, "[{func}] Applying parameterset value to {name}, {type}", __func__, system_name, type.to_string());
 
                         const auto &mapped_start_value = mapping_start_values.at(system_name);
                         c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(mapped_start_value);
@@ -113,14 +113,14 @@ namespace ssp4sim::analysis::graph
 
                     if (c->initial_value)
                     {
-                        LOG_DEBUG(log, "[{func}] Initial value {}", __func__, c->initial_value->to_string());
+                        LOG_DEBUG(log, "[{func}] Initial value {value}", __func__, c->initial_value->to_string());
                     }
 
                     items[c->name] = std::move(c);
                 }
             }
         }
-        LOG_DEBUG(log, "[{func}] exit, Total connectors created: {}", __func__, items.size());
+        LOG_DEBUG(log, "[{func}] exit, Total connectors created: {count}", __func__, items.size());
         return items;
     }
 
@@ -139,12 +139,12 @@ namespace ssp4sim::analysis::graph
                     continue;
                 }
                 auto c = std::make_unique<AnalysisConnection>(&connection);
-                LOG_TRACE_L1(log, "[{func}] New Connection: {}", __func__, c->name);
+                LOG_TRACE_L1(log, "[{func}] New Connection: {connection}", __func__, c->name);
                 c->delay = utils::time::s_to_ns(connection.information_delay.value_or(0));
                 items[c->name] = std::move(c);
             }
         }
-        LOG_DEBUG(log, "[{func}] exit, Total connections created: {}", __func__, items.size());
+        LOG_DEBUG(log, "[{func}] exit, Total connections created: {count}", __func__, items.size());
         return items;
     }
 
@@ -157,12 +157,12 @@ namespace ssp4sim::analysis::graph
             for (auto &variable : fmu->md->ModelVariables.ScalarVariable)
             {
                 auto mv = std::make_unique<AnalysisModelVariable>(name, variable.name);
-                LOG_TRACE_L1(log, "[{func}] New ModelVariable: {}", __func__, mv->name);
+                LOG_TRACE_L1(log, "[{func}] New ModelVariable: {variable}", __func__, mv->name);
                 items[mv->name] = std::move(mv);
             }
         }
 
-        LOG_TRACE_L1(log, "[{func}] exit, Total model variables created: {}", __func__, items.size());
+        LOG_TRACE_L1(log, "[{func}] exit, Total model variables created: {count}", __func__, items.size());
         return items;
     }
 
@@ -179,7 +179,7 @@ namespace ssp4sim::analysis::graph
         LOG_TRACE_L1(log, "[{func}] Connecting FMUs", __func__);
         for (auto &[source, target] : fmu_connections)
         {
-            LOG_TRACE_L1(log, "[{func}] - Connecting: {} -> {}", __func__, source, target);
+            LOG_TRACE_L1(log, "[{func}] - Connecting: {source} -> {target}", __func__, source, target);
             models[source]->add_child(models[target].get());
         }
 
@@ -188,14 +188,14 @@ namespace ssp4sim::analysis::graph
         {
             if (!models.contains(connector->component_name))
             {
-                LOG_ERROR(log, "Attaching connector: Failed to attach connector to model, model {} not found for connector {}", connector->component_name, connector->name);
+                LOG_ERROR(log, "Attaching connector: Failed to attach connector to model, model {model} not found for connector {connector}", connector->component_name, connector->name);
                 throw std::runtime_error("Failed to find model associated with connector ");
             }
 
             auto model = models[connector->component_name].get();
             if (model->connectors.count(connector->name))
             {
-                LOG_ERROR(log, "[{func}] Naming conflict for connectors {}", __func__, connector->name);
+                LOG_ERROR(log, "[{func}] Naming conflict for connectors {connector}", __func__, connector->name);
                 throw std::runtime_error("Naming conflict between connectors");
             }
             model->connectors[connector->name] = connector.get();
@@ -204,13 +204,13 @@ namespace ssp4sim::analysis::graph
         LOG_TRACE_L1(log, "[{func}] Creating connections between connectors", __func__);
         for (auto &[name, connection] : connections)
         {
-            LOG_TRACE_L1(log, "[{func}] Connecting {}", __func__, connection->name);
+            LOG_TRACE_L1(log, "[{func}] Connecting {connection}", __func__, connection->name);
 
             bool source_model_exist = models.contains(connection->source_component_name);
             bool target_model_exist = models.contains(connection->target_component_name);
             if (!source_model_exist or !target_model_exist)
             {
-                LOG_ERROR(log, "Creating connection: Failed to find source or target model. Exists s: {} t: {}\n {}",
+                LOG_ERROR(log, "Creating connection: Failed to find source or target model. Exists s: {source_exists} t: {target_exists}\n {connection}",
                            source_model_exist, target_model_exist, connection->to_string());
                 throw std::runtime_error("Failed to find connection model");
             }
@@ -225,7 +225,7 @@ namespace ssp4sim::analysis::graph
             bool target_connector_exist = connectors.contains(target_connector_name);
             if (!source_connector_exist or !target_connector_exist)
             {
-                LOG_ERROR(log, "Creating connection: Failed to find source or target connector. Found source: {} target: {}\n {}",
+                LOG_ERROR(log, "Creating connection: Failed to find source or target connector. Found source: {source} target: {target}\n {connection}",
                            source_connector_exist, target_connector_exist, connection->to_string());
                 throw std::runtime_error("Failed to find connection connector");
             }
@@ -308,7 +308,7 @@ namespace ssp4sim::analysis::graph
 //                     target_node = variables[target_id];
 //                     LOG_DEBUG(log, "[{func}] Target V {}", __func__, variables[target_id]->name);
 //                 }
-//                 LOG_DEBUG(log, "[{func}] Connecting {} -> {}", __func__, source_node->name, target_node->name);
+//                 LOG_DEBUG(log, "[{func}] Connecting {connection} -> {}", __func__, source_node->name, target_node->name);
 //                 source_node->add_child(target_node);
 //             }
 //         }

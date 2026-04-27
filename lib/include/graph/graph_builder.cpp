@@ -27,10 +27,10 @@ namespace ssp4sim::graph
         for (auto &[ssp_resource_name, analysis_model] : analysis_graph->models)
         {
             auto m = std::make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu, analysis_model->maxOutputDerivativeOrder);
-            LOG_TRACE_L1(log, "[{func}] -- New Model: {}", __func__, m->name);
+            LOG_TRACE_L1(log, "[{func}] -- New Model: {model}", __func__, m->name);
 
             m->delay = analysis_model->delay;
-            LOG_DEBUG(log, "Model: {}, delay {}", m->name, m->delay);
+            LOG_DEBUG(log, "Model: {model}, delay {delay}", m->name, m->delay);
 
             models[analysis_model->name] = std::move(m);
         }

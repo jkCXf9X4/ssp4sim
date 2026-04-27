@@ -17,7 +17,7 @@ namespace ssp4sim::graph
         auto step = StepData(step_data.start_time, step_data.end_time, sub_step, step_data.start_time, step_data.end_time);
 
         IF_LOG({
-            LOG_DEBUG(log, "[{func}] stepdata: {}", __func__, step_data.to_string());
+            LOG_DEBUG(log, "[{func}] stepdata: {stepdata}", __func__, step_data.to_string());
         });
 
         for (auto &node : this->nodes)

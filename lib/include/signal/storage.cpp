@@ -137,7 +137,7 @@ namespace ssp4sim::signal
 
                 if (variable.type == types::DataType::string)
                 {
-                    LOG_DEBUG(log, "[{func}] Setting string {}:{} - {}", __func__, variable.index, variable.name, variable.type.to_string());
+                    LOG_DEBUG(log, "[{func}] Setting string {index}:{name} - {type}", __func__, variable.index, variable.name, variable.type.to_string());
                     auto s = reinterpret_cast<std::string *>(locations[area_index][variable.index]);
                     std::construct_at(s);
                 }

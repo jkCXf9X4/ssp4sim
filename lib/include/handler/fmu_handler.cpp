@@ -36,7 +36,7 @@ namespace ssp4sim::handler
         fmu_map = ssp4sim::ext::ssp::create_fmu_map(*ssp);
         for (auto &[fmu_name, fmu] : fmu_map)
         {
-            LOG_DEBUG(log, "[{func}] - FMU: {} - {}", __func__, fmu_name, fmu->to_string());
+            LOG_DEBUG(log, "[{func}] - FMU: {fmu_name} - {fmu}", __func__, fmu_name, fmu->to_string());
         }
 
         fmu_ref_map = utils::map_ns::map_unique_to_ref(fmu_map);

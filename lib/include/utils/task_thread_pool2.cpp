@@ -67,7 +67,7 @@ namespace ssp4sim::utils
     void ThreadPool2::enqueue(task_info &task)
     {
         IF_LOG({
-            LOG_DEBUG(log, "[{func}] Enqueueing task: {}", __func__, task.node->name);
+            LOG_DEBUG(log, "[{func}] Enqueueing task: {task}", __func__, task.node->name);
         });
 
         {
@@ -75,7 +75,7 @@ namespace ssp4sim::utils
             tasks.emplace(std::move(task));
         }
         IF_LOG({
-            LOG_DEBUG(log, "[{func}] Task queued: {}", __func__, task.node->name);
+            LOG_DEBUG(log, "[{func}] Task queued: {task}", __func__, task.node->name);
         });
     }
 
@@ -113,7 +113,7 @@ namespace ssp4sim::utils
                     if (!tasks.empty())
                     {
                         IF_LOG({
-                            LOG_DEBUG(log, "[{func}] Found new task, que {}", __func__, que);
+                            LOG_DEBUG(log, "[{func}] Found new task, que {queue}", __func__, que);
                         });
 
                         task = std::move(tasks.top());
@@ -126,12 +126,12 @@ namespace ssp4sim::utils
                 {
                     auto &t = task.value();
                     IF_LOG({
-                        LOG_DEBUG(log, "[{func}] Invoking {} {}", __func__, t.node->name, t.step.to_string());
+                        LOG_DEBUG(log, "[{func}] Invoking {node} {step}", __func__, t.node->name, t.step.to_string());
                     });
 
                     t.node->invoke(t.step);
                     IF_LOG({
-                        LOG_DEBUG(log, "[{func}] Task completed {}", __func__, t.node->name);
+                        LOG_DEBUG(log, "[{func}] Task completed {task}", __func__, t.node->name);
                     });
                 }
             }

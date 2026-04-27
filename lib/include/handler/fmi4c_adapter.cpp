@@ -67,7 +67,7 @@ namespace ssp4sim::handler
 
         instance_name_ = std::move(instance_name);
 
-        LOG_DEBUG(log, "[{func}] Loading FMU {}", __func__, fmu_path_);
+        LOG_DEBUG(log, "[{func}] Loading FMU {fmu}", __func__, fmu_path_);
         detail::ensure_message_callback_registered();
         detail::clear_last_message();
         
@@ -90,7 +90,7 @@ namespace ssp4sim::handler
     {
         if (handle_ != nullptr)
         {
-            LOG_DEBUG(log, "[{func}] Freeing FMU {}", __func__, fmu_path_);
+            LOG_DEBUG(log, "[{func}] Freeing FMU {fmu}", __func__, fmu_path_);
             fmi4c_freeFmu(handle_);
             handle_ = nullptr;
         }
@@ -169,7 +169,7 @@ namespace ssp4sim::handler
         std::string msg = detail::format_with_va_list(message, args);
         va_end(args);
 
-        LOG_DEBUG(log, "[{func}] ({}) status:{} {}", instanceName, category, std::to_string(status), msg);
+        LOG_DEBUG(log, "[{func}] ({category}) status:{status} {msg}", instanceName, category, std::to_string(status), msg);
     }
 
     static void *myAllocateMemory(size_t nobj, size_t size)
@@ -207,7 +207,7 @@ namespace ssp4sim::handler
             throw std::runtime_error(std::format("FMU '{}' does not support co-simulation", instance_.path()));
         }
 
-        LOG_DEBUG(log, "[{func}] Instantiating FMU {}", __func__, instance_.path());
+        LOG_DEBUG(log, "[{func}] Instantiating FMU {fmu}", __func__, instance_.path());
         detail::ensure_message_callback_registered();
         detail::clear_last_message();
 
@@ -260,10 +260,10 @@ namespace ssp4sim::handler
         double start = utils::time::ns_to_s(start_time);
         double stop = utils::time::ns_to_s(stop_time);
 
-        LOG_DEBUG(log, "[{func}] setup_experiment start:{} stop[{func}]:{} tolerance[{func}]:{}", __func__, start, stop_defined, stop, tolerance_defined, tolerance);
+        LOG_DEBUG(log, "[{func}] setup_experiment start:{start} stop[{stop_defined}]:{stop} tolerance[{tolerance_defined}]:{tolerance}", __func__, start, stop_defined, stop, tolerance_defined, tolerance);
 
         current_time_ = start_time;
-        LOG_DEBUG(log, "[{func}] start time:{}", __func__, current_time_);
+        LOG_DEBUG(log, "[{func}] start time:{start_time}", __func__, current_time_);
 
         last_status_ = fmi2_setupExperiment(handle, tolerance_defined, tolerance, start, stop_defined, stop);
 
@@ -300,7 +300,7 @@ namespace ssp4sim::handler
             auto step_time = stop_time - sim_time;
 
             IF_LOG({
-                LOG_DEBUG(log, "[{func}] step_time {}s ", __func__, utils::time::ns_to_s(step_time));
+                LOG_DEBUG(log, "[{func}] step_time {step_time}s ", __func__, utils::time::ns_to_s(step_time));
             });
 
             if (!this->step(step_time))
@@ -314,7 +314,7 @@ namespace ssp4sim::handler
             sim_time = get_simulation_time();
 
             IF_LOG({
-                LOG_TRACE_L1(log, "[{func}], sim time {}", __func__, sim_time);
+                LOG_TRACE_L1(log, "[{func}], sim time {tolerance}", __func__, sim_time);
             });
         }
         return sim_time;
@@ -331,7 +331,7 @@ namespace ssp4sim::handler
         double step_value = utils::time::ns_to_s(step_size);
 
         IF_LOG({
-            LOG_DEBUG(log, "[{func}] current {} step {}", __func__, current, step_value);
+            LOG_DEBUG(log, "[{func}] current {current} step {step}", __func__, current, step_value);
         });
 
         last_status_ = fmi2_doStep(handle, current, step_value, fmi2True);
@@ -340,7 +340,7 @@ namespace ssp4sim::handler
             current_time_ += step_size;
             return true;
         }
-        LOG_ERROR(log, "[{func}] step(current: {}, step:{}) returned non ok, status: {} for model {}", __func__, current, step_value, std::to_string(last_status_), this->instance_.instance_name());
+        LOG_ERROR(log, "[{func}] step(current: {current}, step:{step}) returned non ok, status: {status} for model {model}", __func__, current, step_value, std::to_string(last_status_), this->instance_.instance_name());
 
         return false;
     }
@@ -352,18 +352,18 @@ namespace ssp4sim::handler
             return true;
         }
 
-        LOG_DEBUG(log, "[{func}] Terminating FMU {}", __func__, instance_.path());
+        LOG_DEBUG(log, "[{func}] Terminating FMU {fmu}", __func__, instance_.path());
         last_status_ = fmi2_terminate(handle);
         fmi2_freeInstance(handle);
         instantiated_ = false;
         auto terminated = is_status_ok(last_status_);
         if (!terminated)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to terminate", __func__, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to terminate", __func__, this->instance_.instance_name());
         }
         // Some fmus send messages when they terminate, wait for this
         usleep(100);
-        LOG_DEBUG(log, "[{func}] Terminated FMU {}", __func__, instance_.path());
+        LOG_DEBUG(log, "[{func}] Terminated FMU {fmu}", __func__, instance_.path());
         return terminated;
     }
 
@@ -386,7 +386,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to set_real_input_derivative, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to set_real_input_derivative, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -401,7 +401,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to get_real_output_derivative, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to get_real_output_derivative, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -414,7 +414,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to read_real, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to read_real, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -428,7 +428,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to read_integer, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to read_integer, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -441,7 +441,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to read_boolean, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to read_boolean, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -458,7 +458,7 @@ namespace ssp4sim::handler
             return true;
         }
 
-        LOG_ERROR(log, "[{func}] Model {}, failed to read_string, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+        LOG_ERROR(log, "[{func}] Model {model}, failed to read_string, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         return false;
     }
 
@@ -476,7 +476,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to write_real, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to write_real, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -490,7 +490,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to write_integer, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to write_integer, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -504,7 +504,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to write_boolean, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to write_boolean, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;
@@ -519,7 +519,7 @@ namespace ssp4sim::handler
         bool ok = is_status_ok(last_status_);
         if (!ok)
         {
-            LOG_ERROR(log, "[{func}] Model {}, failed to write_string, vr {}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            LOG_ERROR(log, "[{func}] Model {model}, failed to write_string, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
         }
 
         return ok;

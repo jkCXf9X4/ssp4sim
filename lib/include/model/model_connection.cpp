@@ -42,7 +42,7 @@ namespace ssp4sim::graph
             if (connection.source_storage->find_latest_valid_area(input_time - connection.delay, source_area))
             {
                 IF_LOG({
-                    LOG_DEBUG(connection.log, "[{func}] Valid source_storage area found, time {}", __func__, connection.source_storage->data->timestamps[source_area]);
+                    LOG_DEBUG(connection.log, "[{func}] Valid source_storage area found, time {time}", __func__, connection.source_storage->data->timestamps[source_area]);
                 });
 
                 auto source_item = connection.source_storage->get_item(static_cast<std::size_t>(source_area), connection.source_index);
@@ -83,7 +83,7 @@ namespace ssp4sim::graph
             {
                 if (input_time > 1)
                 {
-                    LOG_WARNING(connection.log, "[{func}] No valid data for t {}, connection: {}", __func__, input_time, connection.to_string());
+                    LOG_WARNING(connection.log, "[{func}] No valid data for t {time}, connection: {connection}", __func__, input_time, connection.to_string());
                 }
             }
         }

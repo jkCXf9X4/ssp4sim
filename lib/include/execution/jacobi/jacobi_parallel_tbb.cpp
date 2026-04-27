@@ -19,7 +19,7 @@ namespace ssp4sim::graph
     uint64_t JacobiParallelTBB::invoke(StepData step_data)
     {
         IF_LOG({
-            LOG_DEBUG(log, "[{func}] stepdata: {}", __func__, step_data.to_string());
+            LOG_DEBUG(log, "[{func}] stepdata: {stepdata}", __func__, step_data.to_string());
         });
 
         auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);

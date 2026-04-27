@@ -119,12 +119,12 @@ namespace ssp4sim::ext::ssp1::ssv
             {
                 if (parameter_map.contains(name))
                 {
-                    LOG_WARNING(log(), "[{func}] Overwriting parameter start value for, {}", __func__, name);
+                    LOG_WARNING(log(), "[{func}] Overwriting parameter start value for {parameter}", __func__, name);
                 }
 
-                LOG_DEBUG(log(), "[{func}] Inserting parameter {} as {}", __func__, value.name, name);
+                LOG_DEBUG(log(), "[{func}] Inserting parameter {value} as {parameter}", __func__, value.name, name);
                 parameter_map.insert_or_assign(name, value);
-                LOG_TRACE_L1(log(), "[{func}] - Parameter {} ", __func__, value.to_string());
+                LOG_TRACE_L1(log(), "[{func}] - Parameter {parameter} ", __func__, value.to_string());
             }
         }
         return parameter_map;

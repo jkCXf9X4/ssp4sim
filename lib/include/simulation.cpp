@@ -76,14 +76,14 @@ namespace ssp4sim
 
         LOG_INFO(p->log,"[{func}] - Creating analysis graph", __func__);
         auto analysis_graph = analysis::graph::AnalysisGraphBuilder(p->ssp, p->fmu_handler.get()).build();
-        LOG_DEBUG(p->log, " -- {}", analysis_graph->to_string());
+        LOG_DEBUG(p->log, " -- {graph}", analysis_graph->to_string());
 
         LOG_INFO(p->log,"[{func}] - Creating simulation graph", __func__);
         auto graph_builder = graph::GraphBuilder(analysis_graph.get(), p->recorder.get());
         graph_builder.build();
 
         p->sim_graph = graph_builder.get_graph();
-        LOG_DEBUG(p->log, " -- {}", p->sim_graph->to_string());
+        LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());
 
         p->nodes = graph_builder.get_models(); // transfer ownership of nodes to simulation
 
@@ -136,7 +136,7 @@ namespace ssp4sim
 
         auto sim_wall_time = sim_timer.stop();
 
-        LOG_INFO(p->log,"[{func}] Total walltime: {} ", __func__, utils::time::ns_to_s(sim_wall_time));
+        LOG_INFO(p->log,"[{func}] Total walltime: {walltime} ", __func__, utils::time::ns_to_s(sim_wall_time));
 
         if (p->recorder)
         {
@@ -149,9 +149,9 @@ namespace ssp4sim
         for (auto &node : p->sim_graph->nodes)
         {
             auto model_walltime = node->walltime_ns;
-            LOG_INFO(p->log,"[{func}] Model {} walltime: {}", __func__, node->name, utils::time::ns_to_s(model_walltime));
+            LOG_INFO(p->log,"[{func}] Model {model} walltime: {walltime}", __func__, node->name, utils::time::ns_to_s(model_walltime));
             total_model_time += model_walltime;
         }
-        LOG_INFO(p->log,"[{func}] Model walltime: {}", __func__, utils::time::ns_to_s(total_model_time));
+        LOG_INFO(p->log,"[{func}] Model walltime: {walltime}", __func__, utils::time::ns_to_s(total_model_time));
     }
 }

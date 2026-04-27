@@ -23,9 +23,9 @@ namespace ssp4sim::signal
           file(filename, std::ios::out)
     {
         LOG_TRACE_L2(log, "[{func}] Constructor", __func__);
-        LOG_DEBUG(log, "[{func}] Recording interval {}", __func__, recording_interval);
-        LOG_DEBUG(log, "[{func}] File {}, open {}", __func__, filename, file.is_open());
-        LOG_DEBUG(log, "[{func}] Interval: {}, wait_for: {}", __func__, interval, wait_for);
+        LOG_DEBUG(log, "[{func}] Recording interval {interval}", __func__, recording_interval);
+        LOG_DEBUG(log, "[{func}] File {file}, open {open}", __func__, filename, file.is_open());
+        LOG_DEBUG(log, "[{func}] Interval: {interval}, wait_for: {wait_for}", __func__, interval, wait_for);
 
         recording_interval = interval;
         wait_for_recorder = wait_for;

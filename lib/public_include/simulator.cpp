@@ -26,15 +26,15 @@ namespace ssp4sim
         p->log = ssp4cpp::utils::log::simple_logger();
         LOG_INFO(p->log, "[{func}] Setting up Simulator", __func__);
 
-        LOG_INFO(p->log, "[{func}] - Loading config: {}", __func__, config_path);
+        LOG_INFO(p->log, "[{func}] - Loading config: {config}", __func__, config_path);
         if (!std::filesystem::exists(config_path))
         {
-            LOG_ERROR(p->log, "Config file does not exist: {}", config_path);
+            LOG_ERROR(p->log, "Config file does not exist: {config_path}", config_path);
             throw std::runtime_error("Config file does not exist: " + config_path);
         }
         
         utils::Config::loadFromFile(config_path);
-        LOG_DEBUG(p->log, "[{func}] - Config loaded:\n{}\n", __func__, utils::Config::as_string());
+        LOG_DEBUG(p->log, "[{func}] - Config loaded:\n{config}\n", __func__, utils::Config::as_string());
         // p->log->flush_log(); 
 
         auto log_file = utils::Config::getString("simulation.log.file");
@@ -51,7 +51,7 @@ namespace ssp4sim
         auto ssp_path = utils::Config::getString("simulation.ssp");
         auto ssd = utils::Config::getOr("simulation.ssd", std::string("SystemStructure.ssd"));
         p->ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path, ssd);
-        LOG_DEBUG(p->log, "[{func}] -- SSP: {}", __func__, p->ssp->to_string());
+        LOG_DEBUG(p->log, "[{func}] -- SSP: {ssp}", __func__, p->ssp->to_string());
 
         LOG_DEBUG(p->log, "[{func}] - Creating simulation\n", __func__);
         p->sim = std::make_unique<Simulation>(p->ssp.get());

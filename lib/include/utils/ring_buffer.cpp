@@ -59,7 +59,7 @@ namespace ssp4sim::utils
     {
         if (use_verification && !used[index]) [[unlikely]]
         {
-            LOG_ERROR(log, "[{func}] RingBuffer, index not populated: {}", __func__, index);
+            LOG_ERROR(log, "[{func}] RingBuffer, index not populated: {index}", __func__, index);
             throw std::runtime_error("[RingBuffer][get_item] Index not populated");
         }
         return locations[index];
@@ -69,7 +69,7 @@ namespace ssp4sim::utils
     {
         if (!used[index]) [[unlikely]]
         {
-            LOG_ERROR(log, "[{func}] RingBuffer, index not populated: {}", __func__, index);
+            LOG_ERROR(log, "[{func}] RingBuffer, index not populated: {index}", __func__, index);
             throw std::runtime_error("[RingBuffer][get_time] Index not populated");
         }
         return timestamps[index];
@@ -83,7 +83,7 @@ namespace ssp4sim::utils
             if (timestamps[pos] == time)
             {
                 IF_LOG({
-                    LOG_TRACE_L1(log, "[{func}] found valid index, {}", __func__, pos);
+                    LOG_TRACE_L1(log, "[{func}] found valid index, {index}", __func__, pos);
                 });
 
                 index_found = pos;

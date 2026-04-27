@@ -37,7 +37,7 @@ namespace ssp4sim::graph
               log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.DelayExecutor"))
         {
             this->name = "DelayExecutor";
-            LOG_INFO(log, "[{func}] substep: {}", __func__, sub_step);
+            LOG_INFO(log, "[{func}] substep: {substep}", __func__, sub_step);
         }
 
         Invocable *node_from_name(ExecutionBase *executor, std::string name)
@@ -49,7 +49,7 @@ namespace ssp4sim::graph
                     return node;
                 }
             }
-            LOG_ERROR(executor->log, "[{func}] In {} node: {} not found", __func__, executor->name, name);
+            LOG_ERROR(executor->log, "[{func}] In {node} node: {name} not found", __func__, executor->name, name);
             throw std::runtime_error("Node not found");
         }
 
@@ -130,7 +130,7 @@ namespace ssp4sim::graph
         DelayExecutor(std::vector<Invocable *> nodes) : DelayExecutorBase(nodes)
         {
             this->name = "DelayExecutor";
-            LOG_INFO(log, "[{func}] substep: {}", __func__, sub_step);
+            LOG_INFO(log, "[{func}] substep: {substep}", __func__, sub_step);
 
             auto source = node_from_name(this, "Sources");
             auto let1 = node_from_name(this, "LET1");
@@ -170,7 +170,7 @@ namespace ssp4sim::graph
             auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             IF_LOG({
-                LOG_DEBUG(log, "[{func}] {} stepdata: {}", __func__, name, step_data.to_string());
+                LOG_DEBUG(log, "[{func}] {name} stepdata: {stepdata}", __func__, name, step_data.to_string());
             });
 
             std::for_each(std::execution::par, groups.begin(), groups.end(),
@@ -197,7 +197,7 @@ namespace ssp4sim::graph
         DelayExecutorPartial(std::vector<Invocable *> nodes) : DelayExecutorBase(nodes)
         {
             name = "DelayExecutorPartial";
-            LOG_INFO(log, "[{func}] substep: {}", __func__, sub_step);
+            LOG_INFO(log, "[{func}] substep: {substep}", __func__, sub_step);
 
             auto source = node_from_name(this, "Sources");
             auto let1 = node_from_name(this, "LET1");
@@ -232,7 +232,7 @@ namespace ssp4sim::graph
             auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
 
             IF_LOG({
-                LOG_DEBUG(log, "[{func}] {} stepdata: {}", __func__, name, step_data.to_string());
+                LOG_DEBUG(log, "[{func}] {name} stepdata: {stepdata}", __func__, name, step_data.to_string());
             });
 
             auto one_ms = utils::time::nanoseconds_per_millisecond;

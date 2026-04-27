@@ -32,7 +32,7 @@ namespace ssp4sim::graph
 
             auto data_ptr = connector.initial_value->raw_ptr();
             auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(connector.type, data_ptr);
-            LOG_DEBUG(connector.log, "[{func}] Set initial value for {}, {} : {}", __func__, name, connector.type.to_string(), data_type_str);
+            LOG_DEBUG(connector.log, "[{func}] Set initial value for {name}, {type} : {data_type}", __func__, name, connector.type.to_string(), data_type_str);
 
             utils::write_to_model_(connector.type, *connector.fmu->model, connector.value_ref, data_ptr);
         }
@@ -56,7 +56,7 @@ namespace ssp4sim::graph
             auto item = input_area->get_item(area, input.index);
 
             auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, data_ptr);
-            LOG_DEBUG(input_area->log, "[{func}] Set initial input value for {}, {} : {}", __func__, name, input.type.to_string(), data_type_str);
+            LOG_DEBUG(input_area->log, "[{func}] Set initial input value for {name}, {type} : {data_type}", __func__, name, input.type.to_string(), data_type_str);
 
             if (input.type == types::DataType::string)
             {
@@ -77,7 +77,7 @@ namespace ssp4sim::graph
                                             int area)
     {
         IF_LOG({
-            LOG_DEBUG(storage->log, "[{func}] Write data to model, time: {}", __func__, storage->data->timestamps[area]);
+            LOG_DEBUG(storage->log, "[{func}] Write data to model, time: {time}", __func__, storage->data->timestamps[area]);
         });
 
         for (auto &[_, input] : inputs)
@@ -86,7 +86,7 @@ namespace ssp4sim::graph
 
             IF_LOG({
                 auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, input_item);
-                LOG_DEBUG(storage->log, "[{func}] Copying input to model. {}, data: {}", __func__, input.to_string(), data_type_str);
+                LOG_DEBUG(storage->log, "[{func}] Copying input to model. {input}, data: {data}", __func__, input.to_string(), data_type_str);
             });
 
             utils::write_to_model_(input.type, *input.fmu->model, input.value_ref, static_cast<void *>(input_item));
@@ -98,7 +98,7 @@ namespace ssp4sim::graph
                                                int area)
     {
         IF_LOG({
-            LOG_DEBUG(storage->log, "[{func}] Init, area {}, time {}", __func__, area, storage->data->timestamps[area]);
+            LOG_DEBUG(storage->log, "[{func}] Init, area {area}, time {time}", __func__, area, storage->data->timestamps[area]);
         });
 
         for (auto &[_, output] : outputs)
@@ -112,7 +112,7 @@ namespace ssp4sim::graph
 
             IF_LOG({
                 auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(output.type, item);
-                LOG_DEBUG(storage->log, "[{func}] Copying output from model. {}, data: {}", __func__, output.to_string(), data_type_str);
+                LOG_DEBUG(storage->log, "[{func}] Copying output from model. {output}, data: {data}", __func__, output.to_string(), data_type_str);
             });
         }
         IF_LOG({
@@ -142,7 +142,7 @@ namespace ssp4sim::graph
                 double value = *reinterpret_cast<double *>(der_ptr);
                 if (!connector.fmu->model->set_real_input_derivative(connector.value_ref, order, value))
                 {
-                    LOG_WARNING(connector.log, "[{func}] Failed to set input derivative order {} for {} (status {})",
+                    LOG_WARNING(connector.log, "[{func}] Failed to set input derivative order {order} for {name} (status {status})",
                                  __func__,
                                  order,
                                  connector.name,
@@ -179,14 +179,14 @@ namespace ssp4sim::graph
                 auto der_ptr = connector.storage->get_derivative(area, connector.index, order);
                 if (der_ptr == nullptr)
                 {
-                    LOG_WARNING(connector.log, "[{func}] Failed to find derivative item for {}", __func__, connector.name);
+                    LOG_WARNING(connector.log, "[{func}] Failed to find derivative item for {name}", __func__, connector.name);
                     continue;
                 }
 
                 double value = 0.0;
                 if (!connector.fmu->model->get_real_output_derivative(connector.value_ref, order, value))
                 {
-                    LOG_WARNING(connector.log, "[{func}] Failed to get output derivative order {} for {} (status {})",
+                    LOG_WARNING(connector.log, "[{func}] Failed to get output derivative order {order} for {name} (status {status})",
                                  __func__,
                                  order,
                                  connector.name,

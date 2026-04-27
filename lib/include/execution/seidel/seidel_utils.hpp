@@ -44,7 +44,7 @@ namespace ssp4sim::graph
                               output_time);       // output_time
 
             IF_LOG({
-                LOG_INFO(node->log, "Node {}, Time {}, step: {}",
+                LOG_INFO(node->log, "Node {node}, Time {time}, step: {step}",
                           node->name, node->current_time, s.to_string());
             });
 
