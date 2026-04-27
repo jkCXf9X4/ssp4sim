@@ -54,7 +54,7 @@ namespace ssp4sim::utils
         {
             using return_type = std::invoke_result_t<F>;
             IF_LOG({
-                LOG_DEBUG(log, "[{}] Enqueueing task", __func__);
+                LOG_DEBUG(log, "[{func}] Enqueueing task", __func__);
             });
 
             auto task = std::make_shared<std::packaged_task<return_type()>>(std::forward<F>(f));
@@ -69,7 +69,7 @@ namespace ssp4sim::utils
             // notify a worker that one task is available
             task_semaphore.release();
             IF_LOG({
-                LOG_DEBUG(log, "[{}] Task queued", __func__);
+                LOG_DEBUG(log, "[{func}] Task queued", __func__);
             });
 
             return res;

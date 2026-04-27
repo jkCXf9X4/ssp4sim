@@ -21,7 +21,7 @@ class JacobiBase : public ExecutionBase
             : ExecutionBase(nodes),
               log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiBase"))
         {
-            LOG_INFO(log, "[{}] ", __func__);
+            LOG_INFO(log, "[{func}] ", __func__);
         }
 
         std::string to_string() const override

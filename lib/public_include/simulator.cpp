@@ -24,9 +24,9 @@ namespace ssp4sim
         : p(std::make_unique<SimulatorPrivate>())
     {
         p->log = ssp4cpp::utils::log::simple_logger();
-        LOG_INFO(p->log, "[{}] Setting up Simulator", __func__);
+        LOG_INFO(p->log, "[{func}] Setting up Simulator", __func__);
 
-        LOG_INFO(p->log, "[{}] - Loading config: {}", __func__, config_path);
+        LOG_INFO(p->log, "[{func}] - Loading config: {}", __func__, config_path);
         if (!std::filesystem::exists(config_path))
         {
             LOG_ERROR(p->log, "Config file does not exist: {}", config_path);
@@ -34,7 +34,7 @@ namespace ssp4sim
         }
         
         utils::Config::loadFromFile(config_path);
-        LOG_DEBUG(p->log, "[{}] - Config loaded:\n{}\n", __func__, utils::Config::as_string());
+        LOG_DEBUG(p->log, "[{func}] - Config loaded:\n{}\n", __func__, utils::Config::as_string());
         // p->log->flush_log(); 
 
         auto log_file = utils::Config::getString("simulation.log.file");
@@ -47,13 +47,13 @@ namespace ssp4sim
         
         p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");
 
-        LOG_DEBUG(p->log, "[{}] - Importing SSP", __func__);
+        LOG_DEBUG(p->log, "[{func}] - Importing SSP", __func__);
         auto ssp_path = utils::Config::getString("simulation.ssp");
         auto ssd = utils::Config::getOr("simulation.ssd", std::string("SystemStructure.ssd"));
         p->ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path, ssd);
-        LOG_DEBUG(p->log, "[{}] -- SSP: {}", __func__, p->ssp->to_string());
+        LOG_DEBUG(p->log, "[{func}] -- SSP: {}", __func__, p->ssp->to_string());
 
-        LOG_DEBUG(p->log, "[{}] - Creating simulation\n", __func__);
+        LOG_DEBUG(p->log, "[{func}] - Creating simulation\n", __func__);
         p->sim = std::make_unique<Simulation>(p->ssp.get());
     }
 
@@ -65,7 +65,7 @@ namespace ssp4sim
         {
             throw std::runtime_error("Simulator is not initialized");
         }
-        LOG_INFO(p->log, "[{}] Initializing Simulator\n", __func__);
+        LOG_INFO(p->log, "[{func}] Initializing Simulator\n", __func__);
         p->sim->init();
     }
 
@@ -75,7 +75,7 @@ namespace ssp4sim
         {
             throw std::runtime_error("Simulator is not initialized");
         }
-        LOG_INFO(p->log, "[{}] Starting Simulator\n", __func__);
+        LOG_INFO(p->log, "[{func}] Starting Simulator\n", __func__);
         p->sim->simulate();
     }
 

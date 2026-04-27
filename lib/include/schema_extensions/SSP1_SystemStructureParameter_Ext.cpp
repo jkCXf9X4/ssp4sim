@@ -81,14 +81,14 @@ namespace ssp4sim::ext::ssp1::ssv
 
     std::vector<StartValue> get_start_values(std::vector<ssp4cpp::ParameterBindings> &bindings)
     {
-        LOG_TRACE_L1(log(), "[{}] Init", __func__);
+        LOG_TRACE_L1(log(), "[{func}] Init", __func__);
 
         std::vector<StartValue> start_values;
         for (auto &binding : bindings)
         {
             for (auto &parameter : binding.ssv->Parameters.Parameters)
             {
-                LOG_TRACE_L1(log(), "[{}] - Store values, {}", __func__, parameter.name);
+                LOG_TRACE_L1(log(), "[{func}] - Store values, {}", __func__, parameter.name);
                 StartValue start_value(parameter.name, get_parameter_type(parameter));
                 start_value.store_value(get_parameter_value(parameter));
 
@@ -98,7 +98,7 @@ namespace ssp4sim::ext::ssp1::ssv
                     {
                         if (start_value.name == map.source)
                         {
-                            LOG_TRACE_L1(log(), "[{}] Add mapping for {} - {}", __func__, parameter.name, map.target);
+                            LOG_TRACE_L1(log(), "[{func}] Add mapping for {} - {}", __func__, parameter.name, map.target);
                             start_value.mappings.push_back(map.target);
                         }
                     }
@@ -114,17 +114,17 @@ namespace ssp4sim::ext::ssp1::ssv
         std::map<std::string, StartValue> parameter_map;
         for (auto &value : start_values)
         {
-            LOG_TRACE_L1(log(), "[{}] - Parameter {}, {}", __func__, value.name, value.type.to_string());
+            LOG_TRACE_L1(log(), "[{func}] - Parameter {}, {}", __func__, value.name, value.type.to_string());
             for (auto name : value.mappings)
             {
                 if (parameter_map.contains(name))
                 {
-                    LOG_WARNING(log(), "[{}] Overwriting parameter start value for, {}", __func__, name);
+                    LOG_WARNING(log(), "[{func}] Overwriting parameter start value for, {}", __func__, name);
                 }
 
-                LOG_DEBUG(log(), "[{}] Inserting parameter {} as {}", __func__, value.name, name);
+                LOG_DEBUG(log(), "[{func}] Inserting parameter {} as {}", __func__, value.name, name);
                 parameter_map.insert_or_assign(name, value);
-                LOG_TRACE_L1(log(), "[{}] - Parameter {} ", __func__, value.to_string());
+                LOG_TRACE_L1(log(), "[{func}] - Parameter {} ", __func__, value.to_string());
             }
         }
         return parameter_map;

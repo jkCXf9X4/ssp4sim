@@ -20,12 +20,12 @@ namespace ssp4sim::utils
             dones[i] = false;
             workers.emplace_back(&ThreadPool2::worker_thread, this, static_cast<int>(i), std::ref(dones[i]));
         }
-        LOG_DEBUG(log, "[{}] Threads started", __func__);
+        LOG_DEBUG(log, "[{func}] Threads started", __func__);
     }
 
     ThreadPool2::~ThreadPool2()
     {
-        LOG_DEBUG(log, "[{}] Destroying threadpool", __func__);
+        LOG_DEBUG(log, "[{func}] Destroying threadpool", __func__);
         terminate.store(true);
 
         {
@@ -34,7 +34,7 @@ namespace ssp4sim::utils
         }
         cv.notify_all();
 
-        LOG_DEBUG(log, "[{}] Waiting for all tasks to complete", __func__);
+        LOG_DEBUG(log, "[{func}] Waiting for all tasks to complete", __func__);
         for (std::thread &worker : workers)
         {
             if (worker.joinable())
@@ -42,13 +42,13 @@ namespace ssp4sim::utils
                 worker.join();
             }
         }
-        LOG_DEBUG(log, "[{}] Threadpool successfully destroyed", __func__);
+        LOG_DEBUG(log, "[{func}] Threadpool successfully destroyed", __func__);
     }
 
     void ThreadPool2::ready(int nodes)
     {
         IF_LOG({
-            LOG_DEBUG(log, "[{}] Ready", __func__);
+            LOG_DEBUG(log, "[{func}] Ready", __func__);
         });
 
         for (std::size_t i = 0; i < workers.size(); ++i)
@@ -67,7 +67,7 @@ namespace ssp4sim::utils
     void ThreadPool2::enqueue(task_info &task)
     {
         IF_LOG({
-            LOG_DEBUG(log, "[{}] Enqueueing task: {}", __func__, task.node->name);
+            LOG_DEBUG(log, "[{func}] Enqueueing task: {}", __func__, task.node->name);
         });
 
         {
@@ -75,7 +75,7 @@ namespace ssp4sim::utils
             tasks.emplace(std::move(task));
         }
         IF_LOG({
-            LOG_DEBUG(log, "[{}] Task queued: {}", __func__, task.node->name);
+            LOG_DEBUG(log, "[{func}] Task queued: {}", __func__, task.node->name);
         });
     }
 
@@ -113,7 +113,7 @@ namespace ssp4sim::utils
                     if (!tasks.empty())
                     {
                         IF_LOG({
-                            LOG_DEBUG(log, "[{}] Found new task, que {}", __func__, que);
+                            LOG_DEBUG(log, "[{func}] Found new task, que {}", __func__, que);
                         });
 
                         task = std::move(tasks.top());
@@ -126,19 +126,19 @@ namespace ssp4sim::utils
                 {
                     auto &t = task.value();
                     IF_LOG({
-                        LOG_DEBUG(log, "[{}] Invoking {} {}", __func__, t.node->name, t.step.to_string());
+                        LOG_DEBUG(log, "[{func}] Invoking {} {}", __func__, t.node->name, t.step.to_string());
                     });
 
                     t.node->invoke(t.step);
                     IF_LOG({
-                        LOG_DEBUG(log, "[{}] Task completed {}", __func__, t.node->name);
+                        LOG_DEBUG(log, "[{func}] Task completed {}", __func__, t.node->name);
                     });
                 }
             }
             done = true;
         }
 
-        LOG_DEBUG(log, "[{}] Thread finished", __func__);
+        LOG_DEBUG(log, "[{func}] Thread finished", __func__);
     }
 
 }

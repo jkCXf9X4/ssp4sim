@@ -32,16 +32,16 @@ namespace ssp4sim::handler
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuHandler")),
           ssp(ssp)
     {
-        LOG_DEBUG(log, "[{}] Creating FMU map", __func__);
+        LOG_DEBUG(log, "[{func}] Creating FMU map", __func__);
         fmu_map = ssp4sim::ext::ssp::create_fmu_map(*ssp);
         for (auto &[fmu_name, fmu] : fmu_map)
         {
-            LOG_DEBUG(log, "[{}] - FMU: {} - {}", __func__, fmu_name, fmu->to_string());
+            LOG_DEBUG(log, "[{func}] - FMU: {} - {}", __func__, fmu_name, fmu->to_string());
         }
 
         fmu_ref_map = utils::map_ns::map_unique_to_ref(fmu_map);
 
-        LOG_DEBUG(log, "[{}] Creating FMU Info map", __func__);
+        LOG_DEBUG(log, "[{func}] Creating FMU Info map", __func__);
         for (auto &[name, fmu] : fmu_ref_map)
         {
             fmu_info_map.emplace(name, std::make_unique<FmuInfo>(name, fmu));
@@ -50,9 +50,9 @@ namespace ssp4sim::handler
 
     void FmuHandler::init()
     {
-        LOG_TRACE_L1(log, "[{}] Model init ", __func__);
+        LOG_TRACE_L1(log, "[{func}] Model init ", __func__);
 
-        LOG_TRACE_L1(log, "[{}] Model init completed", __func__);
+        LOG_TRACE_L1(log, "[{func}] Model init completed", __func__);
     }
 
 }

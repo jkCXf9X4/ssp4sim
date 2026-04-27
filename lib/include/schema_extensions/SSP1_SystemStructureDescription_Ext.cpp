@@ -108,7 +108,7 @@ namespace ssp4sim::ext::ssp1
                 {
                     if (!connection.startElement.has_value() || !connection.endElement.has_value())
                     {
-                        LOG_WARNING_LIMIT_EVERY_N(100000, log() , "[{}] Start or endvalue missing for {}", __func__, connection.to_string());
+                        LOG_WARNING_LIMIT_EVERY_N(100000, log() , "[{func}] Start or endvalue missing for {}", __func__, connection.to_string());
                         continue;
                     }
                     auto p = std::make_pair(connection.startElement.value(), connection.endElement.value());

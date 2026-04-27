@@ -130,7 +130,7 @@ namespace ssp4sim::utils::graph
             {
                 if (n->is_orphan())
                 {
-                    // LOG_TRACE_L2(log, "[{}] Deleting {}", __func__, n->name);
+                    // LOG_TRACE_L2(log, "[{func}] Deleting {}", __func__, n->name);
                     delete n;
                 }
                 else

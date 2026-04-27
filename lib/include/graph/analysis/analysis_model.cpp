@@ -22,7 +22,7 @@ namespace ssp4sim::analysis::graph
 
     AnalysisModel::~AnalysisModel()
     {
-        LOG_TRACE_L1(log, "[{}] Destroying AnalysisModel", __func__);
+        LOG_TRACE_L1(log, "[{func}] Destroying AnalysisModel", __func__);
     }
 
     void AnalysisModel::set_interpolation_data(bool canInterpolateInputs, int maxDerivativeOrder)

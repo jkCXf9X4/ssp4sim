@@ -9,13 +9,13 @@ namespace ssp4sim::graph
           log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelFutures")),
           pool(threads)
     {
-        LOG_INFO(log, "[{}] JacobiParallelFutures", __func__);
+        LOG_INFO(log, "[{func}] JacobiParallelFutures", __func__);
     }
 
     uint64_t JacobiParallelFutures::invoke(StepData step_data)
     {
         IF_LOG({
-            LOG_DEBUG(log, "[{}] stepdata: {}", __func__, step_data.to_string());
+            LOG_DEBUG(log, "[{func}] stepdata: {}", __func__, step_data.to_string());
         });
 
         auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);

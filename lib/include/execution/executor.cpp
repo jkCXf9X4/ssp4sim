@@ -12,7 +12,7 @@ namespace ssp4sim::graph
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ExecutionBase")),
           nodes(std::move(nodes))
     {
-        LOG_TRACE_L1(log, "[{}] Setting up shared state", __func__);
+        LOG_TRACE_L1(log, "[{func}] Setting up shared state", __func__);
 
         for (std::size_t i = 0; i < this->nodes.size(); i++)
         {
@@ -44,7 +44,7 @@ namespace ssp4sim::graph
             model->enter_init();
         }
 
-        LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{}] TODO: Implement direct feedthrough", __func__);
+        LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] TODO: Implement direct feedthrough", __func__);
 
         // direct feedthrough evaluation should come between these.
         // Doing direct feedthrough for all variables will overwrite inputs with outputs that are unset

@@ -114,7 +114,7 @@ namespace ssp4sim::signal
     {
         if (allocated)
         {
-            LOG_ERROR(log, "[{}] Buffer can only be allocated once", __func__);
+            LOG_ERROR(log, "[{func}] Buffer can only be allocated once", __func__);
             throw std::runtime_error("Buffer can only be allocated once");
         }
 
@@ -137,7 +137,7 @@ namespace ssp4sim::signal
 
                 if (variable.type == types::DataType::string)
                 {
-                    LOG_DEBUG(log, "[{}] Setting string {}:{} - {}", __func__, variable.index, variable.name, variable.type.to_string());
+                    LOG_DEBUG(log, "[{func}] Setting string {}:{} - {}", __func__, variable.index, variable.name, variable.type.to_string());
                     auto s = reinterpret_cast<std::string *>(locations[area_index][variable.index]);
                     std::construct_at(s);
                 }
