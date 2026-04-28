@@ -10,7 +10,7 @@ namespace ssp4sim::utils
     // There are almost no bound checks in this class
     // use with care...
 
-    RingBuffer::RingBuffer(size_t capacity, size_t item_size)
+    RingBuffer::RingBuffer(size_t capacity, size_t buffer_size)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.RingBuffer")),
           timestamps(capacity),
           used(capacity)
@@ -22,14 +22,14 @@ namespace ssp4sim::utils
         }
         this->capacity = capacity;
 
-        auto total_size = this->capacity * item_size;
+        auto total_size = this->capacity * buffer_size;
 
         data = std::make_unique<std::byte[]>(total_size);
         std::memset(data.get(), 0, total_size);
 
         for (size_t i = 0; i < this->capacity; i++)
         {
-            auto position = item_size * i;
+            auto position = buffer_size * i;
             locations.push_back(data.get() + position);
             used[i] = false;
         }

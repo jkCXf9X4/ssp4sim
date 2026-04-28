@@ -26,10 +26,15 @@ namespace ssp4sim::signal
     struct SignalInfo
     {
         size_t index;
-        types::DataType type;
         std::string name;
+        types::DataType type;
         size_t type_size;
+        size_t type_alignment; 
+
         size_t max_interpolation_orders;
+        size_t derivative_size;
+        size_t derivative_alignment;
+
         size_t total_size; // size of data and derivate
 
         size_t position;          // position in the item data chunk

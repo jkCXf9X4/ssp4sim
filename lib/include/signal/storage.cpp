@@ -84,30 +84,29 @@ namespace ssp4sim::signal
         d.index = variables.size();
         d.name = name;
         d.type = type;
-        d.max_interpolation_orders = max_interpolation_order;
-
         d.type_size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
-        const auto value_alignment = get_value_alignment(type);
+        d.type_alignment = get_value_alignment(type);
+        
+        d.max_interpolation_orders = max_interpolation_order;
+        d.derivative_size = ssp4sim::ext::fmi2::enums::get_data_type_size(types::DataType::real);
+        d.derivative_alignment = get_value_alignment(types::DataType::real);
 
-        d.position = align_up(this->mem_size, value_alignment);
-        if (max_interpolation_order > 0)
-        {
-            d.derivate_position = align_up(d.position + d.type_size, alignof(double));
-        }
-        else
-        {
-            d.derivate_position = d.position + d.type_size;
-        }
+        // memsize tracks the growing buffer mapping
+        d.position = align_up(this->mem_size, d.type_alignment);
+
+        // always align up to derivative type even if there is no derivatives to avoid test branching
+        d.derivate_position = align_up(d.position + d.type_size, d.derivative_alignment);
 
         const auto end_position = d.derivate_position + max_interpolation_order * derivative_size;
+
         d.total_size = end_position - d.position;
 
         constexpr std::size_t area_alignment = alignof(std::max_align_t);
-        this->mem_size = align_up(end_position, area_alignment);
+        this->mem_size = align_up(end_position, area_alignment); // align up to the longest target alignment
 
         variables.push_back(std::move(d));
 
-        return variables.size() - 1;
+        return variables.size() - 1; // the index is the position -1
     }
 
     void SignalStorage::allocate()
@@ -182,7 +181,7 @@ namespace ssp4sim::signal
 
     std::byte *SignalStorage::get_item(std::size_t area, std::size_t index) noexcept
     {
-        if (allocated)
+        if (allocated) [[likely]]
         {
             return locations[area][index];
         }
@@ -191,28 +190,28 @@ namespace ssp4sim::signal
 
     std::byte *SignalStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept
     {
-        if (!allocated)
+        if (!allocated)  [[unlikely]]
         {
             return nullptr;
         }
 
-        if (order == 0)
+        if (order == 0)  [[unlikely]]
         {
             return nullptr;
         }
 
-        if (index >= variables.size())
+        if (index >= variables.size())  [[unlikely]]
         {
             return nullptr;
         }
 
         const auto max_order = variables[index].max_interpolation_orders;
-        if (max_order == 0 || order > max_order)
+        if (max_order == 0 || order > max_order)  [[unlikely]]
         {
             return nullptr;
         }
 
-        if (derivate_locations[area][index] != nullptr)
+        if (derivate_locations[area][index] != nullptr) [[likely]]
         {
             return derivate_locations[area][index] + (order - 1) * derivative_size;
         }
@@ -227,12 +226,12 @@ namespace ssp4sim::signal
 
     void SignalStorage::flag_new_data(std::size_t area)
     {
-        if (allocated)
+        if (allocated) [[likely]]
         {
             new_data_flags[area] = true;
 
             // Prep for non flag solution
-            if (new_data_callback)
+            if (new_data_callback) 
             {
                 auto t = NewDataEvent();
                 t.area = area;

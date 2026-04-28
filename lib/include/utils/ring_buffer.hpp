@@ -25,10 +25,10 @@ namespace ssp4sim::utils
     public:
         ssp4cpp::utils::log::Logger* log = nullptr;
 
-        std::size_t item_size = 0;
+        std::size_t buffer_size = 0;
         std::unique_ptr<std::byte[]> data;
         std::vector<std::uint64_t> timestamps;
-        std::vector<bool> used;
+        std::vector<bool> used; // has the buffer been populated at least once
 
         std::vector<std::byte *> locations; // absolute location in memory for each item
 
@@ -36,7 +36,7 @@ namespace ssp4sim::utils
         std::size_t capacity = 0;   /* total usable slots                 */
         std::size_t nr_inserts = 0; /* current number of elements stored  */
 
-        RingBuffer(size_t capacity, size_t item_size);
+        RingBuffer(size_t capacity, size_t buffer_size);
         
         ~RingBuffer(){
             LOG_TRACE_L1(log, "Destroying RingBuffer");

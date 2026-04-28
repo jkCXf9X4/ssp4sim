@@ -46,7 +46,7 @@ namespace ssp4sim::signal
             t.size = storage->mem_size;
             t.index = tracker_index;
             t.row_pos = row_size;
-            trackers.push_back(t);
+            trackers.emplace_back(std::move(t));
 
             row_size += storage->mem_size;
 
@@ -249,7 +249,8 @@ namespace ssp4sim::signal
             last_print_time += recording_interval;
 
             head = static_cast<uint16_t>((head + 1) % rows);
-            if (new_item_counter >= rows)
+
+            if (new_item_counter >= rows) [[likely]]
             {
                 IF_LOG({
                     LOG_TRACE_L1(log, "[{func}] Row already in use, print and reset. {}", __func__, head);
@@ -276,6 +277,7 @@ namespace ssp4sim::signal
             });
 
             std::memcpy(get_data_pos(row, tracker.row_pos), storage->locations[area][0], tracker.size);
+
             updated_tracker[row][tracker.index] = true;
         }
     }
