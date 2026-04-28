@@ -22,6 +22,7 @@
 #include "utils/io.hpp"
 
 #include <cstdint>
+#include <exception>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -125,13 +126,21 @@ namespace ssp4sim
             p->sim_graph->enable_realtime(utils::time::time_now_ns());
         }
 
+        std::exception_ptr simulation_error;
+
         try
         {
             p->sim_graph->invoke(ssp4sim::graph::StepData(start_time, end_time, timestep));
         }
-        catch (const std::runtime_error &e)
+        catch (const std::exception &e)
         {
-            LOG_ERROR(p->log, "Simulation failed! {}", e.what());
+            LOG_ERROR(p->log, "Simulation failed! {error}", e.what());
+            simulation_error = std::current_exception();
+        }
+        catch (...)
+        {
+            LOG_ERROR(p->log, "Simulation failed! {error}", "Unknown error");
+            simulation_error = std::current_exception();
         }
 
         auto sim_wall_time = sim_timer.stop();
@@ -143,7 +152,14 @@ namespace ssp4sim
             p->recorder->stop_recording();
         }
 
-        LOG_INFO(p->log,"[{func}] Simulation completed\n", __func__);
+        if (simulation_error)
+        {
+            LOG_INFO(p->log,"[{func}] Simulation aborted\n", __func__);
+        }
+        else
+        {
+            LOG_INFO(p->log,"[{func}] Simulation completed\n", __func__);
+        }
 
         uint64_t total_model_time = 0;
         for (auto &node : p->sim_graph->nodes)
@@ -153,5 +169,10 @@ namespace ssp4sim
             total_model_time += model_walltime;
         }
         LOG_INFO(p->log,"[{func}] Model walltime: {walltime}", __func__, utils::time::ns_to_s(total_model_time));
+
+        if (simulation_error)
+        {
+            std::rethrow_exception(simulation_error);
+        }
     }
 }

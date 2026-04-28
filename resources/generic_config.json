@@ -21,7 +21,7 @@
         },
         "recording": {
             "enable": true,
-            "wait_for": false,
+            "wait_for": true,
             "interval": 0.25,
             "result_file": "/home/eriro/pwa/2_work/ssp_airplane/build/results/high_altitude_intercept_results.csv"
         },
