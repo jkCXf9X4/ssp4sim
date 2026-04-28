@@ -55,12 +55,38 @@ namespace ssp4sim::handler
         return status == fmi2OK;
     }
 
+    bool is_error_status(fmi2Status status)
+    {
+        return status == fmi2Error || status == fmi2Fatal;
+    }
+
+    std::string status_to_string(fmi2Status status)
+    {
+        switch (status)
+        {
+        case fmi2OK:
+            return "fmi2OK";
+        case fmi2Warning:
+            return "fmi2Warning";
+        case fmi2Discard:
+            return "fmi2Discard";
+        case fmi2Error:
+            return "fmi2Error";
+        case fmi2Fatal:
+            return "fmi2Fatal";
+        case fmi2Pending:
+            return "fmi2Pending";
+        default:
+            return std::to_string(static_cast<int>(status));
+        }
+    }
+
     FmuInstance::FmuInstance(const std::filesystem::path &path, std::string instance_name)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuInstance"))
     {
         if (!std::filesystem::is_directory(path))
         {
-            throw std::runtime_error(std::format("FMU path is not a unziped directory '{}': {}", instance_name,  path.string()));
+            throw std::runtime_error(std::format("FMU path is not a unziped directory '{}': {}", instance_name, path.string()));
         }
 
         fmu_path_ = path.string();
@@ -70,7 +96,7 @@ namespace ssp4sim::handler
         LOG_DEBUG(log, "[{func}] Loading FMU {fmu}", __func__, fmu_path_);
         detail::ensure_message_callback_registered();
         detail::clear_last_message();
-        
+
         handle_ = fmi4c_loadUnzippedFmu(instance_name_.c_str(), fmu_path_.c_str());
 
         if (handle_ == nullptr)
@@ -292,6 +318,7 @@ namespace ssp4sim::handler
         return is_status_ok(last_status_);
     }
 
+    // hot path
     uint64_t CoSimulationModel::step_until(uint64_t stop_time)
     {
         auto sim_time = get_simulation_time();
@@ -303,7 +330,7 @@ namespace ssp4sim::handler
                 LOG_DEBUG(log, "[{func}] step_time {step_time}s ", __func__, utils::time::ns_to_s(step_time));
             });
 
-            if (!this->step(step_time))
+            if (!this->step(step_time)) [[unlikely]]
             {
                 int status = last_status();
                 if (status == 3 or status == 4)
@@ -320,9 +347,10 @@ namespace ssp4sim::handler
         return sim_time;
     }
 
+    // hot path
     bool CoSimulationModel::step(uint64_t step_size)
     {
-        if (!instantiated_)
+        if (!instantiated_) [[unlikely]]
         {
             throw std::logic_error("step called before instantiate");
         }
@@ -335,14 +363,24 @@ namespace ssp4sim::handler
         });
 
         last_status_ = fmi2_doStep(handle, current, step_value, fmi2True);
-        if (is_status_ok(last_status_))
+        if (is_status_ok(last_status_)) [[likely]]
         {
             current_time_ += step_size;
             return true;
         }
-        LOG_ERROR(log, "[{func}] step(current: {current}, step:{step}) returned non ok, status: {status} for model {model}", __func__, current, step_value, std::to_string(last_status_), this->instance_.instance_name());
+        else
+        {
 
-        return false;
+            LOG_ERROR(log,
+                      "[{func}] step(current: {current}, step:{step}) returned non ok, status: {status} for model {model}",
+                      __func__,
+                      current,
+                      step_value,
+                      status_to_string(last_status_),
+                      this->instance_.instance_name());
+
+            return false;
+        }
     }
 
     bool CoSimulationModel::terminate()
@@ -352,6 +390,18 @@ namespace ssp4sim::handler
             return true;
         }
 
+        if (is_error_status(last_status_))
+        {
+            LOG_WARNING(log,
+                        "[{func}] Skipping terminate for model {model} after previous status {status}; freeing instance",
+                        __func__,
+                        this->instance_.instance_name(),
+                        status_to_string(last_status_));
+            fmi2_freeInstance(handle);
+            instantiated_ = false;
+            return false;
+        }
+
         LOG_DEBUG(log, "[{func}] Terminating FMU {fmu}", __func__, instance_.path());
         last_status_ = fmi2_terminate(handle);
         fmi2_freeInstance(handle);
@@ -359,7 +409,11 @@ namespace ssp4sim::handler
         auto terminated = is_status_ok(last_status_);
         if (!terminated)
         {
-            LOG_ERROR(log, "[{func}] Model {model}, failed to terminate", __func__, this->instance_.instance_name());
+            LOG_ERROR(log,
+                      "[{func}] Model {model}, failed to terminate with status {status}",
+                      __func__,
+                      this->instance_.instance_name(),
+                      status_to_string(last_status_));
         }
         // Some fmus send messages when they terminate, wait for this
         usleep(100);
@@ -377,6 +431,7 @@ namespace ssp4sim::handler
         return last_status_;
     }
 
+    // hot path
     bool CoSimulationModel::set_real_input_derivative(uint64_t value_reference, int derivative_order, double value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
@@ -384,14 +439,18 @@ namespace ssp4sim::handler
         last_status_ = fmi2_setRealInputDerivatives(handle, &vr, 1, &order, &value);
 
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to set_real_input_derivative, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
+        else
+        {
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::get_real_output_derivative(uint64_t value_reference, int derivative_order, double &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
@@ -399,69 +458,89 @@ namespace ssp4sim::handler
         last_status_ = fmi2_getRealOutputDerivatives(handle, &vr, 1, &order, &out);
 
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to get_real_output_derivative, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
+        else
+        {
 
-        return ok;
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::read_real(uint64_t value_reference, double &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getReal(handle, &vr, 1, &out);
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to read_real, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
-
+        else
+        {
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::read_integer(uint64_t value_reference, int &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getInteger(handle, &vr, 1, &out);
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to read_integer, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
+        else
+        {
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::read_boolean(uint64_t value_reference, int &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_getBoolean(handle, &vr, 1, &out);
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to read_boolean, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
+        else
+        {
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::read_string(uint64_t value_reference, std::string &out)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2String value = nullptr;
         last_status_ = fmi2_getString(handle, &vr, 1, &value);
+
         if (is_status_ok(last_status_))
         {
             out = std::string(value);
             return true;
         }
-
-        LOG_ERROR(log, "[{func}] Model {model}, failed to read_string, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
-        return false;
+        else [[unlikely]]
+        {
+            LOG_ERROR(log, "[{func}] Model {model}, failed to read_string, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::write_real(uint64_t value_reference, double value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
@@ -474,55 +553,70 @@ namespace ssp4sim::handler
         fmi2_getReal(handle, &vr, 1, &data);
 
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to write_real, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
+        else
+        {
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::write_integer(uint64_t value_reference, int value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_setInteger(handle, &vr, 1, &value);
-        
+
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to write_integer, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
+        else
+        {
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::write_boolean(uint64_t value_reference, int value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         last_status_ = fmi2_setBoolean(handle, &vr, 1, &value);
-        
+
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to write_boolean, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
+        else
+        {
+            return true;
+        }
     }
 
+    // hot path
     bool CoSimulationModel::write_string(uint64_t value_reference, const std::string &value)
     {
         fmi2ValueReference vr = static_cast<fmi2ValueReference>(value_reference);
         fmi2String data = value.c_str();
         last_status_ = fmi2_setString(handle, &vr, 1, &data);
-        
+
         bool ok = is_status_ok(last_status_);
-        if (!ok)
+        if (!ok) [[unlikely]]
         {
             LOG_ERROR(log, "[{func}] Model {model}, failed to write_string, vr {vr}, Trying to continue...", __func__, value_reference, this->instance_.instance_name());
+            return false;
         }
-
-        return ok;
+        else
+        {
+            return true;
+        }
     }
 
 }
