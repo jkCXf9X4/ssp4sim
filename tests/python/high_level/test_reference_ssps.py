@@ -36,7 +36,6 @@ if not Path(pyssp4sim.__file__).resolve().is_relative_to(PYTHON_API_BUILD.resolv
 SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
 EXPECTED_REFERENCE_FAILURES = {
     "dcmotor": "Hierarchical SSP systems are not supported by the current flat graph builder.",
-    "embrace": "ECS_HW currently returns fmi2Error on the first co-simulation step.",
 }
 
 GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
@@ -107,7 +106,7 @@ def write_config(ssp_root: Path, workdir: Path) -> Path:
     simulation["ssd"] = "SystemStructure.ssd"
     simulation["start_time"] = 0.0
     simulation["stop_time"] = 1.0
-    simulation["timestep"] = 0.1
+    simulation["timestep"] = 0.001
     simulation["tolerance"] = 1e-4
     simulation["realtime"] = False
 

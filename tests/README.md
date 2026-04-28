@@ -53,10 +53,14 @@ against an unrelated installed wheel.
 
 The fmi4c loader marks Linux shared libraries executable before `dlopen`, so loading tracked fixtures directly could dirty Git by changing `.so` file mode bits.
 
+The reference sweep uses a `0.001` second simulation timestep. The `embrace`
+SSP needs this smaller communication step; with a coarse `0.1` second step,
+`ECS_HW` returns `fmi2Error` on the first step.
+
 Known reference runtime failures are marked with strict `xfail` entries in the
 test. If an expected-failing SSP starts passing, pytest reports it as an XPASS
 failure so the marker must be removed. The current expected failures are
-`dcmotor`, because the runtime does not yet support hierarchical SSP systems,
-and `embrace`, because `ECS_HW` returns `fmi2Error` on the first step. After an
-FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance without
-calling `fmi2Terminate` so logs keep the original step failure as the root cause.
+`dcmotor`, because the runtime does not yet support hierarchical SSP systems.
+After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
+without calling `fmi2Terminate` so logs keep the original step failure as the
+root cause.
