@@ -35,6 +35,7 @@ if not Path(pyssp4sim.__file__).resolve().is_relative_to(PYTHON_API_BUILD.resolv
 
 SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
 EXPECTED_REFERENCE_FAILURES = {
+    "dcmotor": "Hierarchical SSP systems are not supported by the current flat graph builder.",
     "embrace": "ECS_HW currently returns fmi2Error on the first co-simulation step.",
 }
 

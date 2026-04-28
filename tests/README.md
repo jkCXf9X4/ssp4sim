@@ -51,6 +51,10 @@ The Python tests import `pyssp4sim` from `build/public/python_api` when that
 build artifact exists. This prevents high-level tests from accidentally passing
 against an unrelated installed wheel.
 
+The fmi4c loader marks Linux shared libraries executable before `dlopen`, so loading tracked fixtures directly could dirty Git by changing `.so` file mode bits.
+
 Known reference runtime failures are marked with strict `xfail` entries in the
 test. If an expected-failing SSP starts passing, pytest reports it as an XPASS
-failure so the marker must be removed.
+failure so the marker must be removed. The current expected failures are
+`dcmotor`, because the runtime does not yet support hierarchical SSP systems,
+and `embrace`, because `ECS_HW` returns `fmi2Error` on the first step.

@@ -180,6 +180,17 @@ namespace ssp4sim::analysis::graph
         for (auto &[source, target] : fmu_connections)
         {
             LOG_TRACE_L1(log, "[{func}] - Connecting: {source} -> {target}", __func__, source, target);
+            if (!models.contains(source) || !models.contains(target))
+            {
+                LOG_ERROR(log,
+                          "[{func}] Unsupported hierarchical or unresolved SSP connection: {source} -> {target}",
+                          __func__,
+                          source,
+                          target);
+                throw std::runtime_error(
+                    "Unsupported hierarchical or unresolved SSP connection: " + source + " -> " + target
+                );
+            }
             models[source]->add_child(models[target].get());
         }
 
