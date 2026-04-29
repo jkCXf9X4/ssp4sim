@@ -64,6 +64,8 @@ namespace ssp4sim::signal
         std::string name;
         std::size_t index;
 
+        inline static std::size_t index_counter = 0;
+
         bool allocated = false;
 
         std::unique_ptr<utils::RingBuffer> data;
@@ -76,8 +78,6 @@ namespace ssp4sim::signal
 
         Callback new_data_callback = nullptr;
         void *new_data_callback_context = nullptr;
-
-        std::vector<std::atomic<bool>> new_data_flags;
 
         SignalStorage(std::size_t areas, std::string name);
 

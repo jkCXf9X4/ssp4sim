@@ -45,8 +45,6 @@ namespace ssp4sim::graph
                         }
                       });
 
-        wait_for_result_collection();
-
         if (captured_exception)
         {
             std::rethrow_exception(captured_exception);

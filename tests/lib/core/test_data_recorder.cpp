@@ -22,7 +22,6 @@
 
 using ssp4sim::signal::DataRecorder;
 using ssp4sim::signal::NewDataEvent;
-using ssp4sim::signal::RecorderStorageBuffer;
 using ssp4sim::signal::RecorderSink;
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
@@ -61,20 +60,20 @@ public:
     std::vector<std::string> storage_names;
     std::vector<double> first_values;
 
-    void on_storage_added(const RecorderStorageBuffer &tracker) override
+    void on_storage_added(const SignalStorage *storage) override
     {
-        storage_names.push_back(tracker.storage->name);
+        storage_names.push_back(storage->name);
     }
 
     void init() override
     {
     }
 
-    void on_event(const NewDataEvent &event, const RecorderStorageBuffer &tracker) override
+    void on_event(const NewDataEvent &event) override
     {
         events.push_back(event);
-        storage_names.push_back(tracker.storage->name);
-        if (event.buffer && tracker.storage->mem_size >= sizeof(double))
+        storage_names.push_back(event.storage->name);
+        if (event.buffer && event.storage->mem_size >= sizeof(double))
         {
             double value = 0.0;
             std::memcpy(&value, event.buffer, sizeof(double));
@@ -121,7 +120,9 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
 
     recorder.add_storage(&storage);
 
-    REQUIRE(recorder.storage_buffers.size() == 1);
+    auto registered_buffers = std::count_if(recorder.storage_buffers.begin(), recorder.storage_buffers.end(), [](const auto &buffer)
+                                            { return buffer.storage != nullptr; });
+    REQUIRE(registered_buffers == 1);
 
     recorder.init();
 
@@ -156,11 +157,8 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
 
     storage.flag_new_data(area);
 
-    recorder.wait_until_done();
-
     recorder.stop_recording();
 
-    REQUIRE_FALSE(storage.new_data_flags[area]);
     REQUIRE(check_file_contains(test_filename.string(), "1, 42.5"));
     REQUIRE(check_file_contains(test_filename.string(), ", 7"));
 
@@ -205,12 +203,7 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     primary.flag_new_data(area);
     secondary.flag_new_data(area);
 
-    recorder.wait_until_done();
-
     recorder.stop_recording();
-
-    REQUIRE_FALSE(primary.new_data_flags[area]);
-    REQUIRE_FALSE(secondary.new_data_flags[area]);
 
     std::ifstream file(test_filename);
     REQUIRE(file.is_open());
@@ -272,17 +265,16 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
     primary.flag_new_data(primary_area);
     secondary.flag_new_data(secondary_area);
 
-    recorder.wait_until_done();
     recorder.stop_recording();
 
     REQUIRE(sink_ptr->events.size() == 2);
-    REQUIRE(sink_ptr->events[0].storage_index == 0);
-    REQUIRE(sink_ptr->events[0].source_area == primary_area);
+    REQUIRE(sink_ptr->events[0].storage == &primary);
+    REQUIRE(sink_ptr->events[0].area == primary_area);
     REQUIRE(sink_ptr->events[0].timestamp == timestamp);
     REQUIRE(sink_ptr->events[0].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
-    REQUIRE(sink_ptr->events[1].storage_index == 1);
-    REQUIRE(sink_ptr->events[1].source_area == secondary_area);
+    REQUIRE(sink_ptr->events[1].storage == &secondary);
+    REQUIRE(sink_ptr->events[1].area == secondary_area);
     REQUIRE(sink_ptr->events[1].timestamp == timestamp);
     REQUIRE(sink_ptr->events[1].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
@@ -326,24 +318,22 @@ TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten"
     storage.flag_new_data(latest_area);
 
     recorder.start_recording();
-    recorder.wait_until_done();
     recorder.stop_recording();
 
     REQUIRE(sink_ptr->events.size() == 2);
-    REQUIRE(sink_ptr->events[0].storage_index == 0);
-    REQUIRE(sink_ptr->events[0].source_area == stale_area);
+    REQUIRE(sink_ptr->events[0].storage == &storage);
+    REQUIRE(sink_ptr->events[0].area == stale_area);
     REQUIRE(sink_ptr->events[0].timestamp == stale_timestamp);
     REQUIRE(sink_ptr->events[0].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
-    REQUIRE(sink_ptr->events[1].storage_index == 0);
-    REQUIRE(sink_ptr->events[1].source_area == latest_area);
+    REQUIRE(sink_ptr->events[1].storage == &storage);
+    REQUIRE(sink_ptr->events[1].area == latest_area);
     REQUIRE(sink_ptr->events[1].timestamp == latest_timestamp);
     REQUIRE(sink_ptr->events[1].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->first_values.size() == 2);
     REQUIRE(sink_ptr->first_values[0] == stale_temperature);
     REQUIRE(sink_ptr->first_values[1] == latest_temperature);
-    REQUIRE_FALSE(storage.new_data_flags[latest_area]);
 
     fs::remove(test_filename);
 }

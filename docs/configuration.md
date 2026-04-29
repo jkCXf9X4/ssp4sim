@@ -85,7 +85,7 @@ Notes:
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
 | `simulation.recording.enable` | `bool` | No | `true` | Enables CSV recorder creation. |
-| `simulation.recording.wait_for` | `bool` | No | `false` | Wait for the recorder queue to drain each step before simulation continues. |
+| `simulation.recording.wait_for` | `bool` | No | `false` | Reserved; recorder draining currently happens during `stop_recording()`. |
 | `simulation.recording.interval` | `double` | No | `1.0` | Seconds between recorded samples. |
 | `simulation.recording.result_file` | `string` | No | `./result/data.scv` | Output CSV path (`[TIME]` supported). |
 

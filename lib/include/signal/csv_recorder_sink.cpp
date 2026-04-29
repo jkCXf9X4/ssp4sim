@@ -1,17 +1,15 @@
 #include "signal/csv_recorder_sink.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
-
 #include "utils/time.hpp"
 
-#include <cstring>
-#include <memory>
+#include <algorithm>
 #include <utility>
 
 namespace ssp4sim::signal
 {
-    CsvRecorderSink::CsvRecorderSink(const std::string &filename, uint64_t interval)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.record.CsvRecorderSink")),
+    CsvRecorderSink::CsvRecorderSink(const std::string &filename, std::uint64_t interval)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.CsvRecorderSink")),
           file(filename, std::ios::out),
           recording_interval(interval)
     {
@@ -19,174 +17,154 @@ namespace ssp4sim::signal
         LOG_DEBUG(log, "[{func}] Interval: {interval}", __func__, recording_interval);
     }
 
-    void CsvRecorderSink::on_storage_added(const RecorderStorageBuffer &tracker)
+    void CsvRecorderSink::on_storage_added(const SignalStorage *storage)
     {
-        if (tracker.storage->mem_size == 0)
+        if (storage == nullptr || storage->mem_size == 0)
         {
             return;
         }
 
-        CsvTracker copy;
-        copy.storage = tracker.storage;
-        copy.index = tracker.index;
-        copy.row_pos = row_size;
-        trackers.emplace_back(std::move(copy));
-        row_size += tracker.storage->mem_size;
+        CsvStorageLayout layout;
+        layout.storage = storage;
+        layout.index = layouts.size();
+        layout.variables.reserve(storage->variables.size());
+
+        for (const auto &variable : storage->variables)
+        {
+            CsvVariableLayout variable_layout;
+            variable_layout.name = variable.name;
+            variable_layout.type = variable.type;
+            variable_layout.position = variable.position;
+            variable_layout.column = column_count++;
+            layout.variables.emplace_back(std::move(variable_layout));
+        }
+
+        layout_lookup[storage] = layout.index;
+        layouts.emplace_back(std::move(layout));
     }
 
-    void CsvRecorderSink::reset_update_status(std::size_t row)
+    void CsvRecorderSink::init()
     {
         LOG_TRACE_L1(log, "[{func}] Init", __func__);
-        for (auto &t : trackers)
+        row_buffer.clear();
+        row_buffer.resize(rows);
+
+        for (auto &row : row_buffer)
         {
-            if (t.index < updated_tracker[row].size())
-            {
-                updated_tracker[row][t.index] = false;
-            }
+            row.values.resize(column_count);
+            row.updated_storages.resize(layouts.size());
         }
+
+        print_headers();
     }
 
     void CsvRecorderSink::print_headers()
     {
-        LOG_TRACE_L1(log, "[{func}] Init", __func__);
+        LOG_TRACE_L1(log, "[{func}] Printing headers", __func__);
         file << "time";
-        for (const auto &tracker : trackers)
+        for (const auto &layout : layouts)
         {
-            for (const auto &var : tracker.storage->variables)
+            for (const auto &variable : layout.variables)
             {
-                file << ',' << var.name;
+                file << ',' << variable.name;
             }
         }
         file << '\n';
         file.flush();
     }
 
-    void CsvRecorderSink::init()
+    void CsvRecorderSink::reset_row(std::uint16_t row)
     {
-        LOG_TRACE_L1(log, "[{func}] Init", __func__);
-        const auto allocation_size = row_size * rows;
+        auto &target = row_buffer[row];
+        target.valid = false;
+        target.timestamp = 0;
+        std::fill(target.values.begin(), target.values.end(), std::string{});
+        std::fill(target.updated_storages.begin(), target.updated_storages.end(), false);
+    }
 
-        data = std::make_unique<std::byte[]>(allocation_size);
-        LOG_TRACE_L1(log, "[{func}] Completed allocation", __func__);
-
-        const std::size_t cols = trackers.size();
-
-        updated_tracker.clear();
-        updated_tracker.reserve(rows);
-        for (std::size_t i = 0; i < rows; ++i)
+    std::uint16_t CsvRecorderSink::row_for_timestamp(std::uint64_t timestamp)
+    {
+        if (auto found = time_row_map.find(timestamp); found != time_row_map.end())
         {
-            updated_tracker.emplace_back(cols, false);
+            return found->second;
         }
 
-        print_headers();
-    }
+        head = static_cast<std::uint16_t>((head + 1) % rows);
 
-    std::byte *CsvRecorderSink::get_data_pos(std::size_t row, std::size_t offset)
-    {
-        return data.get() + row * row_size + offset;
-    }
-
-    void CsvRecorderSink::print_row(uint16_t row)
-    {
-        IF_LOG({
-            LOG_TRACE_L1(log, "[{func}] Row: {}", __func__, row);
-        });
-
-        auto time_value = utils::time::ns_to_s(row_time_map[row]);
-
-        file << time_value;
-        for (const auto &tracker : trackers)
+        if (new_item_counter >= rows && row_buffer[head].valid)
         {
-            for (auto& var : tracker.storage->variables)
-            {
-                IF_LOG({
-                    LOG_TRACE_L2(log, "[{func}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, var.name);
-                });
+            print_row(head);
+            time_row_map.erase(row_buffer[head].timestamp);
+            row_time_map.erase(head);
+            reset_row(head);
+        }
+        else
+        {
+            new_item_counter++;
+        }
 
-                auto pos = var.position;
-                auto type = var.type;
-                file << ", ";
-                if (tracker.index < updated_tracker[row].size() && updated_tracker[row][tracker.index])
-                {
-                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(type, get_data_pos(row, tracker.row_pos + pos));
-                    file << data_type_str;
-                }
-            }
+        auto &row = row_buffer[head];
+        row.valid = true;
+        row.timestamp = timestamp;
+        row_time_map[head] = timestamp;
+        time_row_map[timestamp] = head;
+
+        return head;
+    }
+
+    void CsvRecorderSink::on_event(const NewDataEvent &event)
+    {
+        if (event.storage == nullptr || event.buffer == nullptr)
+        {
+            return;
+        }
+
+        auto layout_it = layout_lookup.find(event.storage);
+        if (layout_it == layout_lookup.end())
+        {
+            LOG_WARNING(log, "[{func}] Ignoring event for unknown storage {}", __func__, event.storage->name);
+            return;
+        }
+
+        const auto &layout = layouts[layout_it->second];
+        auto row_index = row_for_timestamp(event.timestamp);
+        auto &row = row_buffer[row_index];
+
+        for (const auto &variable : layout.variables)
+        {
+            row.values[variable.column] = ext::fmi2::enums::data_type_to_string(variable.type, event.buffer + variable.position);
+        }
+        row.updated_storages[layout.index] = true;
+    }
+
+    void CsvRecorderSink::print_row(std::uint16_t row)
+    {
+        const auto &source = row_buffer[row];
+        if (!source.valid)
+        {
+            return;
+        }
+
+        file << utils::time::ns_to_s(source.timestamp);
+        for (const auto &value : source.values)
+        {
+            file << ", " << value;
         }
         file << '\n';
-        printed_rows += 1;
 
+        printed_rows += 1;
         if (printed_rows % 50 == 0)
         {
             file.flush();
         }
     }
 
-    void CsvRecorderSink::on_event(const NewDataEvent &event, const RecorderStorageBuffer &tracker)
-    {
-        auto ts = event.timestamp;
-        if (tracker.index >= trackers.size())
-        {
-            LOG_WARNING(log, "[{func}] Ignoring event for unknown tracker index {}", __func__, tracker.index);
-            return;
-        }
-
-        if (!time_row_map.contains(ts))
-        {
-            IF_LOG({
-                LOG_TRACE_L1(log, "[{func}] New print time: {}, last_print_time {}", __func__, ts, last_print_time);
-            });
-
-            last_print_time += recording_interval;
-
-            head = static_cast<uint16_t>((head + 1) % rows);
-
-            if (new_item_counter >= rows) [[likely]]
-            {
-                IF_LOG({
-                    LOG_TRACE_L1(log, "[{func}] Row already in use, print and reset. {}", __func__, head);
-                });
-
-                print_row(head);
-                reset_update_status(head);
-                time_row_map.erase(row_time_map[head]);
-            }
-
-            new_item_counter++;
-
-            row_time_map[head] = ts;
-            time_row_map[ts] = head;
-            IF_LOG({
-                LOG_TRACE_L1(log, "[{func}] New row {} with time {}", __func__, head, ts);
-            });
-        }
-
-        if (time_row_map.contains(ts))
-        {
-            auto row = time_row_map[ts];
-            IF_LOG({
-                LOG_TRACE_L1(log, "[{func}] Copying new data; row {}, size: {}", __func__, row, tracker.storage->mem_size);
-            });
-
-            std::memcpy(get_data_pos(row, trackers[tracker.index].row_pos), event.buffer, tracker.storage->mem_size);
-            updated_tracker[row][tracker.index] = true;
-        }
-    }
-
     void CsvRecorderSink::stop()
     {
-        for (int i = 1; i <= rows; i++)
+        for (std::size_t i = 1; i <= rows; i++)
         {
-            bool print = false;
-            auto row = static_cast<uint16_t>((head + i) % rows);
-            for (auto &tracker : trackers)
-            {
-                if (tracker.index < updated_tracker[row].size() && updated_tracker[row][tracker.index])
-                {
-                    print = true;
-                }
-            }
-            if (print)
+            auto row = static_cast<std::uint16_t>((head + i) % rows);
+            if (row_buffer[row].valid)
             {
                 print_row(row);
             }

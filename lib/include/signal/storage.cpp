@@ -12,16 +12,12 @@ namespace ssp4sim::signal
 
     const size_t derivative_size = sizeof(double);
 
-    static std::size_t storage_counter = 0;
-
     SignalStorage::SignalStorage(std::size_t areas, std::string name)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.SignalStorage")),
-          new_data_flags(areas)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.SignalStorage"))
     {
         this->areas = areas;
         this->name = std::move(name);
-        this->index = storage_counter;
-        storage_counter++;
+        this->index = index_counter++;
     }
 
     SignalStorage::~SignalStorage()
@@ -107,8 +103,6 @@ namespace ssp4sim::signal
                     std::construct_at(s);
                 }
             }
-
-            new_data_flags[area_index] = false;
         }
         LOG_DEBUG(log, "[{func}] {storage}", __func__, this->to_string());
 
@@ -197,10 +191,8 @@ namespace ssp4sim::signal
     {
         if (allocated) [[likely]]
         {
-            new_data_flags[area] = true;
-
             // Prep for non flag solution
-            if (new_data_callback) 
+            if (new_data_callback) [[likely]]
             {
                 auto t = NewDataEvent();
                 t.storage = this;

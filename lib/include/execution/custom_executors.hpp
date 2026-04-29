@@ -179,8 +179,6 @@ namespace ssp4sim::graph
                               gauss_seidel(group, step, sub_step);
                           });
 
-            wait_for_result_collection();
-
             return step_data.end_time;
         }
     };
@@ -251,8 +249,6 @@ namespace ssp4sim::graph
 
             auto s3 = StepData(step_data.start_time, step_data.start_time + 4 * one_ms, step_data.timestep);
             gauss_seidel(g4, s3, sub_step, 8*one_ms);
-
-            wait_for_result_collection();
 
             // throw std::runtime_error("Hello");
             return step_data.end_time;

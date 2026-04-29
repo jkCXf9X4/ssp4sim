@@ -11,7 +11,7 @@ namespace ssp4sim::signal
 {
 
     DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.record.DataRecorder"))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.DataRecorder"))
     {
         LOG_TRACE_L2(log, "[{func}] Constructor", __func__);
 
@@ -44,13 +44,15 @@ namespace ssp4sim::signal
         {
             const auto buffer_capacity = 50;
 
-            storage_buffers.emplace_back(RecorderStorageBuffer(storage, buffer_capacity));
-            // make sure the storage::index is aligned to the vector<RecorderStorageBuffer>
-            if (storage_buffers.back().index != storage->index)
+            if (storage_indexes.contains(storage))
             {
-                LOG_ERROR(log, "[{}] Index misalignment for {storage}", __func__, storage->name);
-                throw std::runtime_error("Index misalignment for storage <-> recorder storage");
+                LOG_WARNING(log, "[{}] Storage already registered: {storage}", __func__, storage->name);
+                return;
             }
+
+            const auto recorder_index = storage_buffers.size();
+            storage_buffers.emplace_back(RecorderStorageBuffer(storage, recorder_index, buffer_capacity));
+            storage_indexes[storage] = recorder_index;
 
             storage->register_callback(&DataRecorder::new_event, this);
 
@@ -114,7 +116,14 @@ namespace ssp4sim::signal
 
     void DataRecorder::enqueue_event(NewDataEvent new_event)
     {
-        auto &recorder_storage = this->storage_buffers[new_event.storage->index];
+        auto storage_index = storage_indexes.find(new_event.storage);
+        if (storage_index == storage_indexes.end())
+        {
+            LOG_WARNING(log, "[{func}] Ignoring event for unregistered storage {}", __func__, new_event.storage->name);
+            return;
+        }
+
+        auto &recorder_storage = this->storage_buffers[storage_index->second];
 
         std::size_t target_area;
 
@@ -161,7 +170,13 @@ namespace ssp4sim::signal
 
             process_new_data(new_event);
 
-            auto &recorder_storage = storage_buffers[new_event.storage->index];
+            auto storage_index = storage_indexes.find(new_event.storage);
+            if (storage_index == storage_indexes.end())
+            {
+                LOG_WARNING(log, "[{func}] Missing recorder buffer for storage {}", __func__, new_event.storage->name);
+                continue;
+            }
+            auto &recorder_storage = storage_buffers[storage_index->second];
             recorder_storage.pop();
         }
 

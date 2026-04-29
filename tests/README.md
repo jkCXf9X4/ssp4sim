@@ -7,7 +7,7 @@ The suite is split by layer so each test has a clear responsibility:
   recorder, ring buffer, signal storage, and start values.
 - `tests/lib/utils/`: C++ tests for utility data structures and support code.
 - `tests/lib/high_level/`: one C++ smoke test that executes a complete SSP
-  through the public simulator entry point.
+  through the public simulator entry point with CSV recording enabled.
 - `tests/python/high_level/`: Python API tests for full SSP workflows and
   result-file validation.
 - `tests/reference_ssp/`: unpacked reference SSP fixtures used by the high-level

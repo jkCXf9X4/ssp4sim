@@ -92,6 +92,5 @@ namespace ssp4sim::signal
 
         void process_new_data(const NewDataEvent &new_event);
 
-        void wait_until_done();
     };
 }

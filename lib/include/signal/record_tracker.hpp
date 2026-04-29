@@ -12,28 +12,27 @@
 #include <utility>
 #include <vector>
 
-
 namespace ssp4sim::signal
 {
-    static auto recorder_storeage_counter = 0;
-
     struct RecorderStorageBuffer
     {
+        ssp4cpp::utils::log::Logger *log = nullptr;
         // Connected to one storage
-        SignalStorage *storage;
+        SignalStorage *storage = nullptr;
 
         std::size_t index = 0;
-         // TOdo: accessed from multiple threads, should be atomic
+        // TOdo: accessed from multiple threads, should be atomic
         std::size_t active_items = 0;
 
         std::unique_ptr<utils::RingBuffer> buffers;
 
         RecorderStorageBuffer() = default;
 
-        RecorderStorageBuffer(SignalStorage *storage, std::size_t capacity)
+        RecorderStorageBuffer(SignalStorage *storage, std::size_t index, std::size_t capacity)
+            : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.RecorderStorageBuffer"))
         {
             this->storage = storage;
-            this->index = recorder_storeage_counter++;
+            this->index = index;
             buffers = std::make_unique<utils::RingBuffer>(capacity, storage->mem_size);
         }
 
@@ -56,6 +55,5 @@ namespace ssp4sim::signal
         {
             active_items--;
         }
-
     };
 }

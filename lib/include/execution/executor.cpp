@@ -29,14 +29,6 @@ namespace ssp4sim::graph
         recorder = dr;
     }
 
-    void ExecutionBase::wait_for_result_collection()
-    {
-        if (wait_for_recorder && recorder)
-        {
-            recorder->wait_until_done();
-        }
-    }
-
     void ExecutionBase::init()
     {
         for (auto &model : this->nodes)

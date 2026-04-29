@@ -97,23 +97,6 @@ TEST_CASE("SignalStorage pushes timestamps and finds areas", "[SignalStorage]")
     REQUIRE(index_found == third);
 }
 
-TEST_CASE("SignalStorage flags new data per area", "[SignalStorage]")
-{
-    SignalStorage storage(2, "signals");
-    storage.add("signals.value", DataType::integer, 0);
-    storage.allocate();
-
-    for (const auto &flag : storage.new_data_flags)
-    {
-        REQUIRE(flag == false);
-    }
-
-    auto area = storage.push(123);
-    storage.flag_new_data(area);
-
-    REQUIRE(storage.new_data_flags[area]);
-}
-
 TEST_CASE("SignalStorage returns null for derivative requests outside valid range", "[SignalStorage]")
 {
     SignalStorage storage(2, "signals");

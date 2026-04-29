@@ -25,8 +25,6 @@ namespace ssp4sim::graph
             node->invoke(step);
         }
 
-        wait_for_result_collection();
-
         return step_data.end_time;
     }
 }

@@ -51,8 +51,6 @@ namespace ssp4sim::graph
             LOG_INFO(log, "[{func}] All threads completed", __func__);
         });
 
-        wait_for_result_collection();
-
         return step_data.end_time;
     }
 
