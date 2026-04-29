@@ -35,16 +35,34 @@ namespace ssp4sim
         
         utils::Config::loadFromFile(config_path);
         LOG_DEBUG(p->log, "[{func}] - Config loaded:\n{config}\n", __func__, utils::Config::as_string());
-        // p->log->flush_log(); 
 
         auto log_file = utils::Config::getString("simulation.log.file");
-
         ssp4cpp::utils::log::init_logging();
-        ssp4cpp::utils::log::add_console(quill::loglevel_from_string(utils::Config::getOr("simulation.log.level_terminal", "info")));
-        ssp4cpp::utils::log::add_file_sink(log_file, quill::loglevel_from_string(utils::Config::getOr("simulation.log.level_file", "info")));
-        ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(utils::Config::getOr("simulation.log.level_json", "tracel1")));
-        // Do not construct any objects using a logger before this point, they wont get any sinks.
+
+        auto level_terminal = utils::Config::getOr("simulation.log.level_terminal", "disable");
+        if (level_terminal != "disable")
+        {
+            ssp4cpp::utils::log::add_console(quill::loglevel_from_string(level_terminal));
+        }
         
+        auto level_file = utils::Config::getOr("simulation.log.level_file", "disable");
+        if (level_file != "disable")
+        {
+            ssp4cpp::utils::log::add_file_sink(log_file, quill::loglevel_from_string(level_file));
+        }
+
+        auto level_json = utils::Config::getOr("simulation.log.level_json", "disable");
+        if (level_json != "disable")
+        {
+            ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(level_json));
+        }
+        
+        auto level_cutelog = utils::Config::getOr("simulation.log.level_cutelog", "disable");
+        if (level_cutelog != "disable")
+        {
+            ssp4cpp::utils::log::add_cutelog_sink("127.0.0.1", 19996, quill::loglevel_from_string(level_cutelog));
+        }
+
         p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");
 
         LOG_DEBUG(p->log, "[{func}] - Importing SSP", __func__);

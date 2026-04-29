@@ -30,7 +30,8 @@
             "fmu": true,
             "level_terminal": "info",
             "level_file": "info",
-            "level_json": "tracel1"
+            "level_json": "tracel1",
+            "level_cutelog": "disable"
         }
     }
 }

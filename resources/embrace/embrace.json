@@ -1,48 +1,37 @@
 {
-    "simulation" :
-    {
+    "simulation": {
         "ssp": "./resources/embrace/embrace_scen.ssp",
         "ssd": "SystemStructure.ssd",
-        "start_time":0.0,
-        "stop_time":1200,
+        "start_time": 0.0,
+        "stop_time": 1200,
         "timestep": 0.01,
         "tolerance": 1e-4,
         "realtime": false,
-
-        "executor": 
-        {
-            "method":"jacobi",
-            
+        "executor": {
+            "method": "jacobi",
             "thread_pool_workers": 5,
             "forward_derivatives": true,
-
-            "jacobi":
-            {
+            "jacobi": {
                 "parallel": true,
-                "method" : 1
+                "method": 1
             },
-            "seidel":
-            {
+            "seidel": {
                 "parallel": false
             }
-            
         },
-
-        "recording":
-        {
+        "recording": {
             "enable": true,
             "wait_for": true,
             "interval": 0.25,
             "result_file": "./results/embrace.csv"
         },
-
-        "log":
-        {
+        "log": {
             "file": "./results/embrace.log",
-            "fmu" : true,
-            "level_terminal" : "info",
-            "level_file" : "info",
-            "level_json" : "tracel1"
+            "fmu": false,
+            "level_terminal": "info",
+            "level_file": "info",
+            "level_json": "tracel1",
+            "level_cutelog": "debug"
         }
     }
 }
