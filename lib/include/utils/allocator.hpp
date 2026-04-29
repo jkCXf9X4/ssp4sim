@@ -1,3 +1,7 @@
+#pragma once
+
+#include "ssp4sim_definitions.hpp"
+
 #include <cstddef>
 #include <cstdlib>
 #include <memory>
@@ -17,6 +21,24 @@ namespace ssp4sim::utils
     constexpr std::size_t align_up(std::size_t value, std::size_t alignment)
     {
         return (value + alignment - 1) / alignment * alignment;
+    }
+
+    inline std::size_t get_value_alignment(types::DataType type)
+    {
+        switch (type)
+        {
+        case types::DataType::real:
+            return alignof(double);
+        case types::DataType::boolean:
+        case types::DataType::integer:
+        case types::DataType::enumeration:
+            return alignof(int);
+        case types::DataType::string:
+            return alignof(std::string);
+        case types::DataType::unknown:
+            return alignof(std::byte);
+        }
+        return alignof(std::byte);
     }
 
     struct FreeDeleter
