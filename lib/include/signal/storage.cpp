@@ -50,12 +50,16 @@ namespace ssp4sim::signal
         }
     }
 
+    // static std::size_t index_counter = 0;
+
     SignalStorage::SignalStorage(std::size_t areas, std::string name)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.SignalStorage")),
           new_data_flags(areas)
     {
         this->areas = areas;
         this->name = std::move(name);
+        this->index = index_counter;
+        index_counter++;
     }
 
     SignalStorage::~SignalStorage()
@@ -144,6 +148,7 @@ namespace ssp4sim::signal
 
             new_data_flags[area_index] = false;
         }
+        LOG_DEBUG(log, "[{func}] {storage}", __func__, this->to_string());
 
         allocated = true;
     }
@@ -158,7 +163,7 @@ namespace ssp4sim::signal
         size_t area;
         if (find_area(time, area))
         {
-            return static_cast<int>(area);
+            return static_cast<int>(area); // TODO: why convert this?
         }
         auto new_area = push(time);
         return new_area;
@@ -190,6 +195,7 @@ namespace ssp4sim::signal
 
     std::byte *SignalStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept
     {
+        // TODO: add a HOT_PATH_CHECKS flag 
         if (!allocated)  [[unlikely]]
         {
             return nullptr;
@@ -211,12 +217,12 @@ namespace ssp4sim::signal
             return nullptr;
         }
 
-        if (derivate_locations[area][index] != nullptr) [[likely]]
+        if (derivate_locations[area][index] == nullptr) [[unlikely]]
         {
-            return derivate_locations[area][index] + (order - 1) * derivative_size;
+            return nullptr;
         }
 
-        return nullptr;
+        return derivate_locations[area][index] + (order - 1) * derivative_size;
     }
 
     void SignalStorage::register_callback(Callback cb)
@@ -234,8 +240,8 @@ namespace ssp4sim::signal
             if (new_data_callback) 
             {
                 auto t = NewDataEvent();
+                t.storage_index = this->index;
                 t.area = area;
-                t.storage = this;
                 t.timestamp = get_time(area);
                 new_data_callback(t);
             }
@@ -247,6 +253,7 @@ namespace ssp4sim::signal
         std::ostringstream oss;
         oss << "SignalStorage \n{\n"
             << " name: " << name
+            << " index: " << index
             << "  areas: " << areas
             << ", allocated: " << allocated
             << ", total memory size: " << mem_size

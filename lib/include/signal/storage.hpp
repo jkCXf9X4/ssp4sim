@@ -45,9 +45,9 @@ namespace ssp4sim::signal
 
     struct NewDataEvent
     {
-        SignalStorage *storage = nullptr;
+        std::size_t storage_index = 0;
         std::size_t area = 0;
-        uint64_t timestamp = 0;
+        std::uint64_t timestamp = 0;
     };
     using Callback = void (*)(NewDataEvent);
 
@@ -55,6 +55,13 @@ namespace ssp4sim::signal
     {
     public:
         ssp4cpp::utils::log::Logger *log = nullptr;
+        
+        std::size_t areas = 0;
+        std::string name;
+        std::size_t index;
+        inline static std::size_t index_counter = 0;
+
+        bool allocated = false;
 
         std::unique_ptr<utils::RingBuffer> data;
 
@@ -66,10 +73,6 @@ namespace ssp4sim::signal
 
         Callback new_data_callback = nullptr;
         std::vector<std::atomic<bool>> new_data_flags;
-
-        std::size_t areas = 0;
-        std::string name;
-        bool allocated = false;
 
         SignalStorage(std::size_t areas, std::string name);
 

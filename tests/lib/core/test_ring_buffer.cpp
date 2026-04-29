@@ -53,7 +53,7 @@ TEST_CASE("RingBuffer push grows until full then overwrites oldest", "[RingBuffe
     REQUIRE(buffer.nr_inserts == 4);
 }
 
-TEST_CASE("RingBuffer get_item provides contiguous storage and bounds checks", "[RingBuffer]")
+TEST_CASE("RingBuffer get_item provides aligned storage and bounds checks", "[RingBuffer]")
 {
     constexpr std::size_t element_size = sizeof(std::uint64_t);
     RingBuffer buffer(3, element_size);
@@ -67,7 +67,15 @@ TEST_CASE("RingBuffer get_item provides contiguous storage and bounds checks", "
 
     auto *first = buffer.get_item(idx1);
     auto *second = buffer.get_item(idx2);
-    REQUIRE(second - first == static_cast<std::ptrdiff_t>(element_size));
+    const auto first_address = reinterpret_cast<std::uintptr_t>(first);
+    const auto second_address = reinterpret_cast<std::uintptr_t>(second);
+    const auto expected_stride = ssp4sim::utils::align_up(element_size, ssp4sim::utils::target_alignment);
+
+    REQUIRE(buffer.buffers.aligned_size == expected_stride);
+    REQUIRE(first_address % ssp4sim::utils::target_alignment == 0);
+    REQUIRE(second_address % ssp4sim::utils::target_alignment == 0);
+    REQUIRE(second - first == static_cast<std::ptrdiff_t>(expected_stride));
+    REQUIRE(second - first >= static_cast<std::ptrdiff_t>(element_size));
 
     *reinterpret_cast<std::uint64_t *>(first) = 42;
     *reinterpret_cast<std::uint64_t *>(second) = 99;

@@ -31,7 +31,7 @@
             "level_terminal": "info",
             "level_file": "info",
             "level_json": "tracel1",
-            "level_cutelog": "debug"
+            "level_cutelog": "tracel1"
         }
     }
 }

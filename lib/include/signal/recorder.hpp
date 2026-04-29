@@ -92,6 +92,8 @@ namespace ssp4sim::signal
 
         void loop();
 
+        static void new_event(NewDataEvent event);
+
         void process_new_data(ssp4sim::signal::Tracker &tracker, signal::SignalStorage *storage, std::size_t area);
 
         void wait_until_done();

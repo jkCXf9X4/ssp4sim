@@ -23,12 +23,12 @@ namespace ssp4sim::signal
           file(filename, std::ios::out)
     {
         LOG_TRACE_L2(log, "[{func}] Constructor", __func__);
-        LOG_DEBUG(log, "[{func}] Recording interval {interval}", __func__, recording_interval);
-        LOG_DEBUG(log, "[{func}] File {file}, open {open}", __func__, filename, file.is_open());
-        LOG_DEBUG(log, "[{func}] Interval: {interval}, wait_for: {wait_for}", __func__, interval, wait_for);
-
+        
         recording_interval = interval;
         wait_for_recorder = wait_for;
+
+        LOG_DEBUG(log, "[{func}] File {file}, open {open}", __func__, filename, file.is_open());
+        LOG_DEBUG(log, "[{func}] Interval: {interval}, wait_for: {wait_for}", __func__, recording_interval, wait_for_recorder);
     }
 
     DataRecorder::~DataRecorder()
@@ -46,6 +46,7 @@ namespace ssp4sim::signal
             t.size = storage->mem_size;
             t.index = tracker_index;
             t.row_pos = row_size;
+
             trackers.emplace_back(std::move(t));
 
             row_size += storage->mem_size;
@@ -199,6 +200,11 @@ namespace ssp4sim::signal
     void DataRecorder::update()
     {
         LOG_TRACE_L1(log, "[{func}] Notifying recording to update", __func__);
+    }
+
+    void DataRecorder::new_event(NewDataEvent event)
+    {
+        // LOG_DEBUG(log, "[{func}] New recording event", __func__);
     }
 
     void DataRecorder::loop()

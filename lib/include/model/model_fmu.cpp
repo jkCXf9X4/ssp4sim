@@ -23,7 +23,7 @@ namespace ssp4sim::graph
         this->fmu = fmu;
         this->name = std::move(name);
         this->maxOutputDerivativeOrder = maxOutputDerivativeOrder;
-        
+
         input_area = std::make_unique<ssp4sim::signal::SignalStorage>(10, this->name + ".input");
         output_area = std::make_unique<ssp4sim::signal::SignalStorage>(200, this->name + ".output");
         forward_derivatives = utils::Config::getOr("simulation.executor.forward_derivatives", true);
@@ -133,7 +133,10 @@ namespace ssp4sim::graph
 
         ConnectionInfo::retrieve_model_inputs(connections, target_area, input_time);
 
-        input_area->flag_new_data(target_area);
+        // only log input data if extended logging is active
+        // IF_LOG({
+            input_area->flag_new_data(target_area);
+        // });
 
         ConnectorInfo::write_data_to_model(inputs, input_area.get(), target_area);
 

@@ -21,16 +21,11 @@ namespace ssp4sim::utils
             throw std::runtime_error("[RingBuffer] buffer_size != 0");
         }
         this->capacity = capacity;
-
-        auto total_size = this->capacity * buffer_size;
-
-        data = std::make_unique<std::byte[]>(total_size);
-        std::memset(data.get(), 0, total_size);
-
+        
+        buffers = AlignedBufferPool(buffer_size, this->capacity);
+        
         for (size_t i = 0; i < this->capacity; i++)
         {
-            auto position = buffer_size * i;
-            locations.push_back(data.get() + position);
             used[i] = false;
         }
     }
@@ -62,7 +57,7 @@ namespace ssp4sim::utils
             LOG_ERROR(log, "[{func}] RingBuffer, index not populated: {index}", __func__, index);
             throw std::runtime_error("[RingBuffer][get_item] Index not populated");
         }
-        return locations[index];
+        return buffers.locations[index];
     }
 
     std::uint64_t RingBuffer::get_time(std::size_t index)
