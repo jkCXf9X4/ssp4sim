@@ -28,8 +28,6 @@ namespace ssp4sim::graph
 
         void set_recorder(signal::DataRecorder *dr);
 
-        void wait_for_result_collection();
-
         void init() override;
 
         std::string to_string() const

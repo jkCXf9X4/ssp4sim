@@ -45,11 +45,16 @@ namespace ssp4sim::signal
 
     struct NewDataEvent
     {
-        std::size_t storage_index = 0;
+        // populated by SignalStorage
+        SignalStorage *storage = nullptr;
         std::size_t area = 0;
         std::uint64_t timestamp = 0;
+        // populated by DataRecorder
+        std::byte *buffer = nullptr;
+        std::size_t recorder_storage_index = 0;
     };
-    using Callback = void (*)(NewDataEvent);
+    using Callback = void (*)(void *, NewDataEvent);
+
 
     class SignalStorage : public types::IWritable
     {
@@ -58,8 +63,6 @@ namespace ssp4sim::signal
         
         std::size_t areas = 0;
         std::string name;
-        std::size_t index;
-        inline static std::size_t index_counter = 0;
 
         bool allocated = false;
 
@@ -72,7 +75,7 @@ namespace ssp4sim::signal
         std::vector<std::vector<std::byte *>> derivate_locations; // absolute location in memory
 
         Callback new_data_callback = nullptr;
-        std::vector<std::atomic<bool>> new_data_flags;
+        void *new_data_callback_context = nullptr;
 
         SignalStorage(std::size_t areas, std::string name);
 
@@ -96,7 +99,7 @@ namespace ssp4sim::signal
 
         std::byte *get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept;
 
-        void register_callback(Callback cb);
+        void register_callback(Callback cb, void *context);
 
         void flag_new_data(std::size_t area);
 

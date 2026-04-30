@@ -63,8 +63,6 @@ namespace ssp4sim::graph
             LOG_TRACE_L1(log, "[{func}] End. completed  {}", __func__, completed);
         });
 
-        wait_for_result_collection();
-
         return step_data.end_time;
     }
 }

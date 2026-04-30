@@ -7,18 +7,16 @@
 
 #include "signal/storage.hpp"
 #include "signal/record_tracker.hpp"
+#include "signal/mpsc_event_queue.hpp"
 
-#include <fstream>
 #include <cstddef>
 #include <cstdint>
-#include <unordered_map>
 #include <memory>
-#include <mutex>
 #include <thread>
 #include <atomic>
 #include <string>
+#include <unordered_map>
 #include <vector>
-#include <condition_variable>
 
 namespace ssp4sim::signal
 {
@@ -31,39 +29,39 @@ namespace ssp4sim::signal
     * @todo: Log everything that is between +-2 steps from the print time to ensure that no data is lost but still avoiding to log everything
     */
 
+    class RecorderSink
+    {
+    public:
+        virtual ~RecorderSink() = default;
+
+        virtual void on_storage_added(const SignalStorage *storage) = 0;
+
+        virtual void init() = 0;
+
+        virtual void on_event(const NewDataEvent &event) = 0;
+
+        virtual void stop() = 0;
+    };
+
     class DataRecorder
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger *log = nullptr;
 
-        std::ofstream file;
         std::unique_ptr<std::thread> worker;
 
-        std::atomic<bool> running;
-        std::mutex event_mutex;
-        std::condition_variable event;
+        std::atomic<bool> running = false;
+        BoundedMpscEventQueue<NewDataEvent> event_queue;
+        std::atomic<std::size_t> event_signal = 0;
 
-        std::vector<Tracker> trackers;
-        std::size_t tracker_index = 0;
+        std::vector<RecorderStorageBuffer> storage_buffers;
+        std::unordered_map<SignalStorage *, std::size_t> storage_indexes;
 
-        std::uint16_t head = 0;
-        std::size_t new_item_counter = 0;
-        const std::size_t rows = 500;
-
-        std::size_t row_size = 0;
-
-        std::unordered_map<std::uint64_t, std::uint64_t> row_time_map;
-        std::unordered_map<std::uint64_t, std::uint64_t> time_row_map;
-        std::unique_ptr<std::byte[]> data;
-        std::vector<std::vector<std::atomic<bool>>> updated_tracker; // [row][tracker] bool to signify if the tracker is updated
-
-        uint64_t last_print_time = 0;
-        size_t printed_rows = 0;
+        std::vector<std::unique_ptr<RecorderSink>> sinks;
 
         // config
         uint64_t recording_interval = 0;
         bool wait_for_recorder = false;
-
 
         DataRecorder(const std::string &filename, uint64_t interval, bool wait_for);
 
@@ -74,9 +72,7 @@ namespace ssp4sim::signal
 
         void add_storage(SignalStorage *storage);
 
-        void reset_update_status(std::size_t row);
-
-        void print_headers();
+        void add_sink(std::unique_ptr<RecorderSink> sink);
 
         void init();
 
@@ -84,18 +80,13 @@ namespace ssp4sim::signal
 
         void stop_recording();
 
-        std::byte *get_data_pos(std::size_t row, std::size_t offset);
-
-        void print_row(uint16_t row);
-
-        void update();
-
         void loop();
 
-        static void new_event(NewDataEvent event);
+        static void new_event(void *context, NewDataEvent event);
 
-        void process_new_data(ssp4sim::signal::Tracker &tracker, signal::SignalStorage *storage, std::size_t area);
+        void enqueue_event(NewDataEvent new_event);
 
-        void wait_until_done();
+        void process_new_data(const NewDataEvent &new_event);
+
     };
 }

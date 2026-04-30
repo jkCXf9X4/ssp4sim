@@ -69,7 +69,7 @@ iteration loop:
 
   perform convergence check
 
-CAn this be used for co-simulation?
+Can this be used for co-simulation?
 
 
 ---

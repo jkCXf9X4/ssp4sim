@@ -1,39 +1,41 @@
 #include "signal/recorder.hpp"
 
+#include "signal/csv_recorder_sink.hpp"
 #include "signal/storage.hpp"
-#include "utils/time.hpp"
 
-#include "config.hpp"
-
-#include "FMI2_Enums_Ext.hpp"
-
-#include <cstddef>
-#include <cstring>
 #include <memory>
 #include <thread>
-#include <unistd.h>
 #include <utility>
-#include <vector>
 
 namespace ssp4sim::signal
 {
 
     DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.record.DataRecorder")),
-          file(filename, std::ios::out)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.DataRecorder")),
+          event_queue(4096)
     {
         LOG_TRACE_L2(log, "[{func}] Constructor", __func__);
-        
+
         recording_interval = interval;
         wait_for_recorder = wait_for;
 
-        LOG_DEBUG(log, "[{func}] File {file}, open {open}", __func__, filename, file.is_open());
+        add_sink(std::make_unique<CsvRecorderSink>(filename, recording_interval));
+
         LOG_DEBUG(log, "[{func}] Interval: {interval}, wait_for: {wait_for}", __func__, recording_interval, wait_for_recorder);
     }
 
     DataRecorder::~DataRecorder()
     {
         LOG_TRACE_L2(log, "[{func}] init", __func__);
+        if (running)
+        {
+            stop_recording();
+        }
+    }
+
+    void DataRecorder::add_sink(std::unique_ptr<RecorderSink> sink)
+    {
+        sinks.emplace_back(std::move(sink));
     }
 
     void DataRecorder::add_storage(SignalStorage *storage)
@@ -41,68 +43,36 @@ namespace ssp4sim::signal
         auto items = storage->variables.size();
         if (items > 0)
         {
-            Tracker t;
-            t.storage = storage;
-            t.size = storage->mem_size;
-            t.index = tracker_index;
-            t.row_pos = row_size;
+            const auto buffer_capacity = 50;
 
-            trackers.emplace_back(std::move(t));
-
-            row_size += storage->mem_size;
-
-            LOG_TRACE_L1(log, "[{func}] Adding tracker, storage: {}", __func__, storage->name);
-
-            tracker_index++;
-        }
-    }
-
-    void DataRecorder::reset_update_status(std::size_t row)
-    {
-        LOG_TRACE_L1(log, "[{func}] Init", __func__);
-        for (auto &t : trackers)
-        {
-            updated_tracker[row][t.index] = false;
-        }
-    }
-
-    void DataRecorder::print_headers()
-    {
-        LOG_TRACE_L1(log, "[{func}] Init", __func__);
-        file << "time";
-        for (const auto &tracker : trackers)
-        {
-            for (const auto &var : tracker.storage->variables)
+            if (storage_indexes.contains(storage))
             {
-                file << ',' << var.name;
+                LOG_WARNING(log, "[{}] Storage already registered: {storage}", __func__, storage->name);
+                return;
             }
+
+            const auto recorder_index = storage_buffers.size();
+            storage_buffers.emplace_back(RecorderStorageBuffer(storage, recorder_index, buffer_capacity));
+            storage_indexes[storage] = recorder_index;
+
+            storage->register_callback(&DataRecorder::new_event, this);
+
+            for (auto &sink : sinks)
+            {
+                sink->on_storage_added(storage);
+            }
+
+            LOG_TRACE_L1(log, "[{func}] Adding RecorderStorageBuffer, storage: {storage}", __func__, storage->name);
         }
-        file << '\n';
     }
 
     void DataRecorder::init()
     {
         LOG_TRACE_L1(log, "[{func}] Init", __func__);
-        auto allocation_size = row_size * rows;
-
-        data = std::make_unique<std::byte[]>(allocation_size);
-        LOG_TRACE_L1(log, "[{func}] Completed allocation", __func__);
-
-        const std::size_t cols = trackers.size();
-
-        updated_tracker.clear();
-        updated_tracker.reserve(rows);
-        for (std::size_t i = 0; i < rows; ++i)
+        for (auto &sink : sinks)
         {
-            std::vector<std::atomic<bool>> row(cols); // default-construct atoms
-            for (auto &cell : row)
-            {
-                cell.store(false);
-            }
-            updated_tracker.emplace_back(std::move(row));
+            sink->init();
         }
-
-        print_headers();
     }
 
     void DataRecorder::start_recording()
@@ -111,7 +81,6 @@ namespace ssp4sim::signal
         running = true;
         worker = std::make_unique<std::thread>([this]()
                                                { loop(); });
-        usleep(100);
     }
 
     void DataRecorder::stop_recording()
@@ -123,188 +92,110 @@ namespace ssp4sim::signal
         }
 
         running = false;
-
-        usleep(100);
-        update();
+        event_signal.fetch_add(1, std::memory_order_release);
+        event_signal.notify_one();
 
         if (worker && worker->joinable())
         {
             worker->join();
         }
 
-        for (int i = 1; i <= rows; i++)
+        for (auto &sink : sinks)
         {
-            bool print = false;
-            auto row = static_cast<uint16_t>((head + i) % rows);
-            for (auto &tracker : trackers)
+            sink->stop();
+        }
+    }
+
+    // callback from storage
+    void DataRecorder::new_event(void *context, NewDataEvent new_event)
+    {
+        auto recorder = static_cast<DataRecorder *>(context);
+        if (recorder)  [[likely]]
+        {
+            recorder->enqueue_event(new_event);
+        }
+    }
+
+    void DataRecorder::enqueue_event(NewDataEvent new_event)
+    {
+        auto storage_index = storage_indexes.find(new_event.storage);
+        if (storage_index == storage_indexes.end())  [[unlikely]]
+        {
+            LOG_WARNING(log, "[{func}] Ignoring event for unregistered storage {}", __func__, new_event.storage->name);
+            return;
+        }
+
+        auto &recorder_storage = this->storage_buffers[storage_index->second];
+        new_event.recorder_storage_index = storage_index->second;
+
+        std::size_t target_area;
+
+        while (!recorder_storage.try_push(new_event.area, target_area))
+        {
+            if (!wait_for_recorder || !running.load(std::memory_order_acquire)) [[unlikely]]
             {
-                if (updated_tracker[row][tracker.index])
-                {
-                    print = true;
-                }
+                LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] Storage: {} full for area {}", __func__, recorder_storage.storage->name, new_event.area);
+                return;
             }
-            if (print)
+            std::this_thread::yield();
+        }
+
+        new_event.buffer = recorder_storage.buffers->get_item(target_area);
+
+        while (!event_queue.try_push(new_event))
+        {
+            if (!wait_for_recorder || !running.load(std::memory_order_acquire))  [[unlikely]]
             {
-                print_row(row);
+                recorder_storage.pop();
+                LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] Event queue full for storage {}", __func__, recorder_storage.storage->name);
+                return;
             }
+            std::this_thread::yield();
         }
-        file.flush();
 
-        if (file.is_open())
-        {
-            file.close();
-        }
-    }
-
-    std::byte *DataRecorder::get_data_pos(std::size_t row, std::size_t offset)
-    {
-        return data.get() + row * row_size + offset;
-    }
-
-    void DataRecorder::print_row(uint16_t row)
-    {
-        IF_LOG({
-            LOG_TRACE_L1(log, "[{func}] Row: {}", __func__, row);
-        });
-
-        auto time_value = utils::time::ns_to_s(row_time_map[row]);
-
-        file << time_value;
-        for (const auto &tracker : trackers)
-        {
-            for (auto& var : tracker.storage->variables)
-            {
-                IF_LOG({
-                    LOG_TRACE_L2(log, "[{func}] Printing tracker: {}, item:{}", __func__, tracker.storage->name, var.name);
-                });
-
-                auto pos = var.position;
-                auto type = var.type;
-                file << ", ";
-                if (updated_tracker[row][tracker.index])
-                {
-                    auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(type, get_data_pos(row, tracker.row_pos + pos));
-                    file << data_type_str;
-                }
-            }
-        }
-        file << '\n';
-        printed_rows += 1;
-
-        if (printed_rows % 50 == 0)
-        {
-            file.flush();
-        }
-    }
-
-    void DataRecorder::update()
-    {
-        LOG_TRACE_L1(log, "[{func}] Notifying recording to update", __func__);
-    }
-
-    void DataRecorder::new_event(NewDataEvent event)
-    {
-        // LOG_DEBUG(log, "[{func}] New recording event", __func__);
+        event_signal.fetch_add(1, std::memory_order_release);
+        event_signal.notify_one();
     }
 
     void DataRecorder::loop()
     {
         LOG_DEBUG(log, "[{func}] Starting recording thread", __func__);
 
-        while (running)
+        while (true)
         {
-            IF_LOG({
-                LOG_TRACE_L2(log, "[{func}] Looking for new content to write to file", __func__);
-            });
-
-            for (auto &tracker : trackers)
+            NewDataEvent new_event;
+            auto observed_signal = event_signal.load(std::memory_order_acquire);
+            if (!event_queue.try_pop(new_event)) [[unlikely]]
             {
-                IF_LOG({
-                    LOG_TRACE_L3(log, "[{func}] Evaluating storage {}", __func__, tracker.storage->to_string());
-                });
-
-                for (std::size_t area = 0; area < tracker.storage->areas; ++area)
+                if (!running) [[unlikely]]
                 {
-                    auto storage = tracker.storage;
-                    if (storage->new_data_flags[area])
-                    {
-                        IF_LOG({
-                            LOG_TRACE_L1(log, "[{func}] Found new data; area: {}", __func__, area);
-                        });
-
-                        process_new_data(tracker, storage, area);
-                        storage->new_data_flags[area] = false;
-                    }
+                    break;
                 }
+
+                event_signal.wait(observed_signal, std::memory_order_acquire);
+                continue;
             }
+
+            process_new_data(new_event);
+
+            if (new_event.recorder_storage_index >= storage_buffers.size())  [[unlikely]]
+            {
+                LOG_WARNING(log, "[{func}] Invalid recorder buffer index {} for storage {}", __func__, new_event.recorder_storage_index, new_event.storage->name);
+                continue;
+            }
+            auto &recorder_storage = storage_buffers[new_event.recorder_storage_index];
+            recorder_storage.pop();
         }
 
         LOG_DEBUG(log, "[{func}] Exiting recording thread", __func__);
     }
 
-    void DataRecorder::process_new_data(ssp4sim::signal::Tracker &tracker, signal::SignalStorage *storage, std::size_t area)
+    void DataRecorder::process_new_data(const NewDataEvent &new_event)
     {
-        auto ts = storage->get_time(area);
-
-        if (!time_row_map.contains(ts))
+        for (auto &sink : sinks)
         {
-            IF_LOG({
-                LOG_TRACE_L1(log, "[{func}] New print time: {}, last_print_time {}", __func__, ts, last_print_time);
-            });
-
-            last_print_time += recording_interval;
-
-            head = static_cast<uint16_t>((head + 1) % rows);
-
-            if (new_item_counter >= rows) [[likely]]
-            {
-                IF_LOG({
-                    LOG_TRACE_L1(log, "[{func}] Row already in use, print and reset. {}", __func__, head);
-                });
-
-                print_row(head);
-                reset_update_status(head);
-            }
-
-            new_item_counter++;
-
-            row_time_map[head] = ts;
-            time_row_map[ts] = head;
-            IF_LOG({
-                LOG_TRACE_L1(log, "[{func}] New row [{func}] with time [{func}]", __func__, head, ts);
-            });
+            sink->on_event(new_event);
         }
 
-        if (time_row_map.contains(ts))
-        {
-            auto row = time_row_map[ts];
-            IF_LOG({
-                LOG_TRACE_L1(log, "[{func}] Copying new data; row {}, size: {}", __func__, row, tracker.size);
-            });
-
-            std::memcpy(get_data_pos(row, tracker.row_pos), storage->locations[area][0], tracker.size);
-
-            updated_tracker[row][tracker.index] = true;
-        }
     }
-
-    void DataRecorder::wait_until_done()
-    {
-        bool unprocessed_data;
-        do
-        {
-            unprocessed_data = false;
-            for (auto &tracker : trackers)
-            {
-                for (std::size_t area = 0; area < tracker.storage->areas; ++area)
-                {
-                    if (tracker.storage->new_data_flags[area])
-                    {
-                        unprocessed_data = true;
-                    }
-                }
-            }
-        } while (unprocessed_data);
-    }
-
 }

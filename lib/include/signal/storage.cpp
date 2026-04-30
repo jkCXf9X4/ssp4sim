@@ -12,54 +12,11 @@ namespace ssp4sim::signal
 
     const size_t derivative_size = sizeof(double);
 
-    // is the alignment solution to complex?
-    // can it just align all to the largest alignas?
-    //
-    namespace
-    {
-        inline std::size_t align_up(std::size_t value, std::size_t alignment)
-        {
-            if (alignment <= 1)
-            {
-                return value;
-            }
-            const auto remainder = value % alignment;
-            if (remainder == 0)
-            {
-                return value;
-            }
-            return value + (alignment - remainder);
-        }
-
-        inline std::size_t get_value_alignment(types::DataType type)
-        {
-            switch (type)
-            {
-            case types::DataType::real:
-                return alignof(double);
-            case types::DataType::boolean:
-            case types::DataType::integer:
-            case types::DataType::enumeration:
-                return alignof(int);
-            case types::DataType::string:
-                return alignof(std::string);
-            case types::DataType::unknown:
-                return alignof(std::byte);
-            }
-            return alignof(std::byte);
-        }
-    }
-
-    // static std::size_t index_counter = 0;
-
     SignalStorage::SignalStorage(std::size_t areas, std::string name)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.utils.SignalStorage")),
-          new_data_flags(areas)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.SignalStorage"))
     {
         this->areas = areas;
         this->name = std::move(name);
-        this->index = index_counter;
-        index_counter++;
     }
 
     SignalStorage::~SignalStorage()
@@ -89,24 +46,24 @@ namespace ssp4sim::signal
         d.name = name;
         d.type = type;
         d.type_size = ssp4sim::ext::fmi2::enums::get_data_type_size(type);
-        d.type_alignment = get_value_alignment(type);
+        d.type_alignment = utils::get_value_alignment(type);
         
         d.max_interpolation_orders = max_interpolation_order;
         d.derivative_size = ssp4sim::ext::fmi2::enums::get_data_type_size(types::DataType::real);
-        d.derivative_alignment = get_value_alignment(types::DataType::real);
+        d.derivative_alignment = utils::get_value_alignment(types::DataType::real);
 
         // memsize tracks the growing buffer mapping
-        d.position = align_up(this->mem_size, d.type_alignment);
+        d.position = utils::align_up(this->mem_size, d.type_alignment);
 
         // always align up to derivative type even if there is no derivatives to avoid test branching
-        d.derivate_position = align_up(d.position + d.type_size, d.derivative_alignment);
+        d.derivate_position = utils::align_up(d.position + d.type_size, d.derivative_alignment);
 
         const auto end_position = d.derivate_position + max_interpolation_order * derivative_size;
 
         d.total_size = end_position - d.position;
 
         constexpr std::size_t area_alignment = alignof(std::max_align_t);
-        this->mem_size = align_up(end_position, area_alignment); // align up to the longest target alignment
+        this->mem_size = utils::align_up(end_position, area_alignment); // align up to the longest target alignment
 
         variables.push_back(std::move(d));
 
@@ -145,8 +102,6 @@ namespace ssp4sim::signal
                     std::construct_at(s);
                 }
             }
-
-            new_data_flags[area_index] = false;
         }
         LOG_DEBUG(log, "[{func}] {storage}", __func__, this->to_string());
 
@@ -225,25 +180,24 @@ namespace ssp4sim::signal
         return derivate_locations[area][index] + (order - 1) * derivative_size;
     }
 
-    void SignalStorage::register_callback(Callback cb)
+    void SignalStorage::register_callback(Callback cb, void *context)
     {
-        new_data_callback = std::move(cb);
+        new_data_callback = cb;
+        new_data_callback_context = context;
     }
 
     void SignalStorage::flag_new_data(std::size_t area)
     {
         if (allocated) [[likely]]
         {
-            new_data_flags[area] = true;
-
             // Prep for non flag solution
-            if (new_data_callback) 
+            if (new_data_callback) [[likely]]
             {
                 auto t = NewDataEvent();
-                t.storage_index = this->index;
+                t.storage = this;
                 t.area = area;
                 t.timestamp = get_time(area);
-                new_data_callback(t);
+                new_data_callback(new_data_callback_context, t);
             }
         }
     }
@@ -253,7 +207,6 @@ namespace ssp4sim::signal
         std::ostringstream oss;
         oss << "SignalStorage \n{\n"
             << " name: " << name
-            << " index: " << index
             << "  areas: " << areas
             << ", allocated: " << allocated
             << ", total memory size: " << mem_size

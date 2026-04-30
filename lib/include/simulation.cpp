@@ -51,7 +51,7 @@ namespace ssp4sim
         p->fmu_handler = std::make_unique<handler::FmuHandler>(p->ssp);
 
         auto enable_recording = utils::Config::getOr("simulation.recording.enable", true);
-        auto result_file = utils::Config::getOr("simulation.recording.result_file", std::string("./result/data.scv"));
+        auto result_file = utils::Config::getOr("simulation.recording.result_file", std::string("./result/data.csv"));
         utils::io::create_parent_folder(result_file);
         auto recording_interval = utils::time::s_to_ns(utils::Config::getOr("simulation.recording.interval", 1.0));
         auto wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);

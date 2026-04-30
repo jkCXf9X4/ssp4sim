@@ -2,6 +2,7 @@
 #include "ssp4cpp/utils/log.hpp"
 
 #include "utils/time.hpp"
+#include "utils/allocator.hpp"
 #include "signal/recorder.hpp"
 #include "utils/model.hpp"
 
@@ -20,6 +21,8 @@
 #include <vector>
 
 using ssp4sim::signal::DataRecorder;
+using ssp4sim::signal::NewDataEvent;
+using ssp4sim::signal::RecorderSink;
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
@@ -49,6 +52,39 @@ void remove_if_existing(std::string name)
         fs::remove(name);
     }
 }
+
+class CollectingSink : public RecorderSink
+{
+public:
+    std::vector<NewDataEvent> events;
+    std::vector<std::string> storage_names;
+    std::vector<double> first_values;
+
+    void on_storage_added(const SignalStorage *storage) override
+    {
+        storage_names.push_back(storage->name);
+    }
+
+    void init() override
+    {
+    }
+
+    void on_event(const NewDataEvent &event) override
+    {
+        events.push_back(event);
+        storage_names.push_back(event.storage->name);
+        if (event.buffer && event.storage->mem_size >= sizeof(double))
+        {
+            double value = 0.0;
+            std::memcpy(&value, event.buffer, sizeof(double));
+            first_values.push_back(value);
+        }
+    }
+
+    void stop() override
+    {
+    }
+};
 
 TEST_CASE("DataRecorder initialization and cleanup", "[DataRecorder]")
 {
@@ -84,15 +120,11 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
 
     recorder.add_storage(&storage);
 
-    REQUIRE(recorder.trackers.size() == 1);
+    auto registered_buffers = std::count_if(recorder.storage_buffers.begin(), recorder.storage_buffers.end(), [](const auto &buffer)
+                                            { return buffer.storage != nullptr; });
+    REQUIRE(registered_buffers == 1);
 
     recorder.init();
-
-    REQUIRE(recorder.updated_tracker.size() == recorder.rows);
-    REQUIRE(recorder.updated_tracker.front().size() == recorder.trackers.size());
-
-    recorder.file.flush();
-    recorder.file.close();
 
     REQUIRE(check_file_contains(test_filename.string(), "time,signals.real,signals.int"));
 
@@ -125,12 +157,8 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
 
     storage.flag_new_data(area);
 
-    recorder.update();
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
     recorder.stop_recording();
 
-    REQUIRE_FALSE(storage.new_data_flags[area]);
     REQUIRE(check_file_contains(test_filename.string(), "1, 42.5"));
     REQUIRE(check_file_contains(test_filename.string(), ", 7"));
 
@@ -175,13 +203,7 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     primary.flag_new_data(area);
     secondary.flag_new_data(area);
 
-    recorder.update();
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
     recorder.stop_recording();
-
-    REQUIRE_FALSE(primary.new_data_flags[area]);
-    REQUIRE_FALSE(secondary.new_data_flags[area]);
 
     std::ifstream file(test_filename);
     REQUIRE(file.is_open());
@@ -204,6 +226,118 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     const auto occurrences_of_timestamp = std::count_if(lines.begin(), lines.end(), [](const std::string &l)
                                                         { return l.starts_with("1"); });
     REQUIRE(occurrences_of_timestamp == 1);
+
+    fs::remove(test_filename);
+}
+
+TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecorder]")
+{
+    const fs::path test_filename = project_root / "build" / "test_recorder_sink_events.csv";
+    remove_if_existing(test_filename);
+
+    DataRecorder recorder(test_filename.string(), 1000, false);
+    auto sink = std::make_unique<CollectingSink>();
+    auto *sink_ptr = sink.get();
+    recorder.add_sink(std::move(sink));
+
+    SignalStorage primary(2, "primary");
+    primary.add("primary.temperature", DataType::real, 1);
+    primary.allocate();
+
+    SignalStorage secondary(2, "secondary");
+    secondary.add("secondary.pressure", DataType::real, 1);
+    secondary.allocate();
+
+    recorder.add_storage(&primary);
+    recorder.add_storage(&secondary);
+    recorder.init();
+    recorder.start_recording();
+
+    constexpr uint64_t timestamp = 2ULL * sim_time::nanoseconds_per_second;
+    const std::size_t primary_area = primary.push(timestamp);
+    const std::size_t secondary_area = secondary.push(timestamp);
+    const double primary_temperature = 4.2;
+    const double secondary_pressure = 9.9;
+
+    std::memcpy(primary.get_item(primary_area, 0), &primary_temperature, sizeof(double));
+    std::memcpy(secondary.get_item(secondary_area, 0), &secondary_pressure, sizeof(double));
+
+    primary.flag_new_data(primary_area);
+    secondary.flag_new_data(secondary_area);
+
+    recorder.stop_recording();
+
+    REQUIRE(sink_ptr->events.size() == 2);
+    REQUIRE(sink_ptr->events[0].storage == &primary);
+    REQUIRE(sink_ptr->events[0].area == primary_area);
+    REQUIRE(sink_ptr->events[0].timestamp == timestamp);
+    REQUIRE(sink_ptr->events[0].recorder_storage_index == 0);
+    REQUIRE(sink_ptr->events[0].buffer != nullptr);
+    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
+    REQUIRE(sink_ptr->events[1].storage == &secondary);
+    REQUIRE(sink_ptr->events[1].area == secondary_area);
+    REQUIRE(sink_ptr->events[1].timestamp == timestamp);
+    REQUIRE(sink_ptr->events[1].recorder_storage_index == 1);
+    REQUIRE(sink_ptr->events[1].buffer != nullptr);
+    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
+    REQUIRE(sink_ptr->first_values.size() == 2);
+    REQUIRE(sink_ptr->first_values[0] == primary_temperature);
+    REQUIRE(sink_ptr->first_values[1] == secondary_pressure);
+    REQUIRE(std::find(sink_ptr->storage_names.begin(), sink_ptr->storage_names.end(), "primary") != sink_ptr->storage_names.end());
+    REQUIRE(std::find(sink_ptr->storage_names.begin(), sink_ptr->storage_names.end(), "secondary") != sink_ptr->storage_names.end());
+
+    fs::remove(test_filename);
+}
+
+TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten", "[DataRecorder]")
+{
+    const fs::path test_filename = project_root / "build" / "test_recorder_stale_events.csv";
+    remove_if_existing(test_filename);
+
+    DataRecorder recorder(test_filename.string(), 1000, false);
+    auto sink = std::make_unique<CollectingSink>();
+    auto *sink_ptr = sink.get();
+    recorder.add_sink(std::move(sink));
+
+    SignalStorage storage(1, "signals");
+    storage.add("signals.temperature", DataType::real, 1);
+    storage.allocate();
+
+    recorder.add_storage(&storage);
+    recorder.init();
+
+    constexpr uint64_t stale_timestamp = 1ULL * sim_time::nanoseconds_per_second;
+    constexpr uint64_t latest_timestamp = 2ULL * sim_time::nanoseconds_per_second;
+
+    const std::size_t stale_area = storage.push(stale_timestamp);
+    const double stale_temperature = 1.5;
+    std::memcpy(storage.get_item(stale_area, 0), &stale_temperature, sizeof(double));
+    storage.flag_new_data(stale_area);
+
+    const std::size_t latest_area = storage.push(latest_timestamp);
+    const double latest_temperature = 7.5;
+    std::memcpy(storage.get_item(latest_area, 0), &latest_temperature, sizeof(double));
+    storage.flag_new_data(latest_area);
+
+    recorder.start_recording();
+    recorder.stop_recording();
+
+    REQUIRE(sink_ptr->events.size() == 2);
+    REQUIRE(sink_ptr->events[0].storage == &storage);
+    REQUIRE(sink_ptr->events[0].area == stale_area);
+    REQUIRE(sink_ptr->events[0].timestamp == stale_timestamp);
+    REQUIRE(sink_ptr->events[0].recorder_storage_index == 0);
+    REQUIRE(sink_ptr->events[0].buffer != nullptr);
+    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
+    REQUIRE(sink_ptr->events[1].storage == &storage);
+    REQUIRE(sink_ptr->events[1].area == latest_area);
+    REQUIRE(sink_ptr->events[1].timestamp == latest_timestamp);
+    REQUIRE(sink_ptr->events[1].recorder_storage_index == 0);
+    REQUIRE(sink_ptr->events[1].buffer != nullptr);
+    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
+    REQUIRE(sink_ptr->first_values.size() == 2);
+    REQUIRE(sink_ptr->first_values[0] == stale_temperature);
+    REQUIRE(sink_ptr->first_values[1] == latest_temperature);
 
     fs::remove(test_filename);
 }

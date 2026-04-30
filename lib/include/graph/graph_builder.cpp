@@ -122,11 +122,9 @@ namespace ssp4sim::graph
                 // only log input data if extended logging is active
                 // IF_LOG({
                     recorder->add_storage(m->input_area.get());
-                    m->input_area->register_callback(recorder->new_event);
                 // });
 
                 recorder->add_storage(m->output_area.get());
-                m->output_area->register_callback(recorder->new_event);
             }
         }
 

@@ -2,6 +2,8 @@
 
 This document describes how `ssp4sim` builds and consumes the input JSON configuration file passed to `sim_app` (or `Simulator(config_path)`).
 
+For CLI and Python invocation examples, see [Usage](usage.md).
+
 ## How Configuration Is Built Up
 
 1. The application takes one argument: a path to a JSON config file.
@@ -27,7 +29,7 @@ This document describes how `ssp4sim` builds and consumes the input JSON configu
     "stop_time": 10.0,
     "timestep": 0.1,
     "tolerance": 1e-4,
-    "realtime":false,
+    "realtime": false,
     "executor": {
       "method": "jacobi",
       "thread_pool_workers": 5,
@@ -44,7 +46,11 @@ This document describes how `ssp4sim` builds and consumes the input JSON configu
     },
     "log": {
       "file": "./results/sim_[TIME].log",
-      "fmu": false
+      "fmu": false,
+      "level_terminal": "info",
+      "level_file": "info",
+      "level_json": "disable",
+      "level_cutelog": "disable"
     }
   }
 }
@@ -62,7 +68,7 @@ This document describes how `ssp4sim` builds and consumes the input JSON configu
 | `simulation.stop_time` | `double` | Yes | - | Seconds. |
 | `simulation.timestep` | `double` | Yes | - | Seconds. |
 | `simulation.tolerance` | `double` | Yes | - | FMU experiment tolerance. |
-| `simulation.realtime` | `bool` | No | `false` | Sync to computer clock |
+| `simulation.realtime` | `bool` | No | `false` | Sync simulation progress to the computer clock. |
 
 ### `simulation.executor.*`
 
@@ -85,16 +91,48 @@ Notes:
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
 | `simulation.recording.enable` | `bool` | No | `true` | Enables CSV recorder creation. |
-| `simulation.recording.wait_for` | `bool` | No | `false` | Wait for the recorder queue to drain each step before simulation continues. |
+| `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 | `simulation.recording.interval` | `double` | No | `1.0` | Seconds between recorded samples. |
-| `simulation.recording.result_file` | `string` | No | `./result/data.scv` | Output CSV path (`[TIME]` supported). |
+| `simulation.recording.result_file` | `string` | No | `./result/data.csv` | Output CSV path (`[TIME]` supported) |
 
 ### `simulation.log.*`
 
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
-| `simulation.log.file` | `string` | Yes | - | File sink path (`[TIME]` supported). |
+| `simulation.log.file` | `string` | Yes | - | Base log file path (`[TIME]` supported). Required before sink selection is evaluated. |
 | `simulation.log.fmu` | `bool` | No | `false` | Enables FMU-level logging during instantiate/setup/step/terminate. Long multi-line FMU log messages are supported. |
+| `simulation.log.level_terminal` | `string` | No | `disable` | Console sink level. `disable` skips the sink. |
+| `simulation.log.level_file` | `string` | No | `disable` | Plain text file sink level. Uses `simulation.log.file`. `disable` skips the sink. |
+| `simulation.log.level_json` | `string` | No | `disable` | JSON file sink level. Uses `simulation.log.file + ".json"`. `disable` skips the sink. |
+| `simulation.log.level_cutelog` | `string` | No | `disable` | Cutelog TCP sink level. Uses `127.0.0.1:19996`. `disable` skips the sink. |
+
+Logging level values are passed through Quill's `loglevel_from_string()`.
+Supported values are case-insensitive:
+
+- `tracel3` or `trace_l3`
+- `tracel2` or `trace_l2`
+- `tracel1` or `trace_l1`
+- `debug`
+- `info`
+- `notice`
+- `warning`
+- `error`
+- `critical`
+- `none`
+
+`disable` is an SSP4SIM configuration value, not a Quill log level. Use it to
+avoid creating a sink. Any other unknown value throws during simulator
+construction.
+
+Logging is initialized after the JSON config is loaded. `Simulator` creates
+only the sinks whose `simulation.log.level_*` value is not `disable`, then
+constructs project loggers using that sink set. If all sinks are disabled,
+logger construction will fail.
+
+The plain file and JSON sinks are independent. Enabling both writes a text log
+based on `simulation.log.file` and a JSON log based on
+`simulation.log.file + ".json"`. The cutelog sink expects a listener to already
+be available on `127.0.0.1:19996`.
 
 ## Validation Behavior
 
@@ -105,6 +143,28 @@ Notes:
 ## Reference Examples
 
 - [`resources/embrace/embrace.json`](../resources/embrace/embrace.json)
-- [`resources/f16/config.json`](../resources/f16/config.json)
 - [`resources/generic_config.json`](../resources/generic_config.json)
-- [`resources/delay_sys/`](../resources/delay_sys/)
+
+## Minimal Example
+
+```json
+{
+  "simulation": {
+    "ssp": "./resources/embrace/embrace_scen.ssp",
+    "start_time": 0.0,
+    "stop_time": 1.0,
+    "timestep": 0.01,
+    "tolerance": 1e-4,
+    "recording": {
+      "enable": true,
+      "wait_for": true,
+      "result_file": "./results/embrace.csv"
+    },
+    "log": {
+      "file": "./results/embrace.log",
+      "level_terminal": "info",
+      "level_file": "info"
+    }
+  }
+}
+```
