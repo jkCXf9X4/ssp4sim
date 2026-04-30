@@ -36,8 +36,6 @@ namespace ssp4sim::graph
             model->enter_init();
         }
 
-        LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] TODO: Implement direct feedthrough", __func__);
-
         // Do NOT implement direct feedthrough for CO-SImulation, see https://github.com/modelica/fmi-standard/discussions/2066
 
         for (auto &model : this->nodes)

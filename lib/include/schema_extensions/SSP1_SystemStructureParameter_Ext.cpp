@@ -86,15 +86,15 @@ namespace ssp4sim::ext::ssp1::ssv
         std::vector<StartValue> start_values;
         for (auto &binding : bindings)
         {
-            for (auto &parameter : binding.ssv->Parameters.Parameters)
+            for (auto &parameter : binding.ssv.Parameters.Parameters)
             {
                 LOG_TRACE_L1(log(), "[{func}] - Store values, {}", __func__, parameter.name);
                 StartValue start_value(parameter.name, get_parameter_type(parameter));
                 start_value.store_value(get_parameter_value(parameter));
 
-                if (binding.ssm)
+                if (binding.ssm.has_value())
                 {
-                    for (auto &map : binding.ssm->MappingEntry)
+                    for (auto &map : binding.ssm.value().MappingEntry)
                     {
                         if (start_value.name == map.source)
                         {
