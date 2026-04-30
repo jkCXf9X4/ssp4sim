@@ -30,6 +30,14 @@ Run it with:
 ./build/tests/lib/ssp4sim_tests
 ```
 
+`ctest --test-dir build/tests` is currently unreliable. Run the test binary
+directly.
+
+Prefer small, focused C++ cases named `test_*.cpp` under `tests/lib/core/` or
+`tests/lib/utils/`. Keep `tests/lib/high_level/` to one top-level C++ smoke
+path. Put reference sweeps and detailed result comparisons in pytest under
+`tests/python/`.
+
 ## High-Level SSP Tests
 
 The high-level reference sweep lives in `tests/python/high_level/` so it can use
@@ -64,3 +72,13 @@ failure so the marker must be removed. The current expected failures are
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the
 root cause.
+
+## Reference Fixtures
+
+Reference SSP fixtures under `tests/reference_ssp/` may contain a nested Git
+repository and generated `build/` content. Do not edit generated outputs unless
+the task is explicitly about fixture generation or expected reference data.
+When editing this tree, follow `tests/reference_ssp/AGENTS.md`.
+
+Use focused Catch2 tests, focused pytest tests, or one reference SSP simulation
+as the smallest validation that proves a change before running broader suites.

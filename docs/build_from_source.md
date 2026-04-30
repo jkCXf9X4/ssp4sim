@@ -95,7 +95,7 @@ python3.11 -m venv venv
 . ./venv/bin/activate
 pip install -r ./requirements.txt
 
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_PYTHON_API=ON -DSSP4SIM_LOG_HOT_PATH=OFF
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_PYTHON_API=ON -DVCPKG_MANIFEST_FEATURES=python-api -DSSP4SIM_LOG_HOT_PATH=OFF
 
 cmake --build build
 pip install -e ./build/public/python_api
