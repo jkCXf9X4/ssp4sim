@@ -38,9 +38,7 @@ namespace ssp4sim::graph
 
         LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] TODO: Implement direct feedthrough", __func__);
 
-        // direct feedthrough evaluation should come between these.
-        // Doing direct feedthrough for all variables will overwrite inputs with outputs that are unset
-        // It should only be done for the relevant algebraic loops. Nothing else!
+        // Do NOT implement direct feedthrough for CO-SImulation, see https://github.com/modelica/fmi-standard/discussions/2066
 
         for (auto &model : this->nodes)
         {
