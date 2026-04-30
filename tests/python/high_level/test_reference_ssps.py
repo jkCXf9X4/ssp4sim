@@ -39,7 +39,7 @@ EXPECTED_REFERENCE_FAILURES = {
 }
 
 GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
-REFERENCE_SSP_ROOT = SSP4SIM_ROOT / "tests" / "reference_ssp" / "build" / "models"
+REFERENCE_SSP_ROOT = SSP4SIM_ROOT / "tests" / "resources" / "reference_ssp" / "build" / "models"
 
 
 def uses_model_exchange(model_root: Path) -> bool:

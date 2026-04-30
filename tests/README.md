@@ -33,9 +33,9 @@ The suite is split by layer so each test has a clear responsibility:
   through the public simulator entry point with CSV recording enabled.
 - `tests/python/high_level/`: Python API tests for full SSP workflows and
   result-file validation.
-- `tests/reference_ssp/`: unpacked reference SSP fixtures used by the high-level
+- `tests/resources/reference_ssp/`: unpacked reference SSP fixtures used by the high-level
   workflow tests.
-- `tests/references/` and `tests/resources/`: small static fixtures for focused
+- `tests/resources/references/` and `tests/resources/`: small static fixtures for focused
   C++ tests.
 
 Keep the C++ high-level layer to a single smoke path through the top-level
@@ -62,7 +62,7 @@ pytest parameterization and Python-side CSV/result comparison helpers. Pytest is
 configured to collect only `tests/python`.
 
 The test iterates the unpacked SSP fixtures under
-`tests/reference_ssp/build/models/*/ssp`, simulates each co-simulation SSP, and
+`tests/resources/reference_ssp/build/models/*/ssp`, simulates each co-simulation SSP, and
 checks that a complete result CSV is produced. Model-exchange fixtures are
 excluded because the current runtime only supports co-simulation FMUs.
 
@@ -89,10 +89,10 @@ root cause.
 
 ## Reference Fixtures
 
-Reference SSP fixtures under `tests/reference_ssp/` may contain a nested Git
+Reference SSP fixtures under `tests/resources/reference_ssp/` may contain a nested Git
 repository and generated `build/` content. Do not edit generated outputs unless
 the task is explicitly about fixture generation or expected reference data.
-When editing this tree, follow `tests/reference_ssp/AGENTS.md`.
+When editing this tree, follow `tests/resources/reference_ssp/AGENTS.md`.
 
 Use focused Catch2 tests, focused pytest tests, or one reference SSP simulation
 as the smallest validation that proves a change before running broader suites.

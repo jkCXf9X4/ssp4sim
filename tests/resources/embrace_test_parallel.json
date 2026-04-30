@@ -32,7 +32,7 @@
             "enable": true,
             "wait_for": true,
             "interval": 0.25,
-            "result_file": "./tests/references/embrace_scenario_result.csv" 
+            "result_file": "./tests/resources/references/embrace_scenario_result.csv" 
         },
 
         "log":

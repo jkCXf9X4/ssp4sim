@@ -12,7 +12,7 @@ This page collects contributor conventions. Build commands live in
 - [`tests/lib/`](../tests/lib): Catch2-based C++ unit and integration tests
   split by layer (`core/`, `utils/`, and one `high_level/` smoke test)
 - [`tests/python/`](../tests/python): pytest-based high-level workflow tests
-- [`tests/reference_ssp/`](../tests/reference_ssp): unpacked reference fixture
+- [`tests/resources/reference_ssp/`](../tests/resources/reference_ssp): unpacked reference fixture
   repository used by high-level workflow tests
 - [`resources/`](../resources): SSP/SSD/SSM/SSV examples, reference inputs,
   and sample scenarios
