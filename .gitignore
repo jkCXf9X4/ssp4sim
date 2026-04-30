@@ -24,8 +24,8 @@ __pycache__/
 
 # C extensions
 *.so
-!resources_old/**/*.so
-!resources_old/**/*.dll
+!resources/**/*.so
+!resources/**/*.dll
 
 # Distribution / packaging
 .Python

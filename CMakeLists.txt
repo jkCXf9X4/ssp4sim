@@ -8,8 +8,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(GNUInstallDirs)
 
 # OPTIONS
-option(SSP4SIM_BUILD_TEST "Build test executable" OFF)
-option(SSP4SIM_BUILD_PYTHON_API "Build Python API" OFF)
+option(SSP4SIM_BUILD_TEST "Build test executable" ON)
+option(SSP4SIM_BUILD_PYTHON_API "Build Python API" ON)
 option(SSP4SIM_LOG_HOT_PATH "Include logging in hot path" OFF)
 
 if (NOT CMAKE_BUILD_TYPE)
