@@ -104,7 +104,7 @@ Notes:
 | `simulation.log.level_terminal` | `string` | No | `disable` | Console sink level. `disable` skips the sink. |
 | `simulation.log.level_file` | `string` | No | `disable` | Plain text file sink level. Uses `simulation.log.file`. `disable` skips the sink. |
 | `simulation.log.level_json` | `string` | No | `disable` | JSON file sink level. Uses `simulation.log.file + ".json"`. `disable` skips the sink. |
-| `simulation.log.level_cutelog` | `string` | No | `disable` | Cutelog TCP sink level. Uses `127.0.0.1:19996`. `disable` skips the sink. |
+| `simulation.log.level_cutelog` | `string` | No | `disable` | Cutelog TCP sink level. Uses `127.0.0.1:19996`. `disable` skips the sink. If the endpoint is unavailable, SSP4SIM logs a warning and continues without this sink. |
 
 Logging level values are passed through Quill's `loglevel_from_string()`.
 Supported values are case-insensitive:
@@ -131,8 +131,8 @@ logger construction will fail.
 
 The plain file and JSON sinks are independent. Enabling both writes a text log
 based on `simulation.log.file` and a JSON log based on
-`simulation.log.file + ".json"`. The cutelog sink expects a listener to already
-be available on `127.0.0.1:19996`.
+`simulation.log.file + ".json"`. The cutelog sink expects a listener on
+`127.0.0.1:19996`; if connection setup fails, only that sink is disabled.
 
 ## Validation Behavior
 

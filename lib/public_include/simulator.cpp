@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <exception>
 #include <stdexcept>
+#include <string>
 
 namespace ssp4sim
 {
@@ -60,7 +61,14 @@ namespace ssp4sim
         auto level_cutelog = utils::Config::getOr("simulation.log.level_cutelog", "disable");
         if (level_cutelog != "disable")
         {
-            ssp4cpp::utils::log::add_cutelog_sink("127.0.0.1", 19996, quill::loglevel_from_string(level_cutelog));
+            try
+            {
+                ssp4cpp::utils::log::add_cutelog_sink("127.0.0.1", 19996, quill::loglevel_from_string(level_cutelog));
+            }
+            catch (const std::exception &e)
+            {
+                LOG_WARNING(p->log, "[{func}] Cutelog sink disabled: {}", __func__, e.what());
+            }
         }
 
         p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");
