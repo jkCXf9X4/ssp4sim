@@ -51,6 +51,7 @@ namespace ssp4sim::signal
         std::uint64_t timestamp = 0;
         // populated by DataRecorder
         std::byte *buffer = nullptr;
+        std::size_t recorder_storage_index = 0;
     };
     using Callback = void (*)(void *, NewDataEvent);
 

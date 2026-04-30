@@ -271,11 +271,13 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
     REQUIRE(sink_ptr->events[0].storage == &primary);
     REQUIRE(sink_ptr->events[0].area == primary_area);
     REQUIRE(sink_ptr->events[0].timestamp == timestamp);
+    REQUIRE(sink_ptr->events[0].recorder_storage_index == 0);
     REQUIRE(sink_ptr->events[0].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->events[1].storage == &secondary);
     REQUIRE(sink_ptr->events[1].area == secondary_area);
     REQUIRE(sink_ptr->events[1].timestamp == timestamp);
+    REQUIRE(sink_ptr->events[1].recorder_storage_index == 1);
     REQUIRE(sink_ptr->events[1].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->first_values.size() == 2);
@@ -324,11 +326,13 @@ TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten"
     REQUIRE(sink_ptr->events[0].storage == &storage);
     REQUIRE(sink_ptr->events[0].area == stale_area);
     REQUIRE(sink_ptr->events[0].timestamp == stale_timestamp);
+    REQUIRE(sink_ptr->events[0].recorder_storage_index == 0);
     REQUIRE(sink_ptr->events[0].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->events[1].storage == &storage);
     REQUIRE(sink_ptr->events[1].area == latest_area);
     REQUIRE(sink_ptr->events[1].timestamp == latest_timestamp);
+    REQUIRE(sink_ptr->events[1].recorder_storage_index == 0);
     REQUIRE(sink_ptr->events[1].buffer != nullptr);
     REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->first_values.size() == 2);
