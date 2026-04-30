@@ -134,9 +134,9 @@ namespace ssp4sim::graph
         ConnectionInfo::retrieve_model_inputs(connections, target_area, input_time);
 
         // only log input data if extended logging is active
-        // IF_LOG({
+        IF_LOG({
             input_area->flag_new_data(target_area);
-        // });
+        });
 
         ConnectorInfo::write_data_to_model(inputs, input_area.get(), target_area);
 

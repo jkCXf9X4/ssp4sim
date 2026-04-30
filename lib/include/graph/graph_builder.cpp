@@ -120,9 +120,9 @@ namespace ssp4sim::graph
             if (recorder)
             {
                 // only log input data if extended logging is active
-                // IF_LOG({
+                IF_LOG({
                     recorder->add_storage(m->input_area.get());
-                // });
+                });
 
                 recorder->add_storage(m->output_area.get());
             }
