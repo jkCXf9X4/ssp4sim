@@ -63,9 +63,6 @@ namespace ssp4sim::signal
         
         std::size_t areas = 0;
         std::string name;
-        std::size_t index;
-
-        inline static std::size_t index_counter = 0;
 
         bool allocated = false;
 

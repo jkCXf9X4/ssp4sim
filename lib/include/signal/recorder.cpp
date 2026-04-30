@@ -11,7 +11,8 @@ namespace ssp4sim::signal
 {
 
     DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.DataRecorder"))
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.DataRecorder")),
+          event_queue(4096)
     {
         LOG_TRACE_L2(log, "[{func}] Constructor", __func__);
 
@@ -91,7 +92,8 @@ namespace ssp4sim::signal
         }
 
         running = false;
-        event.notify_all();
+        event_signal.fetch_add(1, std::memory_order_release);
+        event_signal.notify_one();
 
         if (worker && worker->joinable())
         {
@@ -108,7 +110,7 @@ namespace ssp4sim::signal
     void DataRecorder::new_event(void *context, NewDataEvent new_event)
     {
         auto recorder = static_cast<DataRecorder *>(context);
-        if (recorder)
+        if (recorder)  [[likely]]
         {
             recorder->enqueue_event(new_event);
         }
@@ -117,7 +119,7 @@ namespace ssp4sim::signal
     void DataRecorder::enqueue_event(NewDataEvent new_event)
     {
         auto storage_index = storage_indexes.find(new_event.storage);
-        if (storage_index == storage_indexes.end())
+        if (storage_index == storage_indexes.end())  [[unlikely]]
         {
             LOG_WARNING(log, "[{func}] Ignoring event for unregistered storage {}", __func__, new_event.storage->name);
             return;
@@ -128,20 +130,31 @@ namespace ssp4sim::signal
 
         std::size_t target_area;
 
-        // TODO: add wait_for_recorder here if full
-        if (recorder_storage.try_push(new_event.area, target_area))
+        while (!recorder_storage.try_push(new_event.area, target_area))
         {
-            new_event.buffer = recorder_storage.buffers->get_item(target_area);
+            if (!wait_for_recorder || !running.load(std::memory_order_acquire)) [[unlikely]]
             {
-                std::lock_guard<std::mutex> lock(event_mutex);
-                event_queue.push_back(new_event);
-                event.notify_one();
+                LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] Storage: {} full for area {}", __func__, recorder_storage.storage->name, new_event.area);
+                return;
             }
+            std::this_thread::yield();
         }
-        else
+
+        new_event.buffer = recorder_storage.buffers->get_item(target_area);
+
+        while (!event_queue.try_push(new_event))
         {
-            LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] Storage: {} full for area {}", __func__, recorder_storage.storage->name, new_event.area);
+            if (!wait_for_recorder || !running.load(std::memory_order_acquire))  [[unlikely]]
+            {
+                recorder_storage.pop();
+                LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] Event queue full for storage {}", __func__, recorder_storage.storage->name);
+                return;
+            }
+            std::this_thread::yield();
         }
+
+        event_signal.fetch_add(1, std::memory_order_release);
+        event_signal.notify_one();
     }
 
     void DataRecorder::loop()
@@ -151,27 +164,21 @@ namespace ssp4sim::signal
         while (true)
         {
             NewDataEvent new_event;
+            auto observed_signal = event_signal.load(std::memory_order_acquire);
+            if (!event_queue.try_pop(new_event)) [[unlikely]]
             {
-                std::unique_lock<std::mutex> lock(event_mutex);
-                event.wait(lock, [this]()
-                           { return !running || !event_queue.empty(); });
-
-                if (event_queue.empty())
+                if (!running) [[unlikely]]
                 {
-                    if (!running)
-                    {
-                        break;
-                    }
-                    continue;
+                    break;
                 }
 
-                new_event = event_queue.front();
-                event_queue.pop_front();
+                event_signal.wait(observed_signal, std::memory_order_acquire);
+                continue;
             }
 
             process_new_data(new_event);
 
-            if (new_event.recorder_storage_index >= storage_buffers.size())
+            if (new_event.recorder_storage_index >= storage_buffers.size())  [[unlikely]]
             {
                 LOG_WARNING(log, "[{func}] Invalid recorder buffer index {} for storage {}", __func__, new_event.recorder_storage_index, new_event.storage->name);
                 continue;

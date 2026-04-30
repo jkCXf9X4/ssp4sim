@@ -17,7 +17,6 @@ namespace ssp4sim::signal
     {
         this->areas = areas;
         this->name = std::move(name);
-        this->index = index_counter++;
     }
 
     SignalStorage::~SignalStorage()
@@ -208,7 +207,6 @@ namespace ssp4sim::signal
         std::ostringstream oss;
         oss << "SignalStorage \n{\n"
             << " name: " << name
-            << " index: " << index
             << "  areas: " << areas
             << ", allocated: " << allocated
             << ", total memory size: " << mem_size

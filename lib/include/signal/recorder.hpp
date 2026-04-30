@@ -7,18 +7,16 @@
 
 #include "signal/storage.hpp"
 #include "signal/record_tracker.hpp"
+#include "signal/mpsc_event_queue.hpp"
 
 #include <cstddef>
 #include <cstdint>
-#include <deque>
 #include <memory>
-#include <mutex>
 #include <thread>
 #include <atomic>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <condition_variable>
 
 namespace ssp4sim::signal
 {
@@ -53,10 +51,8 @@ namespace ssp4sim::signal
         std::unique_ptr<std::thread> worker;
 
         std::atomic<bool> running = false;
-        std::mutex event_mutex;
-        std::condition_variable event;
-        std::deque<NewDataEvent> event_queue;
-        bool processing_event = false;
+        BoundedMpscEventQueue<NewDataEvent> event_queue;
+        std::atomic<std::size_t> event_signal = 0;
 
         std::vector<RecorderStorageBuffer> storage_buffers;
         std::unordered_map<SignalStorage *, std::size_t> storage_indexes;

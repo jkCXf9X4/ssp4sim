@@ -20,13 +20,39 @@ namespace ssp4sim::signal
         // Connected to one storage
         SignalStorage *storage = nullptr;
 
+        // Each SignalStorage has one producer. The shared event queue handles
+        // cross-storage MPSC fan-in; this buffer only guards recorder lag.
         std::size_t index = 0;
-        // TOdo: accessed from multiple threads, should be atomic
-        std::size_t active_items = 0;
+        std::atomic<std::size_t> active_items = 0;
 
         std::unique_ptr<utils::RingBuffer> buffers;
 
         RecorderStorageBuffer() = default;
+
+        RecorderStorageBuffer(const RecorderStorageBuffer &) = delete;
+        RecorderStorageBuffer &operator=(const RecorderStorageBuffer &) = delete;
+
+        RecorderStorageBuffer(RecorderStorageBuffer &&other) noexcept
+            : log(other.log),
+              storage(other.storage),
+              index(other.index),
+              active_items(other.active_items.load(std::memory_order_relaxed)),
+              buffers(std::move(other.buffers))
+        {
+        }
+
+        RecorderStorageBuffer &operator=(RecorderStorageBuffer &&other) noexcept
+        {
+            if (this != &other)
+            {
+                log = other.log;
+                storage = other.storage;
+                index = other.index;
+                active_items.store(other.active_items.load(std::memory_order_relaxed), std::memory_order_relaxed);
+                buffers = std::move(other.buffers);
+            }
+            return *this;
+        }
 
         RecorderStorageBuffer(SignalStorage *storage, std::size_t index, std::size_t capacity)
             : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.RecorderStorageBuffer"))
@@ -38,11 +64,12 @@ namespace ssp4sim::signal
 
         bool try_push(std::size_t source_area, std::size_t &target_area)
         {
-            if (active_items >= buffers->capacity)
+            auto previous_active_items = active_items.fetch_add(1, std::memory_order_acq_rel);
+            if (previous_active_items >= buffers->capacity)
             {
+                active_items.fetch_sub(1, std::memory_order_acq_rel);
                 return false;
             }
-            active_items++;
             auto source = storage->data->get_item(source_area, false);
             auto source_time = storage->data->get_time(source_area);
             target_area = buffers->push(source_time);
@@ -53,7 +80,7 @@ namespace ssp4sim::signal
 
         void pop()
         {
-            active_items--;
+            active_items.fetch_sub(1, std::memory_order_acq_rel);
         }
     };
 }
