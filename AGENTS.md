@@ -17,7 +17,8 @@ from here.
 ## Canonical Documentation
 
 - Project overview and user entry points: [`readme.md`](readme.md)
-- Local build, test, and run commands: [`docs/build_from_source.md`](docs/build_from_source.md)
+- Running the CLI and Python API: [`docs/usage.md`](docs/usage.md)
+- Local build commands: [`docs/build_from_source.md`](docs/build_from_source.md)
 - Development workflows, repository layout, coding style, dependencies, generated
   data, and contribution conventions: [`docs/development.md`](docs/development.md)
 - Test architecture, commands, reference fixtures, and expected failures:

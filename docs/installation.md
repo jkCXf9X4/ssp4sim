@@ -1,6 +1,7 @@
-# Installation Guide
+# Installation
 
-This guide collects installation-specific workflows for `ssp4sim`.
+This guide covers ways to install or consume `ssp4sim` without developing the
+library itself. For source builds, use [Build From Source](build_from_source.md).
 
 ## Install Linux Release Binaries
 
@@ -46,10 +47,19 @@ Verify the installed CLI version:
 sim_app --version
 ```
 
+Run an example simulation:
+
+```bash
+sim_app $HOME/.local/opt/ssp4sim/resources/embrace/embrace.json
+```
+
+Usage details are in [Usage](usage.md).
+
 Runtime notes:
 
 - Releases are currently built on Ubuntu 22.04.
-- The binary links `libstdc++` statically, but system compatibility can still depend on `glibc` and other runtime components.
+- The binary links `libstdc++` statically, but system compatibility can still
+  depend on `glibc` and other runtime components.
 
 ## Install Python API From Release Wheel
 
@@ -65,4 +75,11 @@ pip install --upgrade --force-reinstall --no-cache-dir \
   https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
 ```
 
-For source development setup and build commands, continue with [Development Guide](development.md).
+Verify the package imports:
+
+```bash
+python -c "import pyssp4sim; print(pyssp4sim)"
+```
+
+Python usage details are in [Usage](usage.md). For source development setup and
+build commands, continue with [Development Guide](development.md).

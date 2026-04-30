@@ -1,6 +1,7 @@
 # Linux Binary Distribution
 
-This repository now provides a Linux-only release pipeline for distributing prebuilt binaries to other developers.
+This repository provides a Linux-only release pipeline for distributing
+prebuilt binaries and a Python wheel to other developers.
 
 ## Stage 1: Distribution target
 
@@ -26,9 +27,12 @@ Template inputs for generated release files:
 - [`scripts/release/RELEASE.txt.template`](../scripts/release/RELEASE.txt.template)
 
 Runs on `ubuntu-22.04` and performs:
-- Installs required system tools for vcpkg `python3` (`autoconf`, `automake`, `autoconf-archive`, `ninja-build`)
-- Installs and uses `gcc-13`/`g++-13` for C++23 `<format>` support
-- Configure (`cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON -DVCPKG_MANIFEST_FEATURES=python-api`)
+
+- Builds the reusable Ubuntu 22.04 + GCC 13 container image from
+  [`containers/ubuntu22-gcc13/Containerfile`](../containers/ubuntu22-gcc13/Containerfile)
+- Runs configure, build, test, install, and packaging commands inside that
+  container
+- Configure (`cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON`)
 - Build (`cmake --build build --config Release`)
 - Test (`./build/tests/lib/ssp4sim_tests`)
 
@@ -85,3 +89,15 @@ For manual runs (`workflow_dispatch`), artifacts are uploaded to the workflow ru
    ```bash
    pip install pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
    ```
+
+## Local Release Parity
+
+Use the same container scripts locally when investigating release failures:
+
+```bash
+./containers/build_ubuntu22_gcc13_container.sh
+./containers/run_ubuntu22_gcc13_container.sh -- \
+  cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON
+./containers/run_ubuntu22_gcc13_container.sh -- cmake --build build --config Release
+./containers/run_ubuntu22_gcc13_container.sh -- ./build/tests/lib/ssp4sim_tests
+```

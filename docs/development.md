@@ -1,6 +1,9 @@
 # Development Guide
 
-This page collects development-oriented workflows for contributors.
+This page collects contributor conventions. Build commands live in
+[Build From Source](build_from_source.md), test-suite details live in
+[tests/README.md](../tests/README.md), and runtime configuration lives in
+[Configuration](configuration.md).
 
 ## Repository Layout
 
@@ -19,11 +22,14 @@ This page collects development-oriented workflows for contributors.
 
 ## Core Development Loop
 
-1. Set up the environment using [docs/build_from_source.md](build_from_source.md).
-2. Configure and build using [docs/build_from_source.md](build_from_source.md).
-3. Run tests with `./build/tests/lib/ssp4sim_tests`.
-4. Run an example scenario:
-   - `./build/public/ssp4sim_app/sim_app ./resources/embrace/embrace.json`
+1. Build with the smallest relevant source-build workflow.
+2. Run the focused test that proves the change.
+3. Run one example simulation when behavior changes user-visible runtime output.
+4. Update the relevant documentation when behavior, commands, architecture, or
+   workflow assumptions change.
+
+Use [Build From Source](build_from_source.md) for exact build commands and
+[tests/README.md](../tests/README.md) for test selection.
 
 ## Coding Style
 
@@ -47,8 +53,6 @@ This page collects development-oriented workflows for contributors.
   [vcpkg.md](../vcpkg.md) for setup.
 - Common optional build flags: `SSP4SIM_BUILD_TEST`,
   `SSP4SIM_BUILD_PYTHON_API`, and `SSP4SIM_LOG_HOT_PATH`.
-- vcpkg manifest feature `python-api` is required when
-  `SSP4SIM_BUILD_PYTHON_API=ON`.
 - Use the repo-local `venv` for Python commands when it exists. Prefer
   `. venv/bin/activate && <command>` or `venv/bin/python <command>` over the
   system Python for workflow scripts and pytest.
@@ -65,14 +69,16 @@ This page collects development-oriented workflows for contributors.
 
 ## Configuration Work
 
-Simulation runtime configuration reference:
-
-- [docs/configuration.md](configuration.md)
+Update the configuration reference when adding, removing, renaming, or changing
+defaults for keys read from `utils::Config`.
 
 ## Profiling And Logging
 
 - Build profiling notes: [docs/profiling.md](profiling.md)
 - Logging conventions: [docs/logging_guidlines.md](logging_guidlines.md)
+
+The logging document keeps the historical `logging_guidlines.md` filename.
+Preserve existing links unless the file is renamed in a coordinated cleanup.
 
 ## Release Process
 

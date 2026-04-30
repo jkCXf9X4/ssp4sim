@@ -1,3 +1,26 @@
+# Tests
+
+This page describes test layout and test-specific behavior. Build setup lives in
+[Build From Source](../docs/build_from_source.md).
+
+## Quick Commands
+
+Configure with the tests enabled before running the C++ test binary:
+
+```bash
+cmake --preset=vcpkg -DSSP4SIM_BUILD_TEST=ON
+cmake --build build
+./build/tests/lib/ssp4sim_tests
+```
+
+Python tests require the Python API build artifact under
+`build/public/python_api`:
+
+```bash
+cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_PYTHON_API=ON
+cmake --build build
+pytest -q tests/python
+```
 
 ## Test Architecture
 
@@ -22,13 +45,7 @@ the suite can use Python-side fixture discovery and comparison tools.
 ## C++ Library Tests
 
 The C++ test binary covers lower-level library behavior and focused integration
-checks under `tests/lib/`.
-
-Run it with:
-
-```bash
-./build/tests/lib/ssp4sim_tests
-```
+checks under `tests/lib/`. Run it with `./build/tests/lib/ssp4sim_tests`.
 
 `ctest --test-dir build/tests` is currently unreliable. Run the test binary
 directly.
@@ -44,12 +61,6 @@ The high-level reference sweep lives in `tests/python/high_level/` so it can use
 pytest parameterization and Python-side CSV/result comparison helpers. Pytest is
 configured to collect only `tests/python`.
 
-Run it with:
-
-```bash
-pytest -q tests/python
-```
-
 The test iterates the unpacked SSP fixtures under
 `tests/reference_ssp/build/models/*/ssp`, simulates each co-simulation SSP, and
 checks that a complete result CSV is produced. Model-exchange fixtures are
@@ -59,7 +70,10 @@ The Python tests import `pyssp4sim` from `build/public/python_api` when that
 build artifact exists. This prevents high-level tests from accidentally passing
 against an unrelated installed wheel.
 
-The fmi4c loader marks Linux shared libraries executable before `dlopen`, so loading tracked fixtures directly could dirty Git by changing `.so` file mode bits.
+The fmi4c loader marks Linux shared libraries executable before `dlopen`, so
+loading tracked fixtures directly could dirty Git by changing `.so` file mode
+bits. Prefer tests that copy mutable fixtures into a temporary directory before
+loading them.
 
 The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
