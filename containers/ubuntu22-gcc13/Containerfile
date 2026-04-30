@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc-13 \
     g++-13 \
     linux-libc-dev \
+    libtool \
     libtbb-dev \
     make \
     ninja-build \
@@ -49,6 +50,7 @@ RUN mkdir -p /usr/lib/bfd-plugins \
 # configured inside the container pick the GCC 13 toolchain consistently.
 ENV CC=/usr/bin/gcc-13
 ENV CXX=/usr/bin/g++-13
+ENV ASM=/usr/bin/gcc-13
 ENV AR=/usr/bin/gcc-ar-13
 ENV RANLIB=/usr/bin/gcc-ranlib-13
 ENV NM=/usr/bin/gcc-nm-13

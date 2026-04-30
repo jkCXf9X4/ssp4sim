@@ -37,7 +37,7 @@ Prerequisites:
 Known Debian/Ubuntu packages needed by vcpkg builds:
 
 ```bash
-sudo apt install -y ninja-build autoconf automake autoconf-archive cmake build-essential pkg-config
+sudo apt install -y ninja-build autoconf automake autoconf-archive cmake build-essential libtool pkg-config
 ```
 
 Clone the repository:
