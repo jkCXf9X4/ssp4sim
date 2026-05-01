@@ -37,6 +37,7 @@ cmake --build build
 
 ## Documentation
 
+- [Overview](docs/overview.md): short feature-oriented summary and positioning.
 - [Installation](docs/installation.md): release tarball and wheel consumption.
 - [Build from source](docs/build_from_source.md): local and container builds.
 - [Usage](docs/usage.md): CLI, Python API, examples, and input data policy.
