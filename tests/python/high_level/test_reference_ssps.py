@@ -39,7 +39,9 @@ EXPECTED_REFERENCE_FAILURES = {
 }
 
 GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
-REFERENCE_SSP_ROOT = SSP4SIM_ROOT / "tests" / "resources" / "reference_ssp" / "build" / "models"
+REFERENCE_SSP_ROOT = (
+    SSP4SIM_ROOT / "tests" / "resources" / "reference_ssp" / "build" / "models"
+)
 
 
 def uses_model_exchange(model_root: Path) -> bool:
@@ -58,7 +60,9 @@ def discover_reference_ssps() -> list[Path]:
         return []
 
     models = []
-    for model_root in sorted(path for path in REFERENCE_SSP_ROOT.iterdir() if path.is_dir()):
+    for model_root in sorted(
+        path for path in REFERENCE_SSP_ROOT.iterdir() if path.is_dir()
+    ):
         if not (model_root / "ssp" / "SystemStructure.ssd").exists():
             continue
 
@@ -76,7 +80,9 @@ def reference_params() -> list[pytest.ParameterSet]:
         return [
             pytest.param(
                 None,
-                marks=pytest.mark.skip(reason="No unpacked reference SSP fixtures found"),
+                marks=pytest.mark.skip(
+                    reason="No unpacked reference SSP fixtures found"
+                ),
                 id="no-reference-ssps",
             )
         ]
@@ -158,11 +164,12 @@ def assert_result_file_is_complete(result_file: Path) -> None:
 
 
 def assert_has_log_file(workdir: Path) -> None:
-    assert any(path.is_file() for path in workdir.glob("sim*.log")), "Missing log file matching sim*.log"
+    assert any(path.is_file() for path in workdir.glob("sim*.log")), (
+        "Missing log file matching sim*.log"
+    )
 
 
-@pytest.mark.parametrize("model_root", reference_params())
-def test_reference_ssp_fully_simulates(model_root: Path, tmp_path: Path) -> None:
+def run_reference_ssp(model_root: Path, tmp_path: Path) -> Path:
     workdir = tmp_path / model_root.name
     config_path = write_config(model_root / "ssp", workdir)
 
@@ -171,4 +178,51 @@ def test_reference_ssp_fully_simulates(model_root: Path, tmp_path: Path) -> None
     simulator.simulate()
 
     assert_result_file_is_complete(workdir / "result.csv")
+    return workdir
+
+@pytest.mark.parametrize("model_root", reference_params())
+def test_reference_ssp_fully_simulates(model_root: Path, tmp_path: Path) -> None:
+    workdir = run_reference_ssp(model_root, tmp_path)
     assert_has_log_file(workdir)
+
+
+
+def assert_start_values_contain(
+    start_values_text: str, expected_entries: dict[str, str]
+) -> None:
+    for name, value in expected_entries.items():
+        expected_line = f", {name}, {value}"
+        assert expected_line in start_values_text, (
+            f"Missing start value entry: {expected_line}"
+        )
+
+def test_reference_ssp_applies_system_level_parametersets(tmp_path: Path) -> None:
+    workdir = run_reference_ssp(REFERENCE_SSP_ROOT / "signal_step_gain", tmp_path)
+    start_values_text = (workdir / "start_values.csv").read_text()
+
+    assert_start_values_contain(
+        start_values_text,
+        {
+            "gain.k": "3.000000",
+            "step.height": "2.000000",
+            "step.offset": "1.000000",
+            "step.startTime": "0.250000",
+        },
+    )
+
+
+def test_reference_ssp_applies_external_parametersets(tmp_path: Path) -> None:
+    workdir = run_reference_ssp(REFERENCE_SSP_ROOT / "scenario", tmp_path)
+    start_values_text = (workdir / "start_values.csv").read_text()
+
+    assert_start_values_contain(
+        start_values_text,
+        {
+            "Consumer.fd.Alt_start": 10,
+            "ECS_HW.fd.Alt_start": 10,
+            "Consumer.fd.Ma_start": 0.1,
+            "ECS_HW.fd.Ma_start": 0.1,
+
+            "Atmos.Alt": 0,
+        },
+    )

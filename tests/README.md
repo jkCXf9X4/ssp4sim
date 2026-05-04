@@ -83,10 +83,15 @@ The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
 `ECS_HW` returns `fmi2Error` on the first step.
 
+Two dedicated high-level tests also check that the emitted `start_values.csv`
+captures the applied values for a system-level inline parameter set fixture and
+an external `.ssv` parameter set fixture.
+
 Known reference runtime failures are marked with strict `xfail` entries in the
 test. If an expected-failing SSP starts passing, pytest reports it as an XPASS
 failure so the marker must be removed. The current expected failures are
-`dcmotor`, because the runtime does not yet support hierarchical SSP systems.
+`dcmotor`, because the runtime does not yet support hierarchical SSP systems
+
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the
 root cause.
