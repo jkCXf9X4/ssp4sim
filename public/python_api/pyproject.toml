@@ -9,6 +9,9 @@ description = "SSP4SIM abi3 binary module"
 requires-python = ">=3.9"
 authors = [{ name = "Erik Rosenlund" }]
 
+[project.scripts]
+pyssp4sim = "pyssp4sim.cli:main"
+
 [tool.setuptools]
 packages = ["pyssp4sim"]
 include-package-data = true

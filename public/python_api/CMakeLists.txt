@@ -48,6 +48,12 @@ add_custom_command(
             ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
             ${PY_SSP4SIM_PKG_DIR}/__init__.py
     COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/cli.py
+            ${PY_SSP4SIM_PKG_DIR}/cli.py
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_CURRENT_SOURCE_DIR}/__main__.py
+            ${PY_SSP4SIM_PKG_DIR}/__main__.py
+    COMMAND ${CMAKE_COMMAND} -E copy
             $<TARGET_FILE:py_ssp4sim>
             ${PY_SSP4SIM_PKG_DIR}/$<TARGET_FILE_NAME:py_ssp4sim>
 )
@@ -61,6 +67,8 @@ install(
 
 install(
   FILES ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/cli.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/__main__.py
   DESTINATION python/pyssp4sim
 )
 

@@ -35,6 +35,27 @@ cmake --build build
 ./build/tests/lib/ssp4sim_tests
 ```
 
+Or run from python:
+
+```bash
+pip install \
+  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
+```
+
+Run the same simulation through the CLI wrapper:
+
+```bash
+pyssp4sim ./resources/embrace/embrace.json
+```
+
+```python
+import pyssp4sim
+
+sim = pyssp4sim.Simulator("./resources/embrace/embrace.json")
+sim.init()
+sim.simulate()
+```
+
 ## Documentation
 
 - [Overview](docs/overview.md): short feature-oriented summary and positioning.

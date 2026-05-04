@@ -45,6 +45,12 @@ sim.init()
 sim.simulate()
 ```
 
+The wheel also installs a `pyssp4sim` command that wraps the same flow:
+
+```bash
+pyssp4sim ./resources/embrace/embrace.json
+```
+
 ## Input Data Policy
 
 SSP4SIM records simulation results to CSV, but CSV is not treated as the

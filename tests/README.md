@@ -70,6 +70,10 @@ The Python tests import `pyssp4sim` from `build/public/python_api` when that
 build artifact exists. This prevents high-level tests from accidentally passing
 against an unrelated installed wheel.
 
+A separate smoke test exercises the packaged CLI through `venv/bin/pyssp4sim`
+against the local `resources/embrace/embrace.json` fixture with temporary
+output paths.
+
 The fmi4c loader marks Linux shared libraries executable before `dlopen`, so
 loading tracked fixtures directly could dirty Git by changing `.so` file mode
 bits. Prefer tests that copy mutable fixtures into a temporary directory before
