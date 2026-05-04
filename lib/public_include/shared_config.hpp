@@ -38,6 +38,7 @@ namespace ssp4sim
         // Logging
 
         std::filesystem::path log_file;
+        std::filesystem::path start_value_log_file;
 
         std::string level_terminal;
         std::string level_file;
@@ -82,6 +83,10 @@ namespace ssp4sim
             level_json = utils::Config::getOr("simulation.log.level_json", "disable");
 
             level_cutelog = utils::Config::getOr("simulation.log.level_cutelog", "disable");
+
+            auto default_start_value_log_file = utils::Config::getOr("simulation.log.start_values", "start_values.csv");
+
+            start_value_log_file = working_dir /default_start_value_log_file;
 
             LOG_DEBUG(this->log, "Setup of SharedConfig complete");
         }

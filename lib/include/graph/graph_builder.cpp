@@ -9,13 +9,15 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+#include <fstream>
 
 namespace ssp4sim::graph
 {
-    GraphBuilder::GraphBuilder(AnalysisGraph *ag, ssp4sim::signal::DataRecorder *recorder)
+    GraphBuilder::GraphBuilder(AnalysisGraph *ag, ssp4sim::signal::DataRecorder *recorder, ssp4sim::SharedConfig *config)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder")),
           analysis_graph(ag),
-          recorder(recorder)
+          recorder(recorder),
+          config(config)
     {
     }
 
@@ -34,6 +36,9 @@ namespace ssp4sim::graph
 
             models[analysis_model->name] = std::move(m);
         }
+
+                    
+        auto start_value_log_file = std::ofstream(this->config->start_value_log_file, std::ios::out);
 
         LOG_DEBUG(log, "[{func}] - Create the data storage areas within the model", __func__);
         for (auto &[_, analysis_model] : analysis_graph->models)
@@ -64,7 +69,10 @@ namespace ssp4sim::graph
                 {
                     info.initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(*connector->initial_value);
 
-                    LOG_TRACE_L1(log, "[{func}] -- Store start value for {} : {}", __func__, info.name, ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr()));
+                    auto value = ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr());
+
+                    LOG_TRACE_L1(log, "[{func}] -- Store start value for {} : {}", __func__, info.name, value);
+                    start_value_log_file << connector->causality << ", " << name << ", " <<  value << "\n";
                 }
 
                 if (connector->causality == types::Causality::input)
