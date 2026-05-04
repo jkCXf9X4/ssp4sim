@@ -7,6 +7,7 @@
         "timestep": 0.01,
         "tolerance": 1e-4,
         "realtime": false,
+        "working_dir": "./wd/embrace",
         "executor": {
             "method": "jacobi",
             "thread_pool_workers": 5,
@@ -22,11 +23,9 @@
         "recording": {
             "enable": true,
             "wait_for": true,
-            "interval": 0.25,
-            "result_file": "./results/embrace.csv"
+            "interval": 0.25
         },
         "log": {
-            "file": "./results/embrace.log",
             "fmu": false,
             "level_terminal": "info",
             "level_file": "info",

@@ -4,6 +4,7 @@
 #include "simulation.hpp"
 #include "ssp4cpp/ssp.hpp"
 #include "ssp4cpp/utils/log.hpp"
+#include "shared_config.hpp"
 
 #include <filesystem>
 #include <exception>
@@ -18,6 +19,7 @@ namespace ssp4sim
 
         std::unique_ptr<ssp4cpp::Ssp> ssp;
         std::unique_ptr<Simulation> sim;
+        std::unique_ptr<SharedConfig> conf;
     };
 
 
@@ -33,37 +35,44 @@ namespace ssp4sim
             LOG_ERROR(p->log, "Config file does not exist: {config_path}", config_path);
             throw std::runtime_error("Config file does not exist: " + config_path);
         }
-        
+
         utils::Config::loadFromFile(config_path);
         LOG_DEBUG(p->log, "[{func}] - Config loaded:\n{config}\n", __func__, utils::Config::as_string());
 
-        auto log_file = utils::Config::getString("simulation.log.file");
+        // need to be constructed after Config::loadFromFile
+        p->conf = std::make_unique<SharedConfig>(p->log);
+
+        LOG_INFO(p->log, "[{func}] - Working directory: {}", __func__, p->conf->working_dir.c_str());
+        
+        std::filesystem::create_directories(p->conf->working_dir);
+
+        if (!p->conf->log_file.parent_path().empty())
+        {
+            std::filesystem::create_directories(p->conf->log_file.parent_path());
+        }
+
         ssp4cpp::utils::log::init_logging();
 
-        auto level_terminal = utils::Config::getOr("simulation.log.level_terminal", "disable");
-        if (level_terminal != "disable")
+        if (p->conf->level_terminal != "disable")
         {
-            ssp4cpp::utils::log::add_console(quill::loglevel_from_string(level_terminal));
+            ssp4cpp::utils::log::add_console(quill::loglevel_from_string(p->conf->level_terminal));
         }
         
-        auto level_file = utils::Config::getOr("simulation.log.level_file", "disable");
-        if (level_file != "disable")
+        if (p->conf->level_file != "disable")
         {
-            ssp4cpp::utils::log::add_file_sink(log_file, quill::loglevel_from_string(level_file));
+            ssp4cpp::utils::log::add_file_sink(p->conf->log_file.string(), quill::loglevel_from_string(p->conf->level_file));
         }
 
-        auto level_json = utils::Config::getOr("simulation.log.level_json", "disable");
-        if (level_json != "disable")
+        if (p->conf->level_json != "disable")
         {
-            ssp4cpp::utils::log::add_json_sink(log_file + ".json",  quill::loglevel_from_string(level_json));
+            ssp4cpp::utils::log::add_json_sink(p->conf->log_file.string() + ".json",  quill::loglevel_from_string(p->conf->level_json));
         }
         
-        auto level_cutelog = utils::Config::getOr("simulation.log.level_cutelog", "disable");
-        if (level_cutelog != "disable")
+        if (p->conf->level_cutelog != "disable")
         {
             try
             {
-                ssp4cpp::utils::log::add_cutelog_sink("127.0.0.1", 19996, quill::loglevel_from_string(level_cutelog));
+                ssp4cpp::utils::log::add_cutelog_sink("127.0.0.1", 19996, quill::loglevel_from_string(p->conf->level_cutelog));
             }
             catch (const std::exception &e)
             {
@@ -74,13 +83,11 @@ namespace ssp4sim
         p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");
 
         LOG_DEBUG(p->log, "[{func}] - Importing SSP", __func__);
-        auto ssp_path = utils::Config::getString("simulation.ssp");
-        auto ssd = utils::Config::getOr("simulation.ssd", std::string("SystemStructure.ssd"));
-        p->ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path, ssd);
+        p->ssp = std::make_unique<ssp4cpp::Ssp>(p->conf->ssp_path, p->conf->ssd);
         LOG_DEBUG(p->log, "[{func}] -- SSP: {ssp}", __func__, p->ssp->to_string());
 
         LOG_DEBUG(p->log, "[{func}] - Creating simulation\n", __func__);
-        p->sim = std::make_unique<Simulation>(p->ssp.get());
+        p->sim = std::make_unique<Simulation>(p->ssp.get(), p->conf.get());
     }
 
     Simulator::~Simulator() = default;

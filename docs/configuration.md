@@ -17,6 +17,8 @@ For CLI and Python invocation examples, see [Usage](usage.md).
    - replaced by defaults (for optional keys, using `getOr`).
    - `getOr` does not hide type errors; it only handles missing keys.
 5. All string reads support `[TIME]` substitution, replaced with the current timestamp string.
+6. `simulation.working_dir` anchors default output locations for the recorder
+   and log files when explicit paths are omitted.
 
 ## Expected JSON Shape
 
@@ -30,6 +32,7 @@ For CLI and Python invocation examples, see [Usage](usage.md).
     "timestep": 0.1,
     "tolerance": 1e-4,
     "realtime": false,
+    "working_dir": "./wd/embrace",
     "executor": {
       "method": "jacobi",
       "thread_pool_workers": 5,
@@ -41,11 +44,9 @@ For CLI and Python invocation examples, see [Usage](usage.md).
     "recording": {
       "enable": true,
       "wait_for": false,
-      "interval": 0.25,
-      "result_file": "./results/sim_[TIME].csv"
+      "interval": 0.25
     },
     "log": {
-      "file": "./results/sim_[TIME].log",
       "fmu": false,
       "level_terminal": "info",
       "level_file": "info",
@@ -69,6 +70,7 @@ For CLI and Python invocation examples, see [Usage](usage.md).
 | `simulation.timestep` | `double` | Yes | - | Seconds. |
 | `simulation.tolerance` | `double` | Yes | - | FMU experiment tolerance. |
 | `simulation.realtime` | `bool` | No | `false` | Sync simulation progress to the computer clock. |
+| `simulation.working_dir` | `string` | No | `.` | Base directory for default recorder and log output paths. |
 
 ### `simulation.executor.*`
 
@@ -93,13 +95,13 @@ Notes:
 | `simulation.recording.enable` | `bool` | No | `true` | Enables CSV recorder creation. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 | `simulation.recording.interval` | `double` | No | `1.0` | Seconds between recorded samples. |
-| `simulation.recording.result_file` | `string` | No | `./result/data.csv` | Output CSV path (`[TIME]` supported) |
+| `simulation.recording.result_file` | `string` | No | `simulation.working_dir/result.csv` | Output CSV path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
 
 ### `simulation.log.*`
 
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
-| `simulation.log.file` | `string` | Yes | - | Base log file path (`[TIME]` supported). Required before sink selection is evaluated. |
+| `simulation.log.file` | `string` | No | `simulation.working_dir/sim.log` | Base log file path (`[TIME]` supported). When omitted, log sinks use the working directory. |
 | `simulation.log.fmu` | `bool` | No | `false` | Enables FMU-level logging during instantiate/setup/step/terminate. Long multi-line FMU log messages are supported. |
 | `simulation.log.level_terminal` | `string` | No | `disable` | Console sink level. `disable` skips the sink. |
 | `simulation.log.level_file` | `string` | No | `disable` | Plain text file sink level. Uses `simulation.log.file`. `disable` skips the sink. |
@@ -155,13 +157,12 @@ based on `simulation.log.file` and a JSON log based on
     "stop_time": 1.0,
     "timestep": 0.01,
     "tolerance": 1e-4,
+    "working_dir": "./wd/embrace",
     "recording": {
       "enable": true,
-      "wait_for": true,
-      "result_file": "./results/embrace.csv"
+      "wait_for": true
     },
     "log": {
-      "file": "./results/embrace.log",
       "level_terminal": "info",
       "level_file": "info"
     }

@@ -109,15 +109,13 @@ def write_config(ssp_root: Path, workdir: Path) -> Path:
     simulation["timestep"] = 0.001
     simulation["tolerance"] = 1e-4
     simulation["realtime"] = False
+    simulation["working_dir"] = str(workdir)
 
     recording = simulation["recording"]
     recording["enable"] = True
     recording["wait_for"] = True
     recording["interval"] = 0.1
-    recording["result_file"] = str(workdir / "results.csv")
-
     log_config = simulation["log"]
-    log_config["file"] = str(workdir / "sim.log")
     log_config["level_terminal"] = "error"
     log_config["level_file"] = "info"
     log_config["level_json"] = "info"
@@ -159,6 +157,10 @@ def assert_result_file_is_complete(result_file: Path) -> None:
     ), "Result file does not contain any numeric signal samples"
 
 
+def assert_has_log_file(workdir: Path) -> None:
+    assert any(path.is_file() for path in workdir.glob("sim*.log")), "Missing log file matching sim*.log"
+
+
 @pytest.mark.parametrize("model_root", reference_params())
 def test_reference_ssp_fully_simulates(model_root: Path, tmp_path: Path) -> None:
     workdir = tmp_path / model_root.name
@@ -168,4 +170,5 @@ def test_reference_ssp_fully_simulates(model_root: Path, tmp_path: Path) -> None
     simulator.init()
     simulator.simulate()
 
-    assert_result_file_is_complete(workdir / "results.csv")
+    assert_result_file_is_complete(workdir / "result.csv")
+    assert_has_log_file(workdir)

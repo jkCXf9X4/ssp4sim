@@ -6,6 +6,7 @@
 
 #include <filesystem>
 #include <fstream>
+#include <algorithm>
 #include <string>
 
 namespace
@@ -41,13 +42,12 @@ namespace
         config["simulation"]["timestep"] = 0.1;
         config["simulation"]["tolerance"] = 1e-4;
         config["simulation"]["realtime"] = false;
+        config["simulation"]["working_dir"] = workdir.string();
 
         config["simulation"]["recording"]["enable"] = true;
         config["simulation"]["recording"]["wait_for"] = true;
         config["simulation"]["recording"]["interval"] = 0.1;
-        config["simulation"]["recording"]["result_file"] = (workdir / "results.csv").string();
 
-        config["simulation"]["log"]["file"] = (workdir / "sim.log").string();
         config["simulation"]["log"]["level_terminal"] = "error";
         config["simulation"]["log"]["level_file"] = "info";
         config["simulation"]["log"]["level_json"] = "info";
@@ -72,5 +72,14 @@ TEST_CASE("Simulator smoke test runs one complete unpacked SSP", "[high_level][s
     simulator.init();
     simulator.simulate();
 
-    REQUIRE(fs::exists(workdir / "results.csv"));
+    REQUIRE(fs::exists(workdir / "result.csv"));
+    const auto has_log_file = std::any_of(
+        fs::directory_iterator(workdir),
+        fs::directory_iterator{},
+        [](const fs::directory_entry &entry)
+        {
+            const auto name = entry.path().filename().string();
+            return entry.is_regular_file() && name.rfind("sim", 0) == 0 && entry.path().extension() == ".log";
+        });
+    REQUIRE(has_log_file);
 }

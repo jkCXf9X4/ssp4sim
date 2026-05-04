@@ -1,5 +1,7 @@
 #pragma once
 
+#include "shared_config.hpp"
+
 #include <memory>
 
 namespace ssp4cpp
@@ -23,6 +25,7 @@ namespace ssp4sim
     {
     private:
         std::unique_ptr<SimulationPrivate> p;
+        ssp4sim::SharedConfig *config;
 
     public:
         /**
@@ -30,7 +33,7 @@ namespace ssp4sim
          *
          * @param ssp A pointer to the SSP object to be simulated.
          */
-        Simulation(ssp4cpp::Ssp *ssp);
+        Simulation(ssp4cpp::Ssp *ssp, ssp4sim::SharedConfig *config);
 
         /**
          * @brief Initializes the simulation.

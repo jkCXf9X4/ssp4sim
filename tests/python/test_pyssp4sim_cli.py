@@ -22,12 +22,7 @@ def build_embrace_config(root: Path, workdir: Path) -> Path:
 
     simulation = config["simulation"]
     simulation["stop_time"] = 1.0
-
-    recording = simulation["recording"]
-    recording["result_file"] = str(workdir / "embrace.csv")
-
-    log_config = simulation["log"]
-    log_config["file"] = str(workdir / "embrace.log")
+    simulation["working_dir"] = str(workdir)
 
     workdir.mkdir(parents=True, exist_ok=True)
     smoke_config = workdir / "embrace_smoke.json"
@@ -43,6 +38,10 @@ def assert_result_file_has_rows(result_file: Path) -> None:
 
     assert rows, "Result file does not contain any samples"
     assert "time" in rows[0], "Result file does not contain a time column"
+
+
+def assert_has_log_file(workdir: Path) -> None:
+    assert any(path.is_file() for path in workdir.glob("sim*.log")), "Missing log file matching sim*.log"
 
 
 def test_pyssp4sim_smoke_runs_local_embrace(tmp_path: Path) -> None:
@@ -63,4 +62,5 @@ def test_pyssp4sim_smoke_runs_local_embrace(tmp_path: Path) -> None:
         f"stderr:\n{completed.stderr}"
     )
 
-    assert_result_file_has_rows(tmp_path / "embrace.csv")
+    assert_result_file_has_rows(tmp_path / "result.csv")
+    assert_has_log_file(tmp_path)

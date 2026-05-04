@@ -7,6 +7,7 @@
         "timestep": 0.0001,
         "tolerance": 1e-4,
         "realtime": false,
+        "working_dir": "./wd/airplane",
         "executor": {
             "method": "jacobi",
             "thread_pool_workers": 5,
@@ -22,11 +23,9 @@
         "recording": {
             "enable": true,
             "wait_for": true,
-            "interval": 0.25,
-            "result_file": "/home/eriro/pwa/2_work/ssp_airplane/build/results/high_altitude_intercept_results.csv"
+            "interval": 0.25
         },
         "log": {
-            "file": "./build/results/sim.log",
             "fmu": true,
             "level_terminal": "info",
             "level_file": "info",
