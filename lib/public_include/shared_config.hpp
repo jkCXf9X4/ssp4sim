@@ -77,12 +77,11 @@ namespace ssp4sim
         bool enable_recording;
         bool wait_for_recorder;
 
-        uint64_t recording_interval;
-
         struct CsvRecordingConfig
         {
             bool enable = true;
             std::filesystem::path file;
+            uint64_t interval = 0;
         };
         CsvRecordingConfig csv;
 
@@ -117,9 +116,19 @@ namespace ssp4sim
             // Recording
 
             csv.enable = utils::Config::getOr("simulation.recording.csv.enable", false);
+            if (csv.enable)
+            {
+                const auto csv_interval_s = utils::Config::getOr("simulation.recording.csv.interval", 1.0);
+                if (csv_interval_s < 0.0)
+                {
+                    throw std::runtime_error("simulation.recording.csv.interval must be greater than or equal to zero");
+                }
+                csv.interval = utils::time::s_to_ns(csv_interval_s);
 
-            auto default_result_file = working_dir / "result.csv";
-            csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));
+                auto default_result_file = working_dir / "result.csv";
+                csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));
+            }
+
 
             influx.enable = utils::Config::getOr("simulation.recording.influx.enable", false);
             if (influx.enable)
@@ -160,8 +169,6 @@ namespace ssp4sim
                 }
                 influx.interval = utils::time::s_to_ns(interval_s);
             }
-
-            recording_interval = utils::time::s_to_ns(utils::Config::getOr("simulation.recording.interval", 1.0));
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
 
             enable_recording = csv.enable || influx.enable;

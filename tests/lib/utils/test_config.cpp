@@ -122,7 +122,7 @@ TEST_CASE("Config tests", "[config]")
         REQUIRE(Config::resolvePath("non_existent_key") == nullptr);
     }
 
-    SECTION("Influx recording config is parsed")
+    SECTION("Recording config is parsed")
     {
         Config::loadFromString(R"json(
         {
@@ -134,7 +134,8 @@ TEST_CASE("Config tests", "[config]")
                 "timestep": 0.1,
                 "recording": {
                     "csv": {
-                        "enable": true
+                        "enable": true,
+                        "interval": 0.5
                     },
                     "influx": {
                         "enable": true,
@@ -157,6 +158,7 @@ TEST_CASE("Config tests", "[config]")
         REQUIRE(shared_config.enable_recording);
         REQUIRE(shared_config.csv.enable);
         REQUIRE(shared_config.csv.file == fs::path("./wd/test/result.csv"));
+        REQUIRE(shared_config.csv.interval == ssp4sim::utils::time::s_to_ns(0.5));
         REQUIRE(shared_config.influx.enable);
         REQUIRE(shared_config.influx.url == "http://localhost:8086");
         REQUIRE(shared_config.influx.db == "ssp4sim");

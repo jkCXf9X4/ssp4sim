@@ -57,6 +57,8 @@ namespace ssp4sim::signal
         std::vector<CsvRow> row_buffer;
 
         std::uint64_t recording_interval = 0;
+        std::uint64_t last_recorded_timestamp = 0;
+        bool has_recorded_timestamp = false;
         std::size_t printed_rows = 0;
 
         CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval);

@@ -236,6 +236,73 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     fs::remove(test_filename);
 }
 
+TEST_CASE("DataRecorder respects CSV recording interval", "[DataRecorder]")
+{
+    const fs::path test_filename = project_root / "build" / "test_recorder_interval.csv";
+    remove_if_existing(test_filename);
+
+    DataRecorder recorder(false);
+    recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, sim_time::nanoseconds_per_second));
+
+    SignalStorage primary(1, "primary");
+    primary.add("primary.temperature", DataType::real, 1);
+    primary.allocate();
+
+    SignalStorage secondary(1, "secondary");
+    secondary.add("secondary.pressure", DataType::real, 1);
+    secondary.allocate();
+
+    recorder.add_storage(&primary);
+    recorder.add_storage(&secondary);
+    recorder.init();
+    recorder.start_recording();
+
+    const uint64_t first_timestamp = 1ULL * sim_time::nanoseconds_per_second;
+    const std::size_t primary_area = primary.push(first_timestamp);
+    const std::size_t secondary_area = secondary.push(first_timestamp);
+    const double primary_temp = 42.5;
+    const double secondary_pressure = 3.14;
+
+    std::memcpy(primary.get_item(primary_area, 0), &primary_temp, sizeof(double));
+    std::memcpy(secondary.get_item(secondary_area, 0), &secondary_pressure, sizeof(double));
+
+    primary.flag_new_data(primary_area);
+    secondary.flag_new_data(secondary_area);
+
+    const uint64_t skipped_timestamp = first_timestamp + sim_time::nanoseconds_per_second / 2;
+    const std::size_t skipped_area = primary.push(skipped_timestamp);
+    const double skipped_temp = 9.9;
+    std::memcpy(primary.get_item(skipped_area, 0), &skipped_temp, sizeof(double));
+    primary.flag_new_data(skipped_area);
+
+    const uint64_t next_timestamp = first_timestamp + sim_time::nanoseconds_per_second;
+    const std::size_t next_area = secondary.push(next_timestamp);
+    const double next_pressure = 7.7;
+    std::memcpy(secondary.get_item(next_area, 0), &next_pressure, sizeof(double));
+    secondary.flag_new_data(next_area);
+
+    recorder.stop_recording();
+
+    std::ifstream file(test_filename);
+    REQUIRE(file.is_open());
+
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(file, line))
+    {
+        lines.push_back(line);
+    }
+
+    REQUIRE(lines.size() == 3);
+    REQUIRE(lines[1].find("42.5") != std::string::npos);
+    REQUIRE(lines[1].find("3.14") != std::string::npos);
+    REQUIRE(lines[1].find("9.9") == std::string::npos);
+    REQUIRE(lines[2].find("7.7") != std::string::npos);
+    REQUIRE(lines[2].find("9.9") == std::string::npos);
+
+    fs::remove(test_filename);
+}
+
 TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecorder]")
 {
     const fs::path test_filename = project_root / "build" / "test_recorder_sink_events.csv";

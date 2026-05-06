@@ -132,7 +132,24 @@ namespace ssp4sim::signal
         }
 
         const auto &layout = layouts[layout_it->second];
-        auto row_index = row_for_timestamp(event.timestamp);
+
+        std::uint16_t row_index = 0;
+        if (const auto row_it = time_row_map.find(event.timestamp); row_it != time_row_map.end())
+        {
+            row_index = row_it->second;
+        }
+        else
+        {
+            if (recording_interval > 0 && has_recorded_timestamp && event.timestamp >= last_recorded_timestamp && event.timestamp - last_recorded_timestamp < recording_interval)
+            {
+                return;
+            }
+
+            row_index = row_for_timestamp(event.timestamp);
+            last_recorded_timestamp = std::max(last_recorded_timestamp, event.timestamp);
+            has_recorded_timestamp = true;
+        }
+
         auto &row = row_buffer[row_index];
 
         for (const auto &variable : layout.variables)

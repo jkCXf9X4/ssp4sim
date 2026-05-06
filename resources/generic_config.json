@@ -22,10 +22,10 @@
         },
         "recording": {
             "csv": {
-                "enable": true
+                "enable": true,
+                "interval": 0.25
             },
-            "wait_for": true,
-            "interval": 0.25
+            "wait_for": true
         },
         "log": {
             "fmu": true,

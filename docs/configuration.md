@@ -42,11 +42,14 @@ For CLI and Python invocation examples, see [Usage](usage.md).
       "seidel": { "parallel": false }
     },
     "recording": {
-      "enable": true,
       "wait_for": false,
-      "interval": 0.25,
+      "csv": {
+        "enable": true,
+        "interval": 0.25
+      },
       "influx": {
         "enable": false,
+        "interval": 1.0,
         "url": "http://localhost:8086?db=ssp4sim",
         "measurement": "ssp4sim_signal",
         "run": "run_[TIME]",
@@ -101,8 +104,8 @@ Notes:
 |---|---|---|---|---|
 | `simulation.recording.csv.enable` | `bool` | No | `false` | Enables the CSV recorder. |
 | `simulation.recording.csv.file` | `string` | No | `simulation.working_dir/result.csv` | Output CSV path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
+| `simulation.recording.csv.interval` | `double` | No | `1.0` | Seconds between recorded CSV samples. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
-| `simulation.recording.interval` | `double` | No | `1.0` | Seconds between recorded samples. |
 
 ### Influx Recording
 
