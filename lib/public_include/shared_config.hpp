@@ -25,6 +25,7 @@ namespace ssp4sim
         std::string measurement = "ssp4sim_signal";
         std::string run = "run_[TIME]";
         std::size_t batch_size = 50000;
+        std::uint64_t interval = 0;
     };
 
     inline std::string discover_influx_token()
@@ -151,6 +152,13 @@ namespace ssp4sim
                     throw std::runtime_error("simulation.recording.influx.batch_size must be greater than zero");
                 }
                 influx.batch_size = static_cast<std::size_t>(batch_size);
+
+                const auto interval_s = utils::Config::getOr("simulation.recording.influx.interval", 0.0);
+                if (interval_s < 0.0)
+                {
+                    throw std::runtime_error("simulation.recording.influx.interval must be greater than or equal to zero");
+                }
+                influx.interval = utils::time::s_to_ns(interval_s);
             }
 
             recording_interval = utils::time::s_to_ns(utils::Config::getOr("simulation.recording.interval", 1.0));

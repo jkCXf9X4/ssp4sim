@@ -2,13 +2,10 @@
 
 #include "signal/recorder.hpp"
 
-#include "InfluxDB/Point.h"
-
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,7 +19,7 @@ namespace ssp4sim::signal
 
         virtual void batch_of(std::size_t size) = 0;
 
-        virtual void write(influxdb::Point point) = 0;
+        virtual void write(std::string line) = 0;
 
         virtual void flush_batch() = 0;
     };
@@ -32,6 +29,8 @@ namespace ssp4sim::signal
         std::string name;
         types::DataType type;
         std::size_t position = 0;
+        std::string line_prefix;
+        bool string_value = false;
     };
 
     struct InfluxStorageLayout
@@ -39,6 +38,8 @@ namespace ssp4sim::signal
         const SignalStorage *storage = nullptr;
         std::size_t index = 0;
         std::vector<InfluxVariableLayout> variables;
+        std::uint64_t last_recorded_timestamp = 0;
+        bool has_recorded_timestamp = false;
     };
 
     class InfluxRecorderSink final : public RecorderSink
@@ -51,6 +52,7 @@ namespace ssp4sim::signal
         std::string measurement;
         std::string run_name;
         std::size_t batch_size = 50000;
+        std::uint64_t recording_interval = 0;
 
         std::chrono::system_clock::time_point run_start_wall_clock{};
 
@@ -82,6 +84,12 @@ namespace ssp4sim::signal
 
         void ensure_run_start_initialized();
 
-        std::optional<influxdb::Point::FieldValue> read_field_value(const std::byte *data, types::DataType type) const;
+        bool should_record(InfluxStorageLayout &layout, std::uint64_t timestamp) const;
+
+        std::string build_line_protocol(
+            const InfluxVariableLayout &variable,
+            const std::byte *data,
+            double simulation_time_s,
+            std::int64_t timestamp_ns) const;
     };
 }

@@ -143,7 +143,8 @@ TEST_CASE("Config tests", "[config]")
                         "token": "config-token",
                         "measurement": "signals",
                         "run": "run-[TIME]",
-                        "batch_size": 123
+                        "batch_size": 123,
+                        "interval": 0.25
                 }
             }
         }
@@ -162,6 +163,7 @@ TEST_CASE("Config tests", "[config]")
         REQUIRE(shared_config.influx.token == "config-token");
         REQUIRE(shared_config.influx.measurement == "signals");
         REQUIRE(shared_config.influx.batch_size == 123);
+        REQUIRE(shared_config.influx.interval == ssp4sim::utils::time::s_to_ns(0.25));
         REQUIRE(shared_config.influx.run.rfind("run-", 0) == 0);
     }
 

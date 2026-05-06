@@ -88,23 +88,11 @@ and again during `stop()`, which flushes and closes the file.
 
 ### `influx_recorder_sink.hpp` / `influx_recorder_sink.cpp`
 
-`InfluxRecorderSink` mirrors the recorder event stream to InfluxDB. It emits
-one point per signal update, using the configured measurement name and tags for
-`run`, `storage`, `signal`, and `type`. Each point carries the typed signal
-`value` or `value_string` and `simulation_time_s` fields, and the timestamp is
-derived from the run-start wall clock plus the simulation timestamp. Numeric and
-boolean signals use `value`; string signals use `value_string`.
+`InfluxRecorderSink` mirrors the recorder event stream to InfluxDB. Sink configuration and behavior are documented in [Configuration Reference](../../../docs/configuration.md#influx-recording).
 
 The sink is safe to use without a running InfluxDB service. Connection or write
 failures are caught, logged, and used to disable only the Influx sink so the
 simulation can continue.
-
-When InfluxDB authentication is enabled, the sink reads the token from
-`simulation.recording.influx.token` or the `SSP4SIM_INFLUX_TOKEN`
-environment variable. For InfluxDB 3, point the configured URL at the write
-endpoint, for example `http://localhost:8181/api/v3/write_lp?db=ssp4sim`.
-The writer posts line protocol with nanosecond precision so the stored `time`
-column stays aligned with simulation timestamps.
 
 ## Runtime interaction
 

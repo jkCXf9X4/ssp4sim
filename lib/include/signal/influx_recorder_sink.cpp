@@ -4,8 +4,11 @@
 
 #include "utils/time.hpp"
 
+#include <charconv>
 #include <cstring>
 #include <chrono>
+#include <limits>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -15,25 +18,75 @@ namespace ssp4sim::signal
 {
     namespace
     {
-        std::string to_line_protocol(const influxdb::Point &point)
+        std::string escape_measurement(std::string_view value)
         {
-            std::string line = point.getName();
-
-            const auto tags = point.getTags();
-            if (!tags.empty())
+            std::string escaped;
+            escaped.reserve(value.size());
+            for (char ch : value)
             {
-                line += ",";
-                line += tags;
+                if (ch == ',' || ch == ' ')
+                {
+                    escaped += '\\';
+                }
+                escaped += ch;
             }
+            return escaped;
+        }
 
-            line += " ";
-            line += point.getFields();
+        std::string escape_tag(std::string_view value)
+        {
+            std::string escaped;
+            escaped.reserve(value.size());
+            for (char ch : value)
+            {
+                if (ch == ',' || ch == ' ' || ch == '=')
+                {
+                    escaped += '\\';
+                }
+                escaped += ch;
+            }
+            return escaped;
+        }
 
-            const auto timestamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(point.getTimestamp().time_since_epoch()).count();
-            line += " ";
-            line += std::to_string(timestamp_ns);
+        std::string escape_string_field(std::string_view value)
+        {
+            std::string escaped;
+            escaped.reserve(value.size() + 2);
+            escaped += '"';
+            for (char ch : value)
+            {
+                if (ch == '"' || ch == '\\')
+                {
+                    escaped += '\\';
+                }
+                escaped += ch;
+            }
+            escaped += '"';
+            return escaped;
+        }
 
-            return line;
+        template <typename T>
+        void append_integral(std::string &target, T value)
+        {
+            char buffer[32];
+            const auto [ptr, ec] = std::to_chars(std::begin(buffer), std::end(buffer), value);
+            if (ec != std::errc{})
+            {
+                throw std::runtime_error("Failed to format integer for Influx line protocol");
+            }
+            target.append(buffer, ptr);
+        }
+
+        void append_double(std::string &target, double value)
+        {
+            std::ostringstream stream;
+            stream.precision(std::numeric_limits<double>::max_digits10);
+            stream << value;
+            if (!stream)
+            {
+                throw std::runtime_error("Failed to format floating-point value for Influx line protocol");
+            }
+            target += stream.str();
         }
 
         std::string with_nanosecond_precision(const std::string &url)
@@ -66,9 +119,8 @@ namespace ssp4sim::signal
                 pending.reserve(batch_size);
             }
 
-            void write(influxdb::Point point) override
+            void write(std::string line) override
             {
-                auto line = to_line_protocol(point);
                 pending_bytes += line.size() + 1;
                 pending.emplace_back(std::move(line));
                 if (pending.size() >= batch_size)
@@ -145,6 +197,7 @@ namespace ssp4sim::signal
           measurement(influx.measurement),
           run_name(influx.run),
           batch_size(influx.batch_size),
+          recording_interval(influx.interval),
           run_start_wall_clock(run_start_wall_clock),
           writer(std::move(writer))
     {
@@ -179,6 +232,13 @@ namespace ssp4sim::signal
             variable_layout.name = variable.name;
             variable_layout.type = variable.type;
             variable_layout.position = variable.position;
+            variable_layout.string_value = variable.type == types::DataType::string;
+            variable_layout.line_prefix = escape_measurement(measurement);
+            variable_layout.line_prefix += ",run=" + escape_tag(run_name);
+            variable_layout.line_prefix += ",storage=" + escape_tag(storage->name);
+            variable_layout.line_prefix += ",signal=" + escape_tag(variable.name);
+            variable_layout.line_prefix += ",type=" + escape_tag(variable.type.to_string());
+            variable_layout.line_prefix += (variable_layout.string_value ? " value_string=" : " value=");
             layout.variables.emplace_back(std::move(variable_layout));
         }
 
@@ -232,37 +292,70 @@ namespace ssp4sim::signal
         }
     }
 
-    std::optional<influxdb::Point::FieldValue> InfluxRecorderSink::read_field_value(const std::byte *data, types::DataType type) const
+    bool InfluxRecorderSink::should_record(InfluxStorageLayout &layout, std::uint64_t timestamp) const
     {
-        switch (type)
+        if (recording_interval == 0)
+        {
+            return true;
+        }
+
+        if (!layout.has_recorded_timestamp || timestamp >= layout.last_recorded_timestamp + recording_interval)
+        {
+            layout.last_recorded_timestamp = timestamp;
+            layout.has_recorded_timestamp = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    std::string InfluxRecorderSink::build_line_protocol(
+        const InfluxVariableLayout &variable,
+        const std::byte *data,
+        double simulation_time_s,
+        std::int64_t timestamp_ns) const
+    {
+        std::string line = variable.line_prefix;
+
+        switch (variable.type)
         {
         case types::DataType::real:
         {
             double value = 0.0;
             std::memcpy(&value, data, sizeof(value));
-            return value;
+            append_double(line, value);
+            break;
         }
         case types::DataType::boolean:
         {
             bool value = false;
             std::memcpy(&value, data, sizeof(value));
-            return value ? 1.0 : 0.0;
+            append_integral(line, value ? 1 : 0);
+            break;
         }
         case types::DataType::integer:
         case types::DataType::enumeration:
         {
             int value = 0;
             std::memcpy(&value, data, sizeof(value));
-            return static_cast<double>(value);
+            append_integral(line, value);
+            break;
         }
         case types::DataType::string:
         {
             const auto *value = reinterpret_cast<const std::string *>(data);
-            return *value;
+            line += escape_string_field(*value);
+            break;
         }
         default:
-            return std::nullopt;
+            throw std::runtime_error("Unsupported variable type for signal " + variable.name);
         }
+
+        line += ",simulation_time_s=";
+        append_double(line, simulation_time_s);
+        line += " ";
+        append_integral(line, timestamp_ns);
+        return line;
     }
 
     void InfluxRecorderSink::disable_sink(const std::string &reason)
@@ -292,33 +385,23 @@ namespace ssp4sim::signal
 
         ensure_run_start_initialized();
 
-        const auto &layout = layouts[layout_it->second];
+        auto &layout = layouts[layout_it->second];
+        if (!should_record(layout, event.timestamp))
+        {
+            return;
+        }
+
         const auto simulation_time_s = utils::time::ns_to_s(event.timestamp);
         const auto timestamp = run_start_wall_clock + std::chrono::nanoseconds(event.timestamp);
+        const auto timestamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(timestamp.time_since_epoch()).count();
 
         for (const auto &variable : layout.variables)
         {
             const auto *data = event.buffer + variable.position;
-            auto field_value = read_field_value(data, variable.type);
-            if (!field_value.has_value())
-            {
-                LOG_WARNING(log, "[{func}] Skipping unsupported variable type {} for signal {}", __func__, variable.type.to_string(), variable.name);
-                continue;
-            }
 
             try
             {
-                influxdb::Point point(measurement);
-                const auto value_field = variable.type == types::DataType::string ? "value_string" : "value";
-                point.addTag("run", run_name)
-                    .addTag("storage", event.storage->name)
-                    .addTag("signal", variable.name)
-                    .addTag("type", variable.type.to_string())
-                    .addField(value_field, *field_value)
-                    .addField("simulation_time_s", simulation_time_s)
-                    .setTimestamp(timestamp);
-
-                writer->write(std::move(point));
+                writer->write(build_line_protocol(variable, data, simulation_time_s, timestamp_ns));
             }
             catch (const std::exception &e)
             {

@@ -104,7 +104,11 @@ Notes:
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 | `simulation.recording.interval` | `double` | No | `1.0` | Seconds between recorded samples. |
 
-### `simulation.recording.influx.*`
+### Influx Recording
+
+This section is the canonical reference for `simulation.recording.influx.*`.
+
+#### `simulation.recording.influx.*`
 
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
@@ -115,14 +119,18 @@ Notes:
 | `simulation.recording.influx.measurement` | `string` | No | `ssp4sim_signal` | Measurement name used for emitted points. |
 | `simulation.recording.influx.run` | `string` | No | `run_[TIME]` | Run tag value. `[TIME]` is substituted before use. |
 | `simulation.recording.influx.batch_size` | `int` | No | `50000` | Batch size passed to the Influx client. Must be greater than zero. Small values increase HTTP flush frequency significantly. |
+| `simulation.recording.influx.interval` | `double` | No | `0.0` | Minimum seconds between emitted Influx samples for the same storage. `0.0` disables downsampling. |
 
-Influx points are emitted one per signal update. Each point carries `run`,
-`storage`, `signal`, and `type` tags, plus `value` or `value_string` and
-`simulation_time_s` fields. Numeric and boolean signals use `value`; string
-signals use `value_string`. The point timestamp is the run-start wall clock plus
-the simulation timestamp. The write request uses nanosecond precision so the
-stored `time` column matches the recorder clock. If creation or writing fails,
-the sink logs a warning and disables itself so the simulation can continue.
+Influx points are emitted one per signal in each recorded storage event. When
+`simulation.recording.influx.interval` is greater than zero, repeated updates
+from the same storage are skipped until the configured interval has elapsed.
+Each point carries `run`, `storage`, `signal`, and `type` tags, plus `value` or
+`value_string` and `simulation_time_s` fields. Numeric and boolean signals use
+`value`; string signals use `value_string`. The point timestamp is the run-start
+wall clock plus the simulation timestamp. The write request uses nanosecond
+precision so the stored `time` column matches the recorder clock. If creation or
+writing fails, the sink logs a warning and disables itself so the simulation can
+continue.
 
 ### `simulation.log.*`
 

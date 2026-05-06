@@ -5,22 +5,9 @@ This page describes test layout and test-specific behavior. Build setup lives in
 
 ## Quick Commands
 
-Configure with the tests enabled before running the C++ test binary:
-
-```bash
-cmake --preset=vcpkg -DSSP4SIM_BUILD_TEST=ON
-cmake --build build
-./build/tests/lib/ssp4sim_tests
-```
-
-Python tests require the Python API build artifact under
-`build/public/python_api`:
-
-```bash
-cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_PYTHON_API=ON
-cmake --build build
-pytest -q tests/python
-```
+Build and test commands are documented in [Build From Source](../docs/build_from_source.md).
+This page focuses on test layout and behavior; use the commands there when you
+need to run the C++ binary or the Python suite.
 
 ## Test Architecture
 
@@ -45,7 +32,8 @@ the suite can use Python-side fixture discovery and comparison tools.
 ## C++ Library Tests
 
 The C++ test binary covers lower-level library behavior and focused integration
-checks under `tests/lib/`. Run it with `./build/tests/lib/ssp4sim_tests`.
+checks under `tests/lib/`. Run the binary produced by the build workflow
+described in [Build From Source](../docs/build_from_source.md).
 
 `ctest --test-dir build/tests` is currently unreliable. Run the test binary
 directly.

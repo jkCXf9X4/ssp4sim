@@ -51,7 +51,9 @@ perf record -F 99 -g -o build/perf.data \
 Review the profile:
 
 ```bash
-perf report --dsos=sim_app -i build/perf.data
+perf report -i build/perf.data --sort comm,dso,symbol
+perf report --dsos=sim_app -i build/perf.data --sort comm,dso,symbol
+
 ```
 
 For recorder or executor investigations, run once with

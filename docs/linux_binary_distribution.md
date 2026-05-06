@@ -32,9 +32,8 @@ Runs on `ubuntu-22.04` and performs:
   [`containers/ubuntu22-gcc13/Containerfile`](../containers/ubuntu22-gcc13/Containerfile)
 - Runs configure, build, test, install, and packaging commands inside that
   container
-- Configure (`cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON`)
-- Build (`cmake --build build --config Release`)
-- Test (`./build/tests/lib/ssp4sim_tests`)
+- Uses the same configure/build/test commands documented in
+  [Build From Source](build_from_source.md) and [Tests](../tests/README.md)
 
 ## Stage 3: Install to staging directory
 
@@ -71,33 +70,12 @@ For manual runs (`workflow_dispatch`), artifacts are uploaded to the workflow ru
 
 ## Stage 6: Developer consumption
 
-1. Download the alias tarball, wheel alias, and `SHA256SUMS` from the latest release.
-2. Verify checksums:
-   ```bash
-   sha256sum -c SHA256SUMS
-   ```
-3. Extract:
-   ```bash
-   tar -xzf ssp4sim-linux-x86_64-latest.tar.gz
-   ```
-4. Run:
-   ```bash
-   ./ssp4sim/bin/sim_app ./ssp4sim/resources/embrace/embrace.json
-   ```
-5. Optionally add `ssp4sim/bin` to `PATH`.
-6. Install the Python API wheel:
-   ```bash
-   pip install pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
-   ```
+Use the release tarball and wheel the same way described in [Installation](installation.md)
+and [Usage](usage.md). The release assets expose `bin/sim_app` and
+`pyssp4sim`; the install and run commands are documented there.
 
 ## Local Release Parity
 
-Use the same container scripts locally when investigating release failures:
-
-```bash
-./containers/build_ubuntu22_gcc13_container.sh
-./containers/run_ubuntu22_gcc13_container.sh -- \
-  cmake --preset=vcpkg -DCMAKE_BUILD_TYPE=Release -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON
-./containers/run_ubuntu22_gcc13_container.sh -- cmake --build build --config Release
-./containers/run_ubuntu22_gcc13_container.sh -- ./build/tests/lib/ssp4sim_tests
-```
+Use the same container scripts locally when investigating release failures.
+The command sequence is the same as the build and test workflow described in
+[Build From Source](build_from_source.md) and [Tests](../tests/README.md).

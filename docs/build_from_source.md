@@ -3,6 +3,8 @@
 This guide covers configuring and building `ssp4sim` from a source checkout.
 For release artifacts, see [Installation](installation.md). For run commands
 after a successful build, see [Usage](usage.md).
+This page is the canonical source for source-build and test command blocks;
+other docs link here instead of repeating the same sequences.
 
 ## Recommended Path
 

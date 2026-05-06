@@ -1,49 +1,46 @@
 {
-    "simulation" :
-    {
+    "simulation": {
         "ssp": "./resources/embrace/embrace_scen.ssp",
-        "start_time":0.0,
-        "stop_time":5000,
+        "ssd": "SystemStructure.ssd",
+        "start_time": 0.0,
+        "stop_time": 200,
         "timestep": 0.01,
         "tolerance": 1e-4,
-        "working_dir": "./wd/embrace_profiling",
-
-        "executor": 
-        {
-            "method":"jacobi",
-            
+        "realtime": false,
+        "working_dir": "./wd/embrace",
+        "executor": {
+            "method": "jacobi",
             "thread_pool_workers": 5,
             "forward_derivatives": true,
-
-            "jacobi":
-            {
+            "jacobi": {
                 "parallel": false,
-                "method" : 1
+                "method": 1
             },
-            "seidel":
-            {
+            "seidel": {
                 "parallel": false
-            },
-            "custom_delay":
-            {
-                "sub_step":0.001
             }
-            
         },
-
-        "recording":
-        {
-            "enable": true,
+        "recording": {
+            "csv": {
+                "enable": true
+            },
             "wait_for": true,
-            "interval": 1.0
+            "interval": 0.25,
+            "influx": {
+                "enable": true,
+                "url": "http://localhost:8181",
+                "db":"ssp4sim",
+                "measurement": "ssp4sim_signal",
+                "run": "run_[TIME]",
+                "batch_size": 50000
+            }
         },
-
-        "log":
-        {
-            "level_terminal" : "info",
-            "level_file" : "info",
-            "level_json" : "tracel1"
+        "log": {
+            "fmu": false,
+            "level_terminal": "info",
+            "level_file": "disable",
+            "level_json": "disable",
+            "level_cutelog": "disable"
         }
     }
 }
-    
