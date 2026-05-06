@@ -50,7 +50,7 @@ For CLI and Python invocation examples, see [Usage](usage.md).
         "url": "http://localhost:8086?db=ssp4sim",
         "measurement": "ssp4sim_signal",
         "run": "run_[TIME]",
-        "batch_size": 500
+        "batch_size": 50000
       }
     },
     "log": {
@@ -114,7 +114,7 @@ Notes:
 | `simulation.recording.influx.token` | `string` | No | - | Auth token for the Influx client. If omitted, SSP4SIM checks `SSP4SIM_INFLUX_TOKEN` and then `~/.influxdb/docker/explorer/config/config.json`. |
 | `simulation.recording.influx.measurement` | `string` | No | `ssp4sim_signal` | Measurement name used for emitted points. |
 | `simulation.recording.influx.run` | `string` | No | `run_[TIME]` | Run tag value. `[TIME]` is substituted before use. |
-| `simulation.recording.influx.batch_size` | `int` | No | `500` | Batch size passed to the Influx client. Must be greater than zero. |
+| `simulation.recording.influx.batch_size` | `int` | No | `50000` | Batch size passed to the Influx client. Must be greater than zero. Small values increase HTTP flush frequency significantly. |
 
 Influx points are emitted one per signal update. Each point carries `run`,
 `storage`, `signal`, and `type` tags, plus `value` or `value_string` and

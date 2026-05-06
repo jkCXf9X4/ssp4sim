@@ -50,7 +50,7 @@ namespace ssp4sim::signal
         std::string token;
         std::string measurement;
         std::string run_name;
-        std::size_t batch_size = 500;
+        std::size_t batch_size = 50000;
 
         std::chrono::system_clock::time_point run_start_wall_clock{};
 

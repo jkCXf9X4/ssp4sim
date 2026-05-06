@@ -63,11 +63,14 @@ namespace ssp4sim::signal
             void batch_of(std::size_t size) override
             {
                 batch_size = size == 0 ? 1 : size;
+                pending.reserve(batch_size);
             }
 
             void write(influxdb::Point point) override
             {
-                pending.emplace_back(to_line_protocol(point));
+                auto line = to_line_protocol(point);
+                pending_bytes += line.size() + 1;
+                pending.emplace_back(std::move(line));
                 if (pending.size() >= batch_size)
                 {
                     flush_pending();
@@ -84,6 +87,7 @@ namespace ssp4sim::signal
             std::string token;
             std::size_t batch_size = 1;
             std::vector<std::string> pending;
+            std::size_t pending_bytes = 0;
 
             void flush_pending()
             {
@@ -93,6 +97,7 @@ namespace ssp4sim::signal
                 }
 
                 std::string body;
+                body.reserve(pending_bytes == 0 ? 0 : pending_bytes - 1);
                 for (std::size_t i = 0; i < pending.size(); ++i)
                 {
                     if (i > 0)
@@ -126,6 +131,7 @@ namespace ssp4sim::signal
                 }
 
                 pending.clear();
+                pending_bytes = 0;
             }
         };
     }

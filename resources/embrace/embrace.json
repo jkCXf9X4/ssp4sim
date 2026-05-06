@@ -3,7 +3,7 @@
         "ssp": "./resources/embrace/embrace_scen.ssp",
         "ssd": "SystemStructure.ssd",
         "start_time": 0.0,
-        "stop_time": 1200,
+        "stop_time": 100,
         "timestep": 0.01,
         "tolerance": 1e-4,
         "realtime": false,
@@ -32,7 +32,7 @@
                 "db":"ssp4sim",
                 "measurement": "ssp4sim_signal",
                 "run": "run_[TIME]",
-                "batch_size": 500
+                "batch_size": 50000
             }
         },
         "log": {
