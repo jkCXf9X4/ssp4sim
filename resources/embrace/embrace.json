@@ -23,13 +23,14 @@
         "recording": {
             "csv": {
                 "enable": true,
-                "interval":1.0
+                "interval":0.0
             },
             "wait_for": true,
             "influx": {
                 "enable": true,
-                "interval":1.0,
-                "url": "http://localhost:8181",
+                "interval":0.0,
+                "protocol": "http",
+                "url": "localhost:8181",
                 "db":"ssp4sim",
                 "measurement": "ssp4sim_signal",
                 "run": "run_[TIME]",

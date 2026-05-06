@@ -50,7 +50,8 @@ For CLI and Python invocation examples, see [Usage](usage.md).
       "influx": {
         "enable": false,
         "interval": 1.0,
-        "url": "http://localhost:8086?db=ssp4sim",
+        "protocol": "http",
+        "url": "localhost:8086",
         "measurement": "ssp4sim_signal",
         "run": "run_[TIME]",
         "batch_size": 50000
@@ -116,12 +117,13 @@ This section is the canonical reference for `simulation.recording.influx.*`.
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
 | `simulation.recording.influx.enable` | `bool` | No | `false` | Enables the optional InfluxDB sink. When `false`, the remaining keys are ignored. |
-| `simulation.recording.influx.url` | `string` | Yes when enabled | `http://localhost:8181` | Base Influx URL passed to the client. SSP4SIM appends the write path internally. |
-| `simulation.recording.influx.db` | `string` | No | `ssp4sim` | Influx database name passed to the client. |
-| `simulation.recording.influx.token` | `string` | No | - | Auth token for the Influx client. If omitted, SSP4SIM checks `SSP4SIM_INFLUX_TOKEN` and then `~/.influxdb/docker/explorer/config/config.json`. |
+| `simulation.recording.influx.protocol` | `string` | No | `http` | Transport used by the sink. Supported values are `http` and `udp`. |
+| `simulation.recording.influx.url` | `string` | Yes when enabled | `localhost:8181` for `http`, `localhost:8089` for `udp` | Influx endpoint passed to the sink. Use `host:port` for both transports. The HTTP writer prepends `http://` internally; `SharedConfig` splits the UDP value into host and port before the sink is created. |
+| `simulation.recording.influx.db` | `string` | No | `ssp4sim` | Influx database name used for HTTP writes. UDP mode ignores this value and forwards line protocol directly to the configured UDP endpoint. |
+| `simulation.recording.influx.token` | `string` | No | - | Auth token for the Influx client. If omitted, SSP4SIM checks `SSP4SIM_INFLUX_TOKEN` and then `~/.influxdb/docker/explorer/config/config.json`. UDP mode does not require a token. |
 | `simulation.recording.influx.measurement` | `string` | No | `ssp4sim_signal` | Measurement name used for emitted points. |
 | `simulation.recording.influx.run` | `string` | No | `run_[TIME]` | Run tag value. `[TIME]` is substituted before use. |
-| `simulation.recording.influx.batch_size` | `int` | No | `50000` | Batch size passed to the Influx client. Must be greater than zero. Small values increase HTTP flush frequency significantly. |
+| `simulation.recording.influx.batch_size` | `int` | No | `50000` | Batch size passed to the Influx writer. Must be greater than zero. Small values increase HTTP flush frequency or UDP packet count. |
 | `simulation.recording.influx.interval` | `double` | No | `0.0` | Minimum seconds between emitted Influx samples for the same storage. `0.0` disables downsampling. |
 
 Influx points are emitted one per signal in each recorded storage event. When
@@ -134,6 +136,11 @@ wall clock plus the simulation timestamp. The write request uses nanosecond
 precision so the stored `time` column matches the recorder clock. If creation or
 writing fails, the sink logs a warning and disables itself so the simulation can
 continue.
+
+When `simulation.recording.influx.protocol` is `udp`, the sink sends the same
+line-protocol batches as UDP datagrams to the configured host and port instead
+of issuing HTTP requests. `SharedConfig` validates `simulation.recording.influx.url`
+as `host:port` and splits the UDP value into host and port before the sink is created.
 
 ### `simulation.log.*`
 

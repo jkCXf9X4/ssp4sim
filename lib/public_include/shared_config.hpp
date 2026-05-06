@@ -1,5 +1,7 @@
 #pragma once
 
+#include "utils/ip.hpp"
+
 #include "ssp4cpp/utils/log.hpp"
 
 #include "config.hpp"
@@ -11,6 +13,7 @@
 #include <exception>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 #include <nlohmann/json.hpp>
 
@@ -19,7 +22,9 @@ namespace ssp4sim
     struct InfluxRecordingConfig
     {
         bool enable = false;
-        std::string url;
+        std::string protocol = "http";
+        std::string host;
+        std::string port;
         std::string db;
         std::string token;
         std::string measurement = "ssp4sim_signal";
@@ -61,6 +66,7 @@ namespace ssp4sim
     {
         ssp4cpp::utils::log::Logger *log;
 
+    public:
         // Common
         std::string ssp_path;
         std::string ssd;
@@ -129,25 +135,31 @@ namespace ssp4sim
                 csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));
             }
 
-
             influx.enable = utils::Config::getOr("simulation.recording.influx.enable", false);
             if (influx.enable)
             {
                 LOG_INFO(this->log, "[{}] Influx recording enabled", __func__);
 
-                influx.url = utils::Config::getOr("simulation.recording.influx.url", "http://localhost:8181");
-                LOG_INFO(this->log, "[{}] Influx url: {}", __func__, influx.url);
+                const auto configured_url = utils::Config::getOr("simulation.recording.influx.url", "localhost:8181");
+                const auto endpoint = utils::ip::parse_host_port(configured_url);
+
+                influx.host = endpoint.first;
+                influx.port = endpoint.second;
+
+                influx.protocol = utils::Config::getOr("simulation.recording.influx.protocol", "http");
+
+                LOG_INFO(this->log, "[{}] Influx url: {}//:{}:{}", __func__,  influx.protocol, influx.host, influx.port);
 
                 influx.db = utils::Config::getOr("simulation.recording.influx.db", "ssp4sim");
                 LOG_INFO(this->log, "[{}] Influx db: {}", __func__, influx.db);
 
                 influx.token = utils::Config::getOr("simulation.recording.influx.token", std::string{});
-                if (influx.token.empty())
+                if (influx.protocol == "http" && influx.token.empty())
                 {
                     influx.token = discover_influx_token();
                     if (influx.token.empty())
                     {
-                        throw std::runtime_error("Influx recording is enabled but no access token could be identified.");
+                        throw std::runtime_error("Influx recording with http is enabled but no access token could be identified.");
                     }
                 }
 

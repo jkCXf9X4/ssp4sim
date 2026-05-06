@@ -1,7 +1,7 @@
 #include <catch.hpp>
 #include "ssp4cpp/utils/log.hpp"
 
-#include "signal/csv_recorder_sink.hpp"
+#include "signal/sinks/csv_recorder_sink.hpp"
 #include "utils/time.hpp"
 #include "utils/allocator.hpp"
 #include "signal/recorder.hpp"

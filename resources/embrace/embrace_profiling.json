@@ -28,7 +28,7 @@
             "interval": 0.25,
             "influx": {
                 "enable": true,
-                "url": "http://localhost:8181",
+                "url": "localhost:8181",
                 "db":"ssp4sim",
                 "measurement": "ssp4sim_signal",
                 "run": "run_[TIME]",

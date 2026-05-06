@@ -1,4 +1,4 @@
-#include "signal/csv_recorder_sink.hpp"
+#include "signal/sinks/csv_recorder_sink.hpp"
 
 #include "FMI2_Enums_Ext.hpp"
 #include "utils/time.hpp"

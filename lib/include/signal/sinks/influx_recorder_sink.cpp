@@ -1,210 +1,32 @@
-#include "signal/influx_recorder_sink.hpp"
+#include "signal/sinks/influx_recorder_sink.hpp"
 
-#include <cpr/cpr.h>
+#include "signal/sinks/writers/influx_http_writer.hpp"
+#include "signal/sinks/writers/influx_udp_writer.hpp"
 
+#include "utils/ip.hpp"
 #include "utils/time.hpp"
 
-#include <charconv>
 #include <chrono>
-#include <limits>
-#include <sstream>
 #include <stdexcept>
 #include <string>
-#include <vector>
 #include <utility>
 
 namespace ssp4sim::signal
 {
-    namespace
-    {
-        std::string escape_measurement(std::string_view value)
-        {
-            std::string escaped;
-            escaped.reserve(value.size());
-            for (char ch : value)
-            {
-                if (ch == ',' || ch == ' ')
-                {
-                    escaped += '\\';
-                }
-                escaped += ch;
-            }
-            return escaped;
-        }
-
-        std::string escape_tag(std::string_view value)
-        {
-            std::string escaped;
-            escaped.reserve(value.size());
-            for (char ch : value)
-            {
-                if (ch == ',' || ch == ' ' || ch == '=')
-                {
-                    escaped += '\\';
-                }
-                escaped += ch;
-            }
-            return escaped;
-        }
-
-        std::string escape_string_field(std::string_view value)
-        {
-            std::string escaped;
-            escaped.reserve(value.size() + 2);
-            escaped += '"';
-            for (char ch : value)
-            {
-                if (ch == '"' || ch == '\\')
-                {
-                    escaped += '\\';
-                }
-                escaped += ch;
-            }
-            escaped += '"';
-            return escaped;
-        }
-
-        template <typename T>
-        void append_integral(std::string &target, T value)
-        {
-            char buffer[32];
-            const auto [ptr, ec] = std::to_chars(std::begin(buffer), std::end(buffer), value);
-            if (ec != std::errc{})
-            {
-                throw std::runtime_error("Failed to format integer for Influx line protocol");
-            }
-            target.append(buffer, ptr);
-        }
-
-        void append_double(std::string &target, double value)
-        {
-            std::ostringstream stream;
-            stream.precision(std::numeric_limits<double>::max_digits10);
-            stream << value;
-            if (!stream)
-            {
-                throw std::runtime_error("Failed to format floating-point value for Influx line protocol");
-            }
-            target += stream.str();
-        }
-
-        std::string with_nanosecond_precision(const std::string &url)
-        {
-            if (url.find("precision=") != std::string::npos)
-            {
-                return url;
-            }
-
-            if (url.find('?') == std::string::npos)
-            {
-                return url + "?precision=ns";
-            }
-
-            return url + "&precision=ns";
-        }
-
-        class InfluxHttpWriter final : public InfluxWriter
-        {
-        public:
-            explicit InfluxHttpWriter(std::string url, std::string token)
-                : url(with_nanosecond_precision(url)),
-                  token(std::move(token))
-            {
-            }
-
-            void batch_of(std::size_t size) override
-            {
-                batch_size = size == 0 ? 1 : size;
-                pending.reserve(batch_size);
-            }
-
-            void write(std::string line) override
-            {
-                pending_bytes += line.size() + 1;
-                pending.emplace_back(std::move(line));
-                if (pending.size() >= batch_size)
-                {
-                    flush_pending();
-                }
-            }
-
-            void flush_batch() override
-            {
-                flush_pending();
-            }
-
-        private:
-            std::string url;
-            std::string token;
-            std::size_t batch_size = 1;
-            std::vector<std::string> pending;
-            std::size_t pending_bytes = 0;
-
-            void flush_pending()
-            {
-                if (pending.empty())
-                {
-                    return;
-                }
-
-                std::string body;
-                body.reserve(pending_bytes == 0 ? 0 : pending_bytes - 1);
-                for (std::size_t i = 0; i < pending.size(); ++i)
-                {
-                    if (i > 0)
-                    {
-                        body += '\n';
-                    }
-                    body += pending[i];
-                }
-
-                cpr::Header headers{{"Content-Type", "text/plain; charset=utf-8"}};
-                if (!token.empty())
-                {
-                    headers.emplace("Authorization", "Bearer " + token);
-                }
-
-                const auto response = cpr::Post(
-                    cpr::Url{url},
-                    headers,
-                    cpr::Body{body},
-                    cpr::Timeout{5000},
-                    cpr::ConnectTimeout{1000});
-
-                if (response.error.code != cpr::ErrorCode::OK)
-                {
-                    throw std::runtime_error("Influx write failed: " + response.error.message);
-                }
-
-                if (response.status_code < 200 || response.status_code >= 300)
-                {
-                    throw std::runtime_error("Influx write failed with HTTP status " + std::to_string(response.status_code) + ": " + response.text);
-                }
-
-                pending.clear();
-                pending_bytes = 0;
-            }
-        };
-    }
-
     InfluxRecorderSink::InfluxRecorderSink(
         ssp4sim::InfluxRecordingConfig influx,
         std::chrono::system_clock::time_point run_start_wall_clock,
         std::unique_ptr<InfluxWriter> writer)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.InfluxRecorderSink")),
-          token(influx.token),
-          measurement(influx.measurement),
-          run_name(influx.run),
-          batch_size(influx.batch_size),
-          recording_interval(influx.interval),
+          config(influx),
           run_start_wall_clock(run_start_wall_clock),
           writer(std::move(writer))
     {
-        url = influx.url + "/api/v3/write_lp?db=" + influx.db;
 
-        LOG_DEBUG(log, "[{func}] URL: {url}, measurement: {measurement}, run: {run}", __func__, this->url, this->measurement, this->run_name);
-        LOG_DEBUG(log, "[{func}] Batch size: {batch_size}", __func__, this->batch_size);
-        LOG_DEBUG(log, "[{func}] Auth token: {token}", __func__, this->token.empty() ? "disabled" : "enabled");
+        LOG_DEBUG(log, "[{func}] URL: {url}, run: {run}", __func__, config.measurement, config.run);
+        LOG_DEBUG(log, "[{func}] Protocol: {protocol}", __func__, config.protocol);
+        LOG_DEBUG(log, "[{func}] Batch size: {batch_size}", __func__, config.batch_size);
+        LOG_DEBUG(log, "[{func}] Auth token: {token}", __func__, config.token.empty() ? "disabled" : "enabled");
     }
 
     void InfluxRecorderSink::on_storage_added(const SignalStorage *storage)
@@ -232,8 +54,8 @@ namespace ssp4sim::signal
             variable_layout.type = variable.type;
             variable_layout.position = variable.position;
             variable_layout.string_value = variable.type == types::DataType::string;
-            variable_layout.line_prefix = escape_measurement(measurement);
-            variable_layout.line_prefix += ",run=" + escape_tag(run_name);
+            variable_layout.line_prefix = escape_measurement(config.measurement);
+            variable_layout.line_prefix += ",run=" + escape_tag(config.run);
             variable_layout.line_prefix += ",storage=" + escape_tag(storage->name);
             variable_layout.line_prefix += ",signal=" + escape_tag(variable.name);
             variable_layout.line_prefix += ",type=" + escape_tag(variable.type.to_string());
@@ -254,7 +76,7 @@ namespace ssp4sim::signal
             return;
         }
 
-        if (batch_size == 0)
+        if (config.batch_size == 0)
         {
             disable_sink("batch size must be greater than zero");
             return;
@@ -264,10 +86,18 @@ namespace ssp4sim::signal
         {
             if (!writer)
             {
-                writer = std::make_unique<InfluxHttpWriter>(url, token);
+                if (config.protocol == "udp")
+                {
+                    writer = std::make_unique<UdpInfluxWriter>(config.host, config.port);
+                }
+                else
+                {
+                    auto url = "http://" + config.host + ":" + config.port + "/api/v3/write_lp?db=" + config.db;
+                    writer = std::make_unique<InfluxHttpWriter>(url, config.token);
+                }
             }
 
-            writer->batch_of(batch_size);
+            writer->batch_of(config.batch_size);
             initialized = true;
             disabled = false;
         }
@@ -293,12 +123,12 @@ namespace ssp4sim::signal
 
     bool InfluxRecorderSink::should_record(InfluxStorageLayout &layout, std::uint64_t timestamp) const
     {
-        if (recording_interval == 0)
+        if (config.interval == 0)
         {
             return true;
         }
 
-        if (!layout.has_recorded_timestamp || timestamp >= layout.last_recorded_timestamp + recording_interval)
+        if (!layout.has_recorded_timestamp || timestamp >= layout.last_recorded_timestamp + config.interval)
         {
             layout.last_recorded_timestamp = timestamp;
             layout.has_recorded_timestamp = true;

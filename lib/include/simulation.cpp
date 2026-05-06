@@ -6,8 +6,8 @@
 #include "analysis_graph_builder.hpp"
 #include "graph_builder.hpp"
 
-#include "signal/influx_recorder_sink.hpp"
-#include "signal/csv_recorder_sink.hpp"
+#include "signal/sinks/influx_recorder_sink.hpp"
+#include "signal/sinks/csv_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
 #include "config.hpp"

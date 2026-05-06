@@ -124,8 +124,7 @@ TEST_CASE("Config tests", "[config]")
 
     SECTION("Recording config is parsed")
     {
-        Config::loadFromString(R"json(
-        {
+        Config::loadFromString(R"json({
             "simulation": {
                 "ssp": "./fake.ssp",
                 "working_dir": "./wd/test",
@@ -139,18 +138,18 @@ TEST_CASE("Config tests", "[config]")
                     },
                     "influx": {
                         "enable": true,
-                        "url": "http://localhost:8086",
+                        "protocol": "http",
+                        "url": "localhost:8086",
                         "db": "ssp4sim",
                         "token": "config-token",
                         "measurement": "signals",
                         "run": "run-[TIME]",
                         "batch_size": 123,
                         "interval": 0.25
+                    }
                 }
             }
-        }
-        }
-        )json");
+        })json");
 
         auto *log = ssp4cpp::utils::log::simple_logger();
         ssp4sim::SharedConfig shared_config(log);
@@ -160,13 +159,52 @@ TEST_CASE("Config tests", "[config]")
         REQUIRE(shared_config.csv.file == fs::path("./wd/test/result.csv"));
         REQUIRE(shared_config.csv.interval == ssp4sim::utils::time::s_to_ns(0.5));
         REQUIRE(shared_config.influx.enable);
-        REQUIRE(shared_config.influx.url == "http://localhost:8086");
+        REQUIRE(shared_config.influx.protocol == "http");
+        REQUIRE(shared_config.influx.host == "localhost");
+        REQUIRE(shared_config.influx.port == "8086");
         REQUIRE(shared_config.influx.db == "ssp4sim");
         REQUIRE(shared_config.influx.token == "config-token");
         REQUIRE(shared_config.influx.measurement == "signals");
         REQUIRE(shared_config.influx.batch_size == 123);
         REQUIRE(shared_config.influx.interval == ssp4sim::utils::time::s_to_ns(0.25));
         REQUIRE(shared_config.influx.run.rfind("run-", 0) == 0);
+    }
+
+    SECTION("UDP recording config does not require a token")
+    {
+        Config::loadFromString(R"json(
+        {
+            "simulation": {
+                "ssp": "./fake.ssp",
+                "working_dir": "./wd/test",
+                "start_time": 0.0,
+                "stop_time": 1.0,
+                "timestep": 0.1,
+                "recording": {
+                    "csv": {
+                        "enable": false
+                    },
+                    "influx": {
+                        "enable": true,
+                        "protocol": "udp",
+                        "url": "localhost:8094",
+                        "db": "telegraf"
+                    }
+                }
+            }
+        }
+        )json");
+
+        auto *log = ssp4cpp::utils::log::simple_logger();
+        ssp4sim::SharedConfig shared_config(log);
+
+        REQUIRE(shared_config.enable_recording);
+        REQUIRE(shared_config.influx.enable);
+        REQUIRE(shared_config.influx.protocol == "udp");
+        REQUIRE(shared_config.influx.host == "localhost");
+        REQUIRE(shared_config.influx.port == "8094");
+        REQUIRE(shared_config.influx.db == "telegraf");
+        REQUIRE(shared_config.influx.token.empty());
     }
 
     SECTION("Influx recording token falls back to environment")
@@ -186,7 +224,7 @@ TEST_CASE("Config tests", "[config]")
                     },
                     "influx": {
                         "enable": true,
-                        "url": "http://localhost:8181",
+                        "url": "localhost:8181",
                         "db": "ssp4sim"
                     }
                 }
@@ -197,6 +235,9 @@ TEST_CASE("Config tests", "[config]")
         auto *log = ssp4cpp::utils::log::simple_logger();
         ssp4sim::SharedConfig shared_config(log);
 
+        REQUIRE(shared_config.influx.protocol == "http");
+        REQUIRE(shared_config.influx.host == "localhost");
+        REQUIRE(shared_config.influx.port == "8181");
         REQUIRE(shared_config.influx.token == "env-token");
     }
 
@@ -230,7 +271,7 @@ TEST_CASE("Config tests", "[config]")
                     },
                     "influx": {
                         "enable": true,
-                        "url": "http://localhost:8181",
+                        "url": "localhost:8181",
                         "db": "ssp4sim"
                     }
                 }
@@ -241,6 +282,9 @@ TEST_CASE("Config tests", "[config]")
         auto *log = ssp4cpp::utils::log::simple_logger();
         ssp4sim::SharedConfig shared_config(log);
 
+        REQUIRE(shared_config.influx.protocol == "http");
+        REQUIRE(shared_config.influx.host == "localhost");
+        REQUIRE(shared_config.influx.port == "8181");
         REQUIRE(shared_config.influx.token == "file-token");
 
         fs::remove_all(temp_home);

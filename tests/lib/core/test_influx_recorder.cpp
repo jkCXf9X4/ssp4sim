@@ -3,14 +3,16 @@
 
 #include <cpr/cpr.h>
 
-#include "signal/influx_recorder_sink.hpp"
+#include "signal/sinks/influx_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
+#include "utils/ip.hpp"
 #include "utils/time.hpp"
 #include "ssp4sim_definitions.hpp"
 
 #include <cstdlib>
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstring>
@@ -26,6 +28,11 @@
 
 #include <nlohmann/json.hpp>
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 using ssp4sim::signal::DataRecorder;
 using ssp4sim::signal::InfluxRecorderSink;
 using ssp4sim::signal::InfluxWriter;
@@ -38,6 +45,88 @@ namespace sim_time = ssp4sim::utils::time;
 
 namespace
 {
+    class UdpCaptureSocket
+    {
+    public:
+        using socket_handle_t = int;
+        static constexpr socket_handle_t invalid_socket = -1;
+
+        UdpCaptureSocket()
+        {
+            socket_fd = ::socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            REQUIRE(socket_fd != invalid_socket);
+
+            sockaddr_in addr{};
+            addr.sin_family = AF_INET;
+            addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+            addr.sin_port = 0;
+            REQUIRE(::bind(socket_fd, reinterpret_cast<sockaddr *>(&addr), sizeof(addr)) == 0);
+
+            socklen_t addr_len = sizeof(addr);
+            REQUIRE(::getsockname(socket_fd, reinterpret_cast<sockaddr *>(&addr), &addr_len) == 0);
+            port_ = ntohs(addr.sin_port);
+        }
+
+        UdpCaptureSocket(const UdpCaptureSocket &) = delete;
+        UdpCaptureSocket &operator=(const UdpCaptureSocket &) = delete;
+
+        ~UdpCaptureSocket()
+        {
+            close();
+        }
+
+        std::uint16_t port() const
+        {
+            return port_;
+        }
+
+        std::optional<std::string> receive(std::chrono::milliseconds timeout)
+        {
+            fd_set readfds;
+            FD_ZERO(&readfds);
+            FD_SET(socket_fd, &readfds);
+
+            timeval tv{};
+            tv.tv_sec = static_cast<long>(timeout.count() / 1000);
+            tv.tv_usec = static_cast<long>((timeout.count() % 1000) * 1000);
+
+            const auto ready = ::select(socket_fd + 1, &readfds, nullptr, nullptr, &tv);
+            REQUIRE(ready >= 0);
+            if (ready == 0)
+            {
+                return std::nullopt;
+            }
+
+            std::array<char, 8192> buffer{};
+            sockaddr_in sender{};
+            socklen_t sender_len = sizeof(sender);
+            const auto received = ::recvfrom(
+                socket_fd,
+                buffer.data(),
+                static_cast<int>(buffer.size()),
+                0,
+                reinterpret_cast<sockaddr *>(&sender),
+                &sender_len);
+            REQUIRE(received >= 0);
+            return std::string(buffer.data(), buffer.data() + received);
+        }
+
+    private:
+        socket_handle_t socket_fd = invalid_socket;
+        std::uint16_t port_ = 0;
+
+        void close()
+        {
+            if (socket_fd == invalid_socket)
+            {
+                return;
+            }
+
+            ::close(socket_fd);
+            socket_fd = invalid_socket;
+        }
+    };
+
     struct RecordingInfluxWriter final : public InfluxWriter
     {
         std::vector<std::size_t> batch_sizes;
@@ -158,24 +247,43 @@ namespace
     {
         if (const char *env_url = std::getenv("SSP4SIM_INFLUX_BASE_URL"); env_url != nullptr && *env_url != '\0')
         {
-            return env_url;
+            std::string base = env_url;
+            if (base.rfind("http://", 0) == 0)
+            {
+                base.erase(0, 7);
+            }
+            else if (base.rfind("https://", 0) == 0)
+            {
+                base.erase(0, 8);
+            }
+
+            if (const auto slash_pos = base.find('/'); slash_pos != std::string::npos)
+            {
+                base.erase(slash_pos);
+            }
+
+            return base;
         }
 
-        return "http://localhost:8181";
+        return "localhost:8181";
     }
 
     ssp4sim::InfluxRecordingConfig make_influx_config(
-        std::string url,
+        std::string endpoint,
         std::string measurement,
         std::string run,
         std::size_t batch_size,
         std::uint64_t interval = 0,
         std::string token = {},
-        std::string db = "ssp4sim")
+        std::string db = "ssp4sim",
+        std::string protocol = "http")
     {
         ssp4sim::InfluxRecordingConfig config;
         config.enable = true;
-        config.url = std::move(url);
+        config.protocol = std::move(protocol);
+        const auto [host, port] = ssp4sim::utils::ip::parse_host_port(endpoint);
+        config.host = host;
+        config.port = port;
         config.db = std::move(db);
         config.token = std::move(token);
         config.measurement = std::move(measurement);
@@ -189,7 +297,7 @@ namespace
     {
         const auto body = nlohmann::json{{"db", "ssp4sim"}, {"q", sql}}.dump();
         return cpr::Post(
-            cpr::Url{influx_base_url() + "/api/v3/query_sql"},
+            cpr::Url{"http://" + influx_base_url() + "/api/v3/query_sql"},
             cpr::Header{{"Authorization", "Bearer " + token}, {"Content-Type", "application/json"}},
             cpr::Body{body},
             cpr::Timeout{5000},
@@ -209,7 +317,7 @@ TEST_CASE("Influx recorder sink emits one point per signal", "[DataRecorder][Inf
 
     DataRecorder recorder(false);
     recorder.add_sink(std::make_unique<InfluxRecorderSink>(
-        make_influx_config("http://unused", "ssp4sim_signal", "run-fixed", 7),
+        make_influx_config("unused:8181", "ssp4sim_signal", "run-fixed", 7),
         run_start,
         std::move(writer)));
 
@@ -268,12 +376,58 @@ TEST_CASE("Influx recorder sink emits one point per signal", "[DataRecorder][Inf
     remove_if_exists(csv_path);
 }
 
+TEST_CASE("Influx recorder sink sends line protocol over UDP", "[DataRecorder][Influx]")
+{
+    UdpCaptureSocket receiver;
+
+    const auto run_start = std::chrono::system_clock::time_point{std::chrono::seconds{100}};
+
+    DataRecorder recorder(false);
+        recorder.add_sink(std::make_unique<InfluxRecorderSink>(
+            make_influx_config(
+                "127.0.0.1:" + std::to_string(receiver.port()),
+                "ssp4sim_signal",
+                "run-fixed",
+                10,
+                0,
+                {},
+                "ssp4sim",
+                "udp"),
+            run_start));
+
+    SignalStorage storage(1, "source");
+    storage.add("source.temperature", DataType::real, 1);
+    storage.add("source.mode", DataType::integer, 1);
+    storage.allocate();
+
+    recorder.add_storage(&storage);
+    recorder.init();
+    recorder.start_recording();
+
+    const auto timestamp = 3ULL * sim_time::nanoseconds_per_second + 123ULL;
+    const std::size_t area = storage.push(timestamp);
+    const double temperature = 42.5;
+    const int mode = -3;
+
+    std::memcpy(storage.get_item(area, 0), &temperature, sizeof(double));
+    std::memcpy(storage.get_item(area, 1), &mode, sizeof(int));
+
+    storage.flag_new_data(area);
+    recorder.stop_recording();
+
+    const auto payload = receiver.receive(std::chrono::seconds{2});
+    REQUIRE(payload.has_value());
+    REQUIRE(payload->find("ssp4sim_signal,run=run-fixed,storage=source,signal=source.temperature,type=real value=42.5") != std::string::npos);
+    REQUIRE(payload->find("signal=source.mode,type=integer value=-3") != std::string::npos);
+    REQUIRE(payload->find('\n') != std::string::npos);
+}
+
 TEST_CASE("Influx recorder sink tolerates writer creation failure", "[Influx]")
 {
     auto csv_path = test_path("test_influx_recorder_failure.csv");
     remove_if_exists(csv_path);
 
-    InfluxRecorderSink sink(make_influx_config("bad://invalid-url", "ssp4sim_signal", "run-fixed", 1));
+    InfluxRecorderSink sink(make_influx_config("localhost:notaport", "ssp4sim_signal", "run-fixed", 1, 0, {}, "ssp4sim", "udp"));
 
     SignalStorage storage(1, "source");
     storage.add("source.temperature", DataType::real, 1);
@@ -308,7 +462,7 @@ TEST_CASE("Influx recorder sink disables itself after write failures", "[Influx]
     writer_ptr->throw_on_write = true;
 
     InfluxRecorderSink sink(
-        make_influx_config("http://unused", "ssp4sim_signal", "run-fixed", 3),
+        make_influx_config("unused:8181", "ssp4sim_signal", "run-fixed", 3),
         std::chrono::system_clock::time_point{std::chrono::seconds{5}},
         std::move(writer));
 
@@ -346,7 +500,7 @@ TEST_CASE("Influx recorder sink can downsample by interval", "[Influx]")
     auto *writer_ptr = writer.get();
 
     InfluxRecorderSink sink(
-        make_influx_config("http://unused", "ssp4sim_signal", "run-fixed", 4, sim_time::nanoseconds_per_second),
+        make_influx_config("unused:8181", "ssp4sim_signal", "run-fixed", 4, sim_time::nanoseconds_per_second),
         std::chrono::system_clock::time_point{std::chrono::seconds{7}},
         std::move(writer));
 
