@@ -5,7 +5,6 @@
 #include "utils/time.hpp"
 
 #include <charconv>
-#include <cstring>
 #include <chrono>
 #include <limits>
 #include <sstream>
@@ -317,28 +316,24 @@ namespace ssp4sim::signal
     {
         std::string line = variable.line_prefix;
 
+        // The recorder has already copied the source area into aligned,
+        // recorder-owned storage, so these values can be read directly.
         switch (variable.type)
         {
         case types::DataType::real:
         {
-            double value = 0.0;
-            std::memcpy(&value, data, sizeof(value));
-            append_double(line, value);
+            append_double(line, *reinterpret_cast<const double *>(data));
             break;
         }
         case types::DataType::boolean:
         {
-            bool value = false;
-            std::memcpy(&value, data, sizeof(value));
-            append_integral(line, value ? 1 : 0);
+            append_integral(line, *reinterpret_cast<const int *>(data) ? 1 : 0);
             break;
         }
         case types::DataType::integer:
         case types::DataType::enumeration:
         {
-            int value = 0;
-            std::memcpy(&value, data, sizeof(value));
-            append_integral(line, value);
+            append_integral(line, *reinterpret_cast<const int *>(data));
             break;
         }
         case types::DataType::string:

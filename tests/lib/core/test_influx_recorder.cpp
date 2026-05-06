@@ -228,12 +228,12 @@ TEST_CASE("Influx recorder sink emits one point per signal", "[DataRecorder][Inf
     const std::size_t area = storage.push(timestamp);
     const double temperature = 42.5;
     const int mode = -3;
-    const bool enabled = true;
+    const int enabled = 1;
     const std::string label = "hello";
 
     std::memcpy(storage.get_item(area, 0), &temperature, sizeof(double));
     std::memcpy(storage.get_item(area, 1), &mode, sizeof(int));
-    std::memcpy(storage.get_item(area, 2), &enabled, sizeof(bool));
+    std::memcpy(storage.get_item(area, 2), &enabled, sizeof(int));
     auto *label_ptr = reinterpret_cast<std::string *>(storage.get_item(area, 3));
     *label_ptr = label;
 
