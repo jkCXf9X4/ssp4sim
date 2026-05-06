@@ -21,9 +21,17 @@ namespace ssp4sim::signal
 
     void InfluxHttpWriter::write(std::string line)
     {
-        pending_bytes += line.size() + 1;
+        const auto line_bytes = line.size() + 1;
+
+        if (!pending.empty() && pending_bytes + line_bytes > max_payload_bytes)
+        {
+            flush_pending();
+        }
+
+        pending_bytes += line_bytes;
         pending.emplace_back(std::move(line));
-        if (pending.size() >= batch_size)
+
+        if (pending.size() >= batch_size || pending_bytes >= max_payload_bytes)
         {
             flush_pending();
         }

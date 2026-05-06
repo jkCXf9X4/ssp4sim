@@ -31,14 +31,14 @@ namespace ssp4sim::signal
         std::string name;
         types::DataType type;
         std::size_t position = 0;
-        std::string line_prefix;
-        bool string_value = false;
+        std::string field_key;
     };
 
     struct InfluxStorageLayout
     {
         const SignalStorage *storage = nullptr;
         std::size_t index = 0;
+        std::string line_prefix;
         std::vector<InfluxVariableLayout> variables;
         std::uint64_t last_recorded_timestamp = 0;
         bool has_recorded_timestamp = false;

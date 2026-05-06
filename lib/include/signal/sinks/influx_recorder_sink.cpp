@@ -3,16 +3,31 @@
 #include "signal/sinks/writers/influx_http_writer.hpp"
 #include "signal/sinks/writers/influx_udp_writer.hpp"
 
-#include "utils/ip.hpp"
 #include "utils/time.hpp"
 
 #include <chrono>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace ssp4sim::signal
 {
+    namespace
+    {
+        std::string make_field_key(std::string_view storage_name, std::string_view variable_name)
+        {
+            if (variable_name.size() > storage_name.size() + 1
+                && variable_name.compare(0, storage_name.size(), storage_name) == 0
+                && variable_name[storage_name.size()] == '.')
+            {
+                return escape_tag(variable_name.substr(storage_name.size() + 1));
+            }
+
+            return escape_tag(variable_name);
+        }
+    }
+
     InfluxRecorderSink::InfluxRecorderSink(
         ssp4sim::InfluxRecordingConfig influx,
         std::chrono::system_clock::time_point run_start_wall_clock,
@@ -23,7 +38,7 @@ namespace ssp4sim::signal
           writer(std::move(writer))
     {
 
-        LOG_DEBUG(log, "[{func}] URL: {url}, run: {run}", __func__, config.measurement, config.run);
+        LOG_DEBUG(log, "[{func}] Measurement: {measurement}, run: {run}", __func__, config.measurement, config.run);
         LOG_DEBUG(log, "[{func}] Protocol: {protocol}", __func__, config.protocol);
         LOG_DEBUG(log, "[{func}] Batch size: {batch_size}", __func__, config.batch_size);
         LOG_DEBUG(log, "[{func}] Auth token: {token}", __func__, config.token.empty() ? "disabled" : "enabled");
@@ -45,6 +60,9 @@ namespace ssp4sim::signal
         InfluxStorageLayout layout;
         layout.storage = storage;
         layout.index = layouts.size();
+        layout.line_prefix = escape_measurement(config.measurement);
+        layout.line_prefix += ",run=" + escape_tag(config.run);
+        layout.line_prefix += ",storage=" + escape_tag(storage->name);
         layout.variables.reserve(storage->variables.size());
 
         for (const auto &variable : storage->variables)
@@ -53,13 +71,7 @@ namespace ssp4sim::signal
             variable_layout.name = variable.name;
             variable_layout.type = variable.type;
             variable_layout.position = variable.position;
-            variable_layout.string_value = variable.type == types::DataType::string;
-            variable_layout.line_prefix = escape_measurement(config.measurement);
-            variable_layout.line_prefix += ",run=" + escape_tag(config.run);
-            variable_layout.line_prefix += ",storage=" + escape_tag(storage->name);
-            variable_layout.line_prefix += ",signal=" + escape_tag(variable.name);
-            variable_layout.line_prefix += ",type=" + escape_tag(variable.type.to_string());
-            variable_layout.line_prefix += (variable_layout.string_value ? " value_string=" : " value=");
+            variable_layout.field_key = make_field_key(storage->name, variable.name);
             layout.variables.emplace_back(std::move(variable_layout));
         }
 
@@ -139,46 +151,67 @@ namespace ssp4sim::signal
     }
 
     std::string InfluxRecorderSink::build_line_protocol(
-        const InfluxVariableLayout &variable,
+        const InfluxStorageLayout &layout,
         const std::byte *data,
         double simulation_time_s,
         std::int64_t timestamp_ns) const
     {
-        std::string line = variable.line_prefix;
+        std::string line = layout.line_prefix;
+        line.reserve(line.size() + layout.variables.size() * 32 + 32);
+        line += ' ';
+
+        bool first_field = true;
+        auto append_field_separator = [&]()
+        {
+            if (!first_field)
+            {
+                line += ',';
+            }
+            first_field = false;
+        };
 
         // The recorder has already copied the source area into aligned,
         // recorder-owned storage, so these values can be read directly.
-        switch (variable.type)
+        for (const auto &variable : layout.variables)
         {
-        case types::DataType::real:
-        {
-            append_double(line, *reinterpret_cast<const double *>(data));
-            break;
-        }
-        case types::DataType::boolean:
-        {
-            append_integral(line, *reinterpret_cast<const int *>(data) ? 1 : 0);
-            break;
-        }
-        case types::DataType::integer:
-        case types::DataType::enumeration:
-        {
-            append_integral(line, *reinterpret_cast<const int *>(data));
-            break;
-        }
-        case types::DataType::string:
-        {
-            const auto *value = reinterpret_cast<const std::string *>(data);
-            line += escape_string_field(*value);
-            break;
-        }
-        default:
-            throw std::runtime_error("Unsupported variable type for signal " + variable.name);
+            append_field_separator();
+            line += variable.field_key;
+            line += '=';
+
+            const auto *value = data + variable.position;
+            switch (variable.type)
+            {
+            case types::DataType::real:
+            {
+                append_double(line, *reinterpret_cast<const double *>(value));
+                break;
+            }
+            case types::DataType::boolean:
+            {
+                append_integral(line, *reinterpret_cast<const int *>(value) ? 1 : 0);
+                break;
+            }
+            case types::DataType::integer:
+            case types::DataType::enumeration:
+            {
+                append_integral(line, *reinterpret_cast<const int *>(value));
+                break;
+            }
+            case types::DataType::string:
+            {
+                const auto *string_value = reinterpret_cast<const std::string *>(value);
+                line += escape_string_field(*string_value);
+                break;
+            }
+            default:
+                throw std::runtime_error("Unsupported variable type for signal " + variable.name);
+            }
         }
 
-        line += ",simulation_time_s=";
+        append_field_separator();
+        line += "simulation_time_s=";
         append_double(line, simulation_time_s);
-        line += " ";
+        line += ' ';
         append_integral(line, timestamp_ns);
         return line;
     }
@@ -220,19 +253,13 @@ namespace ssp4sim::signal
         const auto timestamp = run_start_wall_clock + std::chrono::nanoseconds(event.timestamp);
         const auto timestamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(timestamp.time_since_epoch()).count();
 
-        for (const auto &variable : layout.variables)
+        try
         {
-            const auto *data = event.buffer + variable.position;
-
-            try
-            {
-                writer->write(build_line_protocol(variable, data, simulation_time_s, timestamp_ns));
-            }
-            catch (const std::exception &e)
-            {
-                disable_sink(e.what());
-                return;
-            }
+            writer->write(build_line_protocol(layout, event.buffer, simulation_time_s, timestamp_ns));
+        }
+        catch (const std::exception &e)
+        {
+            disable_sink(e.what());
         }
     }
 

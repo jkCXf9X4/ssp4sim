@@ -22,6 +22,7 @@ namespace ssp4sim::signal
         std::string url;
         std::string token;
         std::size_t batch_size = 1;
+        static constexpr std::size_t max_payload_bytes = 9 * 1024 * 1024;
         std::vector<std::string> pending;
         std::size_t pending_bytes = 0;
 

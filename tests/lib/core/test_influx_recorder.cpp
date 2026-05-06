@@ -305,7 +305,7 @@ namespace
     }
 }
 
-TEST_CASE("Influx recorder sink emits one point per signal", "[DataRecorder][Influx]")
+TEST_CASE("Influx recorder sink emits one point per storage snapshot", "[DataRecorder][Influx]")
 {
     const auto csv_path = test_path("test_influx_recorder.csv");
     remove_if_exists(csv_path);
@@ -351,27 +351,24 @@ TEST_CASE("Influx recorder sink emits one point per signal", "[DataRecorder][Inf
 
     REQUIRE(writer_ptr->batch_sizes == std::vector<std::size_t>{7});
     REQUIRE(writer_ptr->flush_calls == 1);
-    REQUIRE(writer_ptr->lines.size() == 4);
+    REQUIRE(writer_ptr->lines.size() == 1);
 
     const auto expected_simulation_time_s = sim_time::ns_to_s(timestamp);
     const auto expected_timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
         (run_start + std::chrono::nanoseconds(timestamp)).time_since_epoch()).count();
 
-    REQUIRE(writer_ptr->lines[0].find("ssp4sim_signal,run=run-fixed,storage=source,signal=source.temperature,type=real value=") == 0);
-    REQUIRE(field_value_text(writer_ptr->lines[0], "value").has_value());
-    REQUIRE(std::stod(*field_value_text(writer_ptr->lines[0], "value")) == Catch::Approx(temperature));
+    REQUIRE(writer_ptr->lines[0].find("ssp4sim_signal,run=run-fixed,storage=source ") == 0);
+    REQUIRE(field_value_text(writer_ptr->lines[0], "temperature").has_value());
+    REQUIRE(std::stod(*field_value_text(writer_ptr->lines[0], "temperature")) == Catch::Approx(temperature));
+    REQUIRE(field_value_text(writer_ptr->lines[0], "mode").has_value());
+    REQUIRE(std::stoi(*field_value_text(writer_ptr->lines[0], "mode")) == mode);
+    REQUIRE(field_value_text(writer_ptr->lines[0], "enabled").has_value());
+    REQUIRE(std::stoi(*field_value_text(writer_ptr->lines[0], "enabled")) == enabled);
+    REQUIRE(field_value_text(writer_ptr->lines[0], "label").has_value());
+    REQUIRE(*field_value_text(writer_ptr->lines[0], "label") == "\"hello\"");
     REQUIRE(field_value_text(writer_ptr->lines[0], "simulation_time_s").has_value());
     REQUIRE(std::stod(*field_value_text(writer_ptr->lines[0], "simulation_time_s")) == Catch::Approx(expected_simulation_time_s));
     REQUIRE(timestamp_text(writer_ptr->lines[0]) == std::to_string(expected_timestamp));
-
-    REQUIRE(writer_ptr->lines[1].find("signal=source.mode,type=integer value=-3") != std::string::npos);
-    REQUIRE(timestamp_text(writer_ptr->lines[1]) == std::to_string(expected_timestamp));
-
-    REQUIRE(writer_ptr->lines[2].find("signal=source.enabled,type=boolean value=1") != std::string::npos);
-    REQUIRE(timestamp_text(writer_ptr->lines[2]) == std::to_string(expected_timestamp));
-
-    REQUIRE(writer_ptr->lines[3].find("signal=source.label,type=string value_string=\"hello\"") != std::string::npos);
-    REQUIRE(timestamp_text(writer_ptr->lines[3]) == std::to_string(expected_timestamp));
 
     remove_if_exists(csv_path);
 }
@@ -383,17 +380,17 @@ TEST_CASE("Influx recorder sink sends line protocol over UDP", "[DataRecorder][I
     const auto run_start = std::chrono::system_clock::time_point{std::chrono::seconds{100}};
 
     DataRecorder recorder(false);
-        recorder.add_sink(std::make_unique<InfluxRecorderSink>(
-            make_influx_config(
-                "127.0.0.1:" + std::to_string(receiver.port()),
-                "ssp4sim_signal",
-                "run-fixed",
-                10,
-                0,
-                {},
-                "ssp4sim",
-                "udp"),
-            run_start));
+    recorder.add_sink(std::make_unique<InfluxRecorderSink>(
+        make_influx_config(
+            "127.0.0.1:" + std::to_string(receiver.port()),
+            "ssp4sim_signal",
+            "run-fixed",
+            10,
+            0,
+            {},
+            "ssp4sim",
+            "udp"),
+        run_start));
 
     SignalStorage storage(1, "source");
     storage.add("source.temperature", DataType::real, 1);
@@ -417,9 +414,10 @@ TEST_CASE("Influx recorder sink sends line protocol over UDP", "[DataRecorder][I
 
     const auto payload = receiver.receive(std::chrono::seconds{2});
     REQUIRE(payload.has_value());
-    REQUIRE(payload->find("ssp4sim_signal,run=run-fixed,storage=source,signal=source.temperature,type=real value=42.5") != std::string::npos);
-    REQUIRE(payload->find("signal=source.mode,type=integer value=-3") != std::string::npos);
-    REQUIRE(payload->find('\n') != std::string::npos);
+    REQUIRE(payload->find("ssp4sim_signal,run=run-fixed,storage=source ") == 0);
+    REQUIRE(payload->find("temperature=42.5") != std::string::npos);
+    REQUIRE(payload->find("mode=-3") != std::string::npos);
+    REQUIRE(payload->find('\n') == std::string::npos);
 }
 
 TEST_CASE("Influx recorder sink tolerates writer creation failure", "[Influx]")
@@ -576,8 +574,6 @@ TEST_CASE("Influx recorder sink writes to a live InfluxDB instance", "[Influx][i
     storage.add("live_source.temperature", DataType::real, 1);
     storage.allocate();
 
-    const auto type_real = storage.variables[0].type.to_string();
-
     recorder.add_storage(&storage);
     recorder.init();
     recorder.start_recording();
@@ -592,7 +588,7 @@ TEST_CASE("Influx recorder sink writes to a live InfluxDB instance", "[Influx][i
 
     const auto expected_time = std::string("1970-01-01T00:00:01.234567890");
     const auto expected_simulation_time_s = sim_time::ns_to_s(timestamp);
-    const auto sql = std::string("SELECT run, storage, signal, type, value, simulation_time_s, time FROM ") + measurement + " WHERE run = '" + run_name + "' LIMIT 1";
+    const auto sql = std::string("SELECT run, storage, temperature, simulation_time_s, time FROM ") + measurement + " WHERE run = '" + run_name + "' AND storage = 'live_source' LIMIT 1";
 
     std::optional<nlohmann::json> row;
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{10};
@@ -622,9 +618,7 @@ TEST_CASE("Influx recorder sink writes to a live InfluxDB instance", "[Influx][i
     REQUIRE(row.has_value());
     REQUIRE(row->at("run").get<std::string>() == run_name);
     REQUIRE(row->at("storage").get<std::string>() == "live_source");
-    REQUIRE(row->at("signal").get<std::string>() == "live_source.temperature");
-    REQUIRE(row->at("type").get<std::string>() == type_real);
-    REQUIRE(row->at("value").get<double>() == Catch::Approx(temperature));
+    REQUIRE(row->at("temperature").get<double>() == Catch::Approx(temperature));
     REQUIRE(row->at("simulation_time_s").get<double>() == Catch::Approx(expected_simulation_time_s));
     REQUIRE(row->at("time").get<std::string>() == expected_time);
 

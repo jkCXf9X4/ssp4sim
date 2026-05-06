@@ -121,21 +121,21 @@ This section is the canonical reference for `simulation.recording.influx.*`.
 | `simulation.recording.influx.url` | `string` | Yes when enabled | `localhost:8181` for `http`, `localhost:8089` for `udp` | Influx endpoint passed to the sink. Use `host:port` for both transports. The HTTP writer prepends `http://` internally; `SharedConfig` splits the UDP value into host and port before the sink is created. |
 | `simulation.recording.influx.db` | `string` | No | `ssp4sim` | Influx database name used for HTTP writes. UDP mode ignores this value and forwards line protocol directly to the configured UDP endpoint. |
 | `simulation.recording.influx.token` | `string` | No | - | Auth token for the Influx client. If omitted, SSP4SIM checks `SSP4SIM_INFLUX_TOKEN` and then `~/.influxdb/docker/explorer/config/config.json`. UDP mode does not require a token. |
-| `simulation.recording.influx.measurement` | `string` | No | `ssp4sim_signal` | Measurement name used for emitted points. |
+| `simulation.recording.influx.measurement` | `string` | No | `ssp4sim_signal` | Measurement name used for emitted snapshot rows. |
 | `simulation.recording.influx.run` | `string` | No | `run_[TIME]` | Run tag value. `[TIME]` is substituted before use. |
-| `simulation.recording.influx.batch_size` | `int` | No | `50000` | Batch size passed to the Influx writer. Must be greater than zero. Small values increase HTTP flush frequency or UDP packet count. |
+| `simulation.recording.influx.batch_size` | `int` | No | `50000` | Batch size passed to the Influx writer. Must be greater than zero. Small values increase HTTP flush frequency or UDP packet count. The HTTP writer also auto-flushes before a request body reaches Influx's 10 MB limit. |
 | `simulation.recording.influx.interval` | `double` | No | `0.0` | Minimum seconds between emitted Influx samples for the same storage. `0.0` disables downsampling. |
 
-Influx points are emitted one per signal in each recorded storage event. When
+Influx points are emitted one per recorded storage snapshot. When
 `simulation.recording.influx.interval` is greater than zero, repeated updates
 from the same storage are skipped until the configured interval has elapsed.
-Each point carries `run`, `storage`, `signal`, and `type` tags, plus `value` or
-`value_string` and `simulation_time_s` fields. Numeric and boolean signals use
-`value`; string signals use `value_string`. The point timestamp is the run-start
-wall clock plus the simulation timestamp. The write request uses nanosecond
-precision so the stored `time` column matches the recorder clock. If creation or
-writing fails, the sink logs a warning and disables itself so the simulation can
-continue.
+Each point carries `run` and `storage` tags, one field per variable, and a
+`simulation_time_s` field. Variable names are emitted as local field names when
+possible, so `source.temperature` becomes `temperature`. The point timestamp is
+the run-start wall clock plus the simulation timestamp. The write request uses
+nanosecond precision so the stored `time` column matches the recorder clock. If
+creation or writing fails, the sink logs a warning and disables itself so the
+simulation can continue.
 
 When `simulation.recording.influx.protocol` is `udp`, the sink sends the same
 line-protocol batches as UDP datagrams to the configured host and port instead

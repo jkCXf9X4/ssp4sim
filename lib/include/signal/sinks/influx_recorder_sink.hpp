@@ -52,7 +52,7 @@ namespace ssp4sim::signal
         bool should_record(InfluxStorageLayout &layout, std::uint64_t timestamp) const;
 
         std::string build_line_protocol(
-            const InfluxVariableLayout &variable,
+            const InfluxStorageLayout &layout,
             const std::byte *data,
             double simulation_time_s,
             std::int64_t timestamp_ns) const;
