@@ -3,6 +3,8 @@
 #include "ssp4cpp/utils/log.hpp"
 #include "utils/time.hpp"
 
+#include <shared_config.hpp>
+
 #include "ssp4sim_definitions.hpp"
 
 #include "signal/storage.hpp"
@@ -38,6 +40,10 @@ namespace ssp4sim::signal
 
         virtual void init() = 0;
 
+        virtual void start()
+        {
+        }
+
         virtual void on_event(const NewDataEvent &event) = 0;
 
         virtual void stop() = 0;
@@ -60,10 +66,9 @@ namespace ssp4sim::signal
         std::vector<std::unique_ptr<RecorderSink>> sinks;
 
         // config
-        uint64_t recording_interval = 0;
         bool wait_for_recorder = false;
 
-        DataRecorder(const std::string &filename, uint64_t interval, bool wait_for);
+        DataRecorder(bool wait_for);
 
         DataRecorder(const DataRecorder &) = delete;
         DataRecorder &operator=(const DataRecorder &) = delete;

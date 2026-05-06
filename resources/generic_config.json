@@ -21,7 +21,9 @@
             }
         },
         "recording": {
-            "enable": true,
+            "csv": {
+                "enable": true
+            },
             "wait_for": true,
             "interval": 0.25
         },

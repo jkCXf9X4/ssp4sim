@@ -38,7 +38,9 @@ later fills in the recorder-owned buffer pointer and recorder storage index.
 `DataRecorder` connects one or more `SignalStorage` instances to recorder
 sinks. It registers itself as each storage callback, copies new storage areas
 into recorder-owned buffers, queues events, and runs a worker thread that
-delivers events to sinks.
+delivers events to sinks. `start_recording()` calls an optional
+`RecorderSink::start()` hook before the worker thread begins so sinks can
+capture run-specific state.
 
 `DataRecorder::add_storage()` creates a `RecorderStorageBuffer` for the
 storage, records the storage-to-buffer index mapping, installs the storage
@@ -84,6 +86,25 @@ event buffer. Updates from different storages with the same timestamp are
 coalesced into the same CSV row. Rows are written when the row buffer rolls over
 and again during `stop()`, which flushes and closes the file.
 
+### `influx_recorder_sink.hpp` / `influx_recorder_sink.cpp`
+
+`InfluxRecorderSink` mirrors the recorder event stream to InfluxDB. It emits
+one point per signal update, using the configured measurement name and tags for
+`run`, `storage`, `signal`, and `type`. Each point carries the typed signal
+`value` and `simulation_time_s` fields, and the timestamp is derived from the
+run-start wall clock plus the simulation timestamp.
+
+The sink is safe to use without a running InfluxDB service. Connection or write
+failures are caught, logged, and used to disable only the Influx sink so the
+simulation can continue.
+
+When InfluxDB authentication is enabled, the sink reads the token from
+`simulation.recording.influx.token` or the `SSP4SIM_INFLUX_TOKEN`
+environment variable. For InfluxDB 3, point the configured URL at the write
+endpoint, for example `http://localhost:8181/api/v3/write_lp?db=ssp4sim`.
+The writer posts line protocol with nanosecond precision so the stored `time`
+column stays aligned with simulation timestamps.
+
 ## Runtime interaction
 
 The modules interact in this order:
@@ -95,7 +116,8 @@ The modules interact in this order:
 3. The recorder creates one `RecorderStorageBuffer` per storage and notifies
    recorder sinks so they can map storage layouts.
 4. `DataRecorder::init()` initializes all sinks.
-5. `start_recording()` starts the recorder worker thread.
+5. `start_recording()` calls `RecorderSink::start()` on each sink, then starts
+   the recorder worker thread.
 6. Models update storage areas and call `flag_new_data()`.
 7. The storage callback enters `DataRecorder::enqueue_event()`.
 8. The recorder copies the source storage area into the matching

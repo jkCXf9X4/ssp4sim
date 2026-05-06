@@ -118,7 +118,12 @@ def write_config(ssp_root: Path, workdir: Path) -> Path:
     simulation["working_dir"] = str(workdir)
 
     recording = simulation["recording"]
-    recording["enable"] = True
+    recording.pop("enable", None)
+    recording.pop("result_file", None)
+    recording["csv"] = {
+        "enable": True,
+        "file": str(workdir / "result.csv"),
+    }
     recording["wait_for"] = True
     recording["interval"] = 0.1
     log_config = simulation["log"]

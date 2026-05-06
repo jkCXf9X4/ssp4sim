@@ -4,6 +4,8 @@
 
 #include "config.hpp"
 
+#include <cstddef>
+#include <cstdlib>
 #include <filesystem>
 #include <exception>
 #include <stdexcept>
@@ -11,6 +13,16 @@
 
 namespace ssp4sim
 {
+    struct InfluxRecordingConfig
+    {
+        bool enable = false;
+        std::string url;
+        std::string db;
+        std::string token;
+        std::string measurement = "ssp4sim_signal";
+        std::string run = "run_[TIME]";
+        std::size_t batch_size = 500;
+    };
 
     struct SharedConfig
     {
@@ -28,12 +40,20 @@ namespace ssp4sim
         bool realtime;
 
         // Recordings
-        std::filesystem::path result_file;
 
         bool enable_recording;
         bool wait_for_recorder;
 
         uint64_t recording_interval;
+
+        struct CsvRecordingConfig
+        {
+            bool enable = true;
+            std::filesystem::path file;
+        };
+        CsvRecordingConfig csv;
+
+        InfluxRecordingConfig influx;
 
         // Logging
 
@@ -49,7 +69,7 @@ namespace ssp4sim
         {
             this->log = log;
 
-            LOG_DEBUG(this->log, "[{}] Seting up common config" , __func__);
+            LOG_DEBUG(this->log, "[{}] Seting up common config", __func__);
             // Common
             ssp_path = utils::Config::getString("simulation.ssp");
             ssd = utils::Config::getOr("simulation.ssd", "SystemStructure.ssd");
@@ -62,14 +82,52 @@ namespace ssp4sim
             realtime = utils::Config::getOr("simulation.realtime", false);
 
             // Recording
+
+            csv.enable = utils::Config::getOr("simulation.recording.csv.enable", false);
+
             auto default_result_file = working_dir / "result.csv";
+            csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));
 
-            enable_recording = utils::Config::getOr("simulation.recording.enable", true);
+            influx.enable = utils::Config::getOr("simulation.recording.influx.enable", false);
+            if (influx.enable)
+            {
+                LOG_INFO(this->log, "[{}] Influx recording enabled", __func__);
 
-            result_file = std::filesystem::path(utils::Config::getOr("simulation.recording.result_file", default_result_file.string()));
+                influx.url = utils::Config::getOr("simulation.recording.influx.url", "http://localhost:8181");
+                LOG_INFO(this->log, "[{}] Influx url: {}", __func__, influx.url);
+
+                influx.db = utils::Config::getOr("simulation.recording.influx.db", "ssp4sim");
+                LOG_INFO(this->log, "[{}] Influx db: {}", __func__, influx.db);
+
+                influx.token = utils::Config::getOr("simulation.recording.influx.token", std::string{});
+                if (influx.token.empty())
+                {
+                    if (const char *env_token = std::getenv("SSP4SIM_INFLUX_TOKEN"); env_token != nullptr && *env_token != '\0')
+                    {
+                        influx.token = env_token;
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Influx recording is enabled but no access token could be identified.");
+                    }
+                }
+
+                influx.measurement = utils::Config::getOr("simulation.recording.influx.measurement", "ssp4sim_signal");
+
+                influx.run = utils::Config::getOr("simulation.recording.influx.run", "run_[TIME]");
+
+                auto batch_size = utils::Config::getOr("simulation.recording.influx.batch_size", 500);
+                if (batch_size <= 0)
+                {
+                    throw std::runtime_error("simulation.recording.influx.batch_size must be greater than zero");
+                }
+                influx.batch_size = static_cast<std::size_t>(batch_size);
+            }
 
             recording_interval = utils::time::s_to_ns(utils::Config::getOr("simulation.recording.interval", 1.0));
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
+
+            enable_recording = csv.enable || influx.enable;
 
             // Log
             auto default_log_file = working_dir / "sim.log";
@@ -86,7 +144,7 @@ namespace ssp4sim
 
             auto default_start_value_log_file = utils::Config::getOr("simulation.log.start_values", "start_values.csv");
 
-            start_value_log_file = working_dir /default_start_value_log_file;
+            start_value_log_file = working_dir / default_start_value_log_file;
 
             LOG_DEBUG(this->log, "Setup of SharedConfig complete");
         }

@@ -32,6 +32,12 @@ Example configs:
 - [`resources/embrace/embrace.json`](../resources/embrace/embrace.json)
 - [`resources/generic_config.json`](../resources/generic_config.json)
 
+Recording output defaults to CSV. If `simulation.recording.influx.enable` is
+set, SSP4SIM also writes one InfluxDB point per signal update using the
+configured base URL, database name, measurement name, run tag, and optional
+auth token. For local runs, `SSP4SIM_INFLUX_TOKEN` can supply the token when it
+is not set in the config file.
+
 ## Python API
 
 Install the release wheel or build the Python API from source before importing

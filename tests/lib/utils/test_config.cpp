@@ -2,12 +2,55 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "utils/config.hpp"
+#include "shared_config.hpp"
 
+#include "ssp4cpp/utils/log.hpp"
+
+#include <cstdlib>
 #include <filesystem>
 #include <string>
 
 using namespace ssp4sim::utils;
 namespace fs = std::filesystem;
+
+namespace
+{
+    class ScopedEnvVar
+    {
+    public:
+        ScopedEnvVar(const char *name, const char *value)
+            : name(name)
+        {
+            if (const char *current = std::getenv(name); current != nullptr)
+            {
+                has_original = true;
+                original = current;
+            }
+
+            if (setenv(this->name.c_str(), value, 1) != 0)
+            {
+                throw std::runtime_error("failed to set environment variable");
+            }
+        }
+
+        ~ScopedEnvVar()
+        {
+            if (has_original)
+            {
+                setenv(name.c_str(), original.c_str(), 1);
+            }
+            else
+            {
+                unsetenv(name.c_str());
+            }
+        }
+
+    private:
+        std::string name;
+        std::string original;
+        bool has_original = false;
+    };
+}
 
 TEST_CASE("Config tests", "[config]")
 {
@@ -75,6 +118,80 @@ TEST_CASE("Config tests", "[config]")
         REQUIRE(Config::resolvePath("nested.key") != nullptr);
         REQUIRE(Config::resolvePath("array.0") != nullptr);
         REQUIRE(Config::resolvePath("non_existent_key") == nullptr);
+    }
+
+    SECTION("Influx recording config is parsed")
+    {
+        Config::loadFromString(R"json(
+        {
+            "simulation": {
+                "ssp": "./fake.ssp",
+                "working_dir": "./wd/test",
+                "start_time": 0.0,
+                "stop_time": 1.0,
+                "timestep": 0.1,
+                "recording": {
+                    "csv": {
+                        "enable": true
+                    },
+                    "influx": {
+                        "enable": true,
+                        "url": "http://localhost:8086",
+                        "db": "ssp4sim",
+                        "token": "config-token",
+                        "measurement": "signals",
+                        "run": "run-[TIME]",
+                        "batch_size": 123
+                }
+            }
+        }
+        }
+        )json");
+
+        auto *log = ssp4cpp::utils::log::simple_logger();
+        ssp4sim::SharedConfig shared_config(log);
+
+        REQUIRE(shared_config.enable_recording);
+        REQUIRE(shared_config.csv.enable);
+        REQUIRE(shared_config.csv.file == fs::path("./wd/test/result.csv"));
+        REQUIRE(shared_config.influx.enable);
+        REQUIRE(shared_config.influx.url == "http://localhost:8086");
+        REQUIRE(shared_config.influx.db == "ssp4sim");
+        REQUIRE(shared_config.influx.token == "config-token");
+        REQUIRE(shared_config.influx.measurement == "signals");
+        REQUIRE(shared_config.influx.batch_size == 123);
+        REQUIRE(shared_config.influx.run.rfind("run-", 0) == 0);
+    }
+
+    SECTION("Influx recording token falls back to environment")
+    {
+        [[maybe_unused]] ScopedEnvVar token_env("SSP4SIM_INFLUX_TOKEN", "env-token");
+
+        Config::loadFromString(R"json(
+        {
+            "simulation": {
+                "ssp": "./fake.ssp",
+                "start_time": 0.0,
+                "stop_time": 1.0,
+                "timestep": 0.1,
+                "recording": {
+                    "csv": {
+                        "enable": false
+                    },
+                    "influx": {
+                        "enable": true,
+                        "url": "http://localhost:8181",
+                        "db": "ssp4sim"
+                    }
+                }
+            }
+        }
+        )json");
+
+        auto *log = ssp4cpp::utils::log::simple_logger();
+        ssp4sim::SharedConfig shared_config(log);
+
+        REQUIRE(shared_config.influx.token == "env-token");
     }
 
 }

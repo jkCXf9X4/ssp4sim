@@ -177,7 +177,7 @@ namespace ssp4sim::utils
         }
         catch (const missing_key_error &)
         {
-            return std::string(defaultValue);
+            return substitute_tags(std::string(defaultValue));
         }
     }
 
@@ -189,7 +189,7 @@ namespace ssp4sim::utils
         }
         catch (const missing_key_error &)
         {
-            return std::string(defaultValue);
+            return substitute_tags(std::string(defaultValue));
         }
     }
 

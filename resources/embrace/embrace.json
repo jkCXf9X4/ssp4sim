@@ -21,9 +21,19 @@
             }
         },
         "recording": {
-            "enable": true,
+            "csv": {
+                "enable": true
+            },
             "wait_for": true,
-            "interval": 0.25
+            "interval": 0.25,
+            "influx": {
+                "enable": true,
+                "url": "http://localhost:8181",
+                "db":"ssp4sim",
+                "measurement": "ssp4sim_signal",
+                "run": "run_[TIME]",
+                "batch_size": 500
+            }
         },
         "log": {
             "fmu": false,

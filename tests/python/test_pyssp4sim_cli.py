@@ -23,6 +23,15 @@ def build_embrace_config(root: Path, workdir: Path) -> Path:
     simulation = config["simulation"]
     simulation["stop_time"] = 1.0
     simulation["working_dir"] = str(workdir)
+    simulation["log"]["file"] = str(workdir / "sim.log")
+
+    recording = simulation["recording"]
+    recording["enable"] = True
+    recording["result_file"] = str(workdir / "result.csv")
+    recording["csv"] = {
+        "enable": True,
+        "file": str(workdir / "result.csv"),
+    }
 
     workdir.mkdir(parents=True, exist_ok=True)
     smoke_config = workdir / "embrace_smoke.json"

@@ -1,6 +1,6 @@
 #include "signal/recorder.hpp"
 
-#include "signal/csv_recorder_sink.hpp"
+
 #include "signal/storage.hpp"
 
 #include <memory>
@@ -10,18 +10,16 @@
 namespace ssp4sim::signal
 {
 
-    DataRecorder::DataRecorder(const std::string &filename, uint64_t interval, bool wait_for)
+    DataRecorder::DataRecorder(bool wait_for)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.DataRecorder")),
           event_queue(4096)
     {
+
         LOG_TRACE_L2(log, "[{func}] Constructor", __func__);
 
-        recording_interval = interval;
         wait_for_recorder = wait_for;
 
-        add_sink(std::make_unique<CsvRecorderSink>(filename, recording_interval));
-
-        LOG_DEBUG(log, "[{func}] Interval: {interval}, wait_for: {wait_for}", __func__, recording_interval, wait_for_recorder);
+        LOG_DEBUG(log, "[{func}] wait_for: {wait_for}", __func__,  wait_for_recorder);
     }
 
     DataRecorder::~DataRecorder()
@@ -78,6 +76,10 @@ namespace ssp4sim::signal
     void DataRecorder::start_recording()
     {
         LOG_INFO(log, "[{func}] Starting recording", __func__);
+        for (auto &sink : sinks)
+        {
+            sink->start();
+        }
         running = true;
         worker = std::make_unique<std::thread>([this]()
                                                { loop(); });
@@ -110,7 +112,7 @@ namespace ssp4sim::signal
     void DataRecorder::new_event(void *context, NewDataEvent new_event)
     {
         auto recorder = static_cast<DataRecorder *>(context);
-        if (recorder)  [[likely]]
+        if (recorder) [[likely]]
         {
             recorder->enqueue_event(new_event);
         }
@@ -119,7 +121,7 @@ namespace ssp4sim::signal
     void DataRecorder::enqueue_event(NewDataEvent new_event)
     {
         auto storage_index = storage_indexes.find(new_event.storage);
-        if (storage_index == storage_indexes.end())  [[unlikely]]
+        if (storage_index == storage_indexes.end()) [[unlikely]]
         {
             LOG_WARNING(log, "[{func}] Ignoring event for unregistered storage {}", __func__, new_event.storage->name);
             return;
@@ -144,7 +146,7 @@ namespace ssp4sim::signal
 
         while (!event_queue.try_push(new_event))
         {
-            if (!wait_for_recorder || !running.load(std::memory_order_acquire))  [[unlikely]]
+            if (!wait_for_recorder || !running.load(std::memory_order_acquire)) [[unlikely]]
             {
                 recorder_storage.pop();
                 LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] Event queue full for storage {}", __func__, recorder_storage.storage->name);
@@ -178,7 +180,7 @@ namespace ssp4sim::signal
 
             process_new_data(new_event);
 
-            if (new_event.recorder_storage_index >= storage_buffers.size())  [[unlikely]]
+            if (new_event.recorder_storage_index >= storage_buffers.size()) [[unlikely]]
             {
                 LOG_WARNING(log, "[{func}] Invalid recorder buffer index {} for storage {}", __func__, new_event.recorder_storage_index, new_event.storage->name);
                 continue;
@@ -196,6 +198,5 @@ namespace ssp4sim::signal
         {
             sink->on_event(new_event);
         }
-
     }
 }

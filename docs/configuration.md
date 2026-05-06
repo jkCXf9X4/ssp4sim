@@ -44,7 +44,14 @@ For CLI and Python invocation examples, see [Usage](usage.md).
     "recording": {
       "enable": true,
       "wait_for": false,
-      "interval": 0.25
+      "interval": 0.25,
+      "influx": {
+        "enable": false,
+        "url": "http://localhost:8086?db=ssp4sim",
+        "measurement": "ssp4sim_signal",
+        "run": "run_[TIME]",
+        "batch_size": 500
+      }
     },
     "log": {
       "fmu": false,
@@ -92,10 +99,29 @@ Notes:
 
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
-| `simulation.recording.enable` | `bool` | No | `true` | Enables CSV recorder creation. |
+| `simulation.recording.csv.enable` | `bool` | No | `false` | Enables the CSV recorder. |
+| `simulation.recording.csv.file` | `string` | No | `simulation.working_dir/result.csv` | Output CSV path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 | `simulation.recording.interval` | `double` | No | `1.0` | Seconds between recorded samples. |
-| `simulation.recording.result_file` | `string` | No | `simulation.working_dir/result.csv` | Output CSV path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
+
+### `simulation.recording.influx.*`
+
+| Key | Type | Required | Default | Notes |
+|---|---|---|---|---|
+| `simulation.recording.influx.enable` | `bool` | No | `false` | Enables the optional InfluxDB sink. When `false`, the remaining keys are ignored. |
+| `simulation.recording.influx.url` | `string` | Yes when enabled | `http://localhost:8181` | Base Influx URL passed to the client. SSP4SIM appends the write path internally. |
+| `simulation.recording.influx.db` | `string` | No | `ssp4sim` | Influx database name passed to the client. |
+| `simulation.recording.influx.token` | `string` | No | - | Auth token for the Influx client. If omitted, SSP4SIM also checks `SSP4SIM_INFLUX_TOKEN`. |
+| `simulation.recording.influx.measurement` | `string` | No | `ssp4sim_signal` | Measurement name used for emitted points. |
+| `simulation.recording.influx.run` | `string` | No | `run_[TIME]` | Run tag value. `[TIME]` is substituted before use. |
+| `simulation.recording.influx.batch_size` | `int` | No | `500` | Batch size passed to the Influx client. Must be greater than zero. |
+
+Influx points are emitted one per signal update. Each point carries `run`,
+`storage`, `signal`, and `type` tags, plus `value` and `simulation_time_s`
+fields. The point timestamp is the run-start wall clock plus the simulation
+timestamp. The write request uses nanosecond precision so the stored `time`
+column matches the recorder clock. If creation or writing fails, the sink logs
+a warning and disables itself so the simulation can continue.
 
 ### `simulation.log.*`
 

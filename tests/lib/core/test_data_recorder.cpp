@@ -1,6 +1,7 @@
 #include <catch.hpp>
 #include "ssp4cpp/utils/log.hpp"
 
+#include "signal/csv_recorder_sink.hpp"
 #include "utils/time.hpp"
 #include "utils/allocator.hpp"
 #include "signal/recorder.hpp"
@@ -21,6 +22,7 @@
 #include <vector>
 
 using ssp4sim::signal::DataRecorder;
+using ssp4sim::signal::CsvRecorderSink;
 using ssp4sim::signal::NewDataEvent;
 using ssp4sim::signal::RecorderSink;
 using ssp4sim::signal::SignalStorage;
@@ -94,7 +96,8 @@ TEST_CASE("DataRecorder initialization and cleanup", "[DataRecorder]")
 
     // Scope for the DataRecorder to ensure it's destructed properly
     {
-        DataRecorder recorder(test_filename.string(), 1000, false);
+        DataRecorder recorder(false);
+        recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
         // Check if file was created
         REQUIRE(fs::exists(test_filename));
     }
@@ -111,7 +114,8 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
     const fs::path test_filename = project_root / "build" / "test_recorder_headers.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename.string(), 1000, false);
+    DataRecorder recorder(false);
+    recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage storage(2, "signals");
     storage.add("signals.real", DataType::real, 1);
@@ -136,7 +140,8 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     const fs::path test_filename = project_root / "build" / "test_recorder_rows.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename.string(), 1000, false);
+    DataRecorder recorder(false);
+    recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage storage(2, "signals");
     storage.add("signals.temperature", DataType::real, 1);
@@ -170,7 +175,8 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     const fs::path test_filename = project_root / "build" / "test_recorder_multistorage.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename.string(), 1000, false);
+    DataRecorder recorder(false);
+    recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage primary(2, "primary");
     primary.add("primary.temperature", DataType::real, 1);
@@ -235,7 +241,8 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
     const fs::path test_filename = project_root / "build" / "test_recorder_sink_events.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename.string(), 1000, false);
+    DataRecorder recorder(false);
+    recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
     auto sink = std::make_unique<CollectingSink>();
     auto *sink_ptr = sink.get();
     recorder.add_sink(std::move(sink));
@@ -294,7 +301,8 @@ TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten"
     const fs::path test_filename = project_root / "build" / "test_recorder_stale_events.csv";
     remove_if_existing(test_filename);
 
-    DataRecorder recorder(test_filename.string(), 1000, false);
+    DataRecorder recorder(false);
+    recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
     auto sink = std::make_unique<CollectingSink>();
     auto *sink_ptr = sink.get();
     recorder.add_sink(std::move(sink));

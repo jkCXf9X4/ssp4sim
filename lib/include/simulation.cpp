@@ -6,6 +6,8 @@
 #include "analysis_graph_builder.hpp"
 #include "graph_builder.hpp"
 
+#include "signal/influx_recorder_sink.hpp"
+#include "signal/csv_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
 #include "config.hpp"
@@ -52,11 +54,19 @@ namespace ssp4sim
         LOG_INFO(p->log, "[{func}] Creating simulation", __func__);
         p->fmu_handler = std::make_unique<handler::FmuHandler>(p->ssp);
 
-        utils::io::create_parent_folder(config->result_file.string());
-
         if (config->enable_recording)
         {
-            p->recorder = std::make_unique<signal::DataRecorder>(config->result_file.string(), config->recording_interval, config->wait_for_recorder);
+            p->recorder = std::make_unique<signal::DataRecorder>(config->wait_for_recorder);
+
+            if (config->influx.enable)
+            {
+                p->recorder->add_sink(std::make_unique<signal::InfluxRecorderSink>(config->influx));
+            }
+
+            if (config->csv.enable)
+            {
+                p->recorder->add_sink(std::make_unique<signal::CsvRecorderSink>(config->csv.file, config->recording_interval));
+            }
         }
     }
 

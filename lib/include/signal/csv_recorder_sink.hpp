@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <filesystem>
 
 namespace ssp4sim::signal
 {
@@ -58,7 +59,7 @@ namespace ssp4sim::signal
         std::uint64_t recording_interval = 0;
         std::size_t printed_rows = 0;
 
-        CsvRecorderSink(const std::string &filename, std::uint64_t interval);
+        CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval);
 
         void on_storage_added(const SignalStorage *storage) override;
 

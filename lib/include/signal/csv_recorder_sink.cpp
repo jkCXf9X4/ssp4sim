@@ -2,18 +2,23 @@
 
 #include "FMI2_Enums_Ext.hpp"
 #include "utils/time.hpp"
+#include "utils/io.hpp"
 
 #include <algorithm>
 #include <utility>
+#include <filesystem>
+
 
 namespace ssp4sim::signal
 {
-    CsvRecorderSink::CsvRecorderSink(const std::string &filename, std::uint64_t interval)
+    CsvRecorderSink::CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.CsvRecorderSink")),
           file(filename, std::ios::out),
           recording_interval(interval)
     {
-        LOG_DEBUG(log, "[{func}] File {file}, open {open}", __func__, filename, file.is_open());
+        utils::io::create_parent_folder(filename.string());
+
+        LOG_DEBUG(log, "[{func}] File {file}, open {open}", __func__, filename.string(), file.is_open());
         LOG_DEBUG(log, "[{func}] Interval: {interval}", __func__, recording_interval);
     }
 

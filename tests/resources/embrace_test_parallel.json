@@ -29,10 +29,12 @@
 
         "recording":
         {
-            "enable": true,
+            "csv": {
+                "enable": true,
+                "file": "./tests/resources/references/embrace_scenario_result.csv"
+            },
             "wait_for": true,
-            "interval": 0.25,
-            "result_file": "./tests/resources/references/embrace_scenario_result.csv" 
+            "interval": 0.25
         },
 
         "log":
