@@ -6,10 +6,13 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <fstream>
 #include <filesystem>
 #include <exception>
 #include <stdexcept>
 #include <string>
+
+#include <nlohmann/json.hpp>
 
 namespace ssp4sim
 {
@@ -23,6 +26,35 @@ namespace ssp4sim
         std::string run = "run_[TIME]";
         std::size_t batch_size = 500;
     };
+
+    inline std::string discover_influx_token()
+    {
+        if (const char *env_token = std::getenv("SSP4SIM_INFLUX_TOKEN"); env_token != nullptr && *env_token != '\0')
+        {
+            return env_token;
+        }
+
+        const char *home = std::getenv("HOME");
+        if (home == nullptr || *home == '\0')
+        {
+            return {};
+        }
+
+        const auto config_path = std::filesystem::path(home) / ".influxdb" / "docker" / "explorer" / "config" / "config.json";
+        std::ifstream stream(config_path);
+        if (!stream)
+        {
+            return {};
+        }
+
+        const auto config = nlohmann::json::parse(stream, nullptr, false);
+        if (config.is_discarded() || !config.is_object())
+        {
+            return {};
+        }
+
+        return config.value("DEFAULT_API_TOKEN", "");
+    }
 
     struct SharedConfig
     {
@@ -102,11 +134,8 @@ namespace ssp4sim
                 influx.token = utils::Config::getOr("simulation.recording.influx.token", std::string{});
                 if (influx.token.empty())
                 {
-                    if (const char *env_token = std::getenv("SSP4SIM_INFLUX_TOKEN"); env_token != nullptr && *env_token != '\0')
-                    {
-                        influx.token = env_token;
-                    }
-                    else
+                    influx.token = discover_influx_token();
+                    if (influx.token.empty())
                     {
                         throw std::runtime_error("Influx recording is enabled but no access token could be identified.");
                     }

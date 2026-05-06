@@ -111,17 +111,18 @@ Notes:
 | `simulation.recording.influx.enable` | `bool` | No | `false` | Enables the optional InfluxDB sink. When `false`, the remaining keys are ignored. |
 | `simulation.recording.influx.url` | `string` | Yes when enabled | `http://localhost:8181` | Base Influx URL passed to the client. SSP4SIM appends the write path internally. |
 | `simulation.recording.influx.db` | `string` | No | `ssp4sim` | Influx database name passed to the client. |
-| `simulation.recording.influx.token` | `string` | No | - | Auth token for the Influx client. If omitted, SSP4SIM also checks `SSP4SIM_INFLUX_TOKEN`. |
+| `simulation.recording.influx.token` | `string` | No | - | Auth token for the Influx client. If omitted, SSP4SIM checks `SSP4SIM_INFLUX_TOKEN` and then `~/.influxdb/docker/explorer/config/config.json`. |
 | `simulation.recording.influx.measurement` | `string` | No | `ssp4sim_signal` | Measurement name used for emitted points. |
 | `simulation.recording.influx.run` | `string` | No | `run_[TIME]` | Run tag value. `[TIME]` is substituted before use. |
 | `simulation.recording.influx.batch_size` | `int` | No | `500` | Batch size passed to the Influx client. Must be greater than zero. |
 
 Influx points are emitted one per signal update. Each point carries `run`,
-`storage`, `signal`, and `type` tags, plus `value` and `simulation_time_s`
-fields. The point timestamp is the run-start wall clock plus the simulation
-timestamp. The write request uses nanosecond precision so the stored `time`
-column matches the recorder clock. If creation or writing fails, the sink logs
-a warning and disables itself so the simulation can continue.
+`storage`, `signal`, and `type` tags, plus `value` or `value_string` and
+`simulation_time_s` fields. Numeric and boolean signals use `value`; string
+signals use `value_string`. The point timestamp is the run-start wall clock plus
+the simulation timestamp. The write request uses nanosecond precision so the
+stored `time` column matches the recorder clock. If creation or writing fails,
+the sink logs a warning and disables itself so the simulation can continue.
 
 ### `simulation.log.*`
 

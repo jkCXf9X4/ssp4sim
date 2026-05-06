@@ -36,7 +36,8 @@ Recording output defaults to CSV. If `simulation.recording.influx.enable` is
 set, SSP4SIM also writes one InfluxDB point per signal update using the
 configured base URL, database name, measurement name, run tag, and optional
 auth token. For local runs, `SSP4SIM_INFLUX_TOKEN` can supply the token when it
-is not set in the config file.
+is not set in the config file; SSP4SIM also falls back to the local Influx
+Explorer config file under `~/.influxdb/docker/explorer/config/config.json`.
 
 ## Python API
 

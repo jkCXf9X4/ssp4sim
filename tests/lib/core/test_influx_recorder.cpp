@@ -264,19 +264,19 @@ TEST_CASE("Influx recorder sink emits one point per signal", "[DataRecorder][Inf
     REQUIRE(writer_ptr->points[1].getName() == "ssp4sim_signal");
     REQUIRE(tag_value(writer_ptr->points[1], "signal").value() == "source.mode");
     REQUIRE(tag_value(writer_ptr->points[1], "type").value() == type_integer);
-    REQUIRE(field_value<int>(writer_ptr->points[1], "value").value() == mode);
+    REQUIRE(field_value<double>(writer_ptr->points[1], "value").value() == static_cast<double>(mode));
     REQUIRE(writer_ptr->points[1].getTimestamp() == expected_timestamp);
 
     REQUIRE(writer_ptr->points[2].getName() == "ssp4sim_signal");
     REQUIRE(tag_value(writer_ptr->points[2], "signal").value() == "source.enabled");
     REQUIRE(tag_value(writer_ptr->points[2], "type").value() == type_boolean);
-    REQUIRE(field_value<bool>(writer_ptr->points[2], "value").value() == enabled);
+    REQUIRE(field_value<double>(writer_ptr->points[2], "value").value() == (enabled ? 1.0 : 0.0));
     REQUIRE(writer_ptr->points[2].getTimestamp() == expected_timestamp);
 
     REQUIRE(writer_ptr->points[3].getName() == "ssp4sim_signal");
     REQUIRE(tag_value(writer_ptr->points[3], "signal").value() == "source.label");
     REQUIRE(tag_value(writer_ptr->points[3], "type").value() == type_string);
-    REQUIRE(field_value<std::string>(writer_ptr->points[3], "value").value() == label);
+    REQUIRE(field_value<std::string>(writer_ptr->points[3], "value_string").value() == label);
     REQUIRE(writer_ptr->points[3].getTimestamp() == expected_timestamp);
 
     remove_if_exists(csv_path);

@@ -122,7 +122,7 @@ namespace ssp4sim::signal
 
                 if (response.status_code < 200 || response.status_code >= 300)
                 {
-                    throw std::runtime_error("Influx write failed with HTTP status " + std::to_string(response.status_code));
+                    throw std::runtime_error("Influx write failed with HTTP status " + std::to_string(response.status_code) + ": " + response.text);
                 }
 
                 pending.clear();
@@ -240,14 +240,14 @@ namespace ssp4sim::signal
         {
             bool value = false;
             std::memcpy(&value, data, sizeof(value));
-            return value;
+            return value ? 1.0 : 0.0;
         }
         case types::DataType::integer:
         case types::DataType::enumeration:
         {
             int value = 0;
             std::memcpy(&value, data, sizeof(value));
-            return value;
+            return static_cast<double>(value);
         }
         case types::DataType::string:
         {
@@ -303,11 +303,12 @@ namespace ssp4sim::signal
             try
             {
                 influxdb::Point point(measurement);
+                const auto value_field = variable.type == types::DataType::string ? "value_string" : "value";
                 point.addTag("run", run_name)
                     .addTag("storage", event.storage->name)
                     .addTag("signal", variable.name)
                     .addTag("type", variable.type.to_string())
-                    .addField("value", *field_value)
+                    .addField(value_field, *field_value)
                     .addField("simulation_time_s", simulation_time_s)
                     .setTimestamp(timestamp);
 

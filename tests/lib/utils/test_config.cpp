@@ -7,6 +7,8 @@
 #include "ssp4cpp/utils/log.hpp"
 
 #include <cstdlib>
+#include <chrono>
+#include <fstream>
 #include <filesystem>
 #include <string>
 
@@ -192,6 +194,52 @@ TEST_CASE("Config tests", "[config]")
         ssp4sim::SharedConfig shared_config(log);
 
         REQUIRE(shared_config.influx.token == "env-token");
+    }
+
+    SECTION("Influx recording token falls back to the local config file")
+    {
+        const fs::path temp_home = fs::temp_directory_path() /
+                                   ("ssp4sim-influx-home-" +
+                                    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+        const fs::path config_dir = temp_home / ".influxdb" / "docker" / "explorer" / "config";
+        fs::create_directories(config_dir);
+
+        const fs::path config_file_path = config_dir / "config.json";
+        {
+            std::ofstream config_file(config_file_path);
+            config_file << R"json({"DEFAULT_API_TOKEN":"file-token"})json";
+        }
+
+        const std::string home_str = temp_home.string();
+        [[maybe_unused]] ScopedEnvVar home_env("HOME", home_str.c_str());
+
+        Config::loadFromString(R"json(
+        {
+            "simulation": {
+                "ssp": "./fake.ssp",
+                "start_time": 0.0,
+                "stop_time": 1.0,
+                "timestep": 0.1,
+                "recording": {
+                    "csv": {
+                        "enable": false
+                    },
+                    "influx": {
+                        "enable": true,
+                        "url": "http://localhost:8181",
+                        "db": "ssp4sim"
+                    }
+                }
+            }
+        }
+        )json");
+
+        auto *log = ssp4cpp::utils::log::simple_logger();
+        ssp4sim::SharedConfig shared_config(log);
+
+        REQUIRE(shared_config.influx.token == "file-token");
+
+        fs::remove_all(temp_home);
     }
 
 }

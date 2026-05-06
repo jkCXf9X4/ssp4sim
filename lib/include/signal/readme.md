@@ -91,8 +91,9 @@ and again during `stop()`, which flushes and closes the file.
 `InfluxRecorderSink` mirrors the recorder event stream to InfluxDB. It emits
 one point per signal update, using the configured measurement name and tags for
 `run`, `storage`, `signal`, and `type`. Each point carries the typed signal
-`value` and `simulation_time_s` fields, and the timestamp is derived from the
-run-start wall clock plus the simulation timestamp.
+`value` or `value_string` and `simulation_time_s` fields, and the timestamp is
+derived from the run-start wall clock plus the simulation timestamp. Numeric and
+boolean signals use `value`; string signals use `value_string`.
 
 The sink is safe to use without a running InfluxDB service. Connection or write
 failures are caught, logged, and used to disable only the Influx sink so the
