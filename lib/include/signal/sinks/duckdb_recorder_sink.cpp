@@ -195,8 +195,7 @@ namespace ssp4sim::signal
         layout.storage = storage;
         layout.index = layouts.size();
         layout.model = std::move(model);
-        layout.storage_name = std::move(storage_name);
-        layout.table_name = table_name_for(layout.index, layout.model, layout.storage_name);
+        layout.table_name = table_name_for(layout.index, layout.model, storage_name);
         layout.variables.reserve(storage->variables.size());
 
         for (const auto &variable : storage->variables)
@@ -232,11 +231,7 @@ namespace ssp4sim::signal
         create_sql += quote_identifier("timestamp_ns");
         create_sql += " BIGINT, ";
         create_sql += quote_identifier("simulation_time_s");
-        create_sql += " DOUBLE, ";
-        create_sql += quote_identifier("model");
-        create_sql += " VARCHAR, ";
-        create_sql += quote_identifier("storage");
-        create_sql += " VARCHAR";
+        create_sql += " DOUBLE";
 
         for (const auto &variable : layout.variables)
         {
@@ -318,8 +313,6 @@ namespace ssp4sim::signal
         {
             check_duckdb_state(duckdb_append_int64(layout.appender, timestamp_ns), "Failed to append timestamp");
             check_duckdb_state(duckdb_append_double(layout.appender, simulation_time_s), "Failed to append simulation time");
-            check_duckdb_state(duckdb_append_varchar(layout.appender, layout.model.c_str()), "Failed to append model");
-            check_duckdb_state(duckdb_append_varchar(layout.appender, layout.storage_name.c_str()), "Failed to append storage");
 
             for (const auto &variable : layout.variables)
             {

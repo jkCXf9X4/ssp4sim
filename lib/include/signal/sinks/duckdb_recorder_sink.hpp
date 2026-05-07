@@ -30,7 +30,6 @@ namespace ssp4sim::signal
         const SignalStorage *storage = nullptr;
         std::size_t index = 0;
         std::string model;
-        std::string storage_name;
         std::string table_name;
         std::vector<DuckDbVariableLayout> variables;
         duckdb_appender appender = nullptr;

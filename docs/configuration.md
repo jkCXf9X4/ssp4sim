@@ -105,7 +105,7 @@ Notes:
 | `simulation.recording.csv.interval` | `double` | No | `1.0` | Seconds between recorded CSV samples. |
 | `simulation.recording.parquet.enable` | `bool` | No | `false` | Enables the Parquet recorder. It writes one grouped storage snapshot per row and captures the full recorder event stream. |
 | `simulation.recording.parquet.file` | `string` | No | `simulation.working_dir/result.parquet` | Base Parquet path (`[TIME]` supported). The recorder writes one file per storage using this path as the prefix. |
-| `simulation.recording.duckdb.enable` | `bool` | No | `false` | Enables the DuckDB recorder. It writes grouped storage snapshots directly into a DuckDB database file, one table per storage. |
+| `simulation.recording.duckdb.enable` | `bool` | No | `false` | Enables the DuckDB recorder. It writes grouped storage snapshots directly into a DuckDB database file, one table per storage. Each table stores `timestamp_ns`, `simulation_time_s`, and the storage variables; the table name already encodes the model and storage identity. |
 | `simulation.recording.duckdb.file` | `string` | No | `simulation.working_dir/result.duckdb` | Output DuckDB database path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 

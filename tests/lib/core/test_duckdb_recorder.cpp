@@ -174,32 +174,28 @@ TEST_CASE("DuckDB recorder sink writes per-storage tables", "[DataRecorder][Duck
     duckdb_result result;
 
     require_query(connection,
-                  "SELECT timestamp_ns, simulation_time_s, model, storage, CPUtime, EventCounter, enabled, label FROM " +
+                  "SELECT timestamp_ns, simulation_time_s, CPUtime, EventCounter, enabled, label FROM " +
                       quote_identifier(consumer_table) + " ORDER BY timestamp_ns;",
                   result);
 
     REQUIRE(duckdb_row_count(&result) == 1);
     REQUIRE(duckdb_value_int64(&result, 0, 0) == static_cast<std::int64_t>(timestamp));
     REQUIRE(duckdb_value_double(&result, 1, 0) == Catch::Approx(sim_time::ns_to_s(timestamp)));
-    REQUIRE(std::string(duckdb_value_varchar_internal(&result, 2, 0)) == "Consumer");
-    REQUIRE(std::string(duckdb_value_varchar_internal(&result, 3, 0)) == "output");
-    REQUIRE(duckdb_value_double(&result, 4, 0) == Catch::Approx(cpu_time));
-    REQUIRE(duckdb_value_int64(&result, 5, 0) == event_counter);
-    REQUIRE(duckdb_value_boolean(&result, 6, 0));
-    REQUIRE(std::string(duckdb_value_varchar_internal(&result, 7, 0)) == "hello");
+    REQUIRE(duckdb_value_double(&result, 2, 0) == Catch::Approx(cpu_time));
+    REQUIRE(duckdb_value_int32(&result, 3, 0) == event_counter);
+    REQUIRE(duckdb_value_boolean(&result, 4, 0));
+    REQUIRE(std::string(duckdb_value_varchar_internal(&result, 5, 0)) == "hello");
     duckdb_destroy_result(&result);
 
     require_query(connection,
-                  "SELECT timestamp_ns, simulation_time_s, model, storage, value FROM " +
+                  "SELECT timestamp_ns, simulation_time_s, value FROM " +
                       quote_identifier(aux_table) + " ORDER BY timestamp_ns;",
                   result);
 
     REQUIRE(duckdb_row_count(&result) == 1);
     REQUIRE(duckdb_value_int64(&result, 0, 0) == static_cast<std::int64_t>(timestamp));
     REQUIRE(duckdb_value_double(&result, 1, 0) == Catch::Approx(sim_time::ns_to_s(timestamp)));
-    REQUIRE(std::string(duckdb_value_varchar_internal(&result, 2, 0)) == "Aux");
-    REQUIRE(std::string(duckdb_value_varchar_internal(&result, 3, 0)) == "output");
-    REQUIRE(duckdb_value_double(&result, 4, 0) == Catch::Approx(aux_value));
+    REQUIRE(duckdb_value_double(&result, 2, 0) == Catch::Approx(aux_value));
     duckdb_destroy_result(&result);
 
     duckdb_disconnect(&connection);
