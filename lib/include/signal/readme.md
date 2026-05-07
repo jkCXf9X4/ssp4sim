@@ -86,8 +86,9 @@ event buffer. Updates from different storages with the same timestamp are
 coalesced into the same CSV row. Rows are written when the row buffer rolls over
 and again during `stop()`, which flushes and closes the file.
 
-The recorder currently ships with the CSV sink. Additional sinks can be added
-when another export path needs the same event stream.
+The recorder currently ships with a low-rate CSV sink and a full-fidelity
+Parquet sink. Additional sinks can be added when another export path needs the
+same event stream.
 
 ## Runtime interaction
 

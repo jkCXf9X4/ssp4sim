@@ -7,6 +7,7 @@
 #include "graph_builder.hpp"
 
 #include "signal/sinks/csv_recorder_sink.hpp"
+#include "signal/sinks/parquet_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
 #include "config.hpp"
@@ -60,6 +61,11 @@ namespace ssp4sim
             if (config->csv.enable)
             {
                 p->recorder->add_sink(std::make_unique<signal::CsvRecorderSink>(config->csv.file, config->csv.interval));
+            }
+
+            if (config->parquet.enable)
+            {
+                p->recorder->add_sink(std::make_unique<signal::ParquetRecorderSink>(config->parquet.file));
             }
         }
     }

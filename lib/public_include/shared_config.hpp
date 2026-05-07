@@ -4,6 +4,7 @@
 
 #include "config.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <stdexcept>
@@ -39,6 +40,12 @@ namespace ssp4sim
             uint64_t interval = 0;
         };
         CsvRecordingConfig csv;
+        struct ParquetRecordingConfig
+        {
+            bool enable = false;
+            std::filesystem::path file;
+        };
+        ParquetRecordingConfig parquet;
 
         // Logging
 
@@ -81,9 +88,16 @@ namespace ssp4sim
                 auto default_result_file = working_dir / "result.csv";
                 csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));
             }
+
+            parquet.enable = utils::Config::getOr("simulation.recording.parquet.enable", false);
+            if (parquet.enable)
+            {
+                auto default_result_file = working_dir / "result.parquet";
+                parquet.file = std::filesystem::path(utils::Config::getOr("simulation.recording.parquet.file", default_result_file.string()));
+            }
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
 
-            enable_recording = csv.enable;
+            enable_recording = csv.enable || parquet.enable;
 
             // Log
             auto default_log_file = working_dir / "sim.log";

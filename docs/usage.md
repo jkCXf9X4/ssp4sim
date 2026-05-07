@@ -32,8 +32,8 @@ Example configs:
 - [`resources/embrace/embrace.json`](../resources/embrace/embrace.json)
 - [`resources/generic_config.json`](../resources/generic_config.json)
 
-Recording output defaults to CSV. CSV recording details live in
-[Configuration](configuration.md).
+Recording output defaults to CSV. Parquet is available for full-fidelity
+snapshot logging. Recording details live in [Configuration](configuration.md).
 
 ## Python API
 

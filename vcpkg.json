@@ -7,6 +7,7 @@
     "libzip",
     "pugixml",
     "kissnet",
+    "arrow",
     "python3",
     "quill"
   ]

@@ -9,6 +9,8 @@ Current support:
 - SSP 1.0 archives and unpacked SSP directories
 - FMI 2.0 co-simulation models
 - Gauss-Jacobi and Gauss-Seidel execution strategies
+- CSV recording for low-rate logging and Parquet recording for full-fidelity
+  storage snapshots
 
 See the [SSP standard](https://ssp-standard.org) for more information about the file format.
 
