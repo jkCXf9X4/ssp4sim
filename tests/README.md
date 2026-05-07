@@ -51,9 +51,10 @@ pytest parameterization and Python-side CSV/result comparison helpers. Pytest is
 configured to collect only `tests/python`.
 
 The test iterates the unpacked SSP fixtures under
-`tests/resources/reference_ssp/build/models/*/ssp`, simulates each co-simulation SSP, and
-checks that a complete result CSV is produced. Model-exchange fixtures are
-excluded because the current runtime only supports co-simulation FMUs.
+`tests/resources/reference_ssp/artifacts/models/*/*`, simulates each
+co-simulation SSP, and checks that a complete result CSV is produced.
+Model-exchange fixtures are excluded because the current runtime only supports
+co-simulation FMUs.
 
 The Python tests import `pyssp4sim` from `build/public/python_api` when that
 build artifact exists. This prevents high-level tests from accidentally passing
@@ -81,7 +82,7 @@ an external `.ssv` parameter set fixture.
 Known reference runtime failures are marked with strict `xfail` entries in the
 test. If an expected-failing SSP starts passing, pytest reports it as an XPASS
 failure so the marker must be removed. The current expected failures are
-`dcmotor`, because the runtime does not yet support hierarchical SSP systems
+`dcmotor`, because the runtime does not yet support hierarchical SSP systems.
 
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the

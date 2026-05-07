@@ -20,22 +20,37 @@ namespace
 
     fs::path smoke_ssp_root()
     {
-        return project_root() / "tests" / "resources" / "reference_ssp" / "build" / "models" / "pyfmu_csv_source_sink" / "ssp";
+        return project_root() / "tests" / "resources" / "reference_ssp" / "artifacts" / "models" / "pyfmu_csv_source_sink" / "baseline";
+    }
+
+    fs::path runtime_smoke_ssp_root(const fs::path &workdir)
+    {
+        const auto runtime_ssp_root = workdir / "ssp";
+        fs::remove_all(runtime_ssp_root);
+        fs::copy(
+            smoke_ssp_root(),
+            runtime_ssp_root,
+            fs::copy_options::recursive | fs::copy_options::copy_symlinks);
+        return runtime_ssp_root;
     }
 
     fs::path write_smoke_config(const fs::path &workdir)
     {
         const auto config_template = project_root() / "resources" / "generic_config.json";
         REQUIRE(fs::exists(config_template));
-        REQUIRE(fs::exists(smoke_ssp_root() / "SystemStructure.ssd"));
+
+        fs::create_directories(workdir);
 
         std::ifstream input(config_template);
         REQUIRE(input.is_open());
 
+        const auto ssp_root = runtime_smoke_ssp_root(workdir);
+        REQUIRE(fs::exists(ssp_root / "SystemStructure.ssd"));
+
         nlohmann::json config;
         input >> config;
 
-        config["simulation"]["ssp"] = smoke_ssp_root().string();
+        config["simulation"]["ssp"] = ssp_root.string();
         config["simulation"]["ssd"] = "SystemStructure.ssd";
         config["simulation"]["start_time"] = 0.0;
         config["simulation"]["stop_time"] = 1.0;
