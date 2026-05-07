@@ -14,16 +14,19 @@ namespace ssp4sim::signal
 {
     namespace
     {
-        void check_duckdb_state(duckdb_state state, const std::string &context, const std::string *error = nullptr)
+        void check_duckdb_state(duckdb_state state, std::string_view context, std::string_view error = {})
         {
             if (state != DuckDBSuccess)
             {
-                if (error != nullptr && !error->empty())
+                if (!error.empty())
                 {
-                    throw std::runtime_error(context + ": " + *error);
+                    std::string message(context);
+                    message += ": ";
+                    message += error;
+                    throw std::runtime_error(message);
                 }
 
-                throw std::runtime_error(context);
+                throw std::runtime_error(std::string(context));
             }
         }
 
@@ -130,7 +133,7 @@ namespace ssp4sim::signal
             return "DOUBLE";
         case types::DataType::Value::integer:
         case types::DataType::Value::enumeration:
-            return "BIGINT";
+            return "INTEGER";
         case types::DataType::Value::boolean:
             return "BOOLEAN";
         case types::DataType::Value::string:
@@ -154,7 +157,7 @@ namespace ssp4sim::signal
             break;
         case types::DataType::Value::integer:
         case types::DataType::Value::enumeration:
-            check_duckdb_state(duckdb_append_int64(appender, static_cast<int64_t>(*reinterpret_cast<const int *>(data))), "Failed to append integer value");
+            check_duckdb_state(duckdb_append_int32(appender, *reinterpret_cast<const int *>(data)), "Failed to append integer value");
             break;
         case types::DataType::Value::boolean:
             check_duckdb_state(duckdb_append_bool(appender, *reinterpret_cast<const int *>(data) != 0), "Failed to append boolean value");
@@ -249,8 +252,8 @@ namespace ssp4sim::signal
         const auto state = duckdb_query(connection, create_sql.c_str(), &result);
         if (state != DuckDBSuccess)
         {
-            const auto *error = duckdb_result_error(&result);
             std::string message = "Failed to create DuckDB table";
+            const auto *error = duckdb_result_error(&result);
             if (error != nullptr && *error != '\0')
             {
                 message += ": ";
@@ -267,7 +270,7 @@ namespace ssp4sim::signal
     void DuckDbRecorderSink::init()
     {
         LOG_TRACE_L1(log, "[{func}] Init", __func__);
-        if (disabled)
+        if (disabled || stopped)
         {
             return;
         }
@@ -287,27 +290,9 @@ namespace ssp4sim::signal
         }
     }
 
-    void DuckDbRecorderSink::flush_batch(DuckDbStorageLayout &layout)
-    {
-        if (disabled || layout.appender == nullptr || layout.row_count == 0)
-        {
-            return;
-        }
-
-        try
-        {
-            check_duckdb_state(duckdb_appender_flush(layout.appender), "Failed to flush DuckDB appender");
-            layout.row_count = 0;
-        }
-        catch (const std::exception &e)
-        {
-            disable_sink(e.what());
-        }
-    }
-
     void DuckDbRecorderSink::on_event(const NewDataEvent &event)
     {
-        if (disabled || event.storage == nullptr || event.buffer == nullptr)
+        if (disabled || stopped || event.storage == nullptr || event.buffer == nullptr)
         {
             return;
         }
@@ -342,12 +327,6 @@ namespace ssp4sim::signal
             }
 
             check_duckdb_state(duckdb_appender_end_row(layout.appender), "Failed to finish DuckDB row");
-
-            layout.row_count += 1;
-            if (layout.row_count >= batch_rows)
-            {
-                flush_batch(layout);
-            }
         }
         catch (const std::exception &e)
         {
@@ -363,6 +342,7 @@ namespace ssp4sim::signal
         }
 
         disabled = true;
+        stopped = true;
         LOG_WARNING(log, "[{func}] DuckDB sink disabled: {}", __func__, reason);
 
         for (auto &layout : layouts)
@@ -388,7 +368,7 @@ namespace ssp4sim::signal
 
     void DuckDbRecorderSink::stop()
     {
-        if (disabled)
+        if (disabled || stopped)
         {
             return;
         }
@@ -397,7 +377,6 @@ namespace ssp4sim::signal
         {
             for (auto &layout : layouts)
             {
-                flush_batch(layout);
                 if (layout.appender != nullptr)
                 {
                     check_duckdb_state(duckdb_appender_destroy(&layout.appender), "Failed to destroy DuckDB appender");
@@ -421,5 +400,7 @@ namespace ssp4sim::signal
             duckdb_close(&database);
             database = nullptr;
         }
+
+        stopped = true;
     }
 }

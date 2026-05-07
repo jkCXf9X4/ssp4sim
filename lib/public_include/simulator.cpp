@@ -51,8 +51,6 @@ namespace ssp4sim
             std::filesystem::create_directories(p->conf->log_file.parent_path());
         }
 
-        ssp4cpp::utils::log::init_logging();
-
         if (p->conf->level_terminal != "disable")
         {
             ssp4cpp::utils::log::add_console(quill::loglevel_from_string(p->conf->level_terminal));
@@ -62,7 +60,7 @@ namespace ssp4sim
         {
             ssp4cpp::utils::log::add_file_sink(p->conf->log_file.string(), quill::loglevel_from_string(p->conf->level_file));
         }
-
+        
         if (p->conf->level_json != "disable")
         {
             ssp4cpp::utils::log::add_json_sink(p->conf->log_file.string() + ".json",  quill::loglevel_from_string(p->conf->level_json));
@@ -79,6 +77,8 @@ namespace ssp4sim
                 LOG_WARNING(p->log, "[{func}] Cutelog sink disabled: {}", __func__, e.what());
             }
         }
+
+        ssp4cpp::utils::log::init_logging();
 
         p->log = ssp4cpp::utils::log::make_logger("ssp4sim.Simulator");
 

@@ -34,7 +34,6 @@ namespace ssp4sim::signal
         std::string table_name;
         std::vector<DuckDbVariableLayout> variables;
         duckdb_appender appender = nullptr;
-        std::size_t row_count = 0;
     };
 
     class DuckDbRecorderSink final : public RecorderSink
@@ -48,9 +47,9 @@ namespace ssp4sim::signal
         std::vector<DuckDbStorageLayout> layouts;
         std::unordered_map<const SignalStorage *, std::size_t> layout_lookup;
 
-        std::size_t batch_rows = 1024;
         bool disabled = false;
         bool initialized = false;
+        bool stopped = false;
 
         explicit DuckDbRecorderSink(const std::filesystem::path &filename);
         ~DuckDbRecorderSink() override;
@@ -81,8 +80,6 @@ namespace ssp4sim::signal
         void open_database();
 
         void open_layout(DuckDbStorageLayout &layout);
-
-        void flush_batch(DuckDbStorageLayout &layout);
 
         void disable_sink(const std::string &reason);
     };
