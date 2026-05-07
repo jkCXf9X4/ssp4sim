@@ -33,13 +33,13 @@ namespace ssp4sim::signal
         std::size_t index = 0;
         std::string model;
         std::string storage_name;
+        std::filesystem::path file;
+        std::shared_ptr<arrow::Schema> schema;
+        std::shared_ptr<arrow::io::FileOutputStream> output;
+        std::unique_ptr<parquet::arrow::FileWriter> writer;
         std::vector<ParquetVariableLayout> variables;
-    };
-
-    struct ParquetColumnLayout
-    {
-        std::string name;
-        types::DataType type;
+        std::vector<std::unique_ptr<arrow::ArrayBuilder>> builders;
+        std::size_t row_count = 0;
     };
 
     class ParquetRecorderSink final : public RecorderSink
@@ -48,18 +48,11 @@ namespace ssp4sim::signal
         ssp4cpp::utils::log::Logger *log = nullptr;
 
         std::filesystem::path filename;
-        std::shared_ptr<arrow::Schema> schema;
-        std::shared_ptr<arrow::io::FileOutputStream> output;
-        std::unique_ptr<parquet::arrow::FileWriter> writer;
 
         std::vector<ParquetStorageLayout> layouts;
         std::unordered_map<const SignalStorage *, std::size_t> layout_lookup;
-        std::unordered_map<std::string, std::size_t> column_lookup;
-        std::vector<ParquetColumnLayout> columns;
-        std::vector<std::unique_ptr<arrow::ArrayBuilder>> builders;
 
         std::size_t batch_rows = 1024;
-        std::size_t row_count = 0;
         bool disabled = false;
 
         explicit ParquetRecorderSink(const std::filesystem::path &filename);
@@ -83,9 +76,17 @@ namespace ssp4sim::signal
 
         static void append_typed_value(arrow::ArrayBuilder &builder, types::DataType type, const std::byte *data);
 
-        void rebuild_builders();
+        static std::filesystem::path storage_file_path(const std::filesystem::path &base, const std::string &model, const std::string &storage_name);
 
-        void flush_batch();
+        static void reserve_builder_capacity(arrow::ArrayBuilder &builder, std::size_t rows);
+
+        void rebuild_builders(ParquetStorageLayout &layout);
+
+        void open_layout(ParquetStorageLayout &layout);
+
+        void flush_batch(ParquetStorageLayout &layout);
+
+        void disable_sink(ParquetStorageLayout &layout, const std::string &reason);
 
         void disable_sink(const std::string &reason);
     };

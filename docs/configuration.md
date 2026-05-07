@@ -101,7 +101,7 @@ Notes:
 | `simulation.recording.csv.file` | `string` | No | `simulation.working_dir/result.csv` | Output CSV path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
 | `simulation.recording.csv.interval` | `double` | No | `1.0` | Seconds between recorded CSV samples. |
 | `simulation.recording.parquet.enable` | `bool` | No | `false` | Enables the Parquet recorder. It writes one grouped storage snapshot per row and captures the full recorder event stream. |
-| `simulation.recording.parquet.file` | `string` | No | `simulation.working_dir/result.parquet` | Output Parquet path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
+| `simulation.recording.parquet.file` | `string` | No | `simulation.working_dir/result.parquet` | Base Parquet path (`[TIME]` supported). The recorder writes one file per storage using this path as the prefix. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 
 ### `simulation.log.*`

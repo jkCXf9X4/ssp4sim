@@ -7,9 +7,11 @@
 #include <arrow/result.h>
 #include <parquet/properties.h>
 
+#include <cctype>
 #include <algorithm>
 #include <chrono>
 #include <stdexcept>
+#include <string_view>
 
 namespace ssp4sim::signal
 {
@@ -37,6 +39,47 @@ namespace ssp4sim::signal
         std::shared_ptr<arrow::Field> make_field(const std::string &name, const std::shared_ptr<arrow::DataType> &type)
         {
             return arrow::field(name, type);
+        }
+
+        std::string sanitize_component(std::string_view value)
+        {
+            std::string sanitized;
+            sanitized.reserve(value.size());
+            for (const auto ch : value)
+            {
+                if (std::isalnum(static_cast<unsigned char>(ch)) != 0)
+                {
+                    sanitized.push_back(ch);
+                }
+                else
+                {
+                    sanitized.push_back('_');
+                }
+            }
+
+            if (sanitized.empty())
+            {
+                return "default";
+            }
+
+            return sanitized;
+        }
+
+        std::filesystem::path make_storage_file_path(const std::filesystem::path &base, const std::string &model, const std::string &storage_name)
+        {
+            auto filename = base.stem().string();
+            if (!model.empty())
+            {
+                filename += '_' + sanitize_component(model);
+            }
+            if (!storage_name.empty())
+            {
+                filename += '_' + sanitize_component(storage_name);
+            }
+
+            const auto extension = base.extension().empty() ? std::filesystem::path(".parquet").string() : base.extension().string();
+            filename += extension;
+            return base.parent_path() / filename;
         }
     }
 
@@ -85,6 +128,16 @@ namespace ssp4sim::signal
         default:
             throw std::runtime_error("Unsupported data type for Parquet recording");
         }
+    }
+
+    std::filesystem::path ParquetRecorderSink::storage_file_path(const std::filesystem::path &base, const std::string &model, const std::string &storage_name)
+    {
+        return make_storage_file_path(base, model, storage_name);
+    }
+
+    void ParquetRecorderSink::reserve_builder_capacity(arrow::ArrayBuilder &builder, std::size_t rows)
+    {
+        check_status(builder.Reserve(static_cast<int64_t>(rows)), "Failed to reserve Parquet builder capacity");
     }
 
     std::unique_ptr<arrow::ArrayBuilder> ParquetRecorderSink::make_builder(const std::shared_ptr<arrow::DataType> &type)
@@ -145,42 +198,76 @@ namespace ssp4sim::signal
         for (const auto &variable : storage->variables)
         {
             const auto local_name = local_variable_name(layout.model, variable.name);
-            auto [column_it, inserted] = column_lookup.emplace(local_name, columns.size());
-            if (inserted)
-            {
-                columns.push_back(ParquetColumnLayout{local_name, variable.type});
-            }
-            else if (columns[column_it->second].type != variable.type)
-            {
-                throw std::runtime_error("Parquet column type mismatch for " + local_name);
-            }
-
             ParquetVariableLayout variable_layout;
             variable_layout.name = local_name;
             variable_layout.type = variable.type;
             variable_layout.position = variable.position;
-            variable_layout.column = column_it->second;
+            variable_layout.column = layout.variables.size();
             layout.variables.emplace_back(std::move(variable_layout));
         }
 
+        layout.file = storage_file_path(filename, layout.model, layout.storage_name);
         layout_lookup[storage] = layout.index;
         layouts.emplace_back(std::move(layout));
     }
 
-    void ParquetRecorderSink::rebuild_builders()
+    void ParquetRecorderSink::rebuild_builders(ParquetStorageLayout &layout)
     {
-        builders.clear();
-        builders.reserve(4 + columns.size());
+        layout.builders.clear();
+        layout.builders.reserve(4 + layout.variables.size());
 
-        builders.emplace_back(make_builder(arrow::int64()));
-        builders.emplace_back(make_builder(arrow::float64()));
-        builders.emplace_back(make_builder(arrow::utf8()));
-        builders.emplace_back(make_builder(arrow::utf8()));
+        layout.builders.emplace_back(make_builder(arrow::int64()));
+        layout.builders.emplace_back(make_builder(arrow::float64()));
+        layout.builders.emplace_back(make_builder(arrow::utf8()));
+        layout.builders.emplace_back(make_builder(arrow::utf8()));
 
-        for (const auto &column : columns)
+        for (const auto &variable : layout.variables)
         {
-            builders.emplace_back(make_builder(arrow_type_for(column.type)));
+            layout.builders.emplace_back(make_builder(arrow_type_for(variable.type)));
         }
+
+        for (auto &builder : layout.builders)
+        {
+            reserve_builder_capacity(*builder, batch_rows);
+        }
+    }
+
+    void ParquetRecorderSink::open_layout(ParquetStorageLayout &layout)
+    {
+        utils::io::create_parent_folder(layout.file.string());
+
+        std::vector<std::shared_ptr<arrow::Field>> fields;
+        fields.reserve(4 + layout.variables.size());
+        fields.emplace_back(make_field("timestamp_ns", arrow::int64()));
+        fields.emplace_back(make_field("simulation_time_s", arrow::float64()));
+        fields.emplace_back(make_field("model", arrow::utf8()));
+        fields.emplace_back(make_field("storage", arrow::utf8()));
+
+        for (const auto &variable : layout.variables)
+        {
+            fields.emplace_back(make_field(variable.name, arrow_type_for(variable.type)));
+        }
+
+        layout.schema = arrow::schema(std::move(fields));
+        rebuild_builders(layout);
+
+        auto output_result = arrow::io::FileOutputStream::Open(layout.file.string());
+        if (!output_result.ok())
+        {
+            throw std::runtime_error("Failed to open Parquet output file: " + output_result.status().ToString());
+        }
+        layout.output = std::move(output_result).ValueOrDie();
+
+        auto writer_props_builder = parquet::WriterProperties::Builder();
+        writer_props_builder.compression(parquet::Compression::UNCOMPRESSED);
+        auto writer_props = writer_props_builder.build();
+        auto arrow_props = parquet::ArrowWriterProperties::Builder().store_schema()->build();
+        auto writer_result = parquet::arrow::FileWriter::Open(*layout.schema, arrow::default_memory_pool(), layout.output, writer_props, arrow_props);
+        if (!writer_result.ok())
+        {
+            throw std::runtime_error("Failed to create Parquet writer: " + writer_result.status().ToString());
+        }
+        layout.writer = std::move(writer_result).ValueOrDie();
     }
 
     void ParquetRecorderSink::init()
@@ -194,37 +281,10 @@ namespace ssp4sim::signal
         try
         {
             utils::io::create_parent_folder(filename.string());
-
-            std::vector<std::shared_ptr<arrow::Field>> fields;
-            fields.reserve(4 + columns.size());
-            fields.emplace_back(make_field("timestamp_ns", arrow::int64()));
-            fields.emplace_back(make_field("simulation_time_s", arrow::float64()));
-            fields.emplace_back(make_field("model", arrow::utf8()));
-            fields.emplace_back(make_field("storage", arrow::utf8()));
-
-            for (const auto &column : columns)
+            for (auto &layout : layouts)
             {
-                fields.emplace_back(make_field(column.name, arrow_type_for(column.type)));
+                open_layout(layout);
             }
-
-            schema = arrow::schema(std::move(fields));
-            rebuild_builders();
-
-            auto output_result = arrow::io::FileOutputStream::Open(filename.string());
-            if (!output_result.ok())
-            {
-                throw std::runtime_error("Failed to open Parquet output file: " + output_result.status().ToString());
-            }
-            output = output_result.ValueOrDie();
-
-            auto writer_props = parquet::WriterProperties::Builder().build();
-            auto arrow_props = parquet::ArrowWriterProperties::Builder().store_schema()->build();
-            auto writer_result = parquet::arrow::FileWriter::Open(*schema, arrow::default_memory_pool(), output, writer_props, arrow_props);
-            if (!writer_result.ok())
-            {
-                throw std::runtime_error("Failed to create Parquet writer: " + writer_result.status().ToString());
-            }
-            writer = std::move(writer_result).ValueOrDie();
         }
         catch (const std::exception &e)
         {
@@ -241,8 +301,14 @@ namespace ssp4sim::signal
 
         disabled = true;
         LOG_WARNING(log, "[{func}] Parquet sink disabled: {}", __func__, reason);
-        writer.reset();
-        output.reset();
+        for (auto &layout : layouts)
+        {
+            layout.writer.reset();
+            layout.output.reset();
+            layout.schema.reset();
+            layout.builders.clear();
+            layout.row_count = 0;
+        }
     }
 
     void ParquetRecorderSink::on_event(const NewDataEvent &event)
@@ -259,50 +325,48 @@ namespace ssp4sim::signal
             return;
         }
 
-        const auto &layout = layouts[layout_it->second];
+        auto &layout = layouts[layout_it->second];
         const auto simulation_time_s = utils::time::ns_to_s(event.timestamp);
         const auto timestamp_ns = static_cast<std::int64_t>(event.timestamp);
 
         try
         {
-            std::vector<const ParquetVariableLayout *> variables_by_column(columns.size(), nullptr);
+            check_status(builder_as<arrow::Int64Builder>(*layout.builders[0])->Append(timestamp_ns), "Failed to append timestamp");
+            check_status(builder_as<arrow::DoubleBuilder>(*layout.builders[1])->Append(simulation_time_s), "Failed to append simulation time");
+            check_status(builder_as<arrow::StringBuilder>(*layout.builders[2])->Append(layout.model), "Failed to append model");
+            check_status(builder_as<arrow::StringBuilder>(*layout.builders[3])->Append(layout.storage_name), "Failed to append storage");
+
             for (const auto &variable : layout.variables)
             {
-                variables_by_column[variable.column] = &variable;
+                append_typed_value(*layout.builders[4 + variable.column], variable.type, event.buffer + variable.position);
             }
 
-            check_status(builder_as<arrow::Int64Builder>(*builders[0])->Append(timestamp_ns), "Failed to append timestamp");
-            check_status(builder_as<arrow::DoubleBuilder>(*builders[1])->Append(simulation_time_s), "Failed to append simulation time");
-            check_status(builder_as<arrow::StringBuilder>(*builders[2])->Append(layout.model), "Failed to append model");
-            check_status(builder_as<arrow::StringBuilder>(*builders[3])->Append(layout.storage_name), "Failed to append storage");
-
-            for (std::size_t i = 0; i < columns.size(); ++i)
+            layout.row_count += 1;
+            if (layout.row_count >= batch_rows)
             {
-                const auto *variable = variables_by_column[i];
-                if (variable == nullptr)
-                {
-                    check_status(builders[4 + i]->AppendNull(), "Failed to append null column");
-                    continue;
-                }
-
-                append_typed_value(*builders[4 + i], variable->type, event.buffer + variable->position);
-            }
-
-            row_count += 1;
-            if (row_count >= batch_rows)
-            {
-                flush_batch();
+                flush_batch(layout);
             }
         }
         catch (const std::exception &e)
         {
-            disable_sink(e.what());
+            disable_sink(layout, e.what());
         }
     }
 
-    void ParquetRecorderSink::flush_batch()
+    void ParquetRecorderSink::disable_sink(ParquetStorageLayout &layout, const std::string &reason)
     {
-        if (disabled || writer == nullptr || row_count == 0)
+        if (!disabled)
+        {
+            const auto storage_name = layout.storage != nullptr ? layout.storage->name : layout.file.string();
+            LOG_WARNING(log, "[{func}] Parquet sink disabled for {}: {}", __func__, storage_name, reason);
+        }
+
+        disable_sink(reason);
+    }
+
+    void ParquetRecorderSink::flush_batch(ParquetStorageLayout &layout)
+    {
+        if (disabled || layout.writer == nullptr || layout.row_count == 0)
         {
             return;
         }
@@ -310,9 +374,9 @@ namespace ssp4sim::signal
         try
         {
             std::vector<std::shared_ptr<arrow::Array>> arrays;
-            arrays.reserve(builders.size());
+            arrays.reserve(layout.builders.size());
 
-            for (auto &builder : builders)
+            for (auto &builder : layout.builders)
             {
                 std::shared_ptr<arrow::Array> array;
                 auto status = builder->Finish(&array);
@@ -323,19 +387,19 @@ namespace ssp4sim::signal
                 arrays.emplace_back(std::move(array));
             }
 
-            auto batch = arrow::RecordBatch::Make(schema, static_cast<int64_t>(row_count), std::move(arrays));
-            auto status = writer->WriteRecordBatch(*batch);
+            auto batch = arrow::RecordBatch::Make(layout.schema, static_cast<int64_t>(layout.row_count), std::move(arrays));
+            auto status = layout.writer->WriteRecordBatch(*batch);
             if (!status.ok())
             {
                 throw std::runtime_error("Failed to write Parquet batch: " + status.ToString());
             }
 
-            row_count = 0;
-            rebuild_builders();
+            layout.row_count = 0;
+            rebuild_builders(layout);
         }
         catch (const std::exception &e)
         {
-            disable_sink(e.what());
+            disable_sink(layout, e.what());
         }
     }
 
@@ -346,26 +410,24 @@ namespace ssp4sim::signal
             return;
         }
 
-        flush_batch();
-        if (disabled || writer == nullptr)
-        {
-            return;
-        }
-
         try
         {
-            auto status = writer->Close();
-            if (!status.ok())
+            for (auto &layout : layouts)
             {
-                throw std::runtime_error("Failed to close Parquet writer: " + status.ToString());
+                flush_batch(layout);
+                if (layout.writer != nullptr)
+                {
+                    auto status = layout.writer->Close();
+                    if (!status.ok())
+                    {
+                        throw std::runtime_error("Failed to close Parquet writer: " + status.ToString());
+                    }
+                }
             }
         }
         catch (const std::exception &e)
         {
             disable_sink(e.what());
         }
-
-        writer.reset();
-        output.reset();
     }
 }

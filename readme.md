@@ -10,7 +10,7 @@ Current support:
 - FMI 2.0 co-simulation models
 - Gauss-Jacobi and Gauss-Seidel execution strategies
 - CSV recording for low-rate logging and Parquet recording for full-fidelity
-  storage snapshots
+  storage snapshots, with one Parquet file per storage
 
 See the [SSP standard](https://ssp-standard.org) for more information about the file format.
 
