@@ -3,7 +3,7 @@
         "ssp": "./resources/embrace/embrace_scen.ssp",
         "ssd": "SystemStructure.ssd",
         "start_time": 0.0,
-        "stop_time": 200,
+        "stop_time": 100,
         "timestep": 0.01,
         "tolerance": 1e-4,
         "realtime": false,
@@ -28,7 +28,7 @@
             "wait_for": true,
             "influx": {
                 "enable": true,
-                "interval":0.0,
+                "interval":1.0,
                 "protocol": "http",
                 "url": "localhost:8181",
                 "db":"ssp4sim",

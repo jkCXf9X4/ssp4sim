@@ -89,7 +89,7 @@ and again during `stop()`, which flushes and closes the file.
 ### `sinks/influx_recorder_sink.hpp` / `sinks/influx_recorder_sink.cpp`
 
 `InfluxRecorderSink` mirrors the recorder event stream to InfluxDB. Sink configuration and behavior are documented in [Configuration Reference](../../../docs/configuration.md#influx-recording).
-It writes one Influx point per recorded storage snapshot and stores each storage-local variable as a field.
+It writes one Influx point per recorded storage snapshot and stores each storage-local variable as a field. If a storage name contains a dot, the prefix is emitted as `model` and the suffix remains in `storage`, while field names drop the leading model prefix.
 
 The implementation is split across:
 

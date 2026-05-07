@@ -39,6 +39,9 @@ namespace ssp4sim::signal
         const SignalStorage *storage = nullptr;
         std::size_t index = 0;
         std::string line_prefix;
+        std::string model_tag;
+        std::string storage_tag;
+        bool has_model_tag = false;
         std::vector<InfluxVariableLayout> variables;
         std::uint64_t last_recorded_timestamp = 0;
         bool has_recorded_timestamp = false;

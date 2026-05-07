@@ -130,9 +130,11 @@ Influx points are emitted one per recorded storage snapshot. When
 `simulation.recording.influx.interval` is greater than zero, repeated updates
 from the same storage are skipped until the configured interval has elapsed.
 Each point carries `run` and `storage` tags, one field per variable, and a
-`simulation_time_s` field. Variable names are emitted as local field names when
-possible, so `source.temperature` becomes `temperature`. The point timestamp is
-the run-start wall clock plus the simulation timestamp. The write request uses
+`simulation_time_s` field. If a storage name contains a dot, the prefix is also
+emitted as `model`, so `Consumer.output` becomes `model=Consumer` and
+`storage=output`. Variable names are emitted as local field names when
+possible, so `Consumer.CPUtime` becomes `CPUtime`. The point timestamp is the
+run-start wall clock plus the simulation timestamp. The write request uses
 nanosecond precision so the stored `time` column matches the recorder clock. If
 creation or writing fails, the sink logs a warning and disables itself so the
 simulation can continue.

@@ -4,6 +4,7 @@
 
 #include <stdexcept>
 #include <utility>
+#include <iostream>
 
 namespace ssp4sim::signal
 {
@@ -63,6 +64,8 @@ namespace ssp4sim::signal
             cpr::Body{body},
             cpr::Timeout{5000},
             cpr::ConnectTimeout{1000});
+
+        std::cout << body << "\n";
 
         if (response.error.code != cpr::ErrorCode::OK)
         {

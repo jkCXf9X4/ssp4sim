@@ -15,13 +15,34 @@ namespace ssp4sim::signal
 {
     namespace
     {
+        struct StorageNameParts
+        {
+            std::string_view model;
+            std::string_view storage;
+            bool has_model = false;
+        };
+
+        StorageNameParts split_storage_name(std::string_view storage_name)
+        {
+            const auto dot = storage_name.find('.');
+            if (dot == std::string_view::npos)
+            {
+                return {{}, storage_name, false};
+            }
+
+            return {storage_name.substr(0, dot), storage_name.substr(dot + 1), true};
+        }
+
         std::string make_field_key(std::string_view storage_name, std::string_view variable_name)
         {
-            if (variable_name.size() > storage_name.size() + 1
-                && variable_name.compare(0, storage_name.size(), storage_name) == 0
-                && variable_name[storage_name.size()] == '.')
+            const auto parts = split_storage_name(storage_name);
+            const auto prefix = parts.has_model ? parts.model : storage_name;
+
+            if (variable_name.size() > prefix.size() + 1
+                && variable_name.compare(0, prefix.size(), prefix) == 0
+                && variable_name[prefix.size()] == '.')
             {
-                return escape_tag(variable_name.substr(storage_name.size() + 1));
+                return escape_tag(variable_name.substr(prefix.size() + 1));
             }
 
             return escape_tag(variable_name);
@@ -60,9 +81,22 @@ namespace ssp4sim::signal
         InfluxStorageLayout layout;
         layout.storage = storage;
         layout.index = layouts.size();
+        const auto parts = split_storage_name(storage->name);
         layout.line_prefix = escape_measurement(config.measurement);
         layout.line_prefix += ",run=" + escape_tag(config.run);
-        layout.line_prefix += ",storage=" + escape_tag(storage->name);
+        if (parts.has_model)
+        {
+            layout.has_model_tag = true;
+            layout.model_tag = escape_tag(parts.model);
+            layout.storage_tag = escape_tag(parts.storage);
+            layout.line_prefix += ",model=" + layout.model_tag;
+            layout.line_prefix += ",storage=" + layout.storage_tag;
+        }
+        else
+        {
+            layout.storage_tag = escape_tag(parts.storage);
+            layout.line_prefix += ",storage=" + layout.storage_tag;
+        }
         layout.variables.reserve(storage->variables.size());
 
         for (const auto &variable : storage->variables)

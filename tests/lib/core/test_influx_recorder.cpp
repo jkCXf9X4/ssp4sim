@@ -373,6 +373,65 @@ TEST_CASE("Influx recorder sink emits one point per storage snapshot", "[DataRec
     remove_if_exists(csv_path);
 }
 
+TEST_CASE("Influx recorder sink splits dotted storage names", "[Influx]")
+{
+    auto writer = std::make_unique<RecordingInfluxWriter>();
+    auto *writer_ptr = writer.get();
+
+    InfluxRecorderSink sink(
+        make_influx_config("unused:8181", "ssp4sim_signal", "run-fixed", 2),
+        std::chrono::system_clock::time_point{std::chrono::seconds{100}},
+        std::move(writer));
+
+    SignalStorage storage(1, "Consumer.output");
+    storage.add("Consumer.CPUtime", DataType::real, 1);
+    storage.add("Consumer.EventCounter", DataType::integer, 1);
+    storage.add("Consumer.consumerFeed.X[1]", DataType::real, 1);
+    storage.allocate();
+
+    sink.on_storage_added(&storage);
+    sink.init();
+    sink.start();
+
+    const auto timestamp = 3ULL * sim_time::nanoseconds_per_second + 123ULL;
+    const std::size_t area = storage.push(timestamp);
+    const double cpu_time = 0.045515;
+    const int event_counter = 16;
+    const double feed_x1 = 0.0;
+
+    std::memcpy(storage.get_item(area, 0), &cpu_time, sizeof(double));
+    std::memcpy(storage.get_item(area, 1), &event_counter, sizeof(int));
+    std::memcpy(storage.get_item(area, 2), &feed_x1, sizeof(double));
+
+    NewDataEvent event;
+    event.storage = &storage;
+    event.area = area;
+    event.timestamp = timestamp;
+    event.buffer = storage.get_item(area, 0);
+    event.recorder_storage_index = 0;
+
+    REQUIRE_NOTHROW(sink.on_event(event));
+    REQUIRE_NOTHROW(sink.stop());
+
+    REQUIRE(writer_ptr->lines.size() == 1);
+
+    const auto expected_simulation_time_s = sim_time::ns_to_s(timestamp);
+    const auto expected_timestamp = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        (std::chrono::system_clock::time_point{std::chrono::seconds{100}} + std::chrono::nanoseconds(timestamp)).time_since_epoch()).count();
+
+    REQUIRE(writer_ptr->lines[0].find("ssp4sim_signal,run=run-fixed,model=Consumer,storage=output ") == 0);
+    REQUIRE(field_value_text(writer_ptr->lines[0], "CPUtime").has_value());
+    REQUIRE(std::stod(*field_value_text(writer_ptr->lines[0], "CPUtime")) == Catch::Approx(cpu_time));
+    REQUIRE(field_value_text(writer_ptr->lines[0], "EventCounter").has_value());
+    REQUIRE(std::stoi(*field_value_text(writer_ptr->lines[0], "EventCounter")) == event_counter);
+    REQUIRE(field_value_text(writer_ptr->lines[0], "consumerFeed.X[1]").has_value());
+    REQUIRE(std::stod(*field_value_text(writer_ptr->lines[0], "consumerFeed.X[1]")) == Catch::Approx(feed_x1));
+    REQUIRE(field_value_text(writer_ptr->lines[0], "simulation_time_s").has_value());
+    REQUIRE(std::stod(*field_value_text(writer_ptr->lines[0], "simulation_time_s")) == Catch::Approx(expected_simulation_time_s));
+    REQUIRE(timestamp_text(writer_ptr->lines[0]) == std::to_string(expected_timestamp));
+    REQUIRE(writer_ptr->lines[0].find("Consumer.") == std::string::npos);
+}
+
 TEST_CASE("Influx recorder sink sends line protocol over UDP", "[DataRecorder][Influx]")
 {
     UdpCaptureSocket receiver;
