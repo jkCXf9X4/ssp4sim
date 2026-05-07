@@ -7,8 +7,9 @@
     "libzip",
     "pugixml",
     "kissnet",
+    "arrow",
+    "duckdb",
     "python3",
-    "quill",
-    "influxdb-cxx"
+    "quill"
   ]
 }

@@ -86,20 +86,9 @@ event buffer. Updates from different storages with the same timestamp are
 coalesced into the same CSV row. Rows are written when the row buffer rolls over
 and again during `stop()`, which flushes and closes the file.
 
-### `sinks/influx_recorder_sink.hpp` / `sinks/influx_recorder_sink.cpp`
-
-`InfluxRecorderSink` mirrors the recorder event stream to InfluxDB. Sink configuration and behavior are documented in [Configuration Reference](../../../docs/configuration.md#influx-recording).
-
-The implementation is split across:
-
-- `sinks/influx_recorder_common.hpp` / `sinks/influx_recorder_common.cpp` for shared line-protocol helpers and layout types.
-- `sinks/writers/influx_http_writer.hpp` / `sinks/writers/influx_http_writer.cpp` for the HTTP transport.
-- `sinks/writers/influx_udp_writer.hpp` / `sinks/writers/influx_udp_writer.cpp` for the UDP transport.
-- `sinks/influx_recorder_sink.hpp` / `sinks/influx_recorder_sink.cpp` for sink orchestration and per-storage layout tracking.
-
-The sink is safe to use without a running InfluxDB service. Connection or write
-failures are caught, logged, and used to disable only the Influx sink so the
-simulation can continue.
+The recorder currently ships with a low-rate CSV sink, a full-fidelity Parquet
+sink, and a direct DuckDB sink. Additional sinks can be added when another
+export path needs the same event stream.
 
 ## Runtime interaction
 

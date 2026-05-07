@@ -6,8 +6,9 @@
 #include "analysis_graph_builder.hpp"
 #include "graph_builder.hpp"
 
-#include "signal/sinks/influx_recorder_sink.hpp"
 #include "signal/sinks/csv_recorder_sink.hpp"
+#include "signal/sinks/duckdb_recorder_sink.hpp"
+#include "signal/sinks/parquet_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
 #include "config.hpp"
@@ -58,14 +59,19 @@ namespace ssp4sim
         {
             p->recorder = std::make_unique<signal::DataRecorder>(config->wait_for_recorder);
 
-            if (config->influx.enable)
-            {
-                p->recorder->add_sink(std::make_unique<signal::InfluxRecorderSink>(config->influx));
-            }
-
             if (config->csv.enable)
             {
                 p->recorder->add_sink(std::make_unique<signal::CsvRecorderSink>(config->csv.file, config->csv.interval));
+            }
+
+            if (config->parquet.enable)
+            {
+                p->recorder->add_sink(std::make_unique<signal::ParquetRecorderSink>(config->parquet.file));
+            }
+
+            if (config->duckdb.enable)
+            {
+                p->recorder->add_sink(std::make_unique<signal::DuckDbRecorderSink>(config->duckdb.file));
             }
         }
     }

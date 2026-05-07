@@ -14,7 +14,8 @@ need to run the C++ binary or the Python suite.
 The suite is split by layer so each test has a clear responsibility:
 
 - `tests/lib/core/`: C++ tests for core runtime primitives such as FMU adapter,
-  recorder, Influx recorder sink, ring buffer, signal storage, and start values.
+  recorder, ring buffer, signal storage, start values, Parquet recording, and
+  DuckDB recording.
 - `tests/lib/utils/`: C++ tests for utility data structures and support code.
 - `tests/lib/high_level/`: one C++ smoke test that executes a complete SSP
   through the public simulator entry point with CSV recording enabled.
@@ -43,11 +44,6 @@ Prefer small, focused C++ cases named `test_*.cpp` under `tests/lib/core/` or
 path. Put reference sweeps and detailed result comparisons in pytest under
 `tests/python/`.
 
-The Influx recorder tests use a fake in-process writer for offline coverage.
-One live integration case also targets the local InfluxDB 3 service when
-`SSP4SIM_INFLUX_TOKEN` or `~/.influxdb/docker/explorer/config/config.json`
-provides a token. If neither is available, the live case skips cleanly.
-
 ## High-Level SSP Tests
 
 The high-level reference sweep lives in `tests/python/high_level/` so it can use
@@ -75,6 +71,8 @@ loading them.
 The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
 `ECS_HW` returns `fmi2Error` on the first step.
+
+The recorder tests now cover the CSV, Parquet, and DuckDB sinks separately.
 
 Two dedicated high-level tests also check that the emitted `start_values.csv`
 captures the applied values for a system-level inline parameter set fixture and

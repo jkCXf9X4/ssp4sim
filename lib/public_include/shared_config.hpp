@@ -1,67 +1,17 @@
 #pragma once
 
-#include "utils/ip.hpp"
-
 #include "ssp4cpp/utils/log.hpp"
 
 #include "config.hpp"
 
 #include <cstddef>
-#include <cstdlib>
-#include <fstream>
+#include <cstdint>
 #include <filesystem>
-#include <exception>
 #include <stdexcept>
 #include <string>
-#include <utility>
-
-#include <nlohmann/json.hpp>
 
 namespace ssp4sim
 {
-    struct InfluxRecordingConfig
-    {
-        bool enable = false;
-        std::string protocol = "http";
-        std::string host;
-        std::string port;
-        std::string db;
-        std::string token;
-        std::string measurement = "ssp4sim_signal";
-        std::string run = "run_[TIME]";
-        std::size_t batch_size = 50000;
-        std::uint64_t interval = 0;
-    };
-
-    inline std::string discover_influx_token()
-    {
-        if (const char *env_token = std::getenv("SSP4SIM_INFLUX_TOKEN"); env_token != nullptr && *env_token != '\0')
-        {
-            return env_token;
-        }
-
-        const char *home = std::getenv("HOME");
-        if (home == nullptr || *home == '\0')
-        {
-            return {};
-        }
-
-        const auto config_path = std::filesystem::path(home) / ".influxdb" / "docker" / "explorer" / "config" / "config.json";
-        std::ifstream stream(config_path);
-        if (!stream)
-        {
-            return {};
-        }
-
-        const auto config = nlohmann::json::parse(stream, nullptr, false);
-        if (config.is_discarded() || !config.is_object())
-        {
-            return {};
-        }
-
-        return config.value("DEFAULT_API_TOKEN", "");
-    }
-
     struct SharedConfig
     {
         ssp4cpp::utils::log::Logger *log;
@@ -90,8 +40,18 @@ namespace ssp4sim
             uint64_t interval = 0;
         };
         CsvRecordingConfig csv;
-
-        InfluxRecordingConfig influx;
+        struct ParquetRecordingConfig
+        {
+            bool enable = false;
+            std::filesystem::path file;
+        };
+        ParquetRecordingConfig parquet;
+        struct DuckDbRecordingConfig
+        {
+            bool enable = false;
+            std::filesystem::path file;
+        };
+        DuckDbRecordingConfig duckdb;
 
         // Logging
 
@@ -121,7 +81,7 @@ namespace ssp4sim
 
             // Recording
 
-            csv.enable = utils::Config::getOr("simulation.recording.csv.enable", false);
+            csv.enable = utils::Config::getOr("simulation.recording.csv.enable", true);
             if (csv.enable)
             {
                 const auto csv_interval_s = utils::Config::getOr("simulation.recording.csv.interval", 1.0);
@@ -135,55 +95,22 @@ namespace ssp4sim
                 csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));
             }
 
-            influx.enable = utils::Config::getOr("simulation.recording.influx.enable", false);
-            if (influx.enable)
+            parquet.enable = utils::Config::getOr("simulation.recording.parquet.enable", false);
+            if (parquet.enable)
             {
-                LOG_INFO(this->log, "[{}] Influx recording enabled", __func__);
+                auto default_result_file = working_dir / "result.parquet";
+                parquet.file = std::filesystem::path(utils::Config::getOr("simulation.recording.parquet.file", default_result_file.string()));
+            }
 
-                const auto configured_url = utils::Config::getOr("simulation.recording.influx.url", "localhost:8181");
-                const auto endpoint = utils::ip::parse_host_port(configured_url);
-
-                influx.host = endpoint.first;
-                influx.port = endpoint.second;
-
-                influx.protocol = utils::Config::getOr("simulation.recording.influx.protocol", "http");
-
-                LOG_INFO(this->log, "[{}] Influx url: {}//:{}:{}", __func__,  influx.protocol, influx.host, influx.port);
-
-                influx.db = utils::Config::getOr("simulation.recording.influx.db", "ssp4sim");
-                LOG_INFO(this->log, "[{}] Influx db: {}", __func__, influx.db);
-
-                influx.token = utils::Config::getOr("simulation.recording.influx.token", std::string{});
-                if (influx.protocol == "http" && influx.token.empty())
-                {
-                    influx.token = discover_influx_token();
-                    if (influx.token.empty())
-                    {
-                        throw std::runtime_error("Influx recording with http is enabled but no access token could be identified.");
-                    }
-                }
-
-                influx.measurement = utils::Config::getOr("simulation.recording.influx.measurement", "ssp4sim_signal");
-
-                influx.run = utils::Config::getOr("simulation.recording.influx.run", "run_[TIME]");
-
-                auto batch_size = utils::Config::getOr("simulation.recording.influx.batch_size", 50000);
-                if (batch_size <= 0)
-                {
-                    throw std::runtime_error("simulation.recording.influx.batch_size must be greater than zero");
-                }
-                influx.batch_size = static_cast<std::size_t>(batch_size);
-
-                const auto interval_s = utils::Config::getOr("simulation.recording.influx.interval", 0.0);
-                if (interval_s < 0.0)
-                {
-                    throw std::runtime_error("simulation.recording.influx.interval must be greater than or equal to zero");
-                }
-                influx.interval = utils::time::s_to_ns(interval_s);
+            duckdb.enable = utils::Config::getOr("simulation.recording.duckdb.enable", false);
+            if (duckdb.enable)
+            {
+                auto default_result_file = working_dir / "result.duckdb";
+                duckdb.file = std::filesystem::path(utils::Config::getOr("simulation.recording.duckdb.file", default_result_file.string()));
             }
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
 
-            enable_recording = csv.enable || influx.enable;
+            enable_recording = csv.enable || parquet.enable || duckdb.enable;
 
             // Log
             auto default_log_file = working_dir / "sim.log";
