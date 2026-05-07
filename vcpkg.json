@@ -8,7 +8,6 @@
     "pugixml",
     "kissnet",
     "python3",
-    "quill",
-    "influxdb-cxx"
+    "quill"
   ]
 }

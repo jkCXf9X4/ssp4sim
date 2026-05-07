@@ -6,7 +6,6 @@
 #include "analysis_graph_builder.hpp"
 #include "graph_builder.hpp"
 
-#include "signal/sinks/influx_recorder_sink.hpp"
 #include "signal/sinks/csv_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
@@ -57,11 +56,6 @@ namespace ssp4sim
         if (config->enable_recording)
         {
             p->recorder = std::make_unique<signal::DataRecorder>(config->wait_for_recorder);
-
-            if (config->influx.enable)
-            {
-                p->recorder->add_sink(std::make_unique<signal::InfluxRecorderSink>(config->influx));
-            }
 
             if (config->csv.enable)
             {
