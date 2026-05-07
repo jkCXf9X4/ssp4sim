@@ -8,6 +8,7 @@
     "pugixml",
     "kissnet",
     "arrow",
+    "duckdb",
     "python3",
     "quill"
   ]

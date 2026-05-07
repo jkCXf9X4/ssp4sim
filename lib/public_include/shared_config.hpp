@@ -46,6 +46,12 @@ namespace ssp4sim
             std::filesystem::path file;
         };
         ParquetRecordingConfig parquet;
+        struct DuckDbRecordingConfig
+        {
+            bool enable = false;
+            std::filesystem::path file;
+        };
+        DuckDbRecordingConfig duckdb;
 
         // Logging
 
@@ -75,7 +81,7 @@ namespace ssp4sim
 
             // Recording
 
-            csv.enable = utils::Config::getOr("simulation.recording.csv.enable", false);
+            csv.enable = utils::Config::getOr("simulation.recording.csv.enable", true);
             if (csv.enable)
             {
                 const auto csv_interval_s = utils::Config::getOr("simulation.recording.csv.interval", 1.0);
@@ -95,9 +101,16 @@ namespace ssp4sim
                 auto default_result_file = working_dir / "result.parquet";
                 parquet.file = std::filesystem::path(utils::Config::getOr("simulation.recording.parquet.file", default_result_file.string()));
             }
+
+            duckdb.enable = utils::Config::getOr("simulation.recording.duckdb.enable", false);
+            if (duckdb.enable)
+            {
+                auto default_result_file = working_dir / "result.duckdb";
+                duckdb.file = std::filesystem::path(utils::Config::getOr("simulation.recording.duckdb.file", default_result_file.string()));
+            }
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
 
-            enable_recording = csv.enable || parquet.enable;
+            enable_recording = csv.enable || parquet.enable || duckdb.enable;
 
             // Log
             auto default_log_file = working_dir / "sim.log";

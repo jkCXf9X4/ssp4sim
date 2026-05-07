@@ -39,6 +39,9 @@ target_link_libraries(ssp4sim_lib PRIVATE "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Ar
 find_package(Parquet CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Parquet::parquet_static,Parquet::parquet_shared>")
 
+find_package(DuckDB CONFIG REQUIRED)
+target_link_libraries(ssp4sim_lib PRIVATE "$<IF:$<TARGET_EXISTS:duckdb>,duckdb,duckdb_static>")
+
 target_link_libraries(ssp4sim_lib PRIVATE ssp4cpp::ssp4cpp)
 
 target_link_libraries(ssp4sim_lib PUBLIC ssp4sim::3rd::fmi4c)

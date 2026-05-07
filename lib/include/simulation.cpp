@@ -7,6 +7,7 @@
 #include "graph_builder.hpp"
 
 #include "signal/sinks/csv_recorder_sink.hpp"
+#include "signal/sinks/duckdb_recorder_sink.hpp"
 #include "signal/sinks/parquet_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
@@ -66,6 +67,11 @@ namespace ssp4sim
             if (config->parquet.enable)
             {
                 p->recorder->add_sink(std::make_unique<signal::ParquetRecorderSink>(config->parquet.file));
+            }
+
+            if (config->duckdb.enable)
+            {
+                p->recorder->add_sink(std::make_unique<signal::DuckDbRecorderSink>(config->duckdb.file));
             }
         }
     }
