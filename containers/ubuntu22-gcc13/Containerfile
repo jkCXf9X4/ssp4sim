@@ -31,6 +31,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     ninja-build \
     pkg-config \
+    flex \
+    bison \
     && rm -rf /var/lib/apt/lists/*
 
 # Install vcpkg in a shared location and make it writable for the non-root
