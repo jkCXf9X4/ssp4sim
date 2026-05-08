@@ -82,10 +82,7 @@ an external `.ssv` parameter set fixture.
 Known reference runtime failures are marked with strict `xfail` entries in the
 test. If an expected-failing SSP starts passing, pytest reports it as an XPASS
 failure so the marker must be removed. The current expected failures are
-`dcmotor`, because the runtime does not yet support hierarchical SSP systems,
-and `signal_delay_detector`, because its `Step` FMU currently aborts at the
-first discontinuity with `fmi2GetContinuousStates: Invalid argument states[] =
-NULL` during `doStep`.
+`dcmotor`, because the runtime does not yet support hierarchical SSP systems.
 
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the

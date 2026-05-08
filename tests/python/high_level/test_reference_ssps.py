@@ -37,11 +37,6 @@ if not Path(pyssp4sim.__file__).resolve().is_relative_to(PYTHON_API_BUILD.resolv
 SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
 EXPECTED_REFERENCE_FAILURES = {
     "dcmotor": "Hierarchical SSP systems are not supported by the current flat graph builder.",
-    "signal_delay_detector": "The current runtime aborts during the first step for this packaged signal-propagation fixture.",
-    "signal_fanout_gain": "The current runtime aborts during the first step for this packaged signal-propagation fixture.",
-    "signal_step_add": "The current runtime aborts during the first step for this packaged signal-propagation fixture.",
-    "signal_step_gain": "The current runtime aborts during the first step for this packaged signal-propagation fixture.",
-    "signal_step_product": "The current runtime aborts during the first step for this packaged signal-propagation fixture.",
 }
 
 GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
@@ -211,11 +206,6 @@ def assert_start_values_contain(
         )
 
 
-@pytest.mark.xfail(
-    raises=RuntimeError,
-    reason=EXPECTED_REFERENCE_FAILURES["signal_step_gain"],
-    strict=True,
-)
 def test_reference_ssp_applies_system_level_parametersets(tmp_path: Path) -> None:
     workdir = run_reference_ssp(
         REFERENCE_SSP_ROOT / "signal_step_gain" / "baseline", tmp_path
