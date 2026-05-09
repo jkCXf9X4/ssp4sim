@@ -18,7 +18,7 @@ VOLUME_ARGS=()
 # Prefer Podman when available because it supports rootless containers well.
 # With Podman, `--userns keep-id` preserves access to bind-mounted files in the
 # host checkout. Docker does not use the same flag.
-if command -v podman >/dev/null 2>&1; then
+if command -v podman >/dev/null 2>&1 && podman info >/dev/null 2>&1; then
     CONTAINER_RUNTIME="podman"
     USERNS_ARGS=(--userns keep-id)
 elif command -v docker >/dev/null 2>&1; then

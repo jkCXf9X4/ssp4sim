@@ -13,7 +13,7 @@ IMAGE_NAME="${SSP4SIM_CONTAINER_IMAGE:-ssp4sim-ubuntu22-gcc13}"
 
 # Prefer Podman when available because it works well rootless. Fall back to
 # Docker so developers can use whichever runtime they already have installed.
-if command -v podman >/dev/null 2>&1; then
+if command -v podman >/dev/null 2>&1 && podman info >/dev/null 2>&1; then
     CONTAINER_RUNTIME="podman"
 elif command -v docker >/dev/null 2>&1; then
     CONTAINER_RUNTIME="docker"

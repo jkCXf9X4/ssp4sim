@@ -71,6 +71,9 @@ Container file overview:
 - `containers/shell_ubuntu22_gcc13_container.sh` opens an interactive shell with the repository bind-mounted at `/work`.
 - `containers/run_ubuntu22_gcc13_container.sh` runs a non-interactive command in the same container image and is used by CI.
 
+The helper scripts prefer Podman when it can initialize cleanly, but fall back
+to Docker if Podman is present yet unusable in the local environment.
+
 The shell script bind-mounts the host repository root into the container at `/work`, so edits in either place affect the same files on the host. It does not create a separate host mount point:
 
 When the shell helper uses Podman, it now starts the container with `--userns keep-id` so the bind-mounted repository remains writable as your host user. If you still see `Permission denied` under `/work`, verify you launched the shell via the helper script instead of a manual `podman run`.

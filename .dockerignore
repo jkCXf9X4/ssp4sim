@@ -1,0 +1,9 @@
+.git
+.pytest_cache
+build
+dist
+venv
+wd
+
+# Generated reference fixture outputs are not needed to build the project image.
+tests/resources/reference_ssp/artifacts

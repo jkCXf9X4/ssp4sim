@@ -16,7 +16,7 @@ ENV_ARGS=()
 USERNS_ARGS=()
 CONTAINER_COMMAND=()
 
-if command -v podman >/dev/null 2>&1; then
+if command -v podman >/dev/null 2>&1 && podman info >/dev/null 2>&1; then
     CONTAINER_RUNTIME="podman"
     USERNS_ARGS=(--userns keep-id)
 elif command -v docker >/dev/null 2>&1; then
