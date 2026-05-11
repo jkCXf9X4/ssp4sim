@@ -1,54 +1,16 @@
 #include "signal/sinks/duckdb_recorder_sink.hpp"
+#include "signal/sinks/duckdb_recorder_utils.hpp"
 
 #include "utils/io.hpp"
 #include "utils/time.hpp"
 
 #include <duckdb.h>
 
-#include <algorithm>
-#include <cctype>
+#include <cstdint>
 #include <stdexcept>
-#include <string_view>
 
 namespace ssp4sim::signal
 {
-    namespace
-    {
-        void check_duckdb_state(duckdb_state state, std::string_view context, std::string_view error = {})
-        {
-            if (state != DuckDBSuccess)
-            {
-                if (!error.empty())
-                {
-                    std::string message(context);
-                    message += ": ";
-                    message += error;
-                    throw std::runtime_error(message);
-                }
-
-                throw std::runtime_error(std::string(context));
-            }
-        }
-
-        std::string append_sql_column_name(const std::string &name)
-        {
-            std::string quoted = "\"";
-            for (const auto ch : name)
-            {
-                if (ch == '"')
-                {
-                    quoted += "\"\"";
-                }
-                else
-                {
-                    quoted.push_back(ch);
-                }
-            }
-            quoted.push_back('"');
-            return quoted;
-        }
-    }
-
     DuckDbRecorderSink::DuckDbRecorderSink(const std::filesystem::path &filename)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.DuckDbRecorderSink")),
           filename(filename)
@@ -61,125 +23,12 @@ namespace ssp4sim::signal
         stop();
     }
 
-    std::pair<std::string, std::string> DuckDbRecorderSink::split_storage_name(const std::string &name)
-    {
-        const auto separator = name.find('.');
-        if (separator == std::string::npos)
-        {
-            return {"", name};
-        }
-
-        return {name.substr(0, separator), name.substr(separator + 1)};
-    }
-
-    std::string DuckDbRecorderSink::local_variable_name(const std::string &storage_model, const std::string &name)
-    {
-        const auto prefix = storage_model.empty() ? std::string{} : storage_model + '.';
-        if (!prefix.empty() && name.rfind(prefix, 0) == 0 && name.size() > prefix.size())
-        {
-            return name.substr(prefix.size());
-        }
-
-        return name;
-    }
-
-    std::string DuckDbRecorderSink::sanitize_component(std::string_view value)
-    {
-        std::string sanitized;
-        sanitized.reserve(value.size());
-        for (const auto ch : value)
-        {
-            if (std::isalnum(static_cast<unsigned char>(ch)) != 0)
-            {
-                sanitized.push_back(ch);
-            }
-            else
-            {
-                sanitized.push_back('_');
-            }
-        }
-
-        if (sanitized.empty())
-        {
-            return "default";
-        }
-
-        return sanitized;
-    }
-
-    std::string DuckDbRecorderSink::table_name_for(std::size_t index, const std::string &model, const std::string &storage_name)
-    {
-        std::string table_name = "duckdb_";
-        table_name += std::to_string(index);
-        if (!model.empty())
-        {
-            table_name += '_';
-            table_name += sanitize_component(model);
-        }
-        if (!storage_name.empty())
-        {
-            table_name += '_';
-            table_name += sanitize_component(storage_name);
-        }
-
-        return table_name;
-    }
-
-    std::string DuckDbRecorderSink::sql_type_for(types::DataType type)
-    {
-        switch (static_cast<types::DataType::Value>(type))
-        {
-        case types::DataType::Value::real:
-            return "DOUBLE";
-        case types::DataType::Value::integer:
-        case types::DataType::Value::enumeration:
-            return "INTEGER";
-        case types::DataType::Value::boolean:
-            return "BOOLEAN";
-        case types::DataType::Value::string:
-            return "VARCHAR";
-        default:
-            throw std::runtime_error("Unsupported data type for DuckDB recording");
-        }
-    }
-
-    std::string DuckDbRecorderSink::quote_identifier(const std::string &name)
-    {
-        return append_sql_column_name(name);
-    }
-
-    void DuckDbRecorderSink::append_value(duckdb_appender appender, types::DataType type, const std::byte *data)
-    {
-        switch (static_cast<types::DataType::Value>(type))
-        {
-        case types::DataType::Value::real:
-            check_duckdb_state(duckdb_append_double(appender, *reinterpret_cast<const double *>(data)), "Failed to append floating-point value");
-            break;
-        case types::DataType::Value::integer:
-        case types::DataType::Value::enumeration:
-            check_duckdb_state(duckdb_append_int32(appender, *reinterpret_cast<const int *>(data)), "Failed to append integer value");
-            break;
-        case types::DataType::Value::boolean:
-            check_duckdb_state(duckdb_append_bool(appender, *reinterpret_cast<const int *>(data) != 0), "Failed to append boolean value");
-            break;
-        case types::DataType::Value::string:
-            check_duckdb_state(duckdb_append_varchar(appender, reinterpret_cast<const std::string *>(data)->c_str()), "Failed to append string value");
-            break;
-        default:
-            throw std::runtime_error("Unsupported data type for DuckDB recording");
-        }
-    }
-
     void DuckDbRecorderSink::open_database()
     {
         utils::io::create_parent_folder(filename.string());
-        if (std::filesystem::exists(filename))
-        {
-            std::filesystem::remove(filename);
-        }
-
-        check_duckdb_state(duckdb_open(filename.string().c_str(), &database), "Failed to open DuckDB database");
-        check_duckdb_state(duckdb_connect(database, &connection), "Failed to connect to DuckDB database");
+        duckdb_recorder::check_duckdb_state(duckdb_open(filename.string().c_str(), &database), "Failed to open DuckDB database");
+        duckdb_recorder::check_duckdb_state(duckdb_connect(database, &connection), "Failed to connect to DuckDB database");
+        duckdb_recorder::create_metadata_table(connection);
     }
 
     void DuckDbRecorderSink::on_storage_added(const SignalStorage *storage)
@@ -189,19 +38,20 @@ namespace ssp4sim::signal
             return;
         }
 
-        auto [model, storage_name] = split_storage_name(storage->name);
+        auto [model, storage_name] = duckdb_recorder::split_storage_name(storage->name);
 
         DuckDbStorageLayout layout;
         layout.storage = storage;
         layout.index = layouts.size();
         layout.model = std::move(model);
-        layout.table_name = table_name_for(layout.index, layout.model, storage_name);
+        layout.storage_name = std::move(storage_name);
+        layout.table_name = duckdb_recorder::table_name_for(layout.model);
         layout.variables.reserve(storage->variables.size());
 
         for (const auto &variable : storage->variables)
         {
             DuckDbVariableLayout variable_layout;
-            variable_layout.name = local_variable_name(layout.model, variable.name);
+            variable_layout.name = duckdb_recorder::local_variable_name(layout.model, variable.name);
             variable_layout.type = variable.type;
             variable_layout.position = variable.position;
             layout.variables.emplace_back(std::move(variable_layout));
@@ -226,40 +76,27 @@ namespace ssp4sim::signal
     void DuckDbRecorderSink::open_layout(DuckDbStorageLayout &layout)
     {
         std::string create_sql = "CREATE TABLE IF NOT EXISTS ";
-        create_sql += quote_identifier(layout.table_name);
+        create_sql += duckdb_recorder::quote_identifier(layout.table_name);
         create_sql += " (";
-        create_sql += quote_identifier("timestamp_ns");
+        create_sql += duckdb_recorder::quote_identifier("timestamp_ns");
         create_sql += " BIGINT, ";
-        create_sql += quote_identifier("simulation_time_s");
+        create_sql += duckdb_recorder::quote_identifier("simulation_time_s");
         create_sql += " DOUBLE";
 
         for (const auto &variable : layout.variables)
         {
             create_sql += ", ";
-            create_sql += quote_identifier(variable.name);
+            create_sql += duckdb_recorder::quote_identifier(variable.name);
             create_sql += ' ';
-            create_sql += sql_type_for(variable.type);
+            create_sql += duckdb_recorder::sql_type_for(variable.type);
         }
 
         create_sql += ");";
 
-        duckdb_result result;
-        const auto state = duckdb_query(connection, create_sql.c_str(), &result);
-        if (state != DuckDBSuccess)
-        {
-            std::string message = "Failed to create DuckDB table";
-            const auto *error = duckdb_result_error(&result);
-            if (error != nullptr && *error != '\0')
-            {
-                message += ": ";
-                message += error;
-            }
-            duckdb_destroy_result(&result);
-            throw std::runtime_error(message);
-        }
-        duckdb_destroy_result(&result);
+        duckdb_recorder::execute_query(connection, create_sql, "Failed to create DuckDB table");
+        duckdb_recorder::insert_metadata_row(connection, layout);
 
-        check_duckdb_state(duckdb_appender_create(connection, nullptr, layout.table_name.c_str(), &layout.appender), "Failed to create DuckDB appender");
+        duckdb_recorder::check_duckdb_state(duckdb_appender_create(connection, nullptr, layout.table_name.c_str(), &layout.appender), "Failed to create DuckDB appender");
     }
 
     void DuckDbRecorderSink::init()
@@ -311,15 +148,15 @@ namespace ssp4sim::signal
 
         try
         {
-            check_duckdb_state(duckdb_append_int64(layout.appender, timestamp_ns), "Failed to append timestamp");
-            check_duckdb_state(duckdb_append_double(layout.appender, simulation_time_s), "Failed to append simulation time");
+            duckdb_recorder::check_duckdb_state(duckdb_append_int64(layout.appender, timestamp_ns), "Failed to append timestamp");
+            duckdb_recorder::check_duckdb_state(duckdb_append_double(layout.appender, simulation_time_s), "Failed to append simulation time");
 
             for (const auto &variable : layout.variables)
             {
-                append_value(layout.appender, variable.type, event.buffer + variable.position);
+                duckdb_recorder::append_value(layout.appender, variable.type, event.buffer + variable.position);
             }
 
-            check_duckdb_state(duckdb_appender_end_row(layout.appender), "Failed to finish DuckDB row");
+            duckdb_recorder::check_duckdb_state(duckdb_appender_end_row(layout.appender), "Failed to finish DuckDB row");
         }
         catch (const std::exception &e)
         {
@@ -372,7 +209,7 @@ namespace ssp4sim::signal
             {
                 if (layout.appender != nullptr)
                 {
-                    check_duckdb_state(duckdb_appender_destroy(&layout.appender), "Failed to destroy DuckDB appender");
+                    duckdb_recorder::check_duckdb_state(duckdb_appender_destroy(&layout.appender), "Failed to destroy DuckDB appender");
                 }
             }
         }
