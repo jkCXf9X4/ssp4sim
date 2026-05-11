@@ -33,12 +33,6 @@ target_link_libraries(ssp4sim_lib PRIVATE TBB::tbb TBB::tbbmalloc)
 find_package(quill CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE quill::quill)
 
-find_package(Arrow CONFIG REQUIRED)
-target_link_libraries(ssp4sim_lib PRIVATE "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Arrow::arrow_static,Arrow::arrow_shared>")
-
-find_package(Parquet CONFIG REQUIRED)
-target_link_libraries(ssp4sim_lib PRIVATE "$<IF:$<BOOL:${ARROW_BUILD_STATIC}>,Parquet::parquet_static,Parquet::parquet_shared>")
-
 find_package(DuckDB CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE "$<IF:$<TARGET_EXISTS:duckdb>,duckdb,duckdb_static>")
 

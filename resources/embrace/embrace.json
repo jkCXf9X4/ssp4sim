@@ -25,9 +25,6 @@
                 "enable": false,
                 "interval": 0.0
             },
-            "parquet": {
-                "enable": false
-            },
             "duckdb": {
                 "enable": true
             },

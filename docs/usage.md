@@ -32,9 +32,8 @@ Example configs:
 - [`resources/embrace/embrace.json`](../resources/embrace/embrace.json)
 - [`resources/generic_config.json`](../resources/generic_config.json)
 
-Recording output defaults to CSV. Parquet is available for full-fidelity
-snapshot logging and writes one file per storage. DuckDB is available as a
-direct database-backed alternative and writes one table per storage. Recording
+Recording output defaults to CSV. DuckDB is available as a direct
+database-backed alternative and writes one table per storage. Recording
 details live in [Configuration](configuration.md).
 
 ## Python API

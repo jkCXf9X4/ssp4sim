@@ -14,8 +14,7 @@ need to run the C++ binary or the Python suite.
 The suite is split by layer so each test has a clear responsibility:
 
 - `tests/lib/core/`: C++ tests for core runtime primitives such as FMU adapter,
-  recorder, ring buffer, signal storage, start values, Parquet recording, and
-  DuckDB recording.
+  recorder, ring buffer, signal storage, start values, and DuckDB recording.
 - `tests/lib/utils/`: C++ tests for utility data structures and support code.
 - `tests/lib/high_level/`: one C++ smoke test that executes a complete SSP
   through the public simulator entry point with CSV recording enabled.
@@ -73,7 +72,7 @@ The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
 `ECS_HW` returns `fmi2Error` on the first step.
 
-The recorder tests now cover the CSV, Parquet, and DuckDB sinks separately.
+The recorder tests now cover the CSV and DuckDB sinks separately.
 
 Two dedicated high-level tests also check that the emitted `start_values.csv`
 captures the applied values for a system-level inline parameter set fixture and

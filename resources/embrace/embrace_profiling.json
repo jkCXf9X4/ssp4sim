@@ -25,9 +25,6 @@
                 "enable": true,
                 "interval": 0.25
             },
-            "parquet": {
-                "enable": true
-            },
             "wait_for": true
         },
         "log": {

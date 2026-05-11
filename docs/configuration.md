@@ -47,9 +47,6 @@ For CLI and Python invocation examples, see [Usage](usage.md).
         "enable": true,
         "interval": 0.25
       },
-      "parquet": {
-        "enable": true
-      },
       "duckdb": {
         "enable": true
       }
@@ -103,8 +100,6 @@ Notes:
 | `simulation.recording.csv.enable` | `bool` | No | `false` | Enables the CSV recorder. CSV and DuckDB are the primary result outputs for most runs. |
 | `simulation.recording.csv.file` | `string` | No | `simulation.working_dir/result.csv` | Output CSV path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
 | `simulation.recording.csv.interval` | `double` | No | `1.0` | Seconds between recorded CSV samples. |
-| `simulation.recording.parquet.enable` | `bool` | No | `false` | Enables the Parquet recorder. It writes one grouped storage snapshot per row and captures the full recorder event stream. Parquet is supported, but it is usually a little slower than CSV or DuckDB for heavy logging. |
-| `simulation.recording.parquet.file` | `string` | No | `simulation.working_dir/result.parquet` | Base Parquet path (`[TIME]` supported). The recorder writes one file per storage using this path as the prefix. |
 | `simulation.recording.duckdb.enable` | `bool` | No | `false` | Enables the DuckDB recorder. DuckDB and CSV are the primary result outputs for most runs. It writes grouped storage snapshots directly into a DuckDB database file, one table per storage. Each table stores `timestamp_ns`, `simulation_time_s`, and the storage variables. The fixed `ssp4sim_metadata` table maps model and storage names to the generated `<model>_<epoch seconds>_<uuid>` data table names. |
 | `simulation.recording.duckdb.file` | `string` | No | `simulation.working_dir/result.duckdb` | Output DuckDB database path (`[TIME]` supported). When the file already exists, new run tables and metadata rows are appended. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
@@ -172,9 +167,6 @@ based on `simulation.log.file` and a JSON log based on
     "working_dir": "./wd/embrace",
     "recording": {
       "csv": {
-        "enable": true
-      },
-      "parquet": {
         "enable": true
       },
       "duckdb": {

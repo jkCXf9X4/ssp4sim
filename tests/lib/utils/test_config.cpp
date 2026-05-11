@@ -94,9 +94,6 @@ TEST_CASE("Config tests", "[config]")
                         "enable": true,
                         "interval": 0.5
                     },
-                    "parquet": {
-                        "enable": true
-                    },
                     "duckdb": {
                         "enable": true
                     }
@@ -111,8 +108,6 @@ TEST_CASE("Config tests", "[config]")
         REQUIRE(shared_config.csv.enable);
         REQUIRE(shared_config.csv.file == fs::path("./wd/test/result.csv"));
         REQUIRE(shared_config.csv.interval == ssp4sim::utils::time::s_to_ns(0.5));
-        REQUIRE(shared_config.parquet.enable);
-        REQUIRE(shared_config.parquet.file == fs::path("./wd/test/result.parquet"));
         REQUIRE(shared_config.duckdb.enable);
         REQUIRE(shared_config.duckdb.file == fs::path("./wd/test/result.duckdb"));
     }
@@ -143,7 +138,6 @@ TEST_CASE("Config tests", "[config]")
 
         REQUIRE_FALSE(shared_config.enable_recording);
         REQUIRE_FALSE(shared_config.csv.enable);
-        REQUIRE_FALSE(shared_config.parquet.enable);
         REQUIRE_FALSE(shared_config.duckdb.enable);
     }
 

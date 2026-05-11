@@ -1,18 +1,3 @@
-##
-Recording and analysis plan
-
-- Keep the current CSV sink for low-rate logging and quick human-readable output.
-- Add a Parquet sink for full-fidelity storage snapshots using `arrow[parquet]`.
-- Recorder cleanup is complete; the remaining work is the Parquet sink and analysis layer.
-- Add a small Python analysis layer on top of `duckdb`, `pandas`, and `plotly`.
-- Document the run comparison workflow and the expected Parquet schema in the public docs.
-
-Potential implementation details:
-
-- Prefer one Parquet file per run, with grouped snapshot rows.
-- Keep `simulation_time_s`, `run`, `model`, and `storage` as shared columns.
-- Store one column per variable, matching the current grouped snapshot shape.
-- Provide a lightweight notebook or script template for comparing multiple runs.
 
 
 ---

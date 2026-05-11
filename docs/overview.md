@@ -12,8 +12,7 @@ Notable characteristics:
 - Parallel and sequential executor variants, plus custom delay-oriented
   executors in the engine internals
 - A recording pipeline that copies completed signal updates into recorder-owned
-  buffers before writing CSV output, grouped Parquet files, or direct DuckDB
-  tables
+  buffers before writing CSV output or direct DuckDB tables
 - Configurable logging with terminal, file, JSON, and cutelog sinks
 - A C++23 library, CLI, C API, and Python API for embedding or scripting
 
