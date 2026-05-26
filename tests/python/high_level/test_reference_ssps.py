@@ -231,14 +231,6 @@ def assert_start_values_contain(
                 "0, add.k1, 1.000000",
                 "0, add.k2, 1.000000",
             ],
-            marks=pytest.mark.xfail(
-                raises=AssertionError,
-                reason=(
-                    "The runtime currently emits different start values than "
-                    "the fixture declares for this internal parameter set."
-                ),
-                strict=True,
-            ),
             id="signal_sine_gain_add/baseline",
         ),
         pytest.param(
