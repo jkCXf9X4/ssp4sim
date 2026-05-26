@@ -18,6 +18,8 @@ results/*
 tmp/
 wd/
 
+opencode.json
+
 # PYTHON
 
 # Byte-compiled / optimized / DLL files

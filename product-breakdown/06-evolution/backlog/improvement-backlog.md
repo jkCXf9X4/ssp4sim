@@ -40,6 +40,16 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-007.md` | IMP-007 | Rename jacobi_serial to Gauss-Seidel + hybrid executor design sketch | Proposed | Medium | Rename: executor_builder.cpp, docs/configuration.md, module docs (moderate). Design sketch: documentation only (low) |
 | `candidates/IMP-008.md` | IMP-008 | Newton iteration executor feasibility assessment for algebraic-loop resolution | Proposed | Low | Design sketch only; no implementation (low). If later implemented: large (new solver, interface changes) |
 | `candidates/IMP-009.md` | IMP-009 | SignalStorage pointer indirection — close risk as non-bottleneck | Closed | N/A | None — analysis only |
+| `candidates/IMP-010.md` | IMP-010 | Remove logging guidelines from PBS signal.md — domain mismatch | Proposed | High | 2 files (PBS signal.md, docs/logging_guidlines.md); text removal only |
+| `candidates/IMP-011.md` | IMP-011 | Remove coding style rules list from PBS architecture decision | Proposed | High | 1 file (PBS IMD-003.md); text removal only |
+| `candidates/IMP-012.md` | IMP-012 | Consolidate "ctest is unreliable" note to one canonical location | Proposed | Medium | 3 files (docs/build_from_source.md, tests/README.md, PBS test-strategy.md); minor text changes |
+| `candidates/IMP-013.md` | IMP-013 | Consolidate fmi4c mode-bit docs to one canonical location | Proposed | Medium | 3 files (PBS dependency-policy.md, PBS test-strategy.md, tests/README.md); minor text changes |
+| `candidates/IMP-014.md` | IMP-014 | Deduplicate fmi2Error/fmi2Fatal cleanup documentation | Proposed | Medium | 2 files (PBS handler.md, tests/README.md); one-line change |
+| `candidates/IMP-015.md` | IMP-015 | Deduplicate xfail docs between tests/README.md and PBS regressions | Proposed | Low | 2 files (tests/README.md, PBS regressions.md); text removal only |
+| `candidates/IMP-016.md` | IMP-016 | Canonicalize project purpose statement to PBS intent layer | Proposed | Low | 3 files (readme.md, docs/overview.md, PBS purpose.md); minor text changes |
+| `candidates/IMP-017.md` | IMP-017 | Deduplicate test pyramid description between tests/README.md and PBS strategy | Proposed | Low | 2 files (tests/README.md, PBS test-strategy.md); minor text changes |
+| `candidates/IMP-018.md` | IMP-018 | Fix inline ParameterSet namespace bug in ssp1_ssd.toml | Proposed | High | 1 TOML file, generated code, test xfail removal, regression doc; fixes correctness bug |
+| `candidates/IMP-019.md` | IMP-019 | Fix component-level parameter bindings in get_parameter_bindings() for dcmotor/baseline (REG-002) | Proposed | Medium | ssp.cpp core rewrite, composite SSP test fix, regression doc; medium to high risk — affects all component-level parameter resolution |
 
 ## Summary
 
@@ -54,6 +64,16 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-007 | Rename jacobi_serial to Gauss-Seidel + hybrid executor design sketch | Medium | None | Rename: configuration + docs (moderate). Design sketch: docs only (low) |
 | IMP-008 | Newton iteration executor feasibility assessment | Low | None | Design sketch only (low). Implementation deferred |
 | IMP-009 | SignalStorage pointer indirection — close risk | N/A | None | None — analysis only |
+| IMP-010 | Remove logging guidelines from PBS signal.md — domain mismatch | High | None | 2 files, text removal |
+| IMP-011 | Remove coding style rules list from PBS architecture decision | High | None | 1 file, text removal |
+| IMP-012 | Consolidate "ctest is unreliable" note to one canonical location | Medium | None | 3 files, minor text changes |
+| IMP-013 | Consolidate fmi4c mode-bit docs to one canonical location | Medium | None | 3 files, minor text changes |
+| IMP-014 | Deduplicate fmi2Error/fmi2Fatal cleanup documentation | Medium | None | 2 files, minor text changes |
+| IMP-015 | Deduplicate xfail docs between tests/README.md and PBS regressions | Low | None | 2 files, minor text changes |
+| IMP-016 | Canonicalize project purpose statement to PBS intent layer | Low | None | 3 files, minor text changes |
+| IMP-017 | Deduplicate test pyramid description between tests/README.md and PBS strategy | Low | None | 2 files, minor text changes |
+| IMP-018 | Fix inline ParameterSet namespace bug in ssp1_ssd.toml | High | None | 1 TOML file + generated code + test xfail removal; correctness fix |
+| IMP-019 | Fix component-level parameter bindings in get_parameter_bindings() for dcmotor/baseline (REG-002) | Medium | None | ssp.cpp core rewrite + fixture test fix + regression doc; medium-high risk |
 
 ## Cross-Cutting Constraints
 

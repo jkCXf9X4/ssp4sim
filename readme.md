@@ -2,9 +2,7 @@
 <!-- Layer: 00-intent, 01-product, 05-operation, 03-implementation -->
 
 
-SSP4SIM is a C++23 library and application for simulating Structure and
-Parameterization (SSP) archives. The goal is to provide a small experimental
-simulation engine for developing and testing simulation strategies.
+SSP4SIM is a C++23 simulation engine for SSP archives. See [product-breakdown/00-intent/purpose.md](product-breakdown/00-intent/purpose.md) for the full project purpose.
 
 See [product-breakdown/01-product/capabilities.md](product-breakdown/01-product/capabilities.md) for the full capabilities list.
 

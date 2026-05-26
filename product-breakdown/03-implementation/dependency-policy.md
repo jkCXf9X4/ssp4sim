@@ -50,7 +50,7 @@ The following build artifacts and outputs are treated as generated or fixture da
 - Many FMU and SSP workflows assume Linux x86_64 binaries.
 - Preserve executable permissions for libraries under `binaries/`.
 - Prefer copying fixtures to a temporary location when a loader or unpacking step may mutate files.
-- The fmi4c loader marks Linux shared libraries executable before dlopen — loading Git-tracked fixtures directly could dirty the working tree.
+- The fmi4c loader marks Linux shared libraries executable before dlopen — loading Git-tracked fixtures directly could dirty the working tree. Prefer tests that copy mutable fixtures into a temporary directory before loading them.
 
 ### Python Environment
 

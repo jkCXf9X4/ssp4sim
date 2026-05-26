@@ -35,24 +35,9 @@ Owns the in-memory simulation data layout and the recording path used to export 
 - Recorder stores explicit ownership copy (no shared memory with simulation)
 - Coalescing CSV rows by timestamp across storages
 
+Signal module components log storage operations and recorder dispatch using the project's general logging conventions documented in `docs/logging_guidlines.md`.
+
 ## Traceability
 
 - Backward: Architecture component view, data flow view.
-- Sources: `lib/include/signal/readme.md`, `lib/include/signal/`.
-
-### Logger Construction
-
-- Store logger pointers as `ssp4cpp::utils::log::Logger*`.
-- Prefer constructing logger members in constructors after logging has been configured.
-- Avoid header-initialized logger members when sinks are configured at runtime.
-- Use the existing `LOG_*` macros and local patterns near the changed code.
-
-### Quill Backend Profile
-
-The current Quill profile favors lower frontend latency by:
-- Preallocating the thread-local queue before the first log event.
-- Running the backend in busy-poll mode with `sleep_duration=0` and `enable_yield_when_idle=true`.
-- Disabling timestamp grace-period ordering.
-- Flushing sinks less often.
-
-This improves throughput on heavily logged execution paths at the cost of higher backend CPU usage.
+- Sources: `lib/include/signal/readme.md`, `lib/include/signal/`, `docs/logging_guidlines.md`.

@@ -13,6 +13,8 @@ need to run the C++ binary or the Python suite.
 
 ## Test Architecture
 
+See product-breakdown/04-verification/test-strategy.md for the strategic rationale and test coverage targets.
+
 The suite is split by layer so each test has a clear responsibility:
 
 - `tests/lib/core/`: C++ tests for core runtime primitives such as FMU adapter,
@@ -65,10 +67,7 @@ A separate smoke test exercises the packaged CLI through `venv/bin/pyssp4sim`
 against the local `resources/embrace/embrace.json` fixture with temporary
 output paths.
 
-The fmi4c loader marks Linux shared libraries executable before `dlopen`, so
-loading tracked fixtures directly could dirty Git by changing `.so` file mode
-bits. Prefer tests that copy mutable fixtures into a temporary directory before
-loading them.
+See product-breakdown/03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
 
 The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
@@ -82,11 +81,7 @@ the internal parameter-set fixture in `signal_sine_gain_add`, external `.ssv`
 bindings, `.ssv + .ssm` mappings, and representative mapped fixtures with
 multiple value types, including the hierarchical `dcmotor` fixture.
 
-Two parameter-set variants are currently marked strict `xfail` in the Python
-high-level suite because the runtime still emits different start values than
-the fixtures declare: `signal_sine_gain_add/baseline` and `dcmotor/baseline`.
-If either starts passing, pytest will report an XPASS and the marker should be
-removed.
+Known regression fixtures are tracked in product-breakdown/04-verification/regressions.md.
 
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the

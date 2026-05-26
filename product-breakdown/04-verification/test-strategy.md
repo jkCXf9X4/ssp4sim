@@ -10,11 +10,13 @@ This artifact formalizes the SSP4SIM testing approach — what is tested at each
 
 The test suite follows a three-layer pyramid:
 
-1. **Unit Tests (C++ — `tests/lib/core/`, `tests/lib/utils/`)**: Test individual runtime primitives in isolation. Catch2-based, focused on FMU adapter, recorder, ring buffer, signal storage, start values, DuckDB recording, config, node operations, thread pool, and parallel execution utilities.
+1. **Unit Tests (C++)**: Test individual runtime primitives in isolation. Catch2-based. Targets module-level correctness and edge cases.
 
-2. **Integration Smoke Test (C++ — `tests/lib/high_level/`)**: One C++ smoke test that exercises a complete SSP through the public simulator entry point with CSV recording enabled. Verifies end-to-end execution without workflow-level tooling.
+2. **Integration Smoke Test (C++)**: One C++ smoke test that exercises a complete SSP through the public simulator entry point. Verifies end-to-end execution without workflow-level tooling.
 
-3. **Workflow Tests (Python — `tests/python/high_level/`)**: Reference SSP sweep using pytest parameterization. Simulates each co-simulation SSP fixture and checks complete CSV output. Handles fixture discovery, result comparison, and known failure tracking.
+3. **Workflow Tests (Python)**: Reference SSP sweep using pytest parameterization. Targets output validation, fixture discovery, and known failure tracking.
+
+See tests/README.md for the concrete test layout and run commands.
 
 ## Layer Boundary Rationale
 
@@ -31,8 +33,8 @@ The test suite follows a three-layer pyramid:
 
 ## Known Limitations
 
-- `ctest --test-dir build/tests` is unreliable — run the test binary directly.
-- fmi4c loader may dirty Git tracked fixtures by changing `.so` mode bits — prefer copying mutable fixtures to temp directories.
+- See tests/README.md for test-running caveats.
+- See 03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
 - Model-exchange SSP fixtures are excluded (only co-simulation is supported).
 
 ## Traceability

@@ -106,7 +106,7 @@ cmake --preset=vcpkg -DSSP4SIM_LOG_HOT_PATH=OFF
 
 ## Enable C++ Tests
 
-`ctest --test-dir build/tests` is currently unreliable. Run the `./build/tests/lib/ssp4sim_tests` binary directly:
+See tests/README.md for test-running caveats.
 
 ```bash
 cmake --preset=vcpkg -DSSP4SIM_BUILD_TEST=ON

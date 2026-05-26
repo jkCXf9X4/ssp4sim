@@ -26,7 +26,7 @@ Loads FMU archives, prepares FMI 2.0 instances for execution, and manages the FM
 
 ## Notable Patterns
 
-- After fmi2Error or fmi2Fatal, cleanup frees the instance without calling fmi2Terminate (so logs keep the root cause).
+- See tests/README.md for post-error cleanup behavior.
 - FMU libraries loaded via dlopen — no sandboxing for vendor code.
 - Mode bit changes on tracked fixtures require copy-to-tmp workaround.
 
