@@ -35,6 +35,29 @@ This artifact catalogs all external dependencies and documents the version polic
 - If conflicts arise: upgrade conflicting dependency first, then adjust consuming code.
 - Vendored dependencies can be patched locally if upstream is unresponsive.
 
+## Generated Data Policy
+
+The following build artifacts and outputs are treated as generated or fixture data. Do not normalize, repackage, or rewrite them unless the requested change explicitly requires it:
+
+- `build/` directory contents
+- Unpacked SSP archives and FMU binaries
+- Result CSVs and DuckDB databases
+- Log files
+- FMU/SSP binaries
+
+### Handling Mutable Fixtures
+
+- Many FMU and SSP workflows assume Linux x86_64 binaries.
+- Preserve executable permissions for libraries under `binaries/`.
+- Prefer copying fixtures to a temporary location when a loader or unpacking step may mutate files.
+- The fmi4c loader marks Linux shared libraries executable before dlopen — loading Git-tracked fixtures directly could dirty the working tree.
+
+### Python Environment
+
+- Use the repo-local `venv` for Python commands when it exists.
+- Prefer `. venv/bin/activate && <command>` or `venv/bin/python <command>` over system Python.
+- Python dependencies, vcpkg features, and platform-specific FMU tooling are part of the reproducible environment.
+
 ## Traceability
 
 - Backward: Architecture container view (deployment dependencies).

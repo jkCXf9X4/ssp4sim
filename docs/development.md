@@ -9,19 +9,7 @@ This page collects contributor conventions. Build commands live in
 
 ## Repository Layout
 
-- [`lib/`](../lib): simulation engine internals
-- [`public/`](../public): public app and Python API entry points
-- [`tests/lib/`](../tests/lib): Catch2-based C++ unit and integration tests
-  split by layer (`core/`, `utils/`, and one `high_level/` smoke test)
-- [`tests/python/`](../tests/python): pytest-based high-level workflow tests
-- [`tests/resources/reference_ssp/`](../tests/resources/reference_ssp): unpacked reference fixture
-  repository used by high-level workflow tests
-- [`resources/`](../resources): SSP/SSD/SSM/SSV examples, reference inputs,
-  and sample scenarios
-- [`scripts/`](../scripts): helper scripts for result processing/comparison
-- [`3rdParty/`](../3rdParty): vendored dependencies such as `ssp4cpp` and
-  `fmi4c`
-
+For the complete repository structure, see the [code structure overview](../product-breakdown/03-implementation/code-structure.md).
 For detailed architecture information, see the [architecture layer](../product-breakdown/02-architecture/).
 
 ## Core Development Loop
@@ -60,16 +48,7 @@ Use [Build From Source](build_from_source.md) for exact build commands and
 - Use the repo-local `venv` for Python commands when it exists. Prefer
   `. venv/bin/activate && <command>` or `venv/bin/python <command>` over the
   system Python for workflow scripts and pytest.
-- Do not casually rewrite dependency setup. Python dependencies, vcpkg
-  features, and platform-specific FMU tooling are part of the reproducible
-  environment.
-- Many FMU and SSP workflows assume Linux `x86_64` binaries. Preserve
-  executable permissions for libraries under `binaries/`, and prefer copying
-  fixtures to a temporary location when a loader or unpacking step may mutate
-  files.
-- Treat `build/`, unpacked archives, result CSVs, logs, and FMU/SSP binaries
-  as generated or fixture data. Do not normalize, repackage, or rewrite them
-  unless the requested change explicitly requires it.
+See [Dependency Policy — Generated Data Policy](../product-breakdown/03-implementation/dependency-policy.md#generated-data-policy) for the authoritative policy on generated and fixture data, including Python environment guidelines.
 
 ## Configuration Work
 

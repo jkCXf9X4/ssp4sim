@@ -118,7 +118,7 @@ namespace ssp4sim::signal
         size_t area;
         if (find_area(time, area))
         {
-            return static_cast<int>(area); // TODO: why convert this?
+            return area;
         }
         auto new_area = push(time);
         return new_area;
@@ -150,7 +150,7 @@ namespace ssp4sim::signal
 
     std::byte *SignalStorage::get_derivative(std::size_t area, std::size_t index, std::size_t order) noexcept
     {
-        // TODO: add a HOT_PATH_CHECKS flag 
+#ifdef SSP4SIM_HOT_PATH_CHECKS
         if (!allocated)  [[unlikely]]
         {
             return nullptr;
@@ -176,6 +176,7 @@ namespace ssp4sim::signal
         {
             return nullptr;
         }
+#endif
 
         return derivate_locations[area][index] + (order - 1) * derivative_size;
     }

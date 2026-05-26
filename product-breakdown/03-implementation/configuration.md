@@ -39,7 +39,9 @@ Full JSON schema is documented in `docs/configuration.md`. Key sections:
 - `simulation.recording.duckdb.enable`: DuckDB toggle (optional, default false)
 - `simulation.log.level_terminal` / `simulation.log.level_file`: Log levels (optional)
 
+See [Configuration Reference](../../docs/configuration.md) for the complete key table, type defaults, and validation behavior.
+
 ## Traceability
 
-- Backward: Product requirements (REQ-001 through REQ-006 drive config keys).
-- Sources: `docs/configuration.md`, `lib/include/utils/config/`.
+- Backward: Product requirements (REQ-004 CSV, REQ-005 DuckDB, REQ-006 logging).
+- Sources: `docs/configuration.md`.

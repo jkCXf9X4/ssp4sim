@@ -11,6 +11,7 @@ include(GNUInstallDirs)
 option(SSP4SIM_BUILD_TEST "Build test executable" ON)
 option(SSP4SIM_BUILD_PYTHON_API "Build Python API" ON)
 option(SSP4SIM_LOG_HOT_PATH "Include logging in hot path" OFF)
+option(SSP4SIM_HOT_PATH_CHECKS "Perform validation checks in get_derivative hot path" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -39,6 +40,10 @@ set(CMAKE_C_FLAGS_RELEASE
 
 if(SSP4SIM_LOG_HOT_PATH)
   add_compile_definitions(_LOG_)
+endif()
+
+if(SSP4SIM_HOT_PATH_CHECKS)
+  add_compile_definitions(SSP4SIM_HOT_PATH_CHECKS)
 endif()
 
 # Status
