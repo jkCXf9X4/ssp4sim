@@ -1,4 +1,6 @@
 # Profiling
+<!-- Layer: 05-operation -->
+
 
 This page collects repeatable profiling commands for build-time and runtime
 investigation. Prefer storing generated traces under `build/` so they stay out

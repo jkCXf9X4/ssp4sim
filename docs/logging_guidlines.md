@@ -1,4 +1,6 @@
 # Logging Guidelines
+<!-- Layer: 05-operation -->
+
 
 SSP4SIM uses Quill through the shared `ssp4cpp::utils::log` wrapper. The
 wrapper owns backend startup and logger construction; do not call

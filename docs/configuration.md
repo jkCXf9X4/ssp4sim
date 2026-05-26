@@ -1,4 +1,6 @@
 # Configuration Reference
+<!-- Layer: 03-implementation, 05-operation -->
+
 
 This document describes how `ssp4sim` builds and consumes the input JSON configuration file passed to `sim_app` (or `Simulator(config_path)`).
 

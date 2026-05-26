@@ -1,4 +1,6 @@
 # Installation
+<!-- Layer: 05-operation -->
+
 
 This guide covers ways to install or consume `ssp4sim` without developing the
 library itself. For source builds, use [Build From Source](build_from_source.md).

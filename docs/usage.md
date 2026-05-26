@@ -1,4 +1,6 @@
 # Usage
+<!-- Layer: 05-operation, 01-product -->
+
 
 This page covers running simulations after SSP4SIM is installed or built. For
 installation steps, see [Installation](installation.md). For source builds, see
@@ -57,11 +59,5 @@ pyssp4sim ./resources/embrace/embrace.json
 
 ## Input Data Policy
 
-SSP4SIM records simulation results to CSV, but CSV is not treated as the
-preferred way to define portable simulation inputs. CSV input conventions vary
-between tools and are difficult to reproduce across simulation engines without
-extra metadata or standardization.
-
-Use a portable FMU to supply input variables when repeatability matters. That
-keeps input behavior, derivatives, and signal continuity inside a model that can
-travel with the SSP.
+The input data policy and design principles are documented in the
+[product layer](../product-breakdown/01-product/).

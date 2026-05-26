@@ -1,63 +1,37 @@
 # SSP4SIM
+<!-- Layer: 00-intent, 01-product, 05-operation, 03-implementation -->
+
 
 SSP4SIM is a C++23 library and application for simulating Structure and
 Parameterization (SSP) archives. The goal is to provide a small experimental
 simulation engine for developing and testing simulation strategies.
 
-Current support:
-
-- SSP 1.0 archives and unpacked SSP directories
-- FMI 2.0 co-simulation models
-- Gauss-Jacobi and Gauss-Seidel execution strategies
-- CSV and DuckDB recording as the primary result outputs
-
-See the [SSP standard](https://ssp-standard.org) for more information about the file format.
+See [product-breakdown/01-product/capabilities.md](product-breakdown/01-product/capabilities.md) for the full capabilities list.
 
 Builds upon the [SSP4CPP](https://github.com/jkCXf9X4/ssp4cpp) XML deserializer
 and uses [Quill](https://github.com/odygrd/quill) for logging.
 
 ## Quick Start
 
-Run the latest Linux release:
+Install the latest release (see [Installation](docs/installation.md)) or
+[build from source](docs/build_from_source.md), then run:
 
 ```bash
-curl -fLO https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/ssp4sim-linux-x86_64-latest.tar.gz
-tar -xzf ssp4sim-linux-x86_64-latest.tar.gz
-./ssp4sim/bin/sim_app ./ssp4sim/resources/embrace/embrace.json
+sim_app ./resources/embrace/embrace.json
 ```
 
-Build from source and run the C++ tests:
-
-```bash
-git clone --recursive git@github.com:jkCXf9X4/ssp4sim.git
-cd ssp4sim
-cmake --preset=vcpkg -DSSP4SIM_BUILD_TEST=ON
-cmake --build build
-./build/tests/lib/ssp4sim_tests
-```
-
-Or run from python:
-
-```bash
-pip install \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl
-```
-
-Run the same simulation through the CLI wrapper:
-
-```bash
-pyssp4sim ./resources/embrace/embrace.json
-```
+Or use the Python API:
 
 ```python
 import pyssp4sim
-
 sim = pyssp4sim.Simulator("./resources/embrace/embrace.json")
 sim.init()
 sim.simulate()
 ```
 
 ## Documentation
+
+For structured per-layer documentation, see the [product-breakdown](product-breakdown/) directory.
 
 - [Overview](docs/overview.md): short feature-oriented summary and positioning.
 - [Installation](docs/installation.md): release tarball and wheel consumption.

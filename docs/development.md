@@ -1,4 +1,6 @@
 # Development Guide
+<!-- Layer: 03-implementation, 02-architecture, 05-operation -->
+
 
 This page collects contributor conventions. Build commands live in
 [Build From Source](build_from_source.md), test-suite details live in
@@ -19,6 +21,8 @@ This page collects contributor conventions. Build commands live in
 - [`scripts/`](../scripts): helper scripts for result processing/comparison
 - [`3rdParty/`](../3rdParty): vendored dependencies such as `ssp4cpp` and
   `fmi4c`
+
+For detailed architecture information, see the [architecture layer](../product-breakdown/02-architecture/).
 
 ## Core Development Loop
 
@@ -82,8 +86,10 @@ Preserve existing links unless the file is renamed in a coordinated cleanup.
 
 ## Release Process
 
-- Linux release pipeline and artifact details: [docs/linux_binary_distribution.md](linux_binary_distribution.md)
-- Tagging example:
+The release pipeline and packaging details are documented in
+[docs/linux_binary_distribution.md](linux_binary_distribution.md).
+
+Tagging example:
 
 ```bash
 git tag v0.1.1
