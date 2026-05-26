@@ -35,9 +35,6 @@ if not Path(pyssp4sim.__file__).resolve().is_relative_to(PYTHON_API_BUILD.resolv
 
 
 SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
-EXPECTED_REFERENCE_FAILURES = {
-    "dcmotor": "Hierarchical SSP systems are not supported by the current flat graph builder.",
-}
 
 GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
 REFERENCE_SSP_ROOT = (
@@ -93,18 +90,7 @@ def reference_params() -> list[pytest.ParameterSet]:
     for ssp_root in models:
         model_name = ssp_root.parent.name
         experiment_name = ssp_root.name
-        marks = []
-        if model_name in EXPECTED_REFERENCE_FAILURES:
-            marks.append(
-                pytest.mark.xfail(
-                    raises=RuntimeError,
-                    reason=EXPECTED_REFERENCE_FAILURES[model_name],
-                    strict=True,
-                )
-            )
-        params.append(
-            pytest.param(ssp_root, marks=marks, id=f"{model_name}/{experiment_name}")
-        )
+        params.append(pytest.param(ssp_root, id=f"{model_name}/{experiment_name}"))
 
     return params
 
@@ -206,34 +192,100 @@ def assert_start_values_contain(
         )
 
 
-def test_reference_ssp_applies_system_level_parametersets(tmp_path: Path) -> None:
-    workdir = run_reference_ssp(
-        REFERENCE_SSP_ROOT / "signal_step_gain" / "baseline", tmp_path
-    )
-    start_values_text = (workdir / "start_values.csv").read_text()
-
-    assert_start_values_contain(
-        start_values_text,
-        [
-            "0, gain.k, 3.000000",
-            "0, step.height, 2.000000",
-            "0, step.offset, 1.000000",
-            "0, step.startTime, 0.250000",
-        ],
-    )
-
-
-def test_reference_ssp_applies_external_parametersets(tmp_path: Path) -> None:
-    workdir = run_reference_ssp(REFERENCE_SSP_ROOT / "scenario" / "baseline", tmp_path)
-    start_values_text = (workdir / "start_values.csv").read_text()
-
-    assert_start_values_contain(
-        start_values_text,
-        [
-            "0, scenario.scenario_input, Alt;L;0,0;300,5000",
-            "Mach;L;0,0;300,1.2",
-            "heat_load;ZOH;0,50;150,4000",
-            "Wgt_On_Whl;ZOH;0,1;150,0",
-            "Aircraft_state;ZOH;0,0;150,4",
-        ],
-    )
+@pytest.mark.parametrize(
+    "ssp_root, expected_lines",
+    [
+        pytest.param(
+            REFERENCE_SSP_ROOT / "signal_step_gain" / "baseline",
+            [
+                "0, gain.k, 3.000000",
+                "0, step.height, 2.000000",
+                "0, step.offset, 1.000000",
+                "0, step.startTime, 0.250000",
+            ],
+            id="signal_step_gain/baseline",
+        ),
+        pytest.param(
+            REFERENCE_SSP_ROOT / "scenario" / "baseline",
+            [
+                "0, scenario.scenario_input, Alt;L;0,0;300,5000",
+                "Mach;L;0,0;300,1.2",
+                "heat_load;ZOH;0,50;150,4000",
+                "Wgt_On_Whl;ZOH;0,1;150,0",
+                "Aircraft_state;ZOH;0,0;150,4",
+            ],
+            id="scenario/baseline",
+        ),
+        pytest.param(
+            REFERENCE_SSP_ROOT / "signal_sine_gain_add" / "baseline",
+            [
+                "0, sine.amplitude, 1.000000",
+                "0, sine.f, 1.000000",
+                "0, sine.offset, 0.000000",
+                "0, sine.phase, 0.000000",
+                "0, sine.startTime, 0.000000",
+                "0, step.height, 2.000000",
+                "0, step.offset, 0.000000",
+                "0, step.startTime, 0.500000",
+                "0, gain.k, 3.000000",
+                "0, add.k1, 1.000000",
+                "0, add.k2, 1.000000",
+            ],
+            marks=pytest.mark.xfail(
+                raises=AssertionError,
+                reason=(
+                    "The runtime currently emits different start values than "
+                    "the fixture declares for this internal parameter set."
+                ),
+                strict=True,
+            ),
+            id="signal_sine_gain_add/baseline",
+        ),
+        pytest.param(
+            REFERENCE_SSP_ROOT / "signal_step_product" / "baseline",
+            [
+                "0, step.height, 1.000000",
+                "0, step.offset, 0.000000",
+                "0, step.startTime, 0.250000",
+                "0, sine.amplitude, 1.000000",
+                "0, sine.f, 1.000000",
+                "0, sine.offset, 0.000000",
+                "0, sine.phase, 0.000000",
+                "0, sine.startTime, 0.000000",
+            ],
+            id="signal_step_product/baseline",
+        ),
+        pytest.param(
+            REFERENCE_SSP_ROOT / "VanDerPol" / "fast",
+            ["0, fmu.mu, 2.000000"],
+            id="VanDerPol/fast",
+        ),
+        pytest.param(
+            REFERENCE_SSP_ROOT / "dcmotor" / "baseline",
+            [
+                "0, SuT_edrive_mass.M_gain.k, -1.000000",
+                "0, SuT_edrive_mass.inertia.J, 0.002000",
+                "0, SuT_emachine_model.emf.k, 0.100000",
+                "0, SuT_emachine_model.resistor.R, 0.500000",
+                "0, stimuli_model.Voltage_step.height, 12.000000",
+                "0, stimuli_model.MLoad.k, -0.500000",
+            ],
+            marks=pytest.mark.xfail(
+                raises=AssertionError,
+                reason=(
+                    "The runtime currently emits different start values than "
+                    "the fixture declares for this hierarchical parameter set."
+                ),
+                strict=True,
+            ),
+            id="dcmotor/baseline",
+        ),
+    ],
+)
+def test_reference_ssp_applies_parameter_set_variants(
+    ssp_root: Path, expected_lines: list[str], tmp_path: Path
+) -> None:
+    workdir = run_reference_ssp(ssp_root, tmp_path)
+    if expected_lines:
+        start_values_text = (workdir / "start_values.csv").read_text()
+        assert_start_values_contain(start_values_text, expected_lines)

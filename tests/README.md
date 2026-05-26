@@ -74,14 +74,17 @@ SSP needs this smaller communication step; with a coarse `0.1` second step,
 
 The recorder tests now cover the CSV and DuckDB sinks separately.
 
-Two dedicated high-level tests also check that the emitted `start_values.csv`
-captures the applied values for a system-level inline parameter set fixture and
-an external `.ssv` parameter set fixture.
+The high-level parameter-set coverage is grouped in one parametrized test that
+checks the emitted `start_values.csv` for inline system-level parameter sets,
+the internal parameter-set fixture in `signal_sine_gain_add`, external `.ssv`
+bindings, `.ssv + .ssm` mappings, and representative mapped fixtures with
+multiple value types, including the hierarchical `dcmotor` fixture.
 
-Known reference runtime failures are marked with strict `xfail` entries in the
-test. If an expected-failing SSP starts passing, pytest reports it as an XPASS
-failure so the marker must be removed. The current expected failures are
-`dcmotor`, because the runtime does not yet support hierarchical SSP systems.
+Two parameter-set variants are currently marked strict `xfail` in the Python
+high-level suite because the runtime still emits different start values than
+the fixtures declare: `signal_sine_gain_add/baseline` and `dcmotor/baseline`.
+If either starts passing, pytest will report an XPASS and the marker should be
+removed.
 
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the
