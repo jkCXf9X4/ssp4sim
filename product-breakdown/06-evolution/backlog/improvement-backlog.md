@@ -1,5 +1,12 @@
 # Improvement Backlog Overview
 
+subfolders:
+candidates - not selected for development
+selected - items to be incorporated
+done - historical tracking of items
+
+
+
 Use this template as the landing area for accepted continuous-improvement candidates.
 
 Generated from improvement workflow:
