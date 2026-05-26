@@ -11,7 +11,7 @@ This artifact tracks known regressions and unresolved issues in the verification
 | ID | Affected Fixture | Description | Root Cause | Status | Workaround |
 |---|---|---|---|---|---|---|
 | REG-001 | `signal_sine_gain_add/baseline` | Runtime emits different start values than fixture declares | Fixed by IMP-018 — namespace corrected in ssp1_ssd.toml (ssv→ssd) | Fixed | Xfail marker removed; test passes |
-| REG-002 | `dcmotor/baseline` | Runtime emits different start values than fixture declares | `get_parameter_bindings()` in `ssp.cpp` does not traverse component-level `<ssd:ParameterBindings>` — see IMP-019 | Open | Marked as strict xfail in pytest |
+| REG-002 | `dcmotor/baseline` | Runtime emits different start values than fixture declares | `get_parameter_bindings()` in `ssp.cpp` did not traverse component-level `<ssd:ParameterBindings>` — see IMP-019 | Fixed | Fixed by IMP-019 — component-level parameter binding traversal added to `get_parameter_bindings()` in `ssp.cpp` |
 
 ## Tracking Method
 

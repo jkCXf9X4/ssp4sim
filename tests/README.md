@@ -81,7 +81,7 @@ the internal parameter-set fixture in `signal_sine_gain_add`, external `.ssv`
 bindings, `.ssv + .ssm` mappings, and representative mapped fixtures with
 multiple value types, including the hierarchical `dcmotor` fixture.
 
-Known regression fixtures are tracked in product-breakdown/04-verification/regressions.md.
+All known regression fixtures have been resolved. See product-breakdown/04-verification/regressions.md for history.
 
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the

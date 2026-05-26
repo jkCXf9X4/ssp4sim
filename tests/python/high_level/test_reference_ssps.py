@@ -262,14 +262,6 @@ def assert_start_values_contain(
                 "0, stimuli_model.Voltage_step.height, 12.000000",
                 "0, stimuli_model.MLoad.k, -0.500000",
             ],
-            marks=pytest.mark.xfail(
-                raises=AssertionError,
-                reason=(
-                    "The runtime currently emits different start values than "
-                    "the fixture declares for this hierarchical parameter set."
-                ),
-                strict=True,
-            ),
             id="dcmotor/baseline",
         ),
     ],

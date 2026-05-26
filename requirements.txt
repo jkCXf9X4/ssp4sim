@@ -3,5 +3,5 @@ numpy
 pandas
 matplotlib
 pytest
-build/public/python_api/
+-e build/public/python_api/
 duckdb
