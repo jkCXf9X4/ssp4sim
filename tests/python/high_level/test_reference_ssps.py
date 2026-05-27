@@ -23,6 +23,7 @@ def find_upwards(start: Path, target: str) -> Path:
 
 SSP4SIM_ROOT = find_upwards(Path(__file__), "__SSP4SIM_ROOT__")
 PYTHON_API_BUILD = SSP4SIM_ROOT / "build" / "public" / "python_api"
+PYTHON_TEST_RESULTS = SSP4SIM_ROOT / "build" / "python_high"
 
 
 if not (PYTHON_API_BUILD / "pyssp4sim").exists():
@@ -269,6 +270,7 @@ def assert_start_values_contain(
 def test_reference_ssp_applies_parameter_set_variants(
     ssp_root: Path, expected_lines: list[str], tmp_path: Path
 ) -> None:
+    tmp_path =  PYTHON_TEST_RESULTS / ssp_root.relative_to(REFERENCE_SSP_ROOT)
     workdir = run_reference_ssp(ssp_root, tmp_path)
     if expected_lines:
         start_values_text = (workdir / "start_values.csv").read_text()

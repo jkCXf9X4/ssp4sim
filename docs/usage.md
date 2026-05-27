@@ -38,6 +38,16 @@ Recording output defaults to CSV. DuckDB is available as a direct
 database-backed alternative and writes one table per storage. Recording
 details live in [Configuration](configuration.md).
 
+To unpack a DuckDB result into per-table CSV files, use:
+
+```bash
+./venv/bin/python resources/scripts/export_duckdb_tables.py \
+  wd/signal_sine_gain_add/baseline/result.duckdb
+```
+
+By default the script writes CSVs to a sibling directory named
+`result_csv/` next to the database file.
+
 ## Python API
 
 Install the release wheel or build the Python API from source before importing

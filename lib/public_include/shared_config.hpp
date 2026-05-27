@@ -78,7 +78,7 @@ namespace ssp4sim
             csv.enable = utils::Config::getOr("simulation.recording.csv.enable", true);
             if (csv.enable)
             {
-                const auto csv_interval_s = utils::Config::getOr("simulation.recording.csv.interval", 1.0);
+                const auto csv_interval_s = utils::Config::getOr("simulation.recording.csv.interval", 0.0);
                 if (csv_interval_s < 0.0)
                 {
                     throw std::runtime_error("simulation.recording.csv.interval must be greater than or equal to zero");
