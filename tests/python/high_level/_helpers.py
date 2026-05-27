@@ -24,6 +24,11 @@ def find_upwards(start: Path, target: str) -> Path:
 SSP4SIM_ROOT = find_upwards(Path(__file__), "__SSP4SIM_ROOT__")
 PYTHON_API_BUILD = SSP4SIM_ROOT / "build" / "public" / "python_api"
 PYTHON_TEST_RESULTS = SSP4SIM_ROOT / "build" / "python_high"
+GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
+REFERENCE_SSP_ROOT = (
+    SSP4SIM_ROOT / "resources" / "reference_ssp" / "artifacts" / "models"
+)
+SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
 
 
 if not (PYTHON_API_BUILD / "pyssp4sim").exists():
@@ -33,14 +38,6 @@ pyssp4sim = pytest.importorskip("pyssp4sim")
 
 if not Path(pyssp4sim.__file__).resolve().is_relative_to(PYTHON_API_BUILD.resolve()):
     pytest.fail(f"pyssp4sim imported from {pyssp4sim.__file__}, not {PYTHON_API_BUILD}")
-
-
-SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
-
-GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
-REFERENCE_SSP_ROOT = (
-    SSP4SIM_ROOT / "resources" / "reference_ssp" / "artifacts" / "models"
-)
 
 
 def uses_model_exchange(ssp_root: Path) -> bool:
@@ -96,7 +93,7 @@ def reference_params() -> list[pytest.ParameterSet]:
     return params
 
 
-def write_config(ssp_root: Path, workdir: Path) -> Path:
+def write_reference_config(ssp_root: Path, workdir: Path) -> Path:
     config: dict[str, Any] = json.loads(GENERIC_CONFIG_PATH.read_text())
     simulation = config["simulation"]
 
@@ -118,6 +115,7 @@ def write_config(ssp_root: Path, workdir: Path) -> Path:
     }
     recording["wait_for"] = True
     recording["interval"] = 0.1
+
     log_config = simulation["log"]
     log_config["level_terminal"] = "error"
     log_config["level_file"] = "info"
@@ -168,8 +166,10 @@ def run_reference_ssp(ssp_root: Path, tmp_path: Path) -> Path:
     workdir = tmp_path / ssp_root.parent.name / ssp_root.name
     workdir.mkdir(parents=True, exist_ok=True)
     runtime_ssp_root = workdir / "ssp"
+    if runtime_ssp_root.exists():
+        shutil.rmtree(runtime_ssp_root)
     shutil.copytree(ssp_root, runtime_ssp_root)
-    config_path = write_config(runtime_ssp_root, workdir)
+    config_path = write_reference_config(runtime_ssp_root, workdir)
 
     simulator = pyssp4sim.Simulator(str(config_path))
     simulator.init()
@@ -177,101 +177,3 @@ def run_reference_ssp(ssp_root: Path, tmp_path: Path) -> Path:
 
     assert_result_file_is_complete(workdir / "result.csv")
     return workdir
-
-
-@pytest.mark.parametrize("ssp_root", reference_params())
-def test_reference_ssp_fully_simulates(ssp_root: Path, tmp_path: Path) -> None:
-    workdir = run_reference_ssp(ssp_root, tmp_path)
-    assert_has_log_file(workdir)
-
-def assert_start_values_contain(
-    start_values_text: str, expected_lines: list[str]
-) -> None:
-    for expected_line in expected_lines:
-        assert expected_line in start_values_text, (
-            f"Missing start value entry: {expected_line}"
-        )
-
-
-@pytest.mark.parametrize(
-    "ssp_root, expected_lines",
-    [
-        pytest.param(
-            REFERENCE_SSP_ROOT / "signal_step_gain" / "baseline",
-            [
-                "0, gain.k, 3.000000",
-                "0, step.height, 2.000000",
-                "0, step.offset, 1.000000",
-                "0, step.startTime, 0.250000",
-            ],
-            id="signal_step_gain/baseline",
-        ),
-        pytest.param(
-            REFERENCE_SSP_ROOT / "scenario" / "baseline",
-            [
-                "0, scenario.scenario_input, Alt;L;0,0;300,5000",
-                "Mach;L;0,0;300,1.2",
-                "heat_load;ZOH;0,50;150,4000",
-                "Wgt_On_Whl;ZOH;0,1;150,0",
-                "Aircraft_state;ZOH;0,0;150,4",
-            ],
-            id="scenario/baseline",
-        ),
-        pytest.param(
-            REFERENCE_SSP_ROOT / "signal_sine_gain_add" / "baseline",
-            [
-                "0, sine.amplitude, 1.000000",
-                "0, sine.f, 1.000000",
-                "0, sine.offset, 0.000000",
-                "0, sine.phase, 0.000000",
-                "0, sine.startTime, 0.000000",
-                "0, step.height, 2.000000",
-                "0, step.offset, 0.000000",
-                "0, step.startTime, 0.500000",
-                "0, gain.k, 3.000000",
-                "0, add.k1, 1.000000",
-                "0, add.k2, 1.000000",
-            ],
-            id="signal_sine_gain_add/baseline",
-        ),
-        pytest.param(
-            REFERENCE_SSP_ROOT / "signal_step_product" / "baseline",
-            [
-                "0, step.height, 1.000000",
-                "0, step.offset, 0.000000",
-                "0, step.startTime, 0.250000",
-                "0, sine.amplitude, 1.000000",
-                "0, sine.f, 1.000000",
-                "0, sine.offset, 0.000000",
-                "0, sine.phase, 0.000000",
-                "0, sine.startTime, 0.000000",
-            ],
-            id="signal_step_product/baseline",
-        ),
-        pytest.param(
-            REFERENCE_SSP_ROOT / "VanDerPol" / "fast",
-            ["0, fmu.mu, 2.000000"],
-            id="VanDerPol/fast",
-        ),
-        pytest.param(
-            REFERENCE_SSP_ROOT / "dcmotor" / "baseline",
-            [
-                "0, SuT_edrive_mass.M_gain.k, -1.000000",
-                "0, SuT_edrive_mass.inertia.J, 0.002000",
-                "0, SuT_emachine_model.emf.k, 0.100000",
-                "0, SuT_emachine_model.resistor.R, 0.500000",
-                "0, stimuli_model.Voltage_step.height, 12.000000",
-                "0, stimuli_model.MLoad.k, -0.500000",
-            ],
-            id="dcmotor/baseline",
-        ),
-    ],
-)
-def test_reference_ssp_applies_parameter_set_variants(
-    ssp_root: Path, expected_lines: list[str], tmp_path: Path
-) -> None:
-    tmp_path =  PYTHON_TEST_RESULTS / ssp_root.relative_to(REFERENCE_SSP_ROOT)
-    workdir = run_reference_ssp(ssp_root, tmp_path)
-    if expected_lines:
-        start_values_text = (workdir / "start_values.csv").read_text()
-        assert_start_values_contain(start_values_text, expected_lines)
