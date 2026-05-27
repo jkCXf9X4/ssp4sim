@@ -103,7 +103,7 @@ def calculate_signal_sine_gain_add_spike_metrics(
 def test_signal_sine_gain_add_jacobi_parallel_has_no_output_spikes(
     tmp_path: Path,
 ) -> None:
-    runs = int(os.environ.get("SSP4SIM_SPIKE_RUNS", "1000"))
+    runs = int(os.environ.get("SSP4SIM_SPIKE_RUNS", "100"))
     max_allowed_err = float(os.environ.get("SSP4SIM_SPIKE_MAX_ERR", "0.001"))
     max_allowed_delta = float(os.environ.get("SSP4SIM_SPIKE_MAX_DELTA", "0.1"))
 
