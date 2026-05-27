@@ -45,8 +45,11 @@ namespace ssp4sim::utils
 
     std::size_t RingBuffer::push(std::uint64_t time)
     {
+        // assign new time before increasing nr_inserts and head
+        // doing the opposite gives a chance that head points to a very old time that will fullfill the find_latest_valid_index and return something that is wrong
+        // timestamps[nr_inserts + 1% capacity] = time;
+        timestamps[(nr_inserts+1) % capacity] = time;
         auto head = push();
-        timestamps[head] = time;
         return head;
     }
 
@@ -72,9 +75,11 @@ namespace ssp4sim::utils
 
     bool RingBuffer::find_index(uint64_t time, std::size_t &index_found)
     {
-        for (std::size_t i = 0; i < nr_inserts && i < capacity; ++i)
+        // store local_nr_inserts before iteration since there is a risk of it changing during the loop risking missing or processing an item twice
+        auto local_nr_inserts = nr_inserts;
+        for (std::size_t i = 0; i < local_nr_inserts && i < capacity; ++i)
         {
-            int pos = get_index_from_pos_rev(i);
+            int pos = (local_nr_inserts - i) % capacity;
             if (timestamps[pos] == time)
             {
                 IF_LOG({
@@ -90,9 +95,12 @@ namespace ssp4sim::utils
 
     bool RingBuffer::find_latest_valid_index(uint64_t time, std::size_t &index_found)
     {
-        for (std::size_t i = 0; i < nr_inserts && i < capacity; ++i)
+        // store local_nr_inserts before iteration since there is a risk of it changing during the loop risking missing or processing an item twice
+
+        auto local_nr_inserts = nr_inserts;
+        for (std::size_t i = 0; i < local_nr_inserts && i < capacity; ++i)
         {
-            int pos = get_index_from_pos_rev(i);
+            int pos = (local_nr_inserts - i) % capacity;
             if (timestamps[pos] <= time)
             {
                 IF_LOG({
