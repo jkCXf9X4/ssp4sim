@@ -34,7 +34,7 @@ Use [Build From Source](build_from_source.md) for exact build commands and
 - Keep changes direct and explicit. Minimize duplication, but do not introduce
   abstractions that hide important simulation or memory-layout details.
 - Prefer repository-owned code in `lib/`, `public/`, `tests/`, `resources/`,
-  and `scripts/` over patching vendored dependencies in `3rdParty/`, unless
+  and `resources/scripts/` over patching vendored dependencies in `3rdParty/`, unless
   the task is explicitly about vendored behavior.
 - Treat this as active experimental software: clear root-cause fixes are
   preferred over compatibility shims and broad defensive workarounds.

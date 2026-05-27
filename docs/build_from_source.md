@@ -11,12 +11,19 @@ other docs link here instead of repeating the same sequences.
 ## Recommended Path
 
 The most repeatable local build is the container workflow. It matches the Linux
-release workflow and avoids host compiler or vcpkg drift:
+release workflow and avoids host compiler or vcpkg drift.
+
+Host commands:
 
 ```bash
-./containers/build_ubuntu22_gcc13_container.sh
-./containers/shell_ubuntu22_gcc13_container.sh
-cmake --preset=vcpkg -DSSP4SIM_BUILD_TEST=ON
+./resources/containers/build_ubuntu22_gcc13_container.sh
+./resources/containers/shell_ubuntu22_gcc13_container.sh
+```
+
+Inside the container shell:
+
+```bash
+cmake --preset=vcpkg
 cmake --build build
 ./build/tests/lib/ssp4sim_tests
 ```
@@ -59,40 +66,58 @@ git submodule update --init --recursive
 
 ## Build Container Workflow
 
-The repository includes a build container based on Ubuntu 22.04 with GCC 13 that mirrors the verified environment in [`.github/workflows/linux-release.yml`](../.github/workflows/linux-release.yml):
-
-```bash
-./containers/build_ubuntu22_gcc13_container.sh
-./containers/shell_ubuntu22_gcc13_container.sh
-```
+The repository includes a build container based on Ubuntu 22.04 with GCC 13
+that mirrors the verified environment in
+[`.github/workflows/linux-release.yml`](../.github/workflows/linux-release.yml).
+Use `resources/containers/run_ubuntu22_gcc13_container.sh` for non-interactive
+commands and CI-style runs.
 
 Container file overview:
 
-- `containers/ubuntu22-gcc13/Containerfile` defines the reusable Ubuntu 22.04 + GCC 13 image and installs `vcpkg`.
-- `containers/build_ubuntu22_gcc13_container.sh` builds that image with Podman or Docker.
-- `containers/shell_ubuntu22_gcc13_container.sh` opens an interactive shell with the repository bind-mounted at `/work`.
-- `containers/run_ubuntu22_gcc13_container.sh` runs a non-interactive command in the same container image and is used by CI.
+- `resources/containers/ubuntu22-gcc13/Containerfile` defines the reusable Ubuntu 22.04 + GCC 13 image and installs `vcpkg`.
+- `resources/containers/build_ubuntu22_gcc13_container.sh` builds that image with Podman or Docker.
+- `resources/containers/shell_ubuntu22_gcc13_container.sh` opens an interactive shell with the repository bind-mounted at `/work`.
+- `resources/containers/run_ubuntu22_gcc13_container.sh` runs a non-interactive command in the same container image and is used by CI.
 
 The helper scripts prefer Podman when it can initialize cleanly, but fall back
 to Docker if Podman is present yet unusable in the local environment.
 
-The shell script bind-mounts the host repository root into the container at `/work`, so edits in either place affect the same files on the host. It does not create a separate host mount point:
+The shell helper bind-mounts the host repository root into the container at
+`/work`, so edits in either place affect the same files on the host. When the
+helper uses Podman, it starts the container with `--userns keep-id` so the
+bind-mounted repository remains writable as your host user. If you still see
+`Permission denied` under `/work`, verify that you launched the shell via the
+helper script instead of a manual `podman run`.
 
-When the shell helper uses Podman, it now starts the container with `--userns keep-id` so the bind-mounted repository remains writable as your host user. If you still see `Permission denied` under `/work`, verify you launched the shell via the helper script instead of a manual `podman run`.
-
-The Linux release workflow now builds and uses this same container image in GitHub Actions instead of duplicating the native toolchain setup in workflow YAML. Native Linux build-environment changes should therefore be made in the `Containerfile`, not redefined separately in CI.
+The Linux release workflow uses the same container image in GitHub Actions
+instead of duplicating native toolchain setup in workflow YAML. Native Linux
+build-environment changes should therefore be made in the `Containerfile`, not
+redefined separately in CI.
 
 The container keeps the toolchain aligned with the release workflow, but still uses the repository's current `vcpkg.json` and CMake options.
 
 ## Configure And Build
 
-Use the repository preset. Keep using the preset when adding cache options so
-the build continues to use the vcpkg toolchain:
+After entering the container shell, run the same preset and build commands
+shown in the recommended path. Keep using the repository preset when adding
+cache options so the build continues to use the vcpkg toolchain.
+
+## Custom Build Directory
+
+If you want the build tree somewhere other than `./build`, configure CMake with
+an explicit source and build directory instead of the preset. For example, CI
+uses `build_cont`:
 
 ```bash
-cmake --preset=vcpkg
-cmake --build build
+cmake -S . -B build_cont \
+  -G Ninja \
+  -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake"
+cmake --build build_cont
+./build_cont/tests/lib/ssp4sim_tests
 ```
+
+Keep using the same build directory for later commands such as
+`cmake --build`, `ctest`, and `cmake --install`.
 
 ## Build Types And Logging Path
 
@@ -108,11 +133,8 @@ cmake --preset=vcpkg -DSSP4SIM_LOG_HOT_PATH=OFF
 
 See tests/README.md for test-running caveats.
 
-```bash
-cmake --preset=vcpkg -DSSP4SIM_BUILD_TEST=ON
-cmake --build build
-./build/tests/lib/ssp4sim_tests
-```
+Enable the C++ test target by adding `-DSSP4SIM_BUILD_TEST=ON` to the preset
+command, then rebuild and run `./build/tests/lib/ssp4sim_tests`.
 
 Some test fixtures are stored as expanded FMU/SSP directories instead of `.fmu`/`.ssp` archives to make resource diffs and version handling easier. Tests should accept either layout when resolving fixture paths.
 
@@ -120,9 +142,10 @@ More test-suite detail is in [tests/README.md](../tests/README.md).
 
 ## Build Python API (Editable Install)
 
-Use the same Python version for CMake and `pip`. Python API requires a Release build.
-`pyssp4sim` version is derived from Git tags (`setuptools-scm`) for source/editable installs.
-The native module is built against CPython Limited API (`Py_LIMITED_API=0x03090000`) and produces an `abi3` extension.
+Use the same Python version for CMake and `pip`. The Python API requires a
+Release build, the editable version is derived from Git tags
+(`setuptools-scm`), and the native module targets the CPython Limited API
+(`Py_LIMITED_API=0x03090000`) to produce an `abi3` extension.
 
 ```bash
 python3.11 -m venv venv

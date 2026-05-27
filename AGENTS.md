@@ -38,8 +38,8 @@ from here.
   task and expand only when the local design or failure mode requires it.
 - Avoid bulk-reading generated artifacts, vendored code, or large fixture
   directories unless the task explicitly depends on them.
-- Before changing files under `tests/resources/reference_ssp/`, read
-  `tests/resources/reference_ssp/AGENTS.md`.
+- Before changing files under `resources/reference_ssp/`, read
+  `resources/reference_ssp/AGENTS.md`.
 
 ## Quick Commands
 

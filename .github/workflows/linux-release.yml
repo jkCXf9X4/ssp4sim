@@ -22,37 +22,32 @@ jobs:
       # Native Linux build-environment changes belong in the project
       # Containerfile so local container builds and CI stay aligned.
       - name: Build project container image
-        run: ./containers/build_ubuntu22_gcc13_container.sh
+        run: ./resources/containers/build_ubuntu22_gcc13_container.sh
 
       - name: Configure
         run: |
-          ./containers/run_ubuntu22_gcc13_container.sh -- \
-            /bin/bash -lc '
-              cmake --preset=vcpkg \
-                -DCMAKE_BUILD_TYPE=Release \
-                -DSSP4SIM_BUILD_TEST=ON \
-                -DSSP4SIM_BUILD_PYTHON_API=ON
-            '
+          ./resources/containers/run_ubuntu22_gcc13_container.sh -- \
+            /bin/bash -lc 'cmake -S . -B build_cont -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" -DSSP4SIM_BUILD_TEST=ON -DSSP4SIM_BUILD_PYTHON_API=ON'
 
       - name: Build
         run: |
-          ./containers/run_ubuntu22_gcc13_container.sh -- \
-            cmake --build build --config Release
+          ./resources/containers/run_ubuntu22_gcc13_container.sh -- \
+            cmake --build build_cont --config Release
 
       - name: Verify Python API artifact exists
         run: |
-          ./containers/run_ubuntu22_gcc13_container.sh -- \
-            ls -l build/public/python_api/pyssp4sim
+          ./resources/containers/run_ubuntu22_gcc13_container.sh -- \
+            ls -l build_cont/public/python_api/pyssp4sim
 
       - name: Run tests
         run: |
-          ./containers/run_ubuntu22_gcc13_container.sh -- \
-            ./build/tests/lib/ssp4sim_tests
+          ./resources/containers/run_ubuntu22_gcc13_container.sh -- \
+            ./build_cont/tests/lib/ssp4sim_tests
 
       - name: Install to staging directory
         run: |
-          ./containers/run_ubuntu22_gcc13_container.sh -- \
-            cmake --install build --prefix dist/ssp4sim
+          ./resources/containers/run_ubuntu22_gcc13_container.sh -- \
+            cmake --install build_cont --prefix dist/ssp4sim
 
 
       # TODO: break out into release script for reuse 
@@ -61,12 +56,12 @@ jobs:
           GITHUB_REF: ${{ github.ref }}
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
-          ./containers/run_ubuntu22_gcc13_container.sh \
+          ./resources/containers/run_ubuntu22_gcc13_container.sh \
             --env GITHUB_REF \
             --env GITHUB_REF_NAME \
             -- \
             /bin/bash -lc '
-              VCPKG_PY="$(readlink -f build/vcpkg_installed/x64-linux/tools/python3/python3)"
+              VCPKG_PY="$(readlink -f build_cont/vcpkg_installed/x64-linux/tools/python3/python3)"
               "${VCPKG_PY}" -m ensurepip --upgrade
               "${VCPKG_PY}" -m pip install --upgrade pip setuptools wheel
 
@@ -78,7 +73,7 @@ jobs:
               WHEEL_ALIAS_VERSION="0.0.0+lat"
 
               for VERSION in "${WHEEL_VERSION}" "${WHEEL_ALIAS_VERSION}"; do
-                cp -f scripts/release/setup_release.py.template dist/ssp4sim/python/setup_release.py
+                cp -f resources/scripts/release/setup_release.py.template dist/ssp4sim/python/setup_release.py
                 sed -i "s|__WHEEL_VERSION__|${VERSION}|g" dist/ssp4sim/python/setup_release.py
 
                 (
@@ -94,7 +89,7 @@ jobs:
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
         run: |
-          ./containers/run_ubuntu22_gcc13_container.sh \
+          ./resources/containers/run_ubuntu22_gcc13_container.sh \
             --env GITHUB_REF_NAME \
             -- \
             /bin/bash -lc '
@@ -107,7 +102,7 @@ jobs:
               PACKAGE_ALIAS="ssp4sim-linux-x86_64-latest.tar.gz"
 
               BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-              cp -f scripts/release/RELEASE.txt.template dist/ssp4sim/RELEASE.txt
+              cp -f resources/scripts/release/RELEASE.txt.template dist/ssp4sim/RELEASE.txt
               sed -i "s|__VERSION__|${VERSION}|g" dist/ssp4sim/RELEASE.txt
               sed -i "s|__COMMIT_SHA__|${COMMIT_SHA}|g" dist/ssp4sim/RELEASE.txt
               sed -i "s|__BUILT_AT__|${BUILT_AT}|g" dist/ssp4sim/RELEASE.txt

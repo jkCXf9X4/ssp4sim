@@ -7,7 +7,7 @@ set -euo pipefail
 # environment as the local interactive shell helper without TTY-specific flags.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 IMAGE_NAME="${SSP4SIM_CONTAINER_IMAGE:-ssp4sim-ubuntu22-gcc13}"
 CONTAINER_HOME="/tmp/ssp4sim-home"
 

@@ -20,7 +20,7 @@ namespace
 
     fs::path smoke_ssp_root()
     {
-        return project_root() / "tests" / "resources" / "reference_ssp" / "artifacts" / "models" / "pyfmu_csv_source_sink" / "baseline";
+        return project_root() / "resources" / "reference_ssp" / "artifacts" / "models" / "pyfmu_csv_source_sink" / "baseline";
     }
 
     fs::path runtime_smoke_ssp_root(const fs::path &workdir)

@@ -40,7 +40,7 @@ namespace
     std::filesystem::path scenario_fmu_path()
     {
         auto path = first_existing_path({
-            repository_root() / "tests" / "resources" / "reference_ssp" / "artifacts" / "models" / "scenario" / "baseline" / "resources" / "0001_scenario"
+            repository_root() / "resources" / "reference_ssp" / "artifacts" / "models" / "scenario" / "baseline" / "resources" / "0001_scenario"
         });
         REQUIRE(std::filesystem::exists(path));
         return path;

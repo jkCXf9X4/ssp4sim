@@ -25,13 +25,13 @@ Tarball contents are installed from CMake into:
 
 Workflow: [`.github/workflows/linux-release.yml`](../.github/workflows/linux-release.yml)
 Template inputs for generated release files:
-- [`scripts/release/setup_release.py.template`](../scripts/release/setup_release.py.template)
-- [`scripts/release/RELEASE.txt.template`](../scripts/release/RELEASE.txt.template)
+- [`resources/scripts/release/setup_release.py.template`](../resources/scripts/release/setup_release.py.template)
+- [`resources/scripts/release/RELEASE.txt.template`](../resources/scripts/release/RELEASE.txt.template)
 
 Runs on `ubuntu-22.04` and performs:
 
 - Builds the reusable Ubuntu 22.04 + GCC 13 container image from
-  [`containers/ubuntu22-gcc13/Containerfile`](../containers/ubuntu22-gcc13/Containerfile)
+  [`resources/containers/ubuntu22-gcc13/Containerfile`](../resources/containers/ubuntu22-gcc13/Containerfile)
 - Runs configure, build, test, install, and packaging commands inside that
   container
 - Uses the same configure/build/test commands documented in

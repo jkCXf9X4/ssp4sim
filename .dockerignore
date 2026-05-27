@@ -6,4 +6,4 @@ venv
 wd
 
 # Generated reference fixture outputs are not needed to build the project image.
-tests/resources/reference_ssp/artifacts
+resources/reference_ssp/artifacts

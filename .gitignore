@@ -2,6 +2,7 @@
 .opencode/
 
 build
+build_cont
 install
 vcpkg_installed
 

@@ -6,8 +6,8 @@ set -euo pipefail
 # The image mirrors the Ubuntu 22.04 + GCC 13 environment used in CI.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-CONTAINER_DIR="${REPO_ROOT}/containers/ubuntu22-gcc13"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+CONTAINER_DIR="${REPO_ROOT}/resources/containers/ubuntu22-gcc13"
 CONTAINERFILE="${CONTAINER_DIR}/Containerfile"
 IMAGE_NAME="${SSP4SIM_CONTAINER_IMAGE:-ssp4sim-ubuntu22-gcc13}"
 
