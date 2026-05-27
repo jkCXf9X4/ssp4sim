@@ -168,3 +168,26 @@ TEST_CASE("RingBuffer tracks timestamps and finds valid indices", "[RingBuffer]"
     REQUIRE(buffer.find_latest_valid_index(300, index) == true);
     REQUIRE(buffer.find_latest_valid_index(301, index) == true);
 }
+
+TEST_CASE("RingBuffer reserve does not publish until commit", "[RingBuffer]")
+{
+    RingBuffer buffer(3, sizeof(int));
+
+    const auto committed = buffer.push(100);
+    const auto pending = buffer.reserve();
+    buffer.timestamps[pending] = 200;
+
+    REQUIRE_THROWS_AS(buffer.reserve(), std::runtime_error);
+
+    std::size_t index = 0;
+    REQUIRE(buffer.find_index(200, index) == false);
+    REQUIRE(buffer.find_latest_valid_index(250, index) == true);
+    REQUIRE(index == committed);
+
+    buffer.commit(pending, 200);
+
+    REQUIRE(buffer.find_index(200, index) == true);
+    REQUIRE(index == pending);
+    REQUIRE(buffer.find_latest_valid_index(250, index) == true);
+    REQUIRE(index == pending);
+}

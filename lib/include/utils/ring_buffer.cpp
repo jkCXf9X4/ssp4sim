@@ -36,18 +36,40 @@ namespace ssp4sim::utils
             LOG_TRACE_L2(log, "[{func}] init", __func__);
         });
 
-        nr_inserts += 1;
-        head = nr_inserts % capacity;
-        used[head] = true;
-
-        return head;
+        auto index = reserve();
+        commit(index);
+        return index;
     }
 
     std::size_t RingBuffer::push(std::uint64_t time)
     {
-        auto head = push();
-        timestamps[head] = time;
-        return head;
+        auto index = reserve();
+        commit(index, time);
+        return index;
+    }
+
+    std::size_t RingBuffer::reserve()
+    {
+        if (reserved_inserts != nr_inserts) [[unlikely]]
+        {
+            throw std::runtime_error("[RingBuffer][reserve] Previous reservation has not been committed");
+        }
+        reserved_inserts += 1;
+        return reserved_inserts % capacity;
+    }
+
+    void RingBuffer::commit(std::size_t index)
+    {
+        used[index] = true;
+        head = index;
+        nr_inserts = reserved_inserts;
+        published_inserts.store(nr_inserts, std::memory_order_release);
+    }
+
+    void RingBuffer::commit(std::size_t index, std::uint64_t time)
+    {
+        timestamps[index] = time;
+        commit(index);
     }
 
     std::byte *RingBuffer::get_item(std::size_t index, bool use_verification)
@@ -72,9 +94,14 @@ namespace ssp4sim::utils
 
     bool RingBuffer::find_index(uint64_t time, std::size_t &index_found)
     {
-        for (std::size_t i = 0; i < nr_inserts && i < capacity; ++i)
+        const auto inserts = published_inserts.load(std::memory_order_acquire);
+        for (std::size_t i = 0; i < inserts && i < capacity; ++i)
         {
-            int pos = get_index_from_pos_rev(i);
+            auto pos = (inserts - i) % capacity;
+            if (!used[pos])
+            {
+                continue;
+            }
             if (timestamps[pos] == time)
             {
                 IF_LOG({
@@ -90,9 +117,14 @@ namespace ssp4sim::utils
 
     bool RingBuffer::find_latest_valid_index(uint64_t time, std::size_t &index_found)
     {
-        for (std::size_t i = 0; i < nr_inserts && i < capacity; ++i)
+        const auto inserts = published_inserts.load(std::memory_order_acquire);
+        for (std::size_t i = 0; i < inserts && i < capacity; ++i)
         {
-            int pos = get_index_from_pos_rev(i);
+            auto pos = (inserts - i) % capacity;
+            if (!used[pos])
+            {
+                continue;
+            }
             if (timestamps[pos] <= time)
             {
                 IF_LOG({
@@ -108,25 +140,27 @@ namespace ssp4sim::utils
 
     std::size_t RingBuffer::get_index_from_pos_rev(std::size_t position)
     {
-        return (nr_inserts - position) % capacity;
+        const auto inserts = published_inserts.load(std::memory_order_acquire);
+        return (inserts - position) % capacity;
     }
 
     bool RingBuffer::is_empty()
     {
-        return nr_inserts == 0;
+        return published_inserts.load(std::memory_order_acquire) == 0;
     }
 
     bool RingBuffer::is_full()
     {
-        return nr_inserts >= capacity;
+        return published_inserts.load(std::memory_order_acquire) >= capacity;
     }
 
     std::string RingBuffer::to_string() const
     {
         std::ostringstream oss;
+        const auto inserts = published_inserts.load(std::memory_order_acquire);
         oss << "SignalStorage \n{\n"
             << ", capacity: " << capacity
-            << "  nr_inserts: " << nr_inserts
+            << "  nr_inserts: " << inserts
             << ", head: " << head
             << "\n}";
         return oss.str();

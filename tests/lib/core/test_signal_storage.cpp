@@ -144,3 +144,25 @@ TEST_CASE("SignalStorage get_or_push reuses existing timestamp areas", "[SignalS
     REQUIRE(storage.find_area(200, found));
     REQUIRE(found == third);
 }
+
+TEST_CASE("SignalStorage reserve does not expose incomplete areas", "[SignalStorage]")
+{
+    SignalStorage storage(3, "signals");
+    storage.add("signals.temperature", DataType::real, 0);
+    storage.allocate();
+
+    const auto committed = storage.push(100);
+    const auto pending = storage.reserve();
+
+    size_t found = 0;
+    REQUIRE(storage.find_area(200, found) == false);
+    REQUIRE(storage.find_latest_valid_area(250, found) == true);
+    REQUIRE(found == committed);
+
+    storage.commit(pending, 200);
+
+    REQUIRE(storage.find_area(200, found) == true);
+    REQUIRE(found == pending);
+    REQUIRE(storage.find_latest_valid_area(250, found) == true);
+    REQUIRE(found == pending);
+}

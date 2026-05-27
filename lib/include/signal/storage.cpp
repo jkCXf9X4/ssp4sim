@@ -113,6 +113,16 @@ namespace ssp4sim::signal
         return data->push(time);
     }
 
+    size_t SignalStorage::reserve()
+    {
+        return data->reserve();
+    }
+
+    void SignalStorage::commit(size_t area, uint64_t time)
+    {
+        data->commit(area, time);
+    }
+
     size_t SignalStorage::get_or_push(uint64_t time)
     {
         size_t area;

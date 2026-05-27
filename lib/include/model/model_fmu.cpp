@@ -158,7 +158,7 @@ namespace ssp4sim::graph
             LOG_TRACE_L1(log, "[{func}] Store results, timestamp: {}", __func__, time);
         });
 
-        auto area = output_area->push(time);
+        auto area = output_area->reserve();
 
         ConnectorInfo::read_values_from_model(outputs, output_area.get(), area);
 
@@ -168,6 +168,7 @@ namespace ssp4sim::graph
             ConnectorInfo::fetch_output_derivatives(outputs, area);
             this->walltime_ns += model_timer.stop();
         }
+        output_area->commit(area, time);
         output_area->flag_new_data(area);
 
         IF_LOG({

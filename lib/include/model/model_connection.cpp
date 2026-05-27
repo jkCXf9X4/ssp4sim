@@ -1,6 +1,5 @@
 #include "model/model_connection.hpp"
 
-
 #include "FMI2_Enums_Ext.hpp"
 #include "signal/storage.hpp"
 
@@ -39,7 +38,9 @@ namespace ssp4sim::graph
             });
 
             size_t source_area;
-            if (connection.source_storage->find_latest_valid_area(input_time - connection.delay, source_area))
+            const bool found_area = connection.source_storage->find_latest_valid_area(input_time - connection.delay, source_area);
+
+            if (found_area)
             {
                 IF_LOG({
                     LOG_DEBUG(connection.log, "[{func}] Valid source_storage area found, time {time}", __func__, connection.source_storage->data->timestamps[source_area]);
