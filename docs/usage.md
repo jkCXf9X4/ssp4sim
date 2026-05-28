@@ -70,4 +70,4 @@ pyssp4sim ./resources/embrace/embrace.json
 ## Input Data Policy
 
 The input data policy and design principles are documented in the
-[product layer](../product-breakdown/01-product/).
+[capabilities page](../product-breakdown/01-product/capabilities.md).

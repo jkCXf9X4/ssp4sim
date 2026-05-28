@@ -60,9 +60,6 @@ defaults for keys read from `utils::Config`.
 - Build profiling notes: [docs/profiling.md](profiling.md)
 - Logging conventions: [docs/logging_guidlines.md](logging_guidlines.md)
 
-The logging document keeps the historical `logging_guidlines.md` filename.
-Preserve existing links unless the file is renamed in a coordinated cleanup.
-
 ## Release Process
 
 The release pipeline and packaging details are documented in

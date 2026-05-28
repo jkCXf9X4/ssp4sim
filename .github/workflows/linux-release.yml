@@ -66,7 +66,7 @@ jobs:
               else
                 WHEEL_VERSION="0.0.0.dev$(date +%Y%m%d)+$(git rev-parse --short HEAD)"
               fi
-              WHEEL_ALIAS_VERSION="0.0.0+lat"
+              WHEEL_ALIAS_VERSION="0.0.0.dev0"
 
               for VERSION in "${WHEEL_VERSION}" "${WHEEL_ALIAS_VERSION}"; do
                 cp -f resources/scripts/release/setup_release.py.template dist/ssp4sim/python/setup_release.py

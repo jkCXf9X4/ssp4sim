@@ -12,7 +12,7 @@ Release artifacts (same tag/SHA):
 - ssp4sim-linux-x86_64-\<version\>.tar.gz
 - pyssp4sim-\<version\>-*.whl
 - ssp4sim-linux-x86_64-latest.tar.gz (alias)
-- pyssp4sim-0.0.0+lat-cp39-abi3-linux_x86_64.whl (alias)
+- pyssp4sim-0.0.0.dev0-cp39-abi3-linux_x86_64.whl (alias)
 
 Tarball contents: bin/, lib/, include/, python/, resources/, readme.md, LICENSE, RELEASE.txt.
 
