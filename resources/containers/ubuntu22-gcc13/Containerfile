@@ -28,6 +28,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     linux-libc-dev \
     libtool \
     libtbb-dev \
+    python3-setuptools \
+    python3-wheel \
     make \
     ninja-build \
     pkg-config \

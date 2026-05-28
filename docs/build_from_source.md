@@ -75,6 +75,7 @@ commands and CI-style runs.
 Container file overview:
 
 - `resources/containers/ubuntu22-gcc13/Containerfile` defines the reusable Ubuntu 22.04 + GCC 13 image and installs `vcpkg`.
+- The image also includes the Python packaging modules used by the release wheel step, so packaging can run offline once the image is built.
 - `resources/containers/build_ubuntu22_gcc13_container.sh` builds that image with Podman or Docker.
 - `resources/containers/shell_ubuntu22_gcc13_container.sh` opens an interactive shell with the repository bind-mounted at `/work`.
 - `resources/containers/run_ubuntu22_gcc13_container.sh` runs a non-interactive command in the same container image and is used by CI.

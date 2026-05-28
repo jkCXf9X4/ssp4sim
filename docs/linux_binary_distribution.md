@@ -32,6 +32,8 @@ Runs on `ubuntu-22.04` and performs:
 
 - Builds the reusable Ubuntu 22.04 + GCC 13 container image from
   [`resources/containers/ubuntu22-gcc13/Containerfile`](../resources/containers/ubuntu22-gcc13/Containerfile)
+  . The image includes the Python packaging modules needed to build the wheel
+  without reaching out to PyPI during the release job.
 - Runs configure, build, test, install, and packaging commands inside that
   container
 - Uses the same configure/build/test commands documented in

@@ -13,10 +13,10 @@ namespace ssp4sim::signal
 {
     CsvRecorderSink::CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.CsvRecorderSink")),
-          file(filename, std::ios::out),
           recording_interval(interval)
     {
         utils::io::create_parent_folder(filename.string());
+        file.open(filename, std::ios::out);
 
         LOG_DEBUG(log, "[{func}] File {file}, open {open}", __func__, filename.string(), file.is_open());
         LOG_DEBUG(log, "[{func}] Interval: {interval}", __func__, recording_interval);
