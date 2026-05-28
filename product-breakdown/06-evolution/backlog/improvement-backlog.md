@@ -50,7 +50,9 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-017.md` | IMP-017 | Deduplicate test pyramid description between tests/README.md and PBS strategy | Proposed | Low | 2 files (tests/README.md, PBS test-strategy.md); minor text changes |
 | `candidates/IMP-018.md` | IMP-018 | Fix inline ParameterSet namespace bug in ssp1_ssd.toml | Proposed | High | 1 TOML file, generated code, test xfail removal, regression doc; fixes correctness bug |
 | `candidates/IMP-019.md` | IMP-019 | Fix component-level parameter bindings in get_parameter_bindings() for dcmotor/baseline (REG-002) | Proposed | Medium | ssp.cpp core rewrite, composite SSP test fix, regression doc; medium to high risk — affects all component-level parameter resolution |
-
+| `candidates/IMP-020.md` | IMP-020 | Init-Phase Algebraic Loop Iteration — feasibility evaluation | Proposed | Medium | executor.cpp init sequence, FmuModel suppress_recorder flag, no step-phase impact; low risk, FMI-standard endorsed |
+| `candidates/IMP-021.md` | IMP-021 | Implement a working ParallelSeidel DAG scheduler | Proposed | High | seidel_parallel.hpp/cpp, seidel_base.hpp, executor_builder.cpp, test file; moderate blast radius, data race risk if atomics omitted |
+ 
 ## Summary
 
 | ID | Theme | Priority | Prerequisite | Blast radius |
@@ -74,6 +76,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-017 | Deduplicate test pyramid description between tests/README.md and PBS strategy | Low | None | 2 files, minor text changes |
 | IMP-018 | Fix inline ParameterSet namespace bug in ssp1_ssd.toml | High | None | 1 TOML file + generated code + test xfail removal; correctness fix |
 | IMP-019 | Fix component-level parameter bindings in get_parameter_bindings() for dcmotor/baseline (REG-002) | Medium | None | ssp.cpp core rewrite + fixture test fix + regression doc; medium-high risk |
+| IMP-020 | Init-Phase Algebraic Loop Iteration — feasibility evaluation | Medium | None | executor.cpp init sequence + FmuModel flag; low risk, FMI-standard endorsed |
+| IMP-021 | Implement a working ParallelSeidel DAG scheduler | High | None | seidel_parallel.hpp/cpp, seidel_base.hpp, executor_builder.cpp, test file; moderate blast radius, data race risk if atomics omitted |
 
 ## Cross-Cutting Constraints
 
