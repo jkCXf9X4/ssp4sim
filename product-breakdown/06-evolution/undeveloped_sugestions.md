@@ -37,4 +37,4 @@ create a config item for including input storage to the output artifacts, csv or
 
 ---
 7 
-Restructure the threadpools into separate subfolder with information on usage and tradeoffs for the individual solutions
+Restructure the thread pools into separate subfolder with information on usage and tradeoffs for the individual solutions

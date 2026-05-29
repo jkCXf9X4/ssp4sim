@@ -52,6 +52,13 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-019.md` | IMP-019 | Fix component-level parameter bindings in get_parameter_bindings() for dcmotor/baseline (REG-002) | Proposed | Medium | ssp.cpp core rewrite, composite SSP test fix, regression doc; medium to high risk — affects all component-level parameter resolution |
 | `candidates/IMP-020.md` | IMP-020 | Init-Phase Algebraic Loop Iteration — feasibility evaluation | Proposed | Medium | executor.cpp init sequence, FmuModel suppress_recorder flag, no step-phase impact; low risk, FMI-standard endorsed |
 | `candidates/IMP-021.md` | IMP-021 | Implement a working ParallelSeidel DAG scheduler | Proposed | High | seidel_parallel.hpp/cpp, seidel_base.hpp, executor_builder.cpp, test file; moderate blast radius, data race risk if atomics omitted |
+| `candidates/IMP-022.md` | IMP-022 | Internal node connections in the analysis graph | Proposed | Medium | analysis_graph_builder.cpp only; low risk, uncomment and fix dormant code |
+| `candidates/IMP-023.md` | IMP-023 | Variable internal feedthrough storage in sim graph connections | Proposed | Medium | model_connection.hpp, graph_builder.cpp, model_fmu.hpp; moderate blast radius, no behavioral change |
+| `candidates/IMP-024.md` | IMP-024 | Init-phase algebraic loop iteration — gap analysis on IMP-020 | Proposed — Design Evaluation Only | Medium | executor.cpp, executor.hpp, model_fmu.cpp, model_fmu.hpp, graph.cpp; low risk, FMI-standard endorsed |
+| `candidates/IMP-025.md` | IMP-025 | Seidel-Jacobi hybrid executor (building on IMP-021) | Proposed | Medium | New execution/hybrid/ module, executor_builder.cpp; moderate blast radius, depends on IMP-021 |
+| `candidates/IMP-026.md` | IMP-026 | Direct rerun (pipelined) Gauss-Seidel executor | Design Evaluation Only | Low | No code changes; design document only; highly speculative, FMI-incompatible |
+| `candidates/IMP-027.md` | IMP-027 | Config item for input storage in output artifacts (CSV/DuckDB) | Proposed | Medium | shared_config.hpp, model_fmu.hpp/cpp, graph_builder.cpp; small blast radius, opt-in via config |
+| `candidates/IMP-028.md` | IMP-028 | Restructure thread pools with tradeoff documentation | Proposed | Medium | Documentation only (README); deferred file move; moderate blast radius if moved |
  
 ## Summary
 
@@ -78,7 +85,14 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-019 | Fix component-level parameter bindings in get_parameter_bindings() for dcmotor/baseline (REG-002) | Medium | None | ssp.cpp core rewrite + fixture test fix + regression doc; medium-high risk |
 | IMP-020 | Init-Phase Algebraic Loop Iteration — feasibility evaluation | Medium | None | executor.cpp init sequence + FmuModel flag; low risk, FMI-standard endorsed |
 | IMP-021 | Implement a working ParallelSeidel DAG scheduler | High | None | seidel_parallel.hpp/cpp, seidel_base.hpp, executor_builder.cpp, test file; moderate blast radius, data race risk if atomics omitted |
-
+| IMP-022 | Internal node connections in the analysis graph | Medium | None | analysis_graph_builder.cpp; low risk, uncomment/commented-out dormant code |
+| IMP-023 | Variable internal feedthrough storage in sim graph connections | Medium | None | model_connection.hpp, graph_builder.cpp; no behavioral change, enabler for IMP-024/025 |
+| IMP-024 | Init-phase algebraic loop iteration — gap analysis on IMP-020 | Medium | None | executor.cpp, model_fmu.cpp; low risk, FMI-standard endorsed; IMP-022/023 optional (see candidate) |
+| IMP-025 | Seidel-Jacobi hybrid executor (building on IMP-021) | Medium | IMP-021 | New execution/hybrid/ module; moderate blast radius |
+| IMP-026 | Direct rerun (pipelined) Gauss-Seidel executor | Low | None | No code changes; design evaluation only — FMI-incompatible, not viable |
+| IMP-027 | Config item for input storage in output artifacts (CSV/DuckDB) | Medium | None | shared_config.hpp, model_fmu.hpp/cpp, graph_builder.cpp; small blast radius |
+| IMP-028 | Restructure thread pools with tradeoff documentation | Medium | None | Documentation only (README); deferred file move; enabler for IMP-021/025 |
+ 
 ## Cross-Cutting Constraints
 
 1. **Layer ownership**: `product-breakdown/` holds "what the product is, who it is for, scope, stable decisions." `docs/` holds "runnable guidance: usage, install, build, development workflow, examples, profiling commands."
