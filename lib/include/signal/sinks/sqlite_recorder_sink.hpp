@@ -1,0 +1,53 @@
+#pragma once
+
+#include "signal/recorder.hpp"
+#include "signal/sinks/sqlite_recorder_storage.hpp"
+
+#include "ssp4cpp/utils/log.hpp"
+
+#include <sqlite3.h>
+
+#include <filesystem>
+#include <unordered_map>
+#include <vector>
+
+namespace ssp4sim::signal
+{
+    class SqliteWALRecorderSink final : public RecorderSink
+    {
+    public:
+        ssp4cpp::utils::log::Logger *log = nullptr;
+
+        std::filesystem::path filename;
+        sqlite3 *db = nullptr;
+        std::vector<SqliteStorageLayout> layouts;
+        std::unordered_map<const SignalStorage *, std::size_t> layout_lookup;
+
+        bool disabled = false;
+        bool initialized = false;
+        bool stopped = false;
+
+        explicit SqliteWALRecorderSink(const std::filesystem::path &filename);
+        ~SqliteWALRecorderSink() override;
+
+        void on_storage_added(const SignalStorage *storage) override;
+
+        void init() override;
+
+        void on_event(const NewDataEvent &event) override;
+
+        void stop() override;
+
+    private:
+        static constexpr std::size_t commit_interval = 100;
+        std::size_t insert_count = 0;
+
+        void open_database();
+
+        void open_layout(SqliteStorageLayout &layout);
+
+        void disable_sink(const std::string &reason);
+
+        static std::string local_variable_name(const std::string &storage_model, const std::string &name);
+    };
+}

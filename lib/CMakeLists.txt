@@ -33,6 +33,9 @@ target_link_libraries(ssp4sim_lib PRIVATE TBB::tbb TBB::tbbmalloc)
 find_package(quill CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE quill::quill)
 
+find_package(unofficial-sqlite3 CONFIG REQUIRED)
+target_link_libraries(ssp4sim_lib PRIVATE unofficial::sqlite3::sqlite3)
+
 find_package(DuckDB CONFIG REQUIRED)
 target_link_libraries(ssp4sim_lib PRIVATE "$<IF:$<TARGET_EXISTS:duckdb>,duckdb,duckdb_static>")
 

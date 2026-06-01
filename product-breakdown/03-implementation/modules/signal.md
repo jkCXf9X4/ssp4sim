@@ -14,15 +14,17 @@ Owns the in-memory simulation data layout and the recording path used to export 
 - `BoundedMpscEventQueue`: Multi-producer single-consumer queue for recorder events.
 - `CsvRecorderSink`: Writes registered storage variables to CSV with timestamp coalescing.
 - `DuckDBRecorderSink`: Writes to DuckDB database with per-storage tables.
+- `SqliteWALRecorderSink`: Writes to SQLite database with WAL journal mode for concurrent-reader access, using per-storage tables.
 
 ## Sinks
 
 - CSV sink: Row-oriented, coalesces by timestamp across storages. Default recording backend.
 - DuckDB sink: Column-oriented database with per-storage tables. Optional.
+- SQLite WAL sink: Row-oriented database with per-storage tables and concurrent-reader support. Optional.
 
 ## Include Boundary
 
-- Path: `lib/include/signal/` (8 files) + `lib/include/signal/sinks/` (7 files)
+- Path: `lib/include/signal/` (8 files) + `lib/include/signal/sinks/` (12 files)
 
 ## Dependencies
 

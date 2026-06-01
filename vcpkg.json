@@ -9,6 +9,7 @@
     "kissnet",
     "duckdb",
     "python3",
-    "quill"
+    "quill",
+    "sqlite3"
   ]
 }

@@ -8,6 +8,7 @@
 
 #include "signal/sinks/csv_recorder_sink.hpp"
 #include "signal/sinks/duckdb_recorder_sink.hpp"
+#include "signal/sinks/sqlite_recorder_sink.hpp"
 #include "signal/recorder.hpp"
 
 #include "config.hpp"
@@ -66,6 +67,11 @@ namespace ssp4sim
             if (config->duckdb.enable)
             {
                 p->recorder->add_sink(std::make_unique<signal::DuckDbRecorderSink>(config->duckdb.file));
+            }
+
+            if (config->sqlite.enable)
+            {
+                p->recorder->add_sink(std::make_unique<signal::SqliteWALRecorderSink>(config->sqlite.file));
             }
         }
     }

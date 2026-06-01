@@ -58,8 +58,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-025.md` | IMP-025 | Seidel-Jacobi hybrid executor (building on IMP-021) | Proposed | Medium | New execution/hybrid/ module, executor_builder.cpp; moderate blast radius, depends on IMP-021 |
 | `candidates/IMP-026.md` | IMP-026 | Direct rerun (pipelined) Gauss-Seidel executor | Design Evaluation Only | Low | No code changes; design document only; highly speculative, FMI-incompatible |
 | `candidates/IMP-027.md` | IMP-027 | Config item for input storage in output artifacts (CSV/DuckDB) | Proposed | Medium | shared_config.hpp, model_fmu.hpp/cpp, graph_builder.cpp; small blast radius, opt-in via config |
-| `candidates/IMP-028.md` | IMP-028 | Restructure thread pools with tradeoff documentation | Proposed | Medium | Documentation only (README); deferred file move; moderate blast radius if moved |
-| `candidates/IMP-029.md` | IMP-029 | SQLite WAL local database sink | Proposed | Medium | Recording config, recorder sink interfaces, docs; CSV compatibility must be preserved |
+| `done/IMP-028.md` | IMP-028 | Restructure thread pools with tradeoff documentation | Done | Medium | Documentation only (README); deferred file move; moderate blast radius if moved |
+| `done/IMP-029.md` | IMP-029 | SQLite WAL local database sink | Done | Medium | Recording config, recorder sink interfaces, docs; CSV compatibility must be preserved |
 | `candidates/IMP-030.md` | IMP-030 | Remote result ingestion via InfluxDB Line Protocol | Proposed | Medium | Remote sink config, write path, retry/backpressure, docs; local outputs preserved |
 | `candidates/IMP-031.md` | IMP-031 | OpenTelemetry distributed observability | Proposed | Medium | Trace emission, context propagation, exporter config, docs; local logging preserved |
  

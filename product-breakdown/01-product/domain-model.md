@@ -20,7 +20,7 @@ The algorithm used to advance simulation time and coordinate FMU stepping:
 - **Gauss-Seidel**: Models step sequentially, feeding updated values forward within the same step.
 
 ### Recording
-The pipeline that captures simulation results. Supports CSV (default) and DuckDB (alternative) output sinks.
+The pipeline that captures simulation results. Supports CSV (default), DuckDB, and SQLite WAL output sinks.
 
 ### Signal Storage
 In-memory buffers that hold FMU input and output values during simulation. The recorder copies completed updates into recorder-owned buffers for output.
