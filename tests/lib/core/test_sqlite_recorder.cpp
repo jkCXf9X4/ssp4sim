@@ -143,17 +143,23 @@ namespace
             return count;
         }
 
-        std::string table_name_from_metadata(const std::string &model, const std::string &storage_name)
+        std::int64_t run_id()
         {
+            return exec_and_return_int64("SELECT MAX(run_id) FROM ssp4sim_run_counter;", 0);
+        }
+
+        std::string table_name_from_master(std::int64_t run_id, const std::string &model, const std::string &storage_name)
+        {
+            const std::string expected = std::to_string(run_id) + "_" + model + "_" + storage_name;
             return exec_and_return_string(
-                "SELECT table_name FROM ssp4sim_metadata WHERE model = '" + model + "' AND storage_name = '" + storage_name + "';",
+                "SELECT name FROM sqlite_master WHERE type='table' AND name = '" + expected + "';",
                 0);
         }
     };
 
     void record_single_consumer_value(const fs::path &db_path, double value, std::uint64_t timestamp)
     {
-        SqliteWALRecorderSink sink(db_path);
+        SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Consumer.output");
         storage.add("Consumer.value", DataType::real, 1);
@@ -183,7 +189,7 @@ TEST_CASE("T-001: SQLite sink writes events with mixed types and verifies via SE
     const auto db_path = test_path("test_sqlite_recorder.sqlite");
     remove_if_exists(db_path);
 
-    SqliteWALRecorderSink sink(db_path);
+    SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
     storage.add("Consumer.CPUtime", DataType::real, 1);
@@ -240,18 +246,15 @@ TEST_CASE("T-001: SQLite sink writes events with mixed types and verifies via SE
     SqliteHelper db;
     db.open(db_path);
 
-    const auto consumer_table = db.table_name_from_metadata("Consumer", "output");
-    const auto aux_table = db.table_name_from_metadata("Aux", "output");
+    const auto consumer_table = db.table_name_from_master(1, "Consumer", "output");
+    const auto aux_table = db.table_name_from_master(1, "Aux", "output");
 
-    REQUIRE(consumer_table.rfind("Consumer_", 0) == 0);
-    REQUIRE(aux_table.rfind("Aux_", 0) == 0);
+    REQUIRE(consumer_table == "1_Consumer_output");
+    REQUIRE(aux_table == "1_Aux_output");
     REQUIRE(consumer_table != aux_table);
 
-    // Check metadata columns
-    REQUIRE(db.row_count("SELECT table_name, model, storage_name, source_storage_name, created_at_s FROM ssp4sim_metadata ORDER BY model;") == 2);
-
-    REQUIRE(db.exec_and_return_string("SELECT model FROM ssp4sim_metadata ORDER BY model LIMIT 1;", 0) == "Aux");
-    REQUIRE(db.exec_and_return_string("SELECT model FROM ssp4sim_metadata ORDER BY model LIMIT 1 OFFSET 1;", 0) == "Consumer");
+    // Verify NO ssp4sim_metadata table exists
+    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name='ssp4sim_metadata';") == 0);
 
     // Check consumer table data
     REQUIRE(db.row_count("SELECT * FROM " + quote_identifier(consumer_table) + " ORDER BY timestamp_ns;") == 1);
@@ -276,7 +279,7 @@ TEST_CASE("T-002: SQLite sink verifies PRAGMA journal_mode=wal", "[DataRecorder]
     remove_if_exists(db_path);
 
     {
-        SqliteWALRecorderSink sink(db_path);
+        SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Test.model");
         storage.add("Test.value", DataType::real, 1);
@@ -320,13 +323,13 @@ TEST_CASE("T-002: SQLite sink verifies PRAGMA journal_mode=wal", "[DataRecorder]
     remove_if_exists(db_path);
 }
 
-TEST_CASE("T-003: SQLite metadata table ssp4sim_metadata columns", "[DataRecorder][SQLite]")
+TEST_CASE("T-003: SQLite run counter and no metadata table", "[DataRecorder][SQLite]")
 {
-    const auto db_path = test_path("test_sqlite_recorder_metadata.sqlite");
+    const auto db_path = test_path("test_sqlite_recorder_run_counter.sqlite");
     remove_if_exists(db_path);
 
     {
-        SqliteWALRecorderSink sink(db_path);
+        SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Consumer.output");
         storage.add("Consumer.value", DataType::real, 1);
@@ -355,54 +358,49 @@ TEST_CASE("T-003: SQLite metadata table ssp4sim_metadata columns", "[DataRecorde
     SqliteHelper db;
     db.open(db_path);
 
-    // Verify metadata columns exist and have expected content
-    REQUIRE(db.row_count("SELECT * FROM ssp4sim_metadata;") == 1);
+    // Verify ssp4sim_run_counter exists with run_id=1
+    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name='ssp4sim_run_counter';") == 1);
+    REQUIRE(db.run_id() == 1);
 
-    const std::string table_name = db.exec_and_return_string("SELECT table_name FROM ssp4sim_metadata;", 0);
-    REQUIRE(table_name.rfind("Consumer_", 0) == 0);
+    // Verify NO ssp4sim_metadata exists
+    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name='ssp4sim_metadata';") == 0);
 
-    REQUIRE(db.exec_and_return_string("SELECT model FROM ssp4sim_metadata;", 0) == "Consumer");
-    REQUIRE(db.exec_and_return_string("SELECT storage_name FROM ssp4sim_metadata;", 0) == "output");
-    REQUIRE(db.exec_and_return_string("SELECT source_storage_name FROM ssp4sim_metadata;", 0) == "Consumer.output");
-    REQUIRE(db.exec_and_return_int("SELECT created_at_s FROM ssp4sim_metadata;", 0) > 0);
+    // Verify consumer table via sqlite_master
+    const std::string table_name = db.table_name_from_master(1, "Consumer", "output");
+    REQUIRE(table_name == "1_Consumer_output");
+
+    // Verify data values
+    REQUIRE(db.row_count("SELECT * FROM " + quote_identifier(table_name) + ";") == 1);
+    REQUIRE(db.exec_and_return_double("SELECT value FROM " + quote_identifier(table_name) + ";", 0) == Catch::Approx(3.14));
 
     db.close();
     remove_if_exists(db_path);
 }
 
-TEST_CASE("T-004: SQLite sink appends runs to existing database", "[DataRecorder][SQLite]")
+TEST_CASE("T-004: SQLite sink appends runs to existing database (shared-file mode)", "[DataRecorder][SQLite]")
 {
     const auto db_path = test_path("test_sqlite_recorder_append.sqlite");
     remove_if_exists(db_path);
 
     record_single_consumer_value(db_path, 1.25, 1ULL * sim_time::nanoseconds_per_second);
 
-    // Check first run's metadata
+    // Check first run
     SqliteHelper db;
     db.open(db_path);
-    REQUIRE(db.row_count("SELECT table_name FROM ssp4sim_metadata WHERE model = 'Consumer' AND storage_name = 'output';") == 1);
-    const std::string first_table = db.table_name_from_metadata("Consumer", "output");
+    const std::string first_table = db.table_name_from_master(1, "Consumer", "output");
+    REQUIRE(first_table == "1_Consumer_output");
     db.close();
 
-    // Second run - appends new table
+    // Second run - appends to same shared file
     record_single_consumer_value(db_path, 2.5, 2ULL * sim_time::nanoseconds_per_second);
 
     db.open(db_path);
-    REQUIRE(db.row_count("SELECT table_name FROM ssp4sim_metadata WHERE model = 'Consumer' AND storage_name = 'output';") == 2);
+    const std::string second_table = db.table_name_from_master(2, "Consumer", "output");
+    REQUIRE(second_table == "2_Consumer_output");
 
-    // Get the second table name
-    sqlite3_stmt *stmt = nullptr;
-    REQUIRE(sqlite3_prepare_v2(db.db,
-        "SELECT table_name FROM ssp4sim_metadata WHERE model = 'Consumer' AND storage_name = 'output' ORDER BY created_at_s;",
-        -1, &stmt, nullptr) == SQLITE_OK);
-    REQUIRE(sqlite3_step(stmt) == SQLITE_ROW);
-    const std::string first_row_table = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
-    REQUIRE(sqlite3_step(stmt) == SQLITE_ROW);
-    const std::string second_row_table = reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
-    sqlite3_finalize(stmt);
-
-    const std::string second_table = (first_row_table == first_table) ? second_row_table : first_row_table;
-    REQUIRE(first_table != second_table);
+    // Both tables should exist
+    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name = '1_Consumer_output';") == 1);
+    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name = '2_Consumer_output';") == 1);
 
     // Verify each table has its own data
     REQUIRE(db.row_count("SELECT value FROM " + quote_identifier(first_table) + ";") == 1);
@@ -410,6 +408,9 @@ TEST_CASE("T-004: SQLite sink appends runs to existing database", "[DataRecorder
 
     REQUIRE(db.row_count("SELECT value FROM " + quote_identifier(second_table) + ";") == 1);
     REQUIRE(db.exec_and_return_double("SELECT value FROM " + quote_identifier(second_table) + ";", 0) == Catch::Approx(2.5));
+
+    // Run counter should be 2
+    REQUIRE(db.run_id() == 2);
 
     db.close();
     remove_if_exists(db_path);
@@ -420,7 +421,7 @@ TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecor
     const auto db_path = test_path("test_sqlite_recorder_unknown.sqlite");
     remove_if_exists(db_path);
 
-    SqliteWALRecorderSink sink(db_path);
+    SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
     storage.add("Consumer.value", DataType::real, 1);
@@ -468,7 +469,7 @@ TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecor
     // Verify only the known storage data was recorded
     SqliteHelper db;
     db.open(db_path);
-    const auto consumer_table = db.table_name_from_metadata("Consumer", "output");
+    const auto consumer_table = db.table_name_from_master(1, "Consumer", "output");
 
     REQUIRE(db.row_count("SELECT * FROM " + quote_identifier(consumer_table) + ";") == 1);
     REQUIRE(db.exec_and_return_double("SELECT value FROM " + quote_identifier(consumer_table) + ";", 0) == Catch::Approx(99.9));
@@ -487,7 +488,7 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     sqlite3_close(reader_db);
     reader_db = nullptr;
 
-    SqliteWALRecorderSink sink(db_path);
+    SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
     storage.add("Consumer.value", DataType::real, 1);
@@ -518,12 +519,12 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     // Open a second connection for concurrent reading while writer is still open
     REQUIRE(sqlite3_open_v2(db_path.string().c_str(), &reader_db, SQLITE_OPEN_READWRITE, nullptr) == SQLITE_OK);
 
-    // Look up consumer table name from metadata using raw API (avoid SqliteHelper destructor closing reader_db)
+    // Look up consumer table name from sqlite_master
     std::string consumer_table;
     {
         sqlite3_stmt *meta_stmt = nullptr;
         REQUIRE(sqlite3_prepare_v2(reader_db,
-            "SELECT table_name FROM ssp4sim_metadata WHERE model = 'Consumer' AND storage_name = 'output';",
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '1_Consumer_output';",
             -1, &meta_stmt, nullptr) == SQLITE_OK);
         REQUIRE(sqlite3_step(meta_stmt) == SQLITE_ROW);
         consumer_table = reinterpret_cast<const char *>(sqlite3_column_text(meta_stmt, 0));
@@ -550,16 +551,14 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     remove_if_exists(db_path);
 }
 
-TEST_CASE("T-007: Row-count match with DuckDB sink for identical events", "[DataRecorder][SQLite]")
+TEST_CASE("T-007: Row-count match for SQLite events", "[DataRecorder][SQLite]")
 {
     const auto sqlite_path = test_path("test_row_count_match.sqlite");
-    const auto duckdb_path = test_path("test_row_count_match.duckdb");
     remove_if_exists(sqlite_path);
-    remove_if_exists(duckdb_path);
 
     // Write to SQLite
     {
-        SqliteWALRecorderSink sink(sqlite_path);
+        SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", sqlite_path);
 
         SignalStorage storage(1, "Consumer.output");
         storage.add("Consumer.CPUtime", DataType::real, 1);
@@ -600,16 +599,11 @@ TEST_CASE("T-007: Row-count match with DuckDB sink for identical events", "[Data
         REQUIRE_NOTHROW(sink.stop());
     }
 
-    // Write same events to DuckDB
-    {
-        // Note: DuckDB sink is a different class; we just test SQLite here
-    }
-
     // Verify SQLite row count
     SqliteHelper db;
     db.open(sqlite_path);
 
-    const auto consumer_table = db.table_name_from_metadata("Consumer", "output");
+    const auto consumer_table = db.table_name_from_master(1, "Consumer", "output");
     REQUIRE(db.row_count("SELECT * FROM " + quote_identifier(consumer_table) + ";") == 10);
 
     db.close();

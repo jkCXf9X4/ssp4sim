@@ -51,6 +51,45 @@ into a SQLite database file with WAL journal mode enabled.
 - Default file is `result.sqlite` in the working directory.
 - Event-per-row recording (same event detail as DuckDB, no interval coalescing).
 
+### Subsequent Change (IMP-032): Per-Simulation Database Files
+
+IMP-032 changes the SQLite WAL sink from a single `result.sqlite` file to
+per-simulation-run database files (default). Key changes relative to this
+decision record:
+
+- `simulation.recording.sqlite.file` is now **optional** (stored as
+  `std::optional<std::filesystem::path>`). When absent, the sink auto-generates
+  one `.sqlite` file per run named `{epoch_seconds}_{session_uuid}.sqlite` in
+  the working directory. When set, the old single-file behavior is preserved
+  as an opt-in for sequential-only sessions.
+- `session_uuid` is a RFC 4122 UUIDv4 generated once per `Simulation` lifetime
+  by the new `utils::make_uuid_v4()` utility.
+- Table naming is changed to `{run_id}_{model}_{storage_name}` — deterministic,
+  self-describing, no epoch or UUID in table names. Discovery via `sqlite_master`.
+- The `ssp4sim_metadata` table is removed entirely. A new `ssp4sim_run_counter`
+  table persists the incrementing `run_id` counter (atomic BEGIN IMMEDIATE
+  read-increment-store). Fresh per-sim files start at `run_id=1`; shared files
+  increment across runs.
+- `uuid_suffix()`, `current_epoch_seconds()`, `create_metadata_table()`, and
+  `insert_metadata_row()` are removed from `sqlite_recorder_utils`. Added
+  `sqlite_recorder::run_counter()` and `table_name_for(run_id, model, storage_name)`.
+- See `product-breakdown/06-evolution/backlog/candidates/IMP-032.md` for the
+  original candidate.
+
+### Concurrent-Writer Limitations
+
+Only per-simulation-file SQLite WAL supports concurrent simulation execution.
+
+| Backend | Concurrent-writer safe? | Reason |
+|---|---|---|
+| SQLite WAL (per-sim files, IMP-032 — default) | **Yes** | Independent files, no write-lock contention |
+| SQLite WAL (single shared file, opt-in via `sqlite.file`) | **No** | Write lock is per database file, not per table. Sequential-only. |
+| DuckDB | **No** | Single-writer mode |
+| CSV | **No** | File-level append race |
+
+This limitation is a hard requirement documented in UC-005, REQ-005, CAP-005,
+the domain model, configuration docs, and usage docs to prevent future mistakes.
+
 ## Affected Artifacts
 
 - `vcpkg.json` — add `sqlite3` dependency

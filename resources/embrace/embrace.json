@@ -26,10 +26,10 @@
                 "interval": 0.0
             },
             "duckdb": {
-                "enable": true
+                "enable": false
             },
             "sqlite": {
-                "enable": false
+                "enable": true
             },
             "wait_for": true
         },

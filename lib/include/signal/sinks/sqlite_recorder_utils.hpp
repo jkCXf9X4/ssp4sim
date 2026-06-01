@@ -1,10 +1,10 @@
 #pragma once
 
-#include "signal/sinks/sqlite_recorder_storage.hpp"
+#include "ssp4sim_definitions.hpp"
 
 #include <sqlite3.h>
 
-#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -17,11 +17,9 @@ namespace ssp4sim::signal::sqlite_recorder
 
     std::pair<std::string, std::string> split_storage_name(const std::string &name);
 
-    std::string table_name_for(const std::string &model);
+    std::string table_name_for(int64_t run_id, const std::string &model, const std::string &storage_name);
 
-    void create_metadata_table(sqlite3 *db);
-
-    void insert_metadata_row(sqlite3 *db, const SqliteStorageLayout &layout);
+    int64_t run_counter(sqlite3 *db);
 
     std::string sql_type_for(types::DataType type);
 }

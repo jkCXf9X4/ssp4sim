@@ -23,6 +23,7 @@
 #include "ssp4cpp/fmu.hpp"
 
 #include "utils/io.hpp"
+#include "utils/uuid.hpp"
 
 #include <cstdint>
 #include <exception>
@@ -40,6 +41,8 @@ namespace ssp4sim
 
         ssp4cpp::Ssp *ssp;
 
+        std::string session_uuid;
+
         std::unique_ptr<handler::FmuHandler> fmu_handler;
         std::unique_ptr<signal::DataRecorder> recorder = nullptr;
         std::unique_ptr<graph::Graph> sim_graph;
@@ -51,6 +54,7 @@ namespace ssp4sim
     {
         p->ssp = ssp;
         this->config = config;
+        p->session_uuid = utils::make_uuid_v4();
 
         LOG_INFO(p->log, "[{func}] Creating simulation", __func__);
         p->fmu_handler = std::make_unique<handler::FmuHandler>(p->ssp);
@@ -71,7 +75,7 @@ namespace ssp4sim
 
             if (config->sqlite.enable)
             {
-                p->recorder->add_sink(std::make_unique<signal::SqliteWALRecorderSink>(config->sqlite.file));
+                p->recorder->add_sink(std::make_unique<signal::SqliteWALRecorderSink>(config->working_dir, p->session_uuid, config->sqlite.file));
             }
         }
     }

@@ -6,7 +6,9 @@
 
 #include <sqlite3.h>
 
+#include <chrono>
 #include <cstdint>
+#include <format>
 #include <stdexcept>
 #include <string>
 
@@ -25,13 +27,23 @@ namespace ssp4sim::signal
 
             return db == nullptr ? "unknown SQLite error" : sqlite3_errmsg(db);
         }
+
+        // TODO: Move to some util...
+        std::int64_t current_epoch_seconds()
+        {
+            using namespace std::chrono;
+            const auto now = system_clock::now();
+            return duration_cast<seconds>(now.time_since_epoch()).count();
+        }
     }
 
-    SqliteWALRecorderSink::SqliteWALRecorderSink(const std::filesystem::path &filename)
+    SqliteWALRecorderSink::SqliteWALRecorderSink(std::filesystem::path working_dir, std::string session_uuid, std::optional<std::filesystem::path> file_override)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.SqliteWALRecorderSink")),
-          filename(filename)
+          working_dir(std::move(working_dir)),
+          session_uuid(std::move(session_uuid)),
+          file_override(std::move(file_override))
     {
-        LOG_DEBUG(log, "[{func}] File {file}", __func__, filename.string());
+        LOG_DEBUG(log, "[{func}] Working dir {dir}", __func__, this->working_dir.string());
     }
 
     SqliteWALRecorderSink::~SqliteWALRecorderSink()
@@ -41,6 +53,16 @@ namespace ssp4sim::signal
 
     void SqliteWALRecorderSink::open_database()
     {
+        if (file_override.has_value())
+        {
+            filename = file_override.value();
+        }
+        else
+        {
+            const auto epoch = current_epoch_seconds();
+            filename = working_dir / std::format("{}_{}.sqlite", epoch, session_uuid);
+        }
+
         utils::io::create_parent_folder(filename.string());
 
         auto rc = sqlite3_open_v2(
@@ -68,7 +90,23 @@ namespace ssp4sim::signal
         execute_pragma("PRAGMA temp_store=MEMORY;", "Failed to configure SQLite temporary storage");
         execute_pragma("PRAGMA cache_size=-65536;", "Failed to configure SQLite cache size");
 
-        sqlite_recorder::create_metadata_table(db);
+        // Create run_counter table if it does not exist, then atomically increment
+        {
+            const std::string sql = "CREATE TABLE IF NOT EXISTS ssp4sim_run_counter (run_id INTEGER PRIMARY KEY);";
+            char *error_message = nullptr;
+            rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &error_message);
+            if (rc != SQLITE_OK)
+            {
+                const std::string msg = "Failed to create run_counter table: " + std::string(error_message);
+                sqlite3_free(error_message);
+                sqlite3_close(db);
+                db = nullptr;
+                throw std::runtime_error(msg);
+            }
+        }
+
+        run_id = sqlite_recorder::run_counter(db);
+        LOG_DEBUG(log, "[{func}] Run ID {run_id}", __func__, run_id);
     }
 
     void SqliteWALRecorderSink::execute_pragma(const char *sql, const char *context)
@@ -134,7 +172,6 @@ namespace ssp4sim::signal
         layout.index = layouts.size();
         layout.model = std::move(model);
         layout.storage_name = std::move(storage_name);
-        layout.table_name = sqlite_recorder::table_name_for(layout.model);
         layout.variables.reserve(storage->variables.size());
 
         for (std::size_t i = 0; i < storage->variables.size(); ++i)
@@ -166,6 +203,9 @@ namespace ssp4sim::signal
 
     void SqliteWALRecorderSink::open_layout(SqliteStorageLayout &layout)
     {
+        // Compute table name using run_id (now available after open_database)
+        layout.table_name = sqlite_recorder::table_name_for(run_id, layout.model, layout.storage_name);
+
         // CREATE TABLE IF NOT EXISTS
         std::string create_sql = "CREATE TABLE IF NOT EXISTS ";
         create_sql += sqlite_recorder::quote_identifier(layout.table_name);
@@ -194,8 +234,6 @@ namespace ssp4sim::signal
             sqlite3_free(error_message);
             throw std::runtime_error(msg);
         }
-
-        sqlite_recorder::insert_metadata_row(db, layout);
 
         // Prepare INSERT INTO statement
         std::string insert_sql = "INSERT INTO ";

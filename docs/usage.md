@@ -49,10 +49,49 @@ The local database is the primary result artifact because it gives the viewer a
 typed, indexed query layer for recent windows and run-to-run comparison.
 CSV remains the lowest-friction export for scripts and archival handoff. The
 current local database backend is DuckDB, which is good for post-run analysis
-and table export. For a separate live writer and viewer process, SQLite in WAL
-mode is a better fit than DuckDB because it supports one writer with concurrent
-readers in a single local file. Remote database output remains outside the
-current configuration surface.
+and table export. For concurrent-simulation workflows with a live viewer,
+SQLite WAL with per-simulation files is the correct choice because each
+simulation gets an independent file, enabling parallel writes without lock
+contention. Remote database output remains outside the current configuration
+surface.
+
+## SQLite Naming Convention
+
+When `simulation.recording.sqlite.file` is not set, the SQLite WAL sink
+auto-generates one database file per simulation run:
+
+- **Filename**: `{epoch_seconds}_{session_uuid}.sqlite`
+  - `epoch_seconds`: Unix epoch timestamp at database open time.
+  - `session_uuid`: RFC 4122 UUIDv4 generated once per `Simulation` lifetime.
+- **Table names**: `{run_id}_{model}_{storage_name}`
+  - `run_id`: auto-incrementing counter persisted in the `ssp4sim_run_counter` table. Starts at 1 for fresh files, increments for appends to shared files.
+  - `model` and `storage_name`: sanitized alphanumeric components from the signal storage name.
+- **Example**: `1748739201_a1b2c3d4-e5f6-4789-abcd-ef0123456789.sqlite` containing tables like `1_Consumer_output`, `1_Aux_output`.
+
+When `sqlite.file` is set explicitly (shared-file mode), the run counter persists
+across runs: run 1 gets `1_Consumer_output`, run 2 gets `2_Consumer_output`, etc.
+The `ssp4sim_run_counter` table enables table discovery without a metadata side-table.
+
+## Concurrent Execution and Local Database Safety
+
+**No local output format supports safe concurrent multi-writer access except
+per-simulation-file SQLite WAL.** This is a fundamental constraint, not a
+transient limitation:
+
+| Backend | Concurrent-writer safe? | Reason |
+|---|---|---|
+| SQLite WAL (per-sim files, default when `sqlite.file` absent) | **Yes** | Each simulation gets an independent `.sqlite` file. No write-lock contention. |
+| SQLite WAL (single shared file, opt-in via `sqlite.file`) | **No** | SQLite write lock is per database file, not per table. Writers serialize. Must never be used with concurrent writers. |
+| DuckDB | **No** | Single-writer mode. Does not support concurrent writers at all. |
+| CSV | **No** | File-level append race. Concurrent writes produce corrupted output. |
+
+If you need to run multiple simulations concurrently (e.g., parameter sweeps,
+Monte Carlo runs), you **must** use the SQLite WAL sink without setting
+`simulation.recording.sqlite.file` — the per-simulation auto-naming is the
+safe default. If you set `sqlite.file` to use a shared file, the concurrent
+safety guarantee is lost and the runs must be strictly sequential. CSV and
+DuckDB sinks can run alongside SQLite for post-run analysis but must not be
+the sole recorder in concurrent workflows.
 
 Recording details live in [Configuration](configuration.md).
 

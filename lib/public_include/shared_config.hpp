@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -50,7 +51,7 @@ namespace ssp4sim
         struct SqliteRecordingConfig
         {
             bool enable = false;
-            std::filesystem::path file;
+            std::optional<std::filesystem::path> file;
         };
         SqliteRecordingConfig sqlite;
 
@@ -106,9 +107,13 @@ namespace ssp4sim
             sqlite.enable = utils::Config::getOr("simulation.recording.sqlite.enable", false);
             if (sqlite.enable)
             {
-                auto default_result_file = working_dir / "result.sqlite";
-                sqlite.file = std::filesystem::path(
-                    utils::Config::getOr("simulation.recording.sqlite.file", default_result_file.string()));
+                // When config key is absent or empty, file is nullopt (auto-generate).
+                // When present with non-empty string, use it (backward compat, [TIME] supported).
+                const auto file_str = utils::Config::getOr("simulation.recording.sqlite.file", "");
+                if (!file_str.empty())
+                {
+                    sqlite.file = file_str;
+                }
             }
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
             record_inputs = utils::Config::getOr("simulation.recording.record_inputs", false);

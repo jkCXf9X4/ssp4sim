@@ -22,6 +22,12 @@ The algorithm used to advance simulation time and coordinate FMU stepping:
 ### Recording
 The pipeline that captures simulation results. Supports CSV (default), DuckDB, and SQLite WAL output sinks.
 
+**Concurrent-writer constraint**: Only per-simulation-file SQLite WAL
+(one `.sqlite` file per run) supports parallel simulation execution. CSV,
+DuckDB, and shared-file SQLite are each unsafe for concurrent writers due to
+file-level or database-level write-lock contention. This is a fundamental
+limitation of the output backends, not a transient implementation gap.
+
 ### Signal Storage
 In-memory buffers that hold FMU input and output values during simulation. The recorder copies completed updates into recorder-owned buffers for output.
 

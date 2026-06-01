@@ -14,7 +14,7 @@ Owns the in-memory simulation data layout and the recording path used to export 
 - `BoundedMpscEventQueue`: Multi-producer single-consumer queue for recorder events.
 - `CsvRecorderSink`: Writes registered storage variables to CSV with timestamp coalescing.
 - `DuckDBRecorderSink`: Writes to DuckDB database with per-storage tables.
-- `SqliteWALRecorderSink`: Writes to SQLite database with WAL journal mode for concurrent-reader access, using per-storage tables.
+- `SqliteWALRecorderSink`: Writes to SQLite database with WAL journal mode for concurrent-reader access, using per-storage tables named `{run_id}_{model}_{storage_name}`. Supports per-simulation auto-named files `{epoch_seconds}_{session_uuid}.sqlite` (default, concurrent-safe) or opt-in shared-file mode via explicit `sqlite.file` config (sequential-only).
 
 ## Sinks
 

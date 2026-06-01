@@ -7,7 +7,9 @@
 
 #include <sqlite3.h>
 
+#include <cstdint>
 #include <filesystem>
+#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -18,7 +20,11 @@ namespace ssp4sim::signal
     public:
         ssp4cpp::utils::log::Logger *log = nullptr;
 
+        std::filesystem::path working_dir;
+        std::string session_uuid;
+        std::optional<std::filesystem::path> file_override;
         std::filesystem::path filename;
+        int64_t run_id = 0;
         sqlite3 *db = nullptr;
         std::vector<SqliteStorageLayout> layouts;
         std::unordered_map<const SignalStorage *, std::size_t> layout_lookup;
@@ -27,7 +33,7 @@ namespace ssp4sim::signal
         bool initialized = false;
         bool stopped = false;
 
-        explicit SqliteWALRecorderSink(const std::filesystem::path &filename);
+        SqliteWALRecorderSink(std::filesystem::path working_dir, std::string session_uuid, std::optional<std::filesystem::path> file_override);
         ~SqliteWALRecorderSink() override;
 
         void on_storage_added(const SignalStorage *storage) override;
