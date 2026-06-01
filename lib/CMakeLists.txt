@@ -16,6 +16,7 @@ target_include_directories(
          ${CMAKE_CURRENT_LIST_DIR}/include/model
          ${CMAKE_CURRENT_LIST_DIR}/include/schema_extensions
          ${CMAKE_CURRENT_LIST_DIR}/include/utils
+         ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
          ${CMAKE_CURRENT_LIST_DIR}/include/signal
          )
 
