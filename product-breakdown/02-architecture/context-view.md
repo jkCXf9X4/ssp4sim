@@ -24,8 +24,9 @@ SSP4SIM is a simulation engine that consumes SSP archives, loads FMI 2.0 FMUs, a
 |---|---|---|
 | **SSP Archive** | Input — SSP 1.0 archive (.ssp) or unpacked directory | Filesystem read, zip extraction |
 | **FMU Shared Libraries** | Input — FMI 2.0 co-simulation FMU binaries | dlopen/dlsym (via fmi4c adapter), Linux shared library |
-| **CSV Files** | Output — simulation results in CSV format | Filesystem write |
-| **DuckDB Database** | Output — simulation results in DuckDB format | DuckDB C API, filesystem write |
+| **Local Result Database** | Output — simulation results in local database format; currently DuckDB | DuckDB C API, filesystem write |
+| **CSV Files** | Output — portable export of simulation results in CSV format | Filesystem write |
+| **Remote Result Database** | Future output — multi-source simulation result ingestion via InfluxDB Line Protocol | Out of scope for current releases |
 | **Log Sinks** | Output — terminal, file, JSON, cutelog | Filesystem write, network (cutelog) |
 
 ## Trust Boundaries

@@ -34,7 +34,7 @@ A directed acyclic graph (DAG) of invocable nodes that represents the execution 
 SSP Archive → contains → FMU(s)
 FMU → has → Model Description (FMI 2.0)
 Simulation → uses → Execution Strategy
-Simulation → creates → Recording → CSV or DuckDB
+Simulation → creates → Recording → local database with CSV export
 Simulation → builds → Analysis Graph → Execution Graph
 Execution Graph → schedules → FMU Model → reads/writes → Signal Storage
 ```

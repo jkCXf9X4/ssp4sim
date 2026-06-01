@@ -12,8 +12,8 @@ This artifact defines what is in scope and explicitly out of scope for SSP4SIM. 
 - FMI 2.0 co-simulation models
 - Gauss-Jacobi and Gauss-Seidel execution strategies
 - Parallel and sequential executor variants
-- CSV recording output with configurable sample interval
-- DuckDB recording output with per-storage tables
+- Local database recording output with per-storage tables
+- CSV export output with configurable sample interval
 - C++23 library API, C API, and Python bindings
 - Configurable logging with terminal, file, JSON, and cutelog sinks
 - Linux x86_64 as primary platform
@@ -25,10 +25,10 @@ This artifact defines what is in scope and explicitly out of scope for SSP4SIM. 
 - Windows or macOS platform support
 - SSP 2.0 support
 - Real-time simulation guarantees
-- Streaming output (CSV and DuckDB only)
+- Remote database ingestion and streaming output in current releases
 - Formal support or SLAs
 
 ## Traceability
 
 - Backward: Traces to constraints documented in `product-breakdown/00-intent/constraints.md`.
-- Sources: `readme.md` (features list), `docs/overview.md` (notable characteristics), `docs/usage.md` (input data policy).
+- Sources: `readme.md` (features list), `docs/overview.md` (notable characteristics), `docs/usage.md` (result artifacts).

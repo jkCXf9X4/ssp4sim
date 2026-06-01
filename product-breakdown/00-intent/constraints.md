@@ -14,7 +14,8 @@ This artifact documents known limits, non-goals, and binding constraints that sh
 - **Maturity**: Experimental, not production-grade. No SLAs, no formal support.
 - **Interface**: No GUI, no dashboard, no web interface.
 - **Platform support**: No Windows or macOS support planned.
-- **Recording**: No streaming output in the recording pipeline.
+- **Recording**: Current releases provide file-based CSV and local database
+  artifacts only. No streaming or remote database output is available.
 
 ## Traceability
 

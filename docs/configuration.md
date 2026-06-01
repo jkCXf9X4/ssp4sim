@@ -99,10 +99,10 @@ Notes:
 
 | Key | Type | Required | Default | Notes |
 |---|---|---|---|---|
-| `simulation.recording.csv.enable` | `bool` | No | `false` | Enables the CSV recorder. CSV and DuckDB are the primary result outputs for most runs. |
+| `simulation.recording.csv.enable` | `bool` | No | `false` | Enables the CSV export recorder. CSV is the portable export path for the primary local database artifact. |
 | `simulation.recording.csv.file` | `string` | No | `simulation.working_dir/result.csv` | Output CSV path (`[TIME]` supported). When omitted, the recorder writes to the working directory. |
 | `simulation.recording.csv.interval` | `double` | No | `1.0` | Seconds between recorded CSV samples. |
-| `simulation.recording.duckdb.enable` | `bool` | No | `false` | Enables the DuckDB recorder. DuckDB and CSV are the primary result outputs for most runs. It writes grouped storage snapshots directly into a DuckDB database file, one table per storage. Each table stores `timestamp_ns`, `simulation_time_s`, and the storage variables. The fixed `ssp4sim_metadata` table maps model and storage names to the generated `<model>_<epoch seconds>_<uuid>` data table names. |
+| `simulation.recording.duckdb.enable` | `bool` | No | `false` | Enables the DuckDB recorder for the primary local database artifact. DuckDB writes grouped storage snapshots directly into a database file, one table per storage. Each table stores `timestamp_ns`, `simulation_time_s`, and the storage variables. The fixed `ssp4sim_metadata` table maps model and storage names to the generated `<model>_<epoch seconds>_<uuid>` data table names. |
 | `simulation.recording.duckdb.file` | `string` | No | `simulation.working_dir/result.duckdb` | Output DuckDB database path (`[TIME]` supported). When the file already exists, new run tables and metadata rows are appended. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 

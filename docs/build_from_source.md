@@ -33,7 +33,7 @@ Success criteria:
 - `cmake --build build` completes without errors.
 - `./build/tests/lib/ssp4sim_tests` exits successfully.
 - `./build/public/ssp4sim_app/sim_app ./resources/embrace/embrace.json`
-  produces a result CSV at the configured output path.
+  produces a result artifact at the configured output path.
 
 ## Prepare A Source Build Environment
 

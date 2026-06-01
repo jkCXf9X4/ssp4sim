@@ -20,8 +20,8 @@ This artifact documents common operational procedures for running SSP4SIM simula
 After a successful run, verify:
 - Simulation completed without ERROR or CRITICAL log messages
 - Output files exist at the configured working directory
-- CSV output has the expected columns and row count
-- DuckDB output has per-storage tables populated
+- CSV export has the expected columns and row count
+- Local database output has per-storage tables populated
 
 ## Common Issues
 

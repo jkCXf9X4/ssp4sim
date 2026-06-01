@@ -34,9 +34,27 @@ Example configs:
 - [`resources/embrace/embrace.json`](../resources/embrace/embrace.json)
 - [`resources/generic_config.json`](../resources/generic_config.json)
 
-Recording output defaults to CSV. DuckDB is available as a direct
-database-backed alternative and writes one table per storage. Recording
-details live in [Configuration](configuration.md).
+## Result Artifacts
+
+SSP4SIM treats simulation results as artifacts that should be useful at three
+access levels:
+
+| Category | Current support | Main use case |
+|---|---|---|
+| Local database | Primary result artifact category. Supported today through DuckDB; SQLite WAL is the preferred future local-live database shape | Queryable local storage for viewers, bounded time-window plots, and run-to-run comparison without repeatedly parsing CSV. |
+| CSV | Portable export path via `simulation.recording.csv.*` | Lowest-friction access for scripts, spreadsheets, regression fixtures, and quick inspection. |
+| Remote database | Not implemented; the remote ingest interface is decided as InfluxDB Line Protocol ([OD-004](../product-breakdown/05-operation/decisions/OD-004.md)) | Central ingestion from multiple simulation sources for shared dashboards, fleet-scale comparison, and long-lived history. |
+
+The local database is the primary result artifact because it gives the viewer a
+typed, indexed query layer for recent windows and run-to-run comparison.
+CSV remains the lowest-friction export for scripts and archival handoff. The
+current local database backend is DuckDB, which is good for post-run analysis
+and table export. For a separate live writer and viewer process, SQLite in WAL
+mode is a better fit than DuckDB because it supports one writer with concurrent
+readers in a single local file. Remote database output remains outside the
+current configuration surface.
+
+Recording details live in [Configuration](configuration.md).
 
 To unpack a DuckDB result into per-table CSV files, use:
 
@@ -67,7 +85,8 @@ The wheel also installs a `pyssp4sim` command that wraps the same flow:
 pyssp4sim ./resources/embrace/embrace.json
 ```
 
-## Input Data Policy
+## Result Artifact Policy
 
-The input data policy and design principles are documented in the
+The result artifact policy and supporting tradeoffs are documented in
+[PD-001](../product-breakdown/01-product/decisions/PD-001.md) and the
 [capabilities page](../product-breakdown/01-product/capabilities.md).

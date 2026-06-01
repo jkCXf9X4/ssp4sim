@@ -14,7 +14,7 @@ This artifact enumerates the capabilities of SSP4SIM, each with a stable identif
 | CAP-002 | FMI 2.0 Co-Simulation | Execute FMI 2.0 co-simulation models through the engine's FMU adapter layer. |
 | CAP-003 | Multiple Execution Strategies | Support Gauss-Jacobi and Gauss-Seidel execution strategies with parallel and sequential variants. |
 | CAP-004 | CSV Recording | Record simulation results to CSV with configurable sample interval. |
-| CAP-005 | DuckDB Recording | Record simulation results to DuckDB database with per-storage tables. |
+| CAP-005 | Local Database Recording | Record simulation results to a local database with per-storage tables. Current backend: DuckDB. |
 | CAP-006 | Multiple API Surface | Expose simulation through CLI (`sim_app`), C API, and Python bindings (`pyssp4sim`). |
 | CAP-007 | Configurable Logging | Provide configurable logging with multiple sinks (terminal, file, JSON, cutelog) and hot-path compile-time disable. |
 

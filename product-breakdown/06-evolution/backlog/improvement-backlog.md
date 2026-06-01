@@ -59,6 +59,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-026.md` | IMP-026 | Direct rerun (pipelined) Gauss-Seidel executor | Design Evaluation Only | Low | No code changes; design document only; highly speculative, FMI-incompatible |
 | `candidates/IMP-027.md` | IMP-027 | Config item for input storage in output artifacts (CSV/DuckDB) | Proposed | Medium | shared_config.hpp, model_fmu.hpp/cpp, graph_builder.cpp; small blast radius, opt-in via config |
 | `candidates/IMP-028.md` | IMP-028 | Restructure thread pools with tradeoff documentation | Proposed | Medium | Documentation only (README); deferred file move; moderate blast radius if moved |
+| `candidates/IMP-029.md` | IMP-029 | SQLite WAL local database sink | Proposed | Medium | Recording config, recorder sink interfaces, docs; CSV compatibility must be preserved |
+| `candidates/IMP-030.md` | IMP-030 | Remote result ingestion via InfluxDB Line Protocol | Proposed | Medium | Remote sink config, write path, retry/backpressure, docs; local outputs preserved |
  
 ## Summary
 
@@ -92,6 +94,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-026 | Direct rerun (pipelined) Gauss-Seidel executor | Low | None | No code changes; design evaluation only — FMI-incompatible, not viable |
 | IMP-027 | Config item for input storage in output artifacts (CSV/DuckDB) | Medium | None | shared_config.hpp, model_fmu.hpp/cpp, graph_builder.cpp; small blast radius |
 | IMP-028 | Restructure thread pools with tradeoff documentation | Medium | None | Documentation only (README); deferred file move; enabler for IMP-021/025 |
+| IMP-029 | SQLite WAL local database sink | Medium | None | Recording config + local database sink; CSV compatibility preserved |
+| IMP-030 | Remote result ingestion via InfluxDB Line Protocol | Medium | None | Remote sink config + write path; local outputs preserved |
  
 ## Cross-Cutting Constraints
 
