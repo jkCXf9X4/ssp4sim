@@ -112,7 +112,7 @@ namespace ssp4sim
                 const auto file_str = utils::Config::getOr("simulation.recording.sqlite.file", "");
                 if (!file_str.empty())
                 {
-                    sqlite.file = file_str;
+                    sqlite.file = std::filesystem::path( working_dir / file_str);
                 }
             }
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);

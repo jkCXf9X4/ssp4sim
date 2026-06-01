@@ -3,7 +3,7 @@
         "ssp": "./resources/embrace/embrace_scen.ssp",
         "ssd": "SystemStructure.ssd",
         "start_time": 0.0,
-        "stop_time": 20000,
+        "stop_time": 2000,
         "timestep": 0.01,
         "tolerance": 1e-4,
         "realtime": false,
@@ -29,7 +29,8 @@
                 "enable": false
             },
             "sqlite": {
-                "enable": true
+                "enable": true,
+                "file" : "results.sqlite"
             },
             "wait_for": true
         },
