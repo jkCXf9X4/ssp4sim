@@ -15,11 +15,13 @@ namespace ssp4sim::analysis::graph
 
     AnalysisGraph::AnalysisGraph(std::map<std::string, std::unique_ptr<AnalysisModel>> models_,
                                  std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors_,
-                                 std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_)
+                                 std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_,
+                                 std::map<std::string, std::unique_ptr<AnalysisModelVariable>> model_variables_)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisGraph")),
           models(std::move(models_)),
           connectors(std::move(connectors_)),
-          connections(std::move(connections_))
+          connections(std::move(connections_)),
+          model_variables(std::move(model_variables_))
     {
         auto m = ssp4sim::utils::map_ns::map_unique_to_ref(models);
         nodes = ssp4sim::utils::map_ns::map_to_value_vector_copy(m);

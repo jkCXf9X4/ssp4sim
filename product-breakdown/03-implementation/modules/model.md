@@ -8,7 +8,7 @@ Adapts FMUs into graph-invocable simulation models with input and output signal 
 
 ## Key Components
 
-- `FmuModel`: Wraps an FMU instance with signal buffers, connection info, and invocation logic. Implements the Invocable interface.
+- `FmuModel`: Wraps an FMU instance with signal buffers, connection info (including per-connection `is_feedthrough` metadata), and invocation logic. Implements the Invocable interface.
 - `ModelConnection`: Represents a connection between an output connector and an input connector.
 - `ModelConnector`: Represents a typed connector (input or output) on a model.
 - `InitialValue`: Handles initial value processing for signal areas.
@@ -29,6 +29,7 @@ Adapts FMUs into graph-invocable simulation models with input and output signal 
 - FmuModel bridges the handler's FMU lifecycle to the graph's invocation loop.
 - Models read inputs from and write outputs to SignalStorage areas.
 - Connection resolution supports complex SSP topologies (hierarchical connectors).
+- `ConnectionInfo` carries an `is_feedthrough` flag populated from FMI dependency metadata during graph building.
 
 ## Traceability
 

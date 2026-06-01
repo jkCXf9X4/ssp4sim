@@ -9,7 +9,7 @@ Organizes invocable nodes into a directed acyclic graph and dispatches simulatio
 ## Key Components
 
 - `Graph`: Manages the DAG of invocable nodes and delegates step execution to the selected executor.
-- `GraphBuilder`: Constructs executable graph from analysis results and recorder hooks.
+- `GraphBuilder`: Constructs executable graph from analysis results, recorder hooks, and FMI dependency/feedthrough metadata.
 - `AsyncNode`: Wraps an invocable object in a dedicated worker thread.
 - `InvocableNode`: Interface marker for graph nodes that can be scheduled.
 - `Invocable`: Interface for objects with init/invoke entry points.
@@ -31,6 +31,7 @@ Organizes invocable nodes into a directed acyclic graph and dispatches simulatio
 - Graph is a DAG of sub-graphs → DAGs of models.
 - The execution algorithm could be injected in the constructor (currently set during build).
 - AsyncNode enables parallel FMU execution on dedicated threads.
+- Feedthrough metadata flows `AnalysisGraph → GraphBuilder → ConnectionInfo` to preserve FMI dependency information end-to-end during graph construction.
 
 ## Traceability
 

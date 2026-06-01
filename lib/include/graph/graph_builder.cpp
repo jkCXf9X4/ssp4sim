@@ -6,6 +6,8 @@
 #include "model/model_fmu.hpp"
 #include "utils/map.hpp"
 
+#include "FMI2_modelDescription_Ext.hpp"
+
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -115,6 +117,42 @@ namespace ssp4sim::graph
 
             con_info.delay = connection->delay;
             LOG_TRACE_L1(log, "Connection: {}, delay {}", connection->name, connection->delay);
+
+            // Determine if the connection is feedthrough:
+            // A connection is feedthrough if the target FMU has output(s) that depend on
+            // this input variable with DependenciesKind::dependent (same-step functional dependence).
+            con_info.is_feedthrough = false;
+            if (con_info.delay == 0 && connection->target_model->fmu != nullptr)
+            {
+                auto *md = connection->target_model->fmu->model_description;
+                if (md != nullptr && md->ModelStructure.Outputs.has_value())
+                {
+                    try
+                    {
+                        auto dependencies = ext::fmi2::dependency::get_dependencies_variables(
+                            md->ModelStructure.Outputs.value().Unknowns,
+                            md->ModelVariables,
+                            ssp4cpp::fmi2::md::DependenciesKind::dependent);
+
+                        for (auto &[output, dep, kind] : dependencies)
+                        {
+                            if (dep->valueReference.has_value() &&
+                                static_cast<uint64_t>(dep->valueReference.value()) == target_connector.value_ref)
+                            {
+                                con_info.is_feedthrough = true;
+                                LOG_DEBUG(log, "[{func}] Feedthrough detected for connection {conn}, target VR {vr}",
+                                          __func__, connection->name, target_connector.value_ref);
+                                break;
+                            }
+                        }
+                    }
+                    catch (const std::exception &e)
+                    {
+                        LOG_DEBUG(log, "[{func}] Skipping feedthrough detection for connection {conn}: {msg}",
+                                  __func__, connection->name, e.what());
+                    }
+                }
+            }
 
             target_model->connections.push_back(std::move(con_info));
         }

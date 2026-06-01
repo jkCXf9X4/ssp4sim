@@ -9,7 +9,7 @@ Builds a structural view of SSP models and connections before execution. The ana
 ## Key Components
 
 - `AnalysisGraph`: Represents model nodes, connector definitions, and connection topology extracted from the SSP.
-- `AnalysisGraphBuilder`: Transforms SSP structures (models, connectors, connections) into an AnalysisGraph.
+- `AnalysisGraphBuilder`: Transforms SSP structures (models, connectors, connections) into an AnalysisGraph. Also wires intra-FMU variable dependency edges from FMI `<ModelStructure><Outputs>` dependency lists into the analysis graph DAG.
 - `AnalysisModel`, `AnalysisConnector`, `AnalysisConnection`: Domain types for the analysis representation.
 
 ## Include Boundary
@@ -27,6 +27,7 @@ Builds a structural view of SSP models and connections before execution. The ana
 - The analysis graph direction is parent→child: A → B means A is parent of B.
 - A researcher note exists about migrating to the LEMON graph library — currently deferred.
 - The analysis graph is a read-only snapshot of the SSP structure, not a runtime execution graph.
+- The analysis graph includes intra-FMU variable dependency edges derived from FMI feedthrough metadata, making SCC decomposition complete at the variable level.
 
 ## Traceability
 

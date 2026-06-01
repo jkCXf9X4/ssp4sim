@@ -265,59 +265,74 @@ namespace ssp4sim::analysis::graph
             }
         }
 
-        // possible to add internal connections as well
-        // see below
+        LOG_TRACE_L1(log, "[{func}] Connecting internal variable dependencies within FMUs", __func__);
+        for (auto [fmu_name, fmu] : fmu_handler->fmu_ref_map)
+        {
+            LOG_DEBUG(log, "[{func}] Connecting internal dependencies, FMU:{}", __func__, fmu_name);
+
+            auto outputs = fmu->md->ModelStructure.Outputs;
+            if (outputs.has_value())
+            {
+                std::vector<ext::fmi2::dependency::VariableDependencyCoupling> dependencies;
+                try
+                {
+                    dependencies = ext::fmi2::dependency::get_dependencies_variables(
+                        outputs.value().Unknowns,
+                        fmu->md->ModelVariables,
+                        ssp4cpp::fmi2::md::DependenciesKind::dependent);
+                }
+                catch (const std::exception &e)
+                {
+                    LOG_WARNING(log, "[{func}] Skipping dependencies for FMU {}: {}", __func__, fmu_name, e.what());
+                    continue;
+                }
+
+                for (auto &[source, target, kind] : dependencies)
+                {
+                    auto source_id = analysis::graph::AnalysisConnector::create_name(fmu_name, source->name);
+                    auto target_id = analysis::graph::AnalysisConnector::create_name(fmu_name, target->name);
+                    ssp4sim::utils::graph::Node *source_node = nullptr;
+                    ssp4sim::utils::graph::Node *target_node = nullptr;
+
+                    // The connections can be from connectors or model variables, depending on causality
+                    if (connectors.contains(source_id))
+                    {
+                        source_node = connectors[source_id].get();
+                        LOG_DEBUG(log, "[{func}] Source C {}", __func__, connectors[source_id]->name);
+                    }
+                    else if (model_variables.contains(source_id))
+                    {
+                        source_node = model_variables[source_id].get();
+                        LOG_DEBUG(log, "[{func}] Source V {}", __func__, model_variables[source_id]->name);
+                    }
+
+                    if (connectors.contains(target_id))
+                    {
+                        target_node = connectors[target_id].get();
+                        LOG_DEBUG(log, "[{func}] Target C {}", __func__, connectors[target_id]->name);
+                    }
+                    else if (model_variables.contains(target_id))
+                    {
+                        target_node = model_variables[target_id].get();
+                        LOG_DEBUG(log, "[{func}] Target V {}", __func__, model_variables[target_id]->name);
+                    }
+
+                    if (source_node && target_node)
+                    {
+                        LOG_DEBUG(log, "[{func}] Connecting {source} -> {target}", __func__, source_node->name, target_node->name);
+                        target_node->add_child(source_node);
+                    }
+                    else
+                    {
+                        LOG_WARNING(log, "[{func}] Failed to resolve nodes for dependency: {source_id} -> {target_id} in FMU {fmu_name}",
+                                  __func__, source_id, target_id, fmu_name);
+                    }
+                }
+            }
+        }
 
         LOG_TRACE_L1(log, "[{func}] exit", __func__);
-        return make_unique<AnalysisGraph>(std::move(models), std::move(connectors), std::move(connections));
+        return make_unique<AnalysisGraph>(std::move(models), std::move(connectors), std::move(connections), std::move(model_variables));
     }
 
 }
-
-//     for (auto [fmu_name, fmu] : fmu_map)
-//     {
-//         LOG_DEBUG(log, "[{func}] Connecting internal dependencies, FMU:{}", __func__, fmu_name);
-
-//         auto outputs = fmu->md.ModelStructure.Outputs;
-//         if (outputs.has_value())
-//         {
-
-//             auto dependencies = ext::fmi2::dependency::get_dependencies_variables(
-//                 outputs.value().Unknowns,
-//                 fmu->md.ModelVariables,
-//                 ssp4cpp::fmi2::md::DependenciesKind::dependent);
-
-//             for (auto &[source, target, kind] : dependencies)
-//             {
-//                 auto source_id = Connector::create_name(fmu_name, source->name);
-//                 auto target_id = Connector::create_name(fmu_name, target->name);
-//                 SimNode *source_node;
-//                 SimNode *target_node;
-
-//                 // The connections can be from connectors or variables, maybe...
-//                 if (connectors.contains(source_id))
-//                 {
-//                     source_node = connectors[source_id];
-//                     LOG_DEBUG(log, "[{func}] Source C {}", __func__, connectors[source_id]->name);
-//                 }
-//                 else
-//                 {
-//                     source_node = variables[source_id];
-//                     LOG_DEBUG(log, "[{func}] Source V {}", __func__, variables[source_id]->name);
-//                 }
-
-//                 if (connectors.contains(target_id))
-//                 {
-//                     target_node = connectors[target_id];
-//                     LOG_DEBUG(log, "[{func}] Target C {}", __func__, connectors[target_id]->name);
-//                 }
-//                 else
-//                 {
-//                     target_node = variables[target_id];
-//                     LOG_DEBUG(log, "[{func}] Target V {}", __func__, variables[target_id]->name);
-//                 }
-//                 LOG_DEBUG(log, "[{func}] Connecting {connection} -> {}", __func__, source_node->name, target_node->name);
-//                 source_node->add_child(target_node);
-//             }
-//         }
-//     }

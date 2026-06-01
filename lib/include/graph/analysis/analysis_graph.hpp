@@ -5,6 +5,7 @@
 #include "analysis_connection.hpp"
 #include "analysis_model.hpp"
 #include "analysis_connector.hpp"
+#include "analysis_internal.hpp"
 
 #include <map>
 #include <memory>
@@ -21,6 +22,7 @@ namespace ssp4sim::analysis::graph
         std::map<std::string, std::unique_ptr<AnalysisModel>> models;
         std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors;
         std::map<std::string, std::unique_ptr<AnalysisConnection>> connections;
+        std::map<std::string, std::unique_ptr<AnalysisModelVariable>> model_variables;
 
         std::vector<AnalysisModel *> nodes;
 
@@ -28,7 +30,8 @@ namespace ssp4sim::analysis::graph
 
         AnalysisGraph(std::map<std::string, std::unique_ptr<AnalysisModel>> models_,
                       std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors_,
-                      std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_);
+                      std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_,
+                      std::map<std::string, std::unique_ptr<AnalysisModelVariable>> model_variables_);
 
         std::vector<AnalysisModel *> get_start_nodes() const;
 
