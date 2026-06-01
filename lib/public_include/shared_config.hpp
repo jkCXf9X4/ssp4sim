@@ -32,6 +32,7 @@ namespace ssp4sim
 
         bool enable_recording;
         bool wait_for_recorder;
+        bool record_inputs = false;
 
         struct CsvRecordingConfig
         {
@@ -96,6 +97,7 @@ namespace ssp4sim
                 duckdb.file = std::filesystem::path(utils::Config::getOr("simulation.recording.duckdb.file", default_result_file.string()));
             }
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
+            record_inputs = utils::Config::getOr("simulation.recording.record_inputs", false);
 
             enable_recording = csv.enable || duckdb.enable;
 

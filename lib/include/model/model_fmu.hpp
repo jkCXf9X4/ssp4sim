@@ -42,6 +42,7 @@ namespace ssp4sim::graph
         bool forward_derivatives = false;
         size_t maxOutputDerivativeOrder = 0;
         bool fmu_logging = false;
+        bool record_inputs = false;
 
         FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu, size_t maxOutputDerivativeOrder);
 

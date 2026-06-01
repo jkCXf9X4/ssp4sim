@@ -32,6 +32,7 @@ namespace ssp4sim::graph
             LOG_TRACE_L1(log, "[{func}] -- New Model: {model}", __func__, m->name);
 
             m->delay = analysis_model->delay;
+            m->record_inputs = this->config->record_inputs;
             LOG_DEBUG(log, "Model: {model}, delay {delay}", m->name, m->delay);
 
             models[analysis_model->name] = std::move(m);
@@ -127,10 +128,11 @@ namespace ssp4sim::graph
             m->output_area->allocate();
             if (recorder)
             {
-                // only log input data if extended logging is active
-                IF_LOG({
+                // register input storage if record_inputs config is enabled
+                if (m->record_inputs)
+                {
                     recorder->add_storage(m->input_area.get());
-                });
+                }
 
                 recorder->add_storage(m->output_area.get());
             }
