@@ -9,6 +9,21 @@ wrapper owns backend startup and logger construction; do not call
 The filename is intentionally left as `logging_guidlines.md` for now because
 other docs link to it.
 
+## Logging Tiers
+
+SSP4SIM uses four observable tiers:
+
+| Tier | Output | Use case |
+|---|---|---|
+| Overview | terminal + plain text file | Fast human-readable progress checks during a run |
+| Deep analysis | full JSON file | Offline filtering, scripting, and deeper correlation |
+| Live navigation | cutelog streaming JSON | Interactive navigation of a live structured log stream |
+| Distributed observability | OpenTelemetry | Cross-process tracing for distributed simulations |
+
+The first three tiers are part of the current local logging surface. The
+OpenTelemetry tier is the distributed-observability contract for future
+multi-process simulation runs.
+
 ## Levels
 
 Use the lowest level that still makes the event useful:
@@ -75,6 +90,14 @@ Avoid:
 `ssp4cpp::utils::log::add_cutelog_sink(host, port, level)` sends
 length-prefixed JSON records to a cutelog TCP listener. Start cutelog first,
 then configure this sink before constructing loggers.
+
+## OpenTelemetry
+
+OpenTelemetry is the distributed observability layer for simulations that span
+multiple processes or services. It should carry trace context and correlation
+identifiers rather than replacing the local logging tiers. The current
+configuration surface does not expose it yet; the contract is documented in the
+product decision and use cases.
 
 ## Current Backend Profile
 

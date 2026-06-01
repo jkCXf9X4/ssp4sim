@@ -61,6 +61,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-028.md` | IMP-028 | Restructure thread pools with tradeoff documentation | Proposed | Medium | Documentation only (README); deferred file move; moderate blast radius if moved |
 | `candidates/IMP-029.md` | IMP-029 | SQLite WAL local database sink | Proposed | Medium | Recording config, recorder sink interfaces, docs; CSV compatibility must be preserved |
 | `candidates/IMP-030.md` | IMP-030 | Remote result ingestion via InfluxDB Line Protocol | Proposed | Medium | Remote sink config, write path, retry/backpressure, docs; local outputs preserved |
+| `candidates/IMP-031.md` | IMP-031 | OpenTelemetry distributed observability | Proposed | Medium | Trace emission, context propagation, exporter config, docs; local logging preserved |
  
 ## Summary
 
@@ -96,6 +97,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-028 | Restructure thread pools with tradeoff documentation | Medium | None | Documentation only (README); deferred file move; enabler for IMP-021/025 |
 | IMP-029 | SQLite WAL local database sink | Medium | None | Recording config + local database sink; CSV compatibility preserved |
 | IMP-030 | Remote result ingestion via InfluxDB Line Protocol | Medium | None | Remote sink config + write path; local outputs preserved |
+| IMP-031 | OpenTelemetry distributed observability | Medium | None | Trace emission + exporter config; local logging preserved |
  
 ## Cross-Cutting Constraints
 

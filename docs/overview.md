@@ -5,8 +5,8 @@
 SSP4SIM is a C++23 simulation engine that executes SSP 1.0 archives
 containing FMI 2.0 co-simulation FMUs. It supports Gauss-Jacobi and
 Gauss-Seidel execution strategies (parallel and serial), local database
-recording with CSV export, and provides a CLI (`sim_app`), a C API, and a
-Python API (`pyssp4sim`).
+recording with CSV export, tiered logging, and provides a CLI (`sim_app`), a
+C API, and a Python API (`pyssp4sim`).
 
 ## Product
 

@@ -112,12 +112,15 @@ Notes:
 |---|---|---|---|---|
 | `simulation.log.file` | `string` | No | `simulation.working_dir/sim.log` | Base log file path (`[TIME]` supported). When omitted, log sinks use the working directory. |
 | `simulation.log.fmu` | `bool` | No | `false` | Enables FMU-level logging during instantiate/setup/step/terminate. Long multi-line FMU log messages are supported. |
-| `simulation.log.level_terminal` | `string` | No | `disable` | Console sink level. `disable` skips the sink. |
-| `simulation.log.level_file` | `string` | No | `disable` | Plain text file sink level. Uses `simulation.log.file`. `disable` skips the sink. |
-| `simulation.log.level_json` | `string` | No | `disable` | JSON file sink level. Uses `simulation.log.file + ".json"`. `disable` skips the sink. |
-| `simulation.log.level_cutelog` | `string` | No | `disable` | Cutelog TCP sink level. Uses `127.0.0.1:19996`. `disable` skips the sink. If the endpoint is unavailable, SSP4SIM logs a warning and continues without this sink. |
+| `simulation.log.level_terminal` | `string` | No | `disable` | Overview tier console sink. Use for immediate human-readable progress while the simulation runs. |
+| `simulation.log.level_file` | `string` | No | `disable` | Overview tier plain text file sink. Uses `simulation.log.file` for the durable local summary log. |
+| `simulation.log.level_json` | `string` | No | `disable` | Deep-analysis tier JSON file sink. Uses `simulation.log.file + ".json"` for the full structured archive. |
+| `simulation.log.level_cutelog` | `string` | No | `disable` | Live navigation tier TCP sink. Uses `127.0.0.1:19996`. `disable` skips the sink. If the endpoint is unavailable, SSP4SIM logs a warning and continues without this sink. |
 
 Logging level values are passed through Quill's `loglevel_from_string()`.
+OpenTelemetry is the distributed observability tier and is documented in
+[OD-005](../product-breakdown/05-operation/decisions/OD-005.md); it is not yet
+part of the current JSON config surface.
 Supported values are case-insensitive:
 
 - `tracel3` or `trace_l3`

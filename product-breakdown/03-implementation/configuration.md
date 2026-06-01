@@ -43,5 +43,5 @@ See [Configuration Reference](../../docs/configuration.md) for the complete key 
 
 ## Traceability
 
-- Backward: Product requirements (REQ-004 CSV, REQ-005 DuckDB, REQ-006 logging).
+- Backward: Product requirements (REQ-004 CSV export, REQ-005 local database, REQ-006 local logging, REQ-007 distributed observability).
 - Sources: `docs/configuration.md`.

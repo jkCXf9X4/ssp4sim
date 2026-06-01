@@ -15,7 +15,7 @@ This artifact defines what is in scope and explicitly out of scope for SSP4SIM. 
 - Local database recording output with per-storage tables
 - CSV export output with configurable sample interval
 - C++23 library API, C API, and Python bindings
-- Configurable logging with terminal, file, JSON, and cutelog sinks
+- Local logging with terminal, file, JSON, and cutelog tiers
 - Linux x86_64 as primary platform
 
 ## Out of Scope
@@ -26,6 +26,7 @@ This artifact defines what is in scope and explicitly out of scope for SSP4SIM. 
 - SSP 2.0 support
 - Real-time simulation guarantees
 - Remote database ingestion and streaming output in current releases
+- Distributed observability via OpenTelemetry in current releases
 - Formal support or SLAs
 
 ## Traceability

@@ -15,13 +15,14 @@ This artifact maps each product requirement to its verification coverage. Requir
 | REQ-003 | Configurable execution strategy | `tests/lib/utils/test_parallel.cpp`, `tests/lib/high_level/` | Partial | Executor strategies tested indirectly; no strategy-specific unit tests |
 | REQ-004 | CSV output with sample interval | `tests/lib/core/test_data_recorder.cpp`, `tests/lib/high_level/` | Partial | Recorder unit test exists; CSV format not tested in isolation |
 | REQ-005 | Local database output with per-storage tables | `tests/lib/core/test_duckdb_recorder.cpp` | Covered | Dedicated DuckDB recorder unit test |
-| REQ-006 | Configurable logging | (none) | Missing | No log-level or log-sink tests exist |
+| REQ-006 | Local logging with levels and sinks | (none) | Missing | No log-level or log-sink tests exist |
+| REQ-007 | Distributed observability with OpenTelemetry | (none) | Missing | No OpenTelemetry export or trace-context tests exist |
 
 ## Summary
 
-- **Covered**: 2 of 6 requirements (REQ-002, REQ-005)
-- **Partial**: 3 of 6 requirements (REQ-001, REQ-003, REQ-004)
-- **Missing**: 1 of 6 requirements (REQ-006)
+- **Covered**: 2 of 7 requirements (REQ-002, REQ-005)
+- **Partial**: 3 of 7 requirements (REQ-001, REQ-003, REQ-004)
+- **Missing**: 2 of 7 requirements (REQ-006, REQ-007)
 
 ## Traceability
 

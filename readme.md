@@ -40,7 +40,7 @@ For structured per-layer documentation, see the [product-breakdown](product-brea
 - [Development](docs/development.md): contributor workflow and repository conventions.
 - [Release pipeline](docs/linux_binary_distribution.md): Linux binary and wheel packaging.
 - [Profiling](docs/profiling.md): build and runtime profiling commands.
-- [Logging](docs/logging_guidlines.md): logging levels, hot-path logging, and sink notes.
+- [Logging](docs/logging_guidlines.md): logging tiers, hot-path logging, and sink notes.
 
 ## Contributing
 

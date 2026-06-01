@@ -15,14 +15,27 @@ This artifact provides operator-facing guidance for observing and diagnosing SSP
 | ERROR | Operation failures — FMU step error, recorder write failure |
 | CRITICAL | Startup failure, unrecoverable state |
 
+## Logging Tiers
+
+| Tier | Sink(s) | Use Case |
+|---|---|---|
+| Overview | terminal, file | Fast human-readable run checks and operator summaries |
+| Deep analysis | JSON file | Offline filtering, scriptable analysis, and post-run correlation |
+| Live navigation | cutelog | Interactive inspection of a live structured log stream |
+| Distributed observability | OpenTelemetry | Cross-process simulation tracing and service correlation |
+
+The OpenTelemetry tier is the distributed-observability contract for future
+multi-process simulations. It is separate from the current local log sink
+configuration.
+
 ## Sink Configuration
 
 | Sink | Use Case |
 |---|---|
-| Terminal | Interactive debugging |
-| File | Persistent logging for post-hoc analysis |
-| JSON | Structured log consumption by tooling |
-| cutelog | Real-time remote log viewing |
+| Terminal | Overview tier, interactive debugging |
+| File | Overview tier, persistent logging for post-hoc analysis |
+| JSON | Deep-analysis tier, structured log consumption by tooling |
+| cutelog | Live navigation tier, real-time remote log viewing |
 
 ## Key Events to Watch
 
@@ -40,4 +53,4 @@ This artifact provides operator-facing guidance for observing and diagnosing SSP
 ## Traceability
 
 - Backward: Implementation logging infrastructure (`product-breakdown/03-implementation/modules/signal.md`).
-- Sources: `docs/logging_guidlines.md`, `docs/profiling.md`.
+- Sources: `docs/logging_guidlines.md`, `docs/profiling.md`, `product-breakdown/05-operation/decisions/OD-005.md`.
