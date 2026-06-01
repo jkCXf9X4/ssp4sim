@@ -15,6 +15,7 @@ namespace ssp4sim::signal
         std::string name;
         types::DataType type;
         std::size_t position = 0;
+        int bind_index = 0;
     };
 
     struct SqliteStorageLayout

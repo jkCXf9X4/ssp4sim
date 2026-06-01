@@ -39,10 +39,16 @@ namespace ssp4sim::signal
         void stop() override;
 
     private:
-        static constexpr std::size_t commit_interval = 100;
+        static constexpr std::size_t commit_interval = 10'000;
         std::size_t insert_count = 0;
 
         void open_database();
+
+        void execute_pragma(const char *sql, const char *context);
+
+        void begin_transaction();
+
+        void commit_transaction(const char *context);
 
         void open_layout(SqliteStorageLayout &layout);
 

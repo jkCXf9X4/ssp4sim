@@ -12,6 +12,21 @@
 
 namespace ssp4sim::signal
 {
+    namespace
+    {
+        std::string sqlite_exec_error(sqlite3 *db, char *error_message)
+        {
+            if (error_message != nullptr)
+            {
+                std::string message(error_message);
+                sqlite3_free(error_message);
+                return message;
+            }
+
+            return db == nullptr ? "unknown SQLite error" : sqlite3_errmsg(db);
+        }
+    }
+
     SqliteWALRecorderSink::SqliteWALRecorderSink(const std::filesystem::path &filename)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.SqliteWALRecorderSink")),
           filename(filename)
@@ -31,7 +46,7 @@ namespace ssp4sim::signal
         auto rc = sqlite3_open_v2(
             filename.string().c_str(),
             &db,
-            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE,
+            SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX,
             nullptr);
         if (rc != SQLITE_OK)
         {
@@ -44,19 +59,54 @@ namespace ssp4sim::signal
             throw std::runtime_error(msg);
         }
 
-        // Enable WAL mode for concurrent readers
+        // Enable WAL mode for concurrent readers. NORMAL synchronous avoids the
+        // high per-commit fsync cost of FULL while keeping WAL transactions atomic.
+        // Checkpointing is deferred until stop so it does not interrupt the hot path.
+        execute_pragma("PRAGMA journal_mode=WAL;", "Failed to enable WAL mode");
+        execute_pragma("PRAGMA synchronous=NORMAL;", "Failed to configure SQLite synchronous mode");
+        execute_pragma("PRAGMA wal_autocheckpoint=0;", "Failed to disable SQLite automatic WAL checkpointing");
+        execute_pragma("PRAGMA temp_store=MEMORY;", "Failed to configure SQLite temporary storage");
+        execute_pragma("PRAGMA cache_size=-65536;", "Failed to configure SQLite cache size");
+
+        sqlite_recorder::create_metadata_table(db);
+    }
+
+    void SqliteWALRecorderSink::execute_pragma(const char *sql, const char *context)
+    {
         char *error_message = nullptr;
-        rc = sqlite3_exec(db, "PRAGMA journal_mode=WAL;", nullptr, nullptr, &error_message);
+        const auto rc = sqlite3_exec(db, sql, nullptr, nullptr, &error_message);
         if (rc != SQLITE_OK)
         {
-            const std::string msg = "Failed to enable WAL mode: " + std::string(error_message);
-            sqlite3_free(error_message);
+            const std::string msg = std::string(context) + ": " + sqlite_exec_error(db, error_message);
             sqlite3_close(db);
             db = nullptr;
             throw std::runtime_error(msg);
         }
+    }
 
-        sqlite_recorder::create_metadata_table(db);
+    void SqliteWALRecorderSink::begin_transaction()
+    {
+        char *error_message = nullptr;
+        const auto rc = sqlite3_exec(db, "BEGIN IMMEDIATE;", nullptr, nullptr, &error_message);
+        if (rc != SQLITE_OK)
+        {
+            const std::string msg = "Failed to begin transaction: " + sqlite_exec_error(db, error_message);
+            disable_sink(msg);
+        }
+    }
+
+    void SqliteWALRecorderSink::commit_transaction(const char *context)
+    {
+        char *error_message = nullptr;
+        const auto rc = sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &error_message);
+        if (rc != SQLITE_OK)
+        {
+            const std::string msg = std::string(context) + ": " + sqlite_exec_error(db, error_message);
+            disable_sink(msg);
+            return;
+        }
+
+        insert_count = 0;
     }
 
     std::string SqliteWALRecorderSink::local_variable_name(const std::string &storage_model, const std::string &name)
@@ -87,12 +137,14 @@ namespace ssp4sim::signal
         layout.table_name = sqlite_recorder::table_name_for(layout.model);
         layout.variables.reserve(storage->variables.size());
 
-        for (const auto &variable : storage->variables)
+        for (std::size_t i = 0; i < storage->variables.size(); ++i)
         {
+            const auto &variable = storage->variables[i];
             SqliteVariableLayout variable_layout;
             variable_layout.name = local_variable_name(layout.model, variable.name);
             variable_layout.type = variable.type;
             variable_layout.position = variable.position;
+            variable_layout.bind_index = static_cast<int>(i) + 3;
             layout.variables.emplace_back(std::move(variable_layout));
         }
 
@@ -221,13 +273,9 @@ namespace ssp4sim::signal
 
         if (insert_count == 0)
         {
-            char *error_message = nullptr;
-            const auto rc = sqlite3_exec(db, "BEGIN;", nullptr, nullptr, &error_message);
-            if (rc != SQLITE_OK)
+            begin_transaction();
+            if (disabled)
             {
-                const std::string msg = "Failed to begin transaction: " + std::string(error_message);
-                sqlite3_free(error_message);
-                disable_sink(msg);
                 return;
             }
         }
@@ -250,29 +298,28 @@ namespace ssp4sim::signal
             for (const auto &variable : layout.variables)
             {
                 const auto *data = event.buffer + variable.position;
-                const auto bind_index = static_cast<int>(&variable - &layout.variables.front()) + 3;
 
                 switch (static_cast<types::DataType::Value>(variable.type))
                 {
                 case types::DataType::Value::real:
                     sqlite_recorder::check_sqlite_error(
-                        sqlite3_bind_double(stmt, bind_index, *reinterpret_cast<const double *>(data)),
+                        sqlite3_bind_double(stmt, variable.bind_index, *reinterpret_cast<const double *>(data)),
                         "Failed to bind real value");
                     break;
                 case types::DataType::Value::integer:
                 case types::DataType::Value::enumeration:
                     sqlite_recorder::check_sqlite_error(
-                        sqlite3_bind_int(stmt, bind_index, *reinterpret_cast<const int *>(data)),
+                        sqlite3_bind_int(stmt, variable.bind_index, *reinterpret_cast<const int *>(data)),
                         "Failed to bind integer value");
                     break;
                 case types::DataType::Value::boolean:
                     sqlite_recorder::check_sqlite_error(
-                        sqlite3_bind_int(stmt, bind_index, (*reinterpret_cast<const int *>(data) != 0) ? 1 : 0),
+                        sqlite3_bind_int(stmt, variable.bind_index, (*reinterpret_cast<const int *>(data) != 0) ? 1 : 0),
                         "Failed to bind boolean value");
                     break;
                 case types::DataType::Value::string:
                     sqlite_recorder::check_sqlite_error(
-                        sqlite3_bind_text(stmt, bind_index, reinterpret_cast<const std::string *>(data)->c_str(),
+                        sqlite3_bind_text(stmt, variable.bind_index, reinterpret_cast<const std::string *>(data)->c_str(),
                                           static_cast<int>(reinterpret_cast<const std::string *>(data)->size()),
                                           SQLITE_TRANSIENT),
                         "Failed to bind string value");
@@ -296,16 +343,7 @@ namespace ssp4sim::signal
 
             if (insert_count >= commit_interval)
             {
-                char *error_message = nullptr;
-                rc = sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &error_message);
-                if (rc != SQLITE_OK)
-                {
-                    const std::string msg = "Failed to commit transaction: " + std::string(error_message);
-                    sqlite3_free(error_message);
-                    disable_sink(msg);
-                    return;
-                }
-                insert_count = 0;
+                commit_transaction("Failed to commit transaction");
             }
         }
         catch (const std::exception &e)
@@ -351,16 +389,11 @@ namespace ssp4sim::signal
         // Commit any remaining rows
         if (insert_count > 0)
         {
-            char *error_message = nullptr;
-            const auto rc = sqlite3_exec(db, "COMMIT;", nullptr, nullptr, &error_message);
-            if (rc != SQLITE_OK)
+            commit_transaction("Failed to commit final transaction");
+            if (disabled)
             {
-                const std::string msg = "Failed to commit final transaction: " + std::string(error_message);
-                sqlite3_free(error_message);
-                disable_sink(msg);
                 return;
             }
-            insert_count = 0;
         }
 
         try
@@ -384,6 +417,7 @@ namespace ssp4sim::signal
 
         if (db != nullptr)
         {
+            sqlite3_exec(db, "PRAGMA wal_checkpoint(TRUNCATE);", nullptr, nullptr, nullptr);
             sqlite3_close(db);
             db = nullptr;
         }

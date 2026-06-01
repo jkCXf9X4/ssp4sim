@@ -497,9 +497,8 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     sink.init();
     sink.start();
 
-    // Write 150 events to ensure at least one commit boundary is crossed
-    // (commit interval is 100)
-    for (int i = 0; i < 150; ++i)
+    // Write enough events to ensure at least one commit boundary is crossed.
+    for (int i = 0; i < 10050; ++i)
     {
         const auto timestamp = static_cast<std::uint64_t>(i + 1) * sim_time::nanoseconds_per_second;
         const std::size_t area = storage.push(timestamp);
@@ -540,8 +539,8 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
         const int committed_count = sqlite3_column_int(count_stmt, 0);
         sqlite3_finalize(count_stmt);
 
-        // At least the first 100 should be committed
-        REQUIRE(committed_count >= 100);
+        // At least the first commit batch should be visible.
+        REQUIRE(committed_count >= 10000);
     }
 
     sqlite3_close(reader_db);

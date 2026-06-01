@@ -3,7 +3,7 @@
         "ssp": "./resources/embrace/embrace_scen.ssp",
         "ssd": "SystemStructure.ssd",
         "start_time": 0.0,
-        "stop_time": 2000,
+        "stop_time": 20000,
         "timestep": 0.01,
         "tolerance": 1e-4,
         "realtime": false,
@@ -27,6 +27,9 @@
             },
             "duckdb": {
                 "enable": true
+            },
+            "sqlite": {
+                "enable": false
             },
             "wait_for": true
         },
