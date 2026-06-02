@@ -1,8 +1,6 @@
 #include "graph/graph_builder.hpp"
 
 #include "graph/analysis/analysis_graph.hpp"
-#include "graph/analysis/analysis_model.hpp"
-#include "graph/analysis/analysis_connection.hpp"
 #include "model/model_fmu.hpp"
 #include "utils/map.hpp"
 

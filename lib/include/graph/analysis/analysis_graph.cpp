@@ -1,8 +1,8 @@
 #include "graph/analysis/analysis_graph.hpp"
 
-#include "graph/analysis/analysis_model.hpp"
-#include "graph/analysis/analysis_connector.hpp"
-#include "graph/analysis/analysis_connection.hpp"
+#include "graph/analysis/components/analysis_model.hpp"
+#include "graph/analysis/components/analysis_connector.hpp"
+#include "graph/analysis/components/analysis_connection.hpp"
 
 #include "tarjan.hpp"
 #include "utils/map.hpp"

@@ -2,10 +2,10 @@
 
 #include "fmu_handler.hpp"
 
-#include "analysis_connection.hpp"
-#include "analysis_model.hpp"
-#include "analysis_connector.hpp"
-#include "analysis_internal.hpp"
+#include "graph/analysis/components/analysis_connection.hpp"
+#include "graph/analysis/components/analysis_model.hpp"
+#include "graph/analysis/components/analysis_connector.hpp"
+#include "graph/analysis/components/analysis_internal.hpp"
 
 #include "analysis_graph.hpp"
 

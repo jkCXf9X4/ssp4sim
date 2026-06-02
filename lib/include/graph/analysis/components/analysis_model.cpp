@@ -1,4 +1,4 @@
-#include "graph/analysis/analysis_model.hpp"
+#include "graph/analysis/components/analysis_model.hpp"
 
 #include "handler/fmu_handler.hpp"
 

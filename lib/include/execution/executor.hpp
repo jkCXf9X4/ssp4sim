@@ -16,6 +16,7 @@ namespace ssp4sim::graph
     {
     public:
         ssp4cpp::utils::log::Logger* log = nullptr;
+
         // the executor should not own the nodes
         std::vector<Invocable *> nodes;
 

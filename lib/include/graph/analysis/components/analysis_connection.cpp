@@ -1,6 +1,6 @@
-#include "graph/analysis/analysis_connection.hpp"
+#include "graph/analysis/components/analysis_connection.hpp"
 
-#include "graph/analysis/analysis_connector.hpp"
+#include "graph/analysis/components/analysis_connector.hpp"
 
 #include <sstream>
 
