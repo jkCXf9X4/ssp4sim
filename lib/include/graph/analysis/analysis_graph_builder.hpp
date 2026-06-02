@@ -44,6 +44,8 @@ namespace ssp4sim::analysis::graph
         std::map<std::string, std::unique_ptr<AnalysisModelVariable>> create_model_variables(std::map<std::string, ssp4cpp::Fmu *> &fmu_map);
         void wire_internal_dependencies(std::map<std::string, std::unique_ptr<AnalysisModelVariable>> &model_variables,
                                         std::map<std::string, std::unique_ptr<AnalysisConnector>> &connectors);
+        void compute_feedthrough(std::map<std::string, std::unique_ptr<AnalysisConnector>> &connectors,
+                                std::map<std::string, std::unique_ptr<AnalysisModel>> &models);
     };
 
 }

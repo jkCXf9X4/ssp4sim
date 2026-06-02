@@ -128,6 +128,7 @@ namespace ssp4sim::graph
     void GraphBuilder::wire_connections()
     {
         LOG_DEBUG(log, "[{func}] - Hand the information regarding the connections over to the model", __func__);
+
         for (auto &[_, connection] : analysis_graph->connections)
         {
             auto source_model = dynamic_cast<FmuModel *>(models[connection->source_model->name].get());
@@ -149,6 +150,13 @@ namespace ssp4sim::graph
             con_info.forward_derivatives_order = source_connector.forward_derivatives_order;
 
             con_info.delay = connection->delay;
+
+            con_info.is_feedthrough = connection->source_connector->is_feedthrough;
+            if (connection->delay > 0)
+            {
+                con_info.is_feedthrough = false;
+            }
+
             LOG_TRACE_L1(log, "[{func}] Connection: {name}, delay {delay}", __func__, connection->name, connection->delay);
 
             target_model->connections.push_back(std::move(con_info));

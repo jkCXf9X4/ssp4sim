@@ -10,6 +10,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <utility>
 
 namespace ssp4sim::analysis::graph
@@ -156,6 +157,7 @@ namespace ssp4sim::analysis::graph
         attach_connectors_to_models(connectors, models);
         wire_connections(connections, models, connectors);
         wire_internal_dependencies(model_variables, connectors);
+        compute_feedthrough(connectors, models);
 
         LOG_TRACE_L1(log, "[{func}] exit", __func__);
         return make_unique<AnalysisGraph>(std::move(models), std::move(connectors), std::move(connections), std::move(model_variables));
@@ -282,6 +284,7 @@ namespace ssp4sim::analysis::graph
         return items;
     }
 
+    // Created the internal graph
     void AnalysisGraphBuilder::wire_internal_dependencies(
         std::map<std::string, std::unique_ptr<AnalysisModelVariable>> &model_variables,
         std::map<std::string, std::unique_ptr<AnalysisConnector>> &connectors)
@@ -349,6 +352,78 @@ namespace ssp4sim::analysis::graph
                                     "[{func}] Failed to resolve nodes for dependency: {source_id} -> {target_id} in FMU {fmu_name}",
                                     __func__, source_id, target_id, fmu_name);
                     }
+                }
+            }
+        }
+    }
+
+    // finds the feedthru points
+    // should be moved to tarjans... 
+    void AnalysisGraphBuilder::compute_feedthrough(
+        std::map<std::string, std::unique_ptr<AnalysisConnector>> &connectors,
+        std::map<std::string, std::unique_ptr<AnalysisModel>> &models)
+    {
+        LOG_TRACE_L1(log, "[{func}] Computing feedthrough from analysis graph", __func__);
+        for (auto &[model_name, model] : models)
+        {
+            // Collect input and output connector Nodes for this FMU
+            std::vector<ssp4sim::utils::graph::Node *> input_nodes;
+            std::vector<AnalysisConnector *> output_connectors;
+            for (auto &[name, conn] : model->connectors)
+            {
+                if (conn->causality == types::Causality::input)
+                {
+                    input_nodes.push_back(conn);
+                }
+                else if (conn->causality == types::Causality::output)
+                {
+                    output_connectors.push_back(conn);
+                }
+            }
+
+            if (input_nodes.empty() || output_connectors.empty())
+            {
+                LOG_DEBUG(log, "[{func}] Model {model}: no inputs or no outputs, skipping", __func__, model_name);
+                continue;
+            }
+
+            std::unordered_set<ssp4sim::utils::graph::Node *> input_set(input_nodes.begin(), input_nodes.end());
+
+            for (auto *output : output_connectors)
+            {
+                // BFS following children edges to find transitive input dependency
+                std::unordered_set<ssp4sim::utils::graph::Node *> visited;
+                std::vector<ssp4sim::utils::graph::Node *> stack = {output};
+
+                while (!stack.empty())
+                {
+                    auto *current = stack.back();
+                    stack.pop_back();
+
+                    if (input_set.count(current))
+                    {
+                        output->is_feedthrough = true;
+                        LOG_DEBUG(log, "[{func}] Output {name} is feedthrough (input {input} reachable)",
+                                  __func__, output->name, current->name);
+                        break;
+                    }
+
+                    if (!visited.insert(current).second)
+                        continue; // already visited
+
+                    for (auto *child : current->children)
+                    {
+                        if (!visited.count(child))
+                        {
+                            stack.push_back(child);
+                        }
+                    }
+                }
+
+                if (!output->is_feedthrough)
+                {
+                    LOG_DEBUG(log, "[{func}] Output {name} is NOT feedthrough (no input reachable)",
+                              __func__, output->name);
                 }
             }
         }

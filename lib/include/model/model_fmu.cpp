@@ -8,6 +8,7 @@
 #include "utils/time.hpp"
 #include "utils/timer.hpp"
 
+#include <algorithm>
 #include <memory>
 #include <format>
 #include <sstream>
@@ -46,6 +47,22 @@ namespace ssp4sim::graph
             << "Name: " << name
             << "\n}\n";
         return oss.str();
+    }
+
+    bool FmuModel::has_feedthrough_outputs() const
+    {
+        return std::any_of(connections.begin(), connections.end(),
+            [](const ConnectionInfo &c) { return c.is_feedthrough; });
+    }
+
+    std::vector<ConnectionInfo*> FmuModel::feedthrough_connections()
+    {
+        std::vector<ConnectionInfo*> result;
+        for (auto &c : connections)
+        {
+            if (c.is_feedthrough) result.push_back(&c);
+        }
+        return result;
     }
 
     void FmuModel::enter_init()

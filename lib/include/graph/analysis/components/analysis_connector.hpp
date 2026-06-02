@@ -48,6 +48,7 @@ namespace ssp4sim::analysis::graph
 
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;
+        bool is_feedthrough = false;
 
         AnalysisConnector();
 

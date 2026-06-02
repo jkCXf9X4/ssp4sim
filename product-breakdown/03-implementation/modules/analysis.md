@@ -12,6 +12,10 @@ Builds a structural view of SSP models and connections before execution. The ana
 - `AnalysisGraphBuilder`: Transforms SSP structures (models, connectors, connections) into an AnalysisGraph.
 - `AnalysisModel`, `AnalysisConnector`, `AnalysisConnection`: Domain types for the analysis representation.
 
+### Feedthrough Detection
+
+- `AnalysisConnector::is_feedthrough`: Set by `AnalysisGraphBuilder::compute_feedthrough()` after `wire_internal_dependencies()`. Uses BFS from each output connector through the internal dependency graph; if an input connector of the same FMU is reachable, the output is marked feedthrough.
+
 ## Include Boundary
 
 - Path: `lib/include/graph/analysis/`

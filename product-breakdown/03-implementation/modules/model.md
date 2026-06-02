@@ -10,6 +10,7 @@ Adapts FMUs into graph-invocable simulation models with input and output signal 
 
 - `FmuModel`: Wraps an FMU instance with signal buffers, connection info, and invocation logic. Implements the Invocable interface.
 - `ModelConnection`: Represents a connection between an output connector and an input connector.
+    - `ConnectionInfo::is_feedthrough`: Copied from `AnalysisConnector::is_feedthrough` during graph building. Set during analysis phase by BFS traversal of FMU internal dependency graph; delayed connections (`delay > 0`) are forced to `false`.
 - `ModelConnector`: Represents a typed connector (input or output) on a model.
 - `InitialValue`: Handles initial value processing for signal areas.
 

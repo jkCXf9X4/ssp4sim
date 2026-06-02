@@ -50,6 +50,9 @@ namespace ssp4sim::graph
 
         std::string to_string() const override;
 
+        [[nodiscard]] bool has_feedthrough_outputs() const;
+        [[nodiscard]] std::vector<ConnectionInfo*> feedthrough_connections();
+
         void enter_init();
 
         void exit_init();

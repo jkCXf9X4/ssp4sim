@@ -36,6 +36,8 @@ namespace ssp4sim::graph
 
         uint64_t delay = 0;
 
+        bool is_feedthrough = false;
+
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;
 

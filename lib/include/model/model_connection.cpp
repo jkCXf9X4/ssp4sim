@@ -22,6 +22,7 @@ namespace ssp4sim::graph
             << ", source_index: " << source_index
             << ", target_index: " << target_index
             << ", forward_derivatives: " << forward_derivatives_order
+            << ", is_feedthrough: " << (is_feedthrough ? "true" : "false")
             << " }";
         return oss.str();
     }

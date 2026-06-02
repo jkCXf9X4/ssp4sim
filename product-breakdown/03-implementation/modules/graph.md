@@ -10,6 +10,7 @@ Organizes invocable nodes into a directed acyclic graph and dispatches simulatio
 
 - `Graph`: Manages the DAG of invocable nodes and delegates step execution to the selected executor.
 - `GraphBuilder`: Constructs executable graph from analysis results and recorder hooks.
+    - During `wire_connections()`, feedthrough metadata (`is_feedthrough`) is populated on each `ConnectionInfo` from `AnalysisConnector::is_feedthrough`, which is set during analysis graph building by `AnalysisGraphBuilder::compute_feedthrough()`. This method walks the FMU internal dependency graph (edges from `wire_internal_dependencies()`) using BFS from each output connector, marking it feedthrough if an input connector of the same FMU is reachable. Delayed connections (`delay > 0`) override feedthrough to `false`.
 - `AsyncNode`: Wraps an invocable object in a dedicated worker thread.
 - `InvocableNode`: Interface marker for graph nodes that can be scheduled.
 - `Invocable`: Interface for objects with init/invoke entry points.
