@@ -15,7 +15,6 @@ BUT for SQLite, the writer constraint is effectively per database file, not per 
 
   - one SQLite file per execution, then merge/query across files later;
   - one SQLite file per partition/model if the viewer can handle multiple attached databases;
-  - use DuckDB or another backend for high-throughput multi-table ingestion, depending on the reader/writer requirements.
 
 In light of this: investigate an improvement regarding individual storage of simulation runs in per sim local db
 

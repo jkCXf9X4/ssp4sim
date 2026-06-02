@@ -41,7 +41,7 @@ Configuration start_time → Executor.invoke(step_data)
 ```
 RecorderSink
   → CsvRecorderSink: coalesce by timestamp → write CSV row → flush per interval
-  → DuckDBRecorderSink: write to per-storage table → commit per interval
+  → SqliteWALRecorderSink: write to per-storage table → commit per interval
 ```
 
 ## Data Ownership

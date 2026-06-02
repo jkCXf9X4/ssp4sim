@@ -42,12 +42,6 @@ namespace ssp4sim
             uint64_t interval = 0;
         };
         CsvRecordingConfig csv;
-        struct DuckDbRecordingConfig
-        {
-            bool enable = false;
-            std::filesystem::path file;
-        };
-        DuckDbRecordingConfig duckdb;
         struct SqliteRecordingConfig
         {
             bool enable = false;
@@ -97,13 +91,6 @@ namespace ssp4sim
                 csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));
             }
 
-            duckdb.enable = utils::Config::getOr("simulation.recording.duckdb.enable", false);
-            if (duckdb.enable)
-            {
-                auto default_result_file = working_dir / "result.duckdb";
-                duckdb.file = std::filesystem::path(utils::Config::getOr("simulation.recording.duckdb.file", default_result_file.string()));
-            }
-
             sqlite.enable = utils::Config::getOr("simulation.recording.sqlite.enable", false);
             if (sqlite.enable)
             {
@@ -118,7 +105,7 @@ namespace ssp4sim
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
             record_inputs = utils::Config::getOr("simulation.recording.record_inputs", false);
 
-            enable_recording = csv.enable || duckdb.enable || sqlite.enable;
+            enable_recording = csv.enable || sqlite.enable;
 
             // Log
             auto default_log_file = working_dir / "sim.log";

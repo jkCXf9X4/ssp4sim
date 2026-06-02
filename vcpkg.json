@@ -7,7 +7,6 @@
     "libzip",
     "pugixml",
     "kissnet",
-    "duckdb",
     "python3",
     "quill",
     "sqlite3"

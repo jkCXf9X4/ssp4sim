@@ -41,19 +41,17 @@ access levels:
 
 | Category | Current support | Main use case |
 |---|---|---|
-| Local database | Primary result artifact category. Supported today through DuckDB; SQLite WAL is the preferred future local-live database shape | Queryable local storage for viewers, bounded time-window plots, and run-to-run comparison without repeatedly parsing CSV. |
+| Local database | Primary result artifact category. Supported today through SQLite WAL | Queryable local storage for viewers, bounded time-window plots, and run-to-run comparison without repeatedly parsing CSV. |
 | CSV | Portable export path via `simulation.recording.csv.*` | Lowest-friction access for scripts, spreadsheets, regression fixtures, and quick inspection. |
 | Remote database | Not implemented; the remote ingest interface is decided as InfluxDB Line Protocol ([OD-004](../product-breakdown/05-operation/decisions/OD-004.md)) | Central ingestion from multiple simulation sources for shared dashboards, fleet-scale comparison, and long-lived history. |
 
 The local database is the primary result artifact because it gives the viewer a
 typed, indexed query layer for recent windows and run-to-run comparison.
-CSV remains the lowest-friction export for scripts and archival handoff. The
-current local database backend is DuckDB, which is good for post-run analysis
-and table export. For concurrent-simulation workflows with a live viewer,
-SQLite WAL with per-simulation files is the correct choice because each
-simulation gets an independent file, enabling parallel writes without lock
-contention. Remote database output remains outside the current configuration
-surface.
+CSV remains the lowest-friction export for scripts and archival handoff. For
+concurrent-simulation workflows with a live viewer, SQLite WAL with
+per-simulation files is the correct choice because each simulation gets an
+independent file, enabling parallel writes without lock contention. Remote
+database output remains outside the current configuration surface.
 
 ## SQLite Naming Convention
 
@@ -82,7 +80,6 @@ transient limitation:
 |---|---|---|
 | SQLite WAL (per-sim files, default when `sqlite.file` absent) | **Yes** | Each simulation gets an independent `.sqlite` file. No write-lock contention. |
 | SQLite WAL (single shared file, opt-in via `sqlite.file`) | **No** | SQLite write lock is per database file, not per table. Writers serialize. Must never be used with concurrent writers. |
-| DuckDB | **No** | Single-writer mode. Does not support concurrent writers at all. |
 | CSV | **No** | File-level append race. Concurrent writes produce corrupted output. |
 
 If you need to run multiple simulations concurrently (e.g., parameter sweeps,
@@ -90,20 +87,10 @@ Monte Carlo runs), you **must** use the SQLite WAL sink without setting
 `simulation.recording.sqlite.file` — the per-simulation auto-naming is the
 safe default. If you set `sqlite.file` to use a shared file, the concurrent
 safety guarantee is lost and the runs must be strictly sequential. CSV and
-DuckDB sinks can run alongside SQLite for post-run analysis but must not be
+SQLite sinks can run alongside for post-run analysis but must not be
 the sole recorder in concurrent workflows.
 
 Recording details live in [Configuration](configuration.md).
-
-To unpack a DuckDB result into per-table CSV files, use:
-
-```bash
-./venv/bin/python resources/scripts/export_duckdb_tables.py \
-  wd/signal_sine_gain_add/baseline/result.duckdb
-```
-
-By default the script writes CSVs to a sibling directory named
-`result_csv/` next to the database file.
 
 ## Python API
 

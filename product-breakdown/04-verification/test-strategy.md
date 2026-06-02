@@ -26,7 +26,7 @@ See tests/README.md for the concrete test layout and run commands.
 
 ## Coverage Notes
 
-- DuckDB recorder has dedicated C++ tests.
+- SQLite recorder has dedicated C++ tests.
 - CSV recorder is tested only through the C++ high-level smoke test and Python workflow tests (no dedicated unit test).
 - FMU adapter and model lifecycle are tested through C++ core tests and indirectly through Python workflow tests.
 - Reference fixtures in `resources/reference_ssp/` are the primary workflow test data.

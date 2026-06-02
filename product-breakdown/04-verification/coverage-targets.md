@@ -10,7 +10,7 @@ This artifact defines verification coverage expectations for SSP4SIM modules. Ta
 
 | Module | Current Estimate | Target | Notes |
 |---|---|---|---|
-| signal/ (storage, recorder) | Good | Core: 80%+ line coverage | DuckDB recorder tested; CSV recorder gap noted |
+| signal/ (storage, recorder) | Good | Core: 80%+ line coverage | SQLite recorder tested; CSV recorder gap noted |
 | utils/ (config, ring_buffer, thread_pool) | Good | Core: 80%+ line coverage | Config, node, thread_pool, parallel tested |
 | handler/ (FMU adapter) | Moderate | Core: 70%+ line coverage | fmi4c adapter tested; edge cases (error states) untested |
 | execution/ (Jacobi, Seidel) | Partial | Core: 60%+ | Tested indirectly through workflow; no strategy-specific unit tests |

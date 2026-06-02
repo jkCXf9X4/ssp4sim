@@ -38,7 +38,7 @@ Config flows through:
 
 - `DataRecorder` exposes `add_storage()` and `add_sink()` for runtime setup
 - `RecorderSink` abstract interface: `start()`, `on_event()`, `stop()`
-- Two implementations: `CsvRecorderSink`, `DuckDBRecorderSink`
+- Two implementations: `CsvRecorderSink`, `SqliteWALRecorderSink`
 
 ## Traceability
 

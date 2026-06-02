@@ -4,14 +4,8 @@
 
 ## Context
 
-The local database recording layer currently supports DuckDB and CSV sinks.
-DuckDB provides excellent analytical capabilities but is designed around
-columnar batch writes and a single-writer, single-reader operational model.
-This makes it less suitable for live one-writer, many-reader viewer workflows
-where a separate viewer process reads the database file while the simulation
-is still writing.
-
-A SQLite sink with WAL journal mode offers:
+The local database recording layer currently supports CSV sinks and needs a
+local database backend. A SQLite sink with WAL journal mode offers:
 
 - Concurrent reads during ongoing writes (WAL mode)
 - Simple, low-overhead prepared statement interface
@@ -37,19 +31,12 @@ into a SQLite database file with WAL journal mode enabled.
   native boolean type.
 - **No WAL checkpoint exposure**: The default SQLite WAL checkpoint behavior
   is retained. Future work could expose checkpoint control for very long runs.
-- **Don't share DuckDB utils**: SQLite API surface (C callbacks, `sqlite3_stmt`
-  handles) is entirely different from DuckDB's C API. Sharing or refactoring
-  would introduce unnecessary abstraction. Each sink owns its utils namespace.
 
 ## Consequences
 
 - New build dependency: `unofficial-sqlite3` via vcpkg.
 - New config keys: `simulation.recording.sqlite.enable`, `simulation.recording.sqlite.file`.
-- Metadata table `ssp4sim_metadata` mirrors the DuckDB pattern for cross-sink
-  consistency of run metadata.
-- Table naming follows the same `<model>_<epoch>_<uuid>` convention as DuckDB.
-- Default file is `result.sqlite` in the working directory.
-- Event-per-row recording (same event detail as DuckDB, no interval coalescing).
+- Event-per-row recording (no interval coalescing).
 
 ### Subsequent Change (IMP-032): Per-Simulation Database Files
 
@@ -84,7 +71,6 @@ Only per-simulation-file SQLite WAL supports concurrent simulation execution.
 |---|---|---|
 | SQLite WAL (per-sim files, IMP-032 — default) | **Yes** | Independent files, no write-lock contention |
 | SQLite WAL (single shared file, opt-in via `sqlite.file`) | **No** | Write lock is per database file, not per table. Sequential-only. |
-| DuckDB | **No** | Single-writer mode |
 | CSV | **No** | File-level append race |
 
 This limitation is a hard requirement documented in UC-005, REQ-005, CAP-005,

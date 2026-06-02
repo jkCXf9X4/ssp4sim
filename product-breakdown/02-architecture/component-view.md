@@ -15,7 +15,7 @@ This artifact describes the internal component structure of libssp4sim, the core
 | **graph/** | Invocable node graph, dispatches simulation steps to executor | Graph, GraphBuilder, InvocableNode, AsyncNode |
 | **handler/** | FMU loading, instantiation, stepping, teardown | FmuHandler, FmuInfo, FmuInstance, CoSimulationModel |
 | **model/** | FMU adapter as graph-invocable model with signal buffers | FmuModel, ModelConnection, ModelConnector |
-| **signal/** | Signal memory layout, recorder handoff, CSV/DuckDB sinks | SignalStorage, DataRecorder, RecorderSink |
+| **signal/** | Signal memory layout, recorder handoff, CSV/SQLite sinks | SignalStorage, DataRecorder, RecorderSink |
 | **utils/** | Shared helpers — config, allocator, ring buffer, thread pool, tarjan, time, timer | Config, RingBuffer, TaskThreadPool |
 | **schema_extensions/** | SSP/FMI schema extensions for parsed XML data | SSP_Ext, FMI2 modelDescription_Ext |
 

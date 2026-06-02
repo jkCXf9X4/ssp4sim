@@ -93,9 +93,6 @@ TEST_CASE("Config tests", "[config]")
                     "csv": {
                         "enable": true,
                         "interval": 0.5
-                    },
-                    "duckdb": {
-                        "enable": true
                     }
                 }
             }
@@ -108,8 +105,6 @@ TEST_CASE("Config tests", "[config]")
         REQUIRE(shared_config.csv.enable);
         REQUIRE(shared_config.csv.file == fs::path("./wd/test/result.csv"));
         REQUIRE(shared_config.csv.interval == ssp4sim::utils::time::s_to_ns(0.5));
-        REQUIRE(shared_config.duckdb.enable);
-        REQUIRE(shared_config.duckdb.file == fs::path("./wd/test/result.duckdb"));
     }
 
     SECTION("Recording config can be disabled")
@@ -124,9 +119,6 @@ TEST_CASE("Config tests", "[config]")
                 "recording": {
                     "csv": {
                         "enable": false
-                    },
-                    "duckdb": {
-                        "enable": false
                     }
                 }
             }
@@ -138,7 +130,6 @@ TEST_CASE("Config tests", "[config]")
 
         REQUIRE_FALSE(shared_config.enable_recording);
         REQUIRE_FALSE(shared_config.csv.enable);
-        REQUIRE_FALSE(shared_config.duckdb.enable);
     }
 
 }

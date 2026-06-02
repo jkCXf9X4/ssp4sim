@@ -25,9 +25,7 @@
                 "enable": false,
                 "interval": 0.0
             },
-            "duckdb": {
-                "enable": false
-            },
+            
             "sqlite": {
                 "enable": true,
                 "file" : "results.sqlite"

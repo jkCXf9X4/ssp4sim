@@ -36,7 +36,6 @@ Full JSON schema is documented in `docs/configuration.md`. Key sections:
 - `simulation.executor.method`: "jacobi" or "seidel" (required)
 - `simulation.executor.thread_pool_workers`: Thread count (optional, default varies)
 - `simulation.recording.csv.enable`: CSV toggle (optional, default true)
-- `simulation.recording.duckdb.enable`: DuckDB toggle (optional, default false)
 - `simulation.log.level_terminal` / `simulation.log.level_file`: Log levels (optional)
 
 See [Configuration Reference](../../docs/configuration.md) for the complete key table, type defaults, and validation behavior.

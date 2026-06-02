@@ -28,7 +28,6 @@ This artifact provides structured triage steps for common SSP4SIM failure modes.
 2. Check signal connections in SSD (SSP System Structure Description)
 3. Verify start values match fixture expectations
 4. Check for known xfails in `tests/python/high_level/` test markers
-5. If using DuckDB, verify table structure matches expected schema
 
 ## Performance Degradation
 

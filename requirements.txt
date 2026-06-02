@@ -4,4 +4,3 @@ pandas
 matplotlib
 pytest
 -e build/public/python_api/
-duckdb

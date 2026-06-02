@@ -18,7 +18,7 @@ See product-breakdown/04-verification/test-strategy.md for the strategic rationa
 The suite is split by layer so each test has a clear responsibility:
 
 - `tests/lib/core/`: C++ tests for core runtime primitives such as FMU adapter,
-  recorder, ring buffer, signal storage, start values, DuckDB recording, and SQLite recording.
+  recorder, ring buffer, signal storage, start values, and SQLite recording.
 - `tests/lib/utils/`: C++ tests for utility data structures and support code.
 - `tests/lib/high_level/`: one C++ smoke test that executes a complete SSP
   through the public simulator entry point with CSV recording enabled.
@@ -73,7 +73,7 @@ The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
 `ECS_HW` returns `fmi2Error` on the first step.
 
-The recorder tests now cover the CSV, DuckDB, and SQLite sinks separately.
+The recorder tests now cover the CSV and SQLite sinks separately.
 
 The high-level parameter-set coverage is grouped in one parametrized test that
 checks the emitted `start_values.csv` for inline system-level parameter sets,
