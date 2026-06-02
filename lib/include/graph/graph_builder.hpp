@@ -34,6 +34,11 @@ namespace ssp4sim::graph
         std::unique_ptr<Graph> get_graph();
 
         std::map<std::string, std::unique_ptr<Invocable>> get_models();
+
+    private:
+        void create_fmu_models();
+        void create_data_storage_areas();
+        void wire_connections();
     };
 
 }

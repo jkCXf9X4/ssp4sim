@@ -86,7 +86,7 @@ namespace ssp4sim::signal::sqlite_recorder
 
     std::string table_name_for(int64_t run_id, const std::string &model, const std::string &storage_name)
     {
-        return std::format("_{}_{}_{}", run_id, sanitize_component(model), sanitize_component(storage_name));
+        return std::format("I{}_{}_{}", run_id, sanitize_component(model), sanitize_component(storage_name));
     }
 
     int64_t run_counter(sqlite3 *db)

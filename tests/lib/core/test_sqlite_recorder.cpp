@@ -150,7 +150,7 @@ namespace
 
         std::string table_name_from_master(std::int64_t run_id, const std::string &model, const std::string &storage_name)
         {
-            const std::string expected = std::to_string(run_id) + "_" + model + "_" + storage_name;
+            const std::string expected = "I" + std::to_string(run_id) + "_" + model + "_" + storage_name;
             return exec_and_return_string(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name = '" + expected + "';",
                 0);
@@ -249,8 +249,8 @@ TEST_CASE("T-001: SQLite sink writes events with mixed types and verifies via SE
     const auto consumer_table = db.table_name_from_master(1, "Consumer", "output");
     const auto aux_table = db.table_name_from_master(1, "Aux", "output");
 
-    REQUIRE(consumer_table == "1_Consumer_output");
-    REQUIRE(aux_table == "1_Aux_output");
+    REQUIRE(consumer_table == "I1_Consumer_output");
+    REQUIRE(aux_table == "I1_Aux_output");
     REQUIRE(consumer_table != aux_table);
 
     // Verify NO ssp4sim_metadata table exists
@@ -367,7 +367,7 @@ TEST_CASE("T-003: SQLite run counter and no metadata table", "[DataRecorder][SQL
 
     // Verify consumer table via sqlite_master
     const std::string table_name = db.table_name_from_master(1, "Consumer", "output");
-    REQUIRE(table_name == "1_Consumer_output");
+    REQUIRE(table_name == "I1_Consumer_output");
 
     // Verify data values
     REQUIRE(db.row_count("SELECT * FROM " + quote_identifier(table_name) + ";") == 1);
@@ -388,7 +388,7 @@ TEST_CASE("T-004: SQLite sink appends runs to existing database (shared-file mod
     SqliteHelper db;
     db.open(db_path);
     const std::string first_table = db.table_name_from_master(1, "Consumer", "output");
-    REQUIRE(first_table == "1_Consumer_output");
+    REQUIRE(first_table == "I1_Consumer_output");
     db.close();
 
     // Second run - appends to same shared file
@@ -396,11 +396,11 @@ TEST_CASE("T-004: SQLite sink appends runs to existing database (shared-file mod
 
     db.open(db_path);
     const std::string second_table = db.table_name_from_master(2, "Consumer", "output");
-    REQUIRE(second_table == "2_Consumer_output");
+    REQUIRE(second_table == "I2_Consumer_output");
 
     // Both tables should exist
-    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name = '1_Consumer_output';") == 1);
-    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name = '2_Consumer_output';") == 1);
+    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name = 'I1_Consumer_output';") == 1);
+    REQUIRE(db.row_count("SELECT name FROM sqlite_master WHERE type='table' AND name = 'I2_Consumer_output';") == 1);
 
     // Verify each table has its own data
     REQUIRE(db.row_count("SELECT value FROM " + quote_identifier(first_table) + ";") == 1);
@@ -524,7 +524,7 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     {
         sqlite3_stmt *meta_stmt = nullptr;
         REQUIRE(sqlite3_prepare_v2(reader_db,
-            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE '1_Consumer_output';",
+            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'I1_Consumer_output';",
             -1, &meta_stmt, nullptr) == SQLITE_OK);
         REQUIRE(sqlite3_step(meta_stmt) == SQLITE_ROW);
         consumer_table = reinterpret_cast<const char *>(sqlite3_column_text(meta_stmt, 0));

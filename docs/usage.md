@@ -63,13 +63,13 @@ auto-generates one database file per simulation run:
 - **Filename**: `{epoch_seconds}_{session_uuid}.sqlite`
   - `epoch_seconds`: Unix epoch timestamp at database open time.
   - `session_uuid`: RFC 4122 UUIDv4 generated once per `Simulation` lifetime.
-- **Table names**: `{run_id}_{model}_{storage_name}`
+- **Table names**: `I{run_id}_{model}_{storage_name}`
   - `run_id`: auto-incrementing counter persisted in the `ssp4sim_run_counter` table. Starts at 1 for fresh files, increments for appends to shared files.
   - `model` and `storage_name`: sanitized alphanumeric components from the signal storage name.
-- **Example**: `1748739201_a1b2c3d4-e5f6-4789-abcd-ef0123456789.sqlite` containing tables like `1_Consumer_output`, `1_Aux_output`.
+- **Example**: `1748739201_a1b2c3d4-e5f6-4789-abcd-ef0123456789.sqlite` containing tables like `I1_Consumer_output`, `I1_Aux_output`.
 
 When `sqlite.file` is set explicitly (shared-file mode), the run counter persists
-across runs: run 1 gets `1_Consumer_output`, run 2 gets `2_Consumer_output`, etc.
+across runs: run 1 gets `I1_Consumer_output`, run 2 gets `I2_Consumer_output`, etc.
 The `ssp4sim_run_counter` table enables table discovery without a metadata side-table.
 
 ## Concurrent Execution and Local Database Safety
