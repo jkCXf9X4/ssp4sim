@@ -63,6 +63,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-030.md` | IMP-030 | Remote result ingestion via InfluxDB Line Protocol | Proposed | Medium | Remote sink config, write path, retry/backpressure, docs; local outputs preserved |
 | `candidates/IMP-031.md` | IMP-031 | OpenTelemetry distributed observability | Proposed | Medium | Trace emission, context propagation, exporter config, docs; local logging preserved |
 | `done/IMP-032.md` | IMP-032 | Per-simulation SQLite database files for concurrent write parallelism | Done | High | SQLite sink, config, simulation orchestration, 6+ docs, 7 tests; opt-in mode mitigates breakage |
+| `candidates/IMP-033.md` | IMP-033 | Refactoring & Cleanup of Graph Builder Files | Proposed | Medium | analysis_graph_builder.cpp/.hpp, graph_builder.cpp/.hpp, test files; low-medium risk per finding |
   
 ## Summary
 
@@ -100,7 +101,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-030 | Remote result ingestion via InfluxDB Line Protocol | Medium | None | Remote sink config + write path; local outputs preserved |
 | IMP-031 | OpenTelemetry distributed observability | Medium | None | Trace emission + exporter config; local logging preserved |
 | IMP-032 | Per-simulation SQLite database files for concurrent write parallelism | High | None | SQLite sink, config, simulation orchestration, 6+ docs, 7 tests; opt-in mode mitigates breakage |
-  
+| IMP-033 | Refactoring & Cleanup of Graph Builder Files | Medium | None | analysis_graph_builder.cpp/.hpp, graph_builder.cpp/.hpp, test files; low-medium risk per finding |
+   
 ## Cross-Cutting Constraints
 
 1. **Layer ownership**: `product-breakdown/` holds "what the product is, who it is for, scope, stable decisions." `docs/` holds "runnable guidance: usage, install, build, development workflow, examples, profiling commands."
