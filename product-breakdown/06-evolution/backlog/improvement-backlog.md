@@ -64,7 +64,9 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-031.md` | IMP-031 | OpenTelemetry distributed observability | Proposed | Medium | Trace emission, context propagation, exporter config, docs; local logging preserved |
 | `done/IMP-032.md` | IMP-032 | Per-simulation SQLite database files for concurrent write parallelism | Done | High | SQLite sink, config, simulation orchestration, 6+ docs, 7 tests; opt-in mode mitigates breakage |
 | `candidates/IMP-033.md` | IMP-033 | Refactoring & Cleanup of Graph Builder Files | Proposed | Medium | analysis_graph_builder.cpp/.hpp, graph_builder.cpp/.hpp, test files; low-medium risk per finding |
-  
+| `candidates/IMP-034.md` | IMP-034 | Strip DuckDB result feature | Proposed | High | 5 source files deleted, 1 test deleted, 2 Python scripts deleted, build system (3 files), config (2 files), 30+ doc artifacts; large blast radius but mechanical removal |
+| `candidates/IMP-035.md` | IMP-035 | XML signal list with per-sink behavior | Proposed | Medium | Config pipeline, recorder interface, DataRecorder, new XML file format, docs; backward compatible when absent |
+   
 ## Summary
 
 | ID | Theme | Priority | Prerequisite | Blast radius |
@@ -102,7 +104,9 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-031 | OpenTelemetry distributed observability | Medium | None | Trace emission + exporter config; local logging preserved |
 | IMP-032 | Per-simulation SQLite database files for concurrent write parallelism | High | None | SQLite sink, config, simulation orchestration, 6+ docs, 7 tests; opt-in mode mitigates breakage |
 | IMP-033 | Refactoring & Cleanup of Graph Builder Files | Medium | None | analysis_graph_builder.cpp/.hpp, graph_builder.cpp/.hpp, test files; low-medium risk per finding |
-   
+| IMP-034 | Strip DuckDB result feature | High | None | 5 source files + 1 test + 2 scripts deleted; 30+ doc artifacts updated; mechanical removal, no behavioral change |
+| IMP-035 | XML signal list with per-sink behavior | Medium | None | Config pipeline + recorder filtering + XML parsing; backward compatible when absent |
+    
 ## Cross-Cutting Constraints
 
 1. **Layer ownership**: `product-breakdown/` holds "what the product is, who it is for, scope, stable decisions." `docs/` holds "runnable guidance: usage, install, build, development workflow, examples, profiling commands."
