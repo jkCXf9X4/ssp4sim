@@ -4,13 +4,14 @@
 
 ## Purpose
 
-Builds a structural view of SSP models and connections before execution. The analysis graph feeds into the graph builder to create executable nodes.
+Builds a structural view of SSP models, connectors, and connections before execution. Supports **hierarchical** SSPs with arbitrary nesting depth through recursive traversal. The analysis graph feeds into the graph builder to create executable nodes.
 
 ## Key Components
 
-- `AnalysisGraph`: Represents model nodes, connector definitions, and connection topology extracted from the SSP.
-- `AnalysisGraphBuilder`: Transforms SSP structures (models, connectors, connections) into an AnalysisGraph.
-- `AnalysisModel`, `AnalysisConnector`, `AnalysisConnection`: Domain types for the analysis representation.
+- `AnalysisGraph`: Represents model nodes, connector definitions, and connection topology extracted from the SSP. Contains flat maps (backward-compatible) plus hierarchical parent-child relationships.
+- `AnalysisGraphBuilder`: Transforms SSP structures into an AnalysisGraph using **recursive** traversal. Walks `Elements.Components` (FMU models) and `Elements.Systems` (nested systems) at every level.
+- `AnalysisModel`: Now supports both FMU components (`ModelKind::fmu`) and system nodes (`ModelKind::system`) via an enum discriminant. System models contain `sub_models` for nested children.
+- `AnalysisConnector`, `AnalysisConnection`: Domain types for the analysis representation. Connections use hierarchical names for unambiguous resolution.
 
 ### Feedthrough Detection
 
@@ -29,10 +30,12 @@ Builds a structural view of SSP models and connections before execution. The ana
 ## Notable Patterns
 
 - The analysis graph direction is parent→child: A → B means A is parent of B.
-- A researcher note exists about migrating to the LEMON graph library — currently deferred.
+- **No model-to-model edges** — connectors point to their owning model via `connector.model`.
+- System connectors (boundary connectors on `ModelKind::system` models) use hierarchical names.
 - The analysis graph is a read-only snapshot of the SSP structure, not a runtime execution graph.
+- Builder handles recursive traversal; graph objects handle self-analysis.
 
 ## Traceability
 
-- Backward: Architecture component view (`product-breakdown/02-architecture/component-view.md`).
+- Backward: Architecture component view (`product-breakdown/02-architecture/component-view.md`), AD-003 (graph responsibility separation).
 - Sources: `lib/include/graph/analysis/`, `lib/include/graph/analysis/analysis_graph.md`.

@@ -10,14 +10,20 @@ This artifact describes the internal component structure of libssp4sim, the core
 
 | Module | Responsibility | Public Interface |
 |---|---|---|
-| **analysis/** | Builds model and connection graphs from SSP structures | AnalysisGraph, AnalysisGraphBuilder |
+| **analysis/** | Builds a hierarchical structural view of SSP models, connectors, and connections via recursive traversal. Supports both FMU Components and nested Systems. | AnalysisGraph, AnalysisGraphBuilder, AnalysisModel (fmu/system), AnalysisConnector, AnalysisConnection |
 | **execution/** | Executor strategies — Jacobi (4 variants), Seidel (2 variants), custom executors | ExecutionBase, Jacobi, Seidel, ExecutorBuilder |
-| **graph/** | Invocable node graph, dispatches simulation steps to executor | Graph, GraphBuilder, InvocableNode, AsyncNode |
+| **graph/** | Flattens the hierarchical analysis graph into a flat DAG of invocable FMU nodes. Dispatches simulation steps to the executor. | Graph, GraphBuilder, InvocableNode, AsyncNode |
 | **handler/** | FMU loading, instantiation, stepping, teardown | FmuHandler, FmuInfo, FmuInstance, CoSimulationModel |
 | **model/** | FMU adapter as graph-invocable model with signal buffers | FmuModel, ModelConnection, ModelConnector |
 | **signal/** | Signal memory layout, recorder handoff, CSV/SQLite sinks | SignalStorage, DataRecorder, RecorderSink |
 | **utils/** | Shared helpers — config, allocator, ring buffer, thread pool, tarjan, time, timer | Config, RingBuffer, TaskThreadPool |
 | **schema_extensions/** | SSP/FMI schema extensions for parsed XML data | SSP_Ext, FMI2 modelDescription_Ext |
+
+### Graph Responsibility Separation (AD-003)
+
+The analysis graph mirrors the SSP structure (models, connectors, connections, internal variables) 
+without model-to-model edges. The simulation graph creates the model-to-model dependency graph 
+by flattening the analysis graph hierarchy. See AD-003 for details.
 
 ## Key Internal Dependencies
 

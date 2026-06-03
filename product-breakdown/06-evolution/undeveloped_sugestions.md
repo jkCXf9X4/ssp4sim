@@ -1,29 +1,31 @@
 
-I wanted multiple concurrent simulations to execute against the same local database
-BUT for SQLite, the writer constraint is effectively per database file, not per table.
 
-  With WAL mode:
+Lets clarify and streamline the responsibilities of the analysis graph vs the graph
 
-  - Multiple readers can read the same .sqlite file while a writer is active.
-  - Only one connection can hold the write lock for that database file at a time.
-  - That write lock blocks other writers even if they target different tables.
-  - So two executions writing different generated data tables plus ssp4sim_metadata in the same .sqlite file still serialize.
+The analysis graph is responsible to parse any information that is relevant from the ssp and store it in local nodes
+- The graph is closer to the actual ssp and is used as analysis
+- nodes exist for model, connectors, connections (to store delay information), internal variables ( to find algebraic loops )
 
-  So the busy timeout improvement helps multiple executions share one result database by waiting instead of failing, but it does not make table-level parallel writes possible.
+Nested system implication:
+ - look at resources/reference_ssp/models/ssp/dcmotor/ssp/SystemStructure.ssd
+ - nested systems will add multiple connections between models
 
-  If true write parallelism is needed, the practical options are:
+Practical implications:
+- The graph includes: connectors, connections (to store delay information), internal variables
+- The connectors point to the model they relate to: connector.model
+- avoid model-to-model graph in this stage
 
-  - one SQLite file per execution, then merge/query across files later;
-  - one SQLite file per partition/model if the viewer can handle multiple attached databases;
 
-In light of this: investigate an improvement regarding individual storage of simulation runs in per sim local db
+The simulation graph when sets up the models, the storage areas and store any necessary information in local containers or self from the analysis graph 
+- Creates the final connection graph: model-to-model from analyzing the analysis graph
 
-Some guidelines:
-Utilize an UUID that is session based to create a unique file for each simulation
-start the filename with epoch seconds to ensure folder order
-this also means that the internal table names can be simplified
 
-Make sure to update the use-cases and document the limitations
+The graph builders are responsible for creating and connecting up the graph
+The graph objects are responsible for the analysis of itself
 
----
-**Formalized as:** [IMP-032](backlog/candidates/IMP-032.md) — Per-Simulation SQLite Database Files for Concurrent Write Parallelism
+
+This will require some large restructuring of the existing codebase 
+The gains will be:
+- the application can parse nested systems
+- clear separation of concern, well documented in decisions and architecture
+

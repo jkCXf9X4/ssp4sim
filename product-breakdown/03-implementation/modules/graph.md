@@ -4,13 +4,15 @@
 
 ## Purpose
 
-Organizes invocable nodes into a directed acyclic graph and dispatches simulation steps to the active executor. Bridges analysis results to executable runtime nodes.
+Organizes invocable nodes into a directed acyclic graph and dispatches simulation steps to the active executor. Bridges analysis results to executable runtime nodes by **flattening** the hierarchical analysis graph into a flat model-to-model dependency graph.
 
 ## Key Components
 
 - `Graph`: Manages the DAG of invocable nodes and delegates step execution to the selected executor.
 - `GraphBuilder`: Constructs executable graph from analysis results and recorder hooks.
-    - During `wire_connections()`, feedthrough metadata (`is_feedthrough`) is populated on each `ConnectionInfo` from `AnalysisConnector::is_feedthrough`, which is set during analysis graph building by `AnalysisGraphBuilder::compute_feedthrough()`. This method walks the FMU internal dependency graph (edges from `wire_internal_dependencies()`) using BFS from each output connector, marking it feedthrough if an input connector of the same FMU is reachable. Delayed connections (`delay > 0`) override feedthrough to `false`.
+    - Only creates `FmuModel` instances for `ModelKind::fmu` analysis models (skips `ModelKind::system`).
+    - During `wire_connections()`, skips system-boundary connections (those involving `ModelKind::system` as source or target). Future enhancement: flatten hierarchical connections through system boundaries.
+    - Feedthrough metadata (`is_feedthrough`) is populated on each `ConnectionInfo` from `AnalysisConnector::is_feedthrough`.
 - `AsyncNode`: Wraps an invocable object in a dedicated worker thread.
 - `InvocableNode`: Interface marker for graph nodes that can be scheduled.
 - `Invocable`: Interface for objects with init/invoke entry points.
@@ -21,7 +23,7 @@ Organizes invocable nodes into a directed acyclic graph and dispatches simulatio
 
 ## Dependencies
 
-- `analysis/` — for AnalysisGraph input
+- `analysis/` — for AnalysisGraph input (consumes hierarchical model/connector/connection maps)
 - `execution/` — for ExecutionBase, Jacobi, Seidel
 - `model/` — for FmuModel as invocable nodes
 - `signal/` — for DataRecorder hooks during graph building
@@ -32,8 +34,9 @@ Organizes invocable nodes into a directed acyclic graph and dispatches simulatio
 - Graph is a DAG of sub-graphs → DAGs of models.
 - The execution algorithm could be injected in the constructor (currently set during build).
 - AsyncNode enables parallel FMU execution on dedicated threads.
+- GraphBuilder skips system models — only FMU components become runtime nodes.
 
 ## Traceability
 
-- Backward: Architecture component view (graph/ module area).
+- Backward: Architecture component view (graph/ module area), AD-003 (graph responsibility separation).
 - Sources: `lib/include/graph/`, `lib/include/graph/graph.md`.
