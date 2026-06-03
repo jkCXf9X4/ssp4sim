@@ -7,6 +7,8 @@ import pytest
 from ._helpers import (
     PYTHON_TEST_RESULTS,
     REFERENCE_SSP_ROOT,
+    REFERENCE_SSP_ROOTS,
+    SOURCE_SSP_ROOT,
     run_reference_ssp,
 )
 
@@ -18,6 +20,15 @@ def assert_start_values_contain(
         assert expected_line in start_values_text, (
             f"Missing start value entry: {expected_line}"
         )
+
+
+def resolve_test_root(ssp_root: Path) -> Path:
+    for root in REFERENCE_SSP_ROOTS:
+        try:
+            return PYTHON_TEST_RESULTS / ssp_root.relative_to(root)
+        except ValueError:
+            continue
+    return PYTHON_TEST_RESULTS / ssp_root.name
 
 
 @pytest.mark.parametrize(
@@ -92,12 +103,27 @@ def assert_start_values_contain(
             ],
             id="dcmotor/baseline",
         ),
+        pytest.param(
+            SOURCE_SSP_ROOT / "dcmotor" / "ssp",
+            [
+                "0, SuT.edrive_mass.damper.d, 0.001000",
+                "0, SuT.edrive_mass.inertia.J, 0.002000",
+                "0, SuT.emachine_model.emf.k, 0.010000",
+                "0, SuT.emachine_model.resistor.R, 1.000000",
+                "0, stimuli_model.Voltage_step.height, 12.000000",
+                "0, stimuli_model.MLoad.k, -0.500000",
+            ],
+            marks=pytest.mark.xfail(
+                reason="Unsupported hierarchical or unresolved SSP connection: stimuli_model -> SuT"
+            ),
+            id="dcmotor_nested/baseline",
+        ),
     ],
 )
 def test_reference_ssp_applies_parameter_set_variants(
     ssp_root: Path, expected_lines: list[str], tmp_path: Path
 ) -> None:
-    tmp_path = PYTHON_TEST_RESULTS / ssp_root.relative_to(REFERENCE_SSP_ROOT)
+    tmp_path = resolve_test_root(ssp_root)
     workdir = run_reference_ssp(ssp_root, tmp_path)
     if expected_lines:
         start_values_text = (workdir / "start_values.csv").read_text()

@@ -5,13 +5,25 @@ from pathlib import Path
 import pytest
 
 from ._helpers import (
+    SOURCE_SSP_ROOT,
     assert_has_log_file,
     reference_params,
     run_reference_ssp,
 )
 
 
-@pytest.mark.parametrize("ssp_root", reference_params())
+PARAMETRIZED_SSP_ROOTS = reference_params() + [
+    pytest.param(
+        SOURCE_SSP_ROOT / "dcmotor" / "ssp",
+        marks=pytest.mark.xfail(
+            reason="Unsupported hierarchical or unresolved SSP connection: stimuli_model -> SuT"
+        ),
+        id="dcmotor_nested/baseline",
+    ),
+]
+
+
+@pytest.mark.parametrize("ssp_root", PARAMETRIZED_SSP_ROOTS)
 def test_reference_ssp_fully_simulates(ssp_root: Path, tmp_path: Path) -> None:
     workdir = run_reference_ssp(ssp_root, tmp_path)
     assert_has_log_file(workdir)

@@ -28,6 +28,10 @@ GENERIC_CONFIG_PATH = SSP4SIM_ROOT / "resources" / "generic_config.json"
 REFERENCE_SSP_ROOT = (
     SSP4SIM_ROOT / "resources" / "reference_ssp" / "artifacts" / "models"
 )
+SOURCE_SSP_ROOT = (
+    SSP4SIM_ROOT / "resources" / "reference_ssp" / "models" / "ssp"
+)
+REFERENCE_SSP_ROOTS = [REFERENCE_SSP_ROOT, SOURCE_SSP_ROOT]
 SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
 
 

@@ -34,22 +34,41 @@ namespace ssp4sim::ext::ssp
         return resources;
     }
 
+    namespace
+    {
+        void create_fmu_map_recursive(
+            const ssp4cpp::ssp1::ssd::TSystem &sys,
+            const std::string &path_prefix,
+            std::map<std::string, std::unique_ptr<ssp4cpp::Fmu>> &items,
+            const std::filesystem::path &ssp_dir)
+        {
+            if (!sys.Elements.has_value()) return;
+            
+            for (auto &component : sys.Elements.value().Components)
+            {
+                if (!component.name.has_value()) continue;
+                auto name = path_prefix.empty()
+                    ? component.name.value()
+                    : path_prefix + "." + component.name.value();
+                items[name] = std::make_unique<ssp4cpp::Fmu>(ssp_dir / component.source);
+            }
+            for (auto &sub_sys : sys.Elements.value().Systems)
+            {
+                auto sub_prefix = path_prefix.empty()
+                    ? sub_sys.name.value_or("unnamed")
+                    : path_prefix + "." + sub_sys.name.value_or("unnamed");
+                create_fmu_map_recursive(sub_sys, sub_prefix, items, ssp_dir);
+            }
+        }
+    }
+
     /**
      * @brief Create a map of FMU names to loaded Fmu objects.
      */
     std::map<std::string, std::unique_ptr<ssp4cpp::Fmu>> create_fmu_map(ssp4cpp::Ssp &ssp)
     {
         auto items = std::map<std::string, std::unique_ptr<ssp4cpp::Fmu>>();
-
-        for (auto &resource : get_resources(*ssp.ssd))
-        {
-            auto name = resource->name.value_or("null");
-            LOG_TRACE_L1(log(), "Resource {resource}", name);
-
-            auto fmu = std::make_unique<ssp4cpp::Fmu>(ssp.dir / resource->source);
-            items[name] = std::move(fmu);
-        }
-
+        create_fmu_map_recursive(ssp.ssd->System, "", items, ssp.dir);
         LOG_TRACE_L1(log(), "FMUs");
         for (auto &[name, fmu] : items)
         {
