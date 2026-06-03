@@ -5,7 +5,10 @@
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 #include "ssp4cpp/utils/log.hpp"
 
+#include "ssp4cpp/ssp.hpp"
+
 #include <cstdint>
+#include <map>
 #include <string>
 
 namespace ssp4sim::analysis::graph
@@ -50,5 +53,7 @@ namespace ssp4sim::analysis::graph
 
         std::string to_string() const override;
     };
+
+    std::map<std::string, std::unique_ptr<AnalysisConnection>> create_connections(ssp4cpp::Ssp &ssp_ref,  ssp4cpp::utils::log::Logger *log);
 
 }

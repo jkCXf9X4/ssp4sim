@@ -2,6 +2,8 @@
 
 #include "graph/analysis/components/analysis_connector.hpp"
 
+#include "utils/time.hpp"
+
 #include <sstream>
 
 namespace ssp4sim::analysis::graph
@@ -67,6 +69,30 @@ namespace ssp4sim::analysis::graph
             << "\ntarget_connector_name: " << target_connector_name
             << "\n }\n";
         return oss.str();
+    }
+
+    std::map<std::string, std::unique_ptr<AnalysisConnection>> create_connections(ssp4cpp::Ssp &ssp_ref,  ssp4cpp::utils::log::Logger *log)
+    {
+        LOG_TRACE_L1(log, "[{func}] init", __func__);
+        std::map<std::string, std::unique_ptr<AnalysisConnection>> items;
+        if (ssp_ref.ssd->System.Connections.has_value())
+        {
+            for (auto &connection : ssp_ref.ssd->System.Connections.value().Connections)
+            {
+                // System boundary connections, pass over for now
+                if (!connection.startElement.has_value() || !connection.endElement.has_value())
+                {
+                    LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] System level connections are not supported as of now", __func__);
+                    continue;
+                }
+                auto c = std::make_unique<AnalysisConnection>(&connection);
+                LOG_TRACE_L1(log, "[{func}] New Connection: {connection}", __func__, c->name);
+                c->delay = utils::time::s_to_ns(connection.information_delay.value_or(0));
+                items[c->name] = std::move(c);
+            }
+        }
+        LOG_DEBUG(log, "[{func}] exit, Total connections created: {count}", __func__, items.size());
+        return items;
     }
 
 }

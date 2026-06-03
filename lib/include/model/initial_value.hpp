@@ -4,8 +4,6 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
-
 #include <sstream>
 #include <string>
 #include <utility>

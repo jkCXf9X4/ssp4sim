@@ -66,7 +66,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-033.md` | IMP-033 | Refactoring & Cleanup of Graph Builder Files | Proposed | Medium | analysis_graph_builder.cpp/.hpp, graph_builder.cpp/.hpp, test files; low-medium risk per finding |
 | `candidates/IMP-034.md` | IMP-034 | Strip DuckDB result feature | Proposed | High | 5 source files deleted, 1 test deleted, 2 Python scripts deleted, build system (3 files), config (2 files), 30+ doc artifacts; large blast radius but mechanical removal |
 | `candidates/IMP-035.md` | IMP-035 | XML signal list with per-sink behavior | Proposed | Medium | Config pipeline, recorder interface, DataRecorder, new XML file format, docs; backward compatible when absent |
-   
+| `candidates/IMP-036.md` | IMP-036 | Unified analysis graph node vector with Tarjan SCC for feedthrough detection | Proposed — Design Evaluation Only | Low-Medium | analysis_graph.hpp, analysis_graph.cpp, analysis_graph_builder.cpp, analysis_graph_builder.hpp |
+    
 ## Summary
 
 | ID | Theme | Priority | Prerequisite | Blast radius |
@@ -106,6 +107,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-033 | Refactoring & Cleanup of Graph Builder Files | Medium | None | analysis_graph_builder.cpp/.hpp, graph_builder.cpp/.hpp, test files; low-medium risk per finding |
 | IMP-034 | Strip DuckDB result feature | High | None | 5 source files + 1 test + 2 scripts deleted; 30+ doc artifacts updated; mechanical removal, no behavioral change |
 | IMP-035 | XML signal list with per-sink behavior | Medium | None | Config pipeline + recorder filtering + XML parsing; backward compatible when absent |
+| IMP-036 | Unified analysis graph node vector with Tarjan SCC for feedthrough detection | Low-Medium | None | analysis_graph.hpp, analysis_graph.cpp, analysis_graph_builder.cpp, analysis_graph_builder.hpp |
     
 ## Cross-Cutting Constraints
 

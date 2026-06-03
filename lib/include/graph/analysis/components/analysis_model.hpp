@@ -6,6 +6,8 @@
 
 #include "analysis_connector.hpp"
 
+#include "ssp4cpp/ssp.hpp"
+
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -19,7 +21,7 @@ namespace ssp4sim::analysis::graph
     public:
         uint64_t delay = 0;
 
-        ssp4cpp::utils::log::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger *log = nullptr;
 
         std::string fmu_name;
         handler::FmuInfo *fmu;
@@ -39,4 +41,6 @@ namespace ssp4sim::analysis::graph
 
         std::string to_string() const override;
     };
+
+    std::map<std::string, std::unique_ptr<AnalysisModel>> create_models(ssp4cpp::Ssp &ssp_ref, handler::FmuHandler *fmu_handler, ssp4cpp::utils::log::Logger *log);
 }

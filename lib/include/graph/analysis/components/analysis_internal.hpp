@@ -6,6 +6,8 @@
 
 #include "analysis_connector.hpp"
 
+#include "ssp4cpp/fmu.hpp"
+
 #include <cstdint>
 #include <string>
 
@@ -33,5 +35,8 @@ namespace ssp4sim::analysis::graph
 
         std::string to_string() const override;
     };
+
+    std::map<std::string, std::unique_ptr<AnalysisModelVariable>>
+    create_model_variables(std::map<std::string, ssp4cpp::Fmu *> &fmu_map, ssp4cpp::utils::log::Logger *log);
 
 }

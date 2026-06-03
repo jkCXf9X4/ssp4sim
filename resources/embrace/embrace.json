@@ -22,7 +22,7 @@
         },
         "recording": {
             "csv": {
-                "enable": false,
+                "enable": true,
                 "interval": 0.0
             },
             

@@ -48,4 +48,23 @@ namespace ssp4sim::analysis::graph
         return oss.str();
     }
 
+
+    std::map<std::string, std::unique_ptr<AnalysisModelVariable>>
+    create_model_variables(std::map<std::string, ssp4cpp::Fmu *> &fmu_map, ssp4cpp::utils::log::Logger *log)
+    {
+        LOG_TRACE_L1(log, "[{func}] init", __func__);
+        std::map<std::string, std::unique_ptr<AnalysisModelVariable>> items;
+        for (auto &[name, fmu] : fmu_map)
+        {
+            for (auto &variable : fmu->md->ModelVariables.ScalarVariable)
+            {
+                auto mv = std::make_unique<AnalysisModelVariable>(name, variable.name);
+                LOG_TRACE_L1(log, "[{func}] New ModelVariable: {variable}", __func__, mv->name);
+                items[mv->name] = std::move(mv);
+            }
+        }
+        LOG_TRACE_L1(log, "[{func}] exit, Total model variables created: {count}", __func__, items.size());
+        return items;
+    }
+
 }

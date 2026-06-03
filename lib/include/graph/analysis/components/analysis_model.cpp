@@ -1,5 +1,7 @@
 #include "graph/analysis/components/analysis_model.hpp"
 
+#include "SSP_Ext.hpp"
+
 #include "handler/fmu_handler.hpp"
 
 #include <sstream>
@@ -39,6 +41,31 @@ namespace ssp4sim::analysis::graph
             << "\nFmu: " << fmu_name
             << "\n}\n";
         return oss.str();
+    }
+
+    std::map<std::string, std::unique_ptr<AnalysisModel>> create_models(ssp4cpp::Ssp &ssp_ref, handler::FmuHandler *fmu_handler, ssp4cpp::utils::log::Logger *log)
+    {
+        LOG_TRACE_L1(log, "[{func}] init", __func__);
+        std::map<std::string, std::unique_ptr<AnalysisModel>> models;
+
+        for (auto &resource : ext::ssp::get_resources(*ssp_ref.ssd))
+        {
+            auto ssp_resource_name = resource->name.value_or("null");
+
+            auto fmu = fmu_handler->fmu_info_map[ssp_resource_name].get();
+            auto m = std::make_unique<AnalysisModel>(ssp_resource_name, resource->source, fmu);
+
+            if (fmu->model_description->CoSimulation)
+            {
+                auto co_sim = *fmu->model_description->CoSimulation;
+                m->set_interpolation_data(co_sim.canInterpolateInputs.value_or(false), co_sim.maxOutputDerivativeOrder.value_or(0));
+            }
+
+            LOG_DEBUG(log, "[{func}] New Model: {model}", __func__, m->name);
+            models[m->name] = std::move(m);
+        }
+        LOG_TRACE_L1(log, "[{func}] exit", __func__);
+        return models;
     }
 
 }

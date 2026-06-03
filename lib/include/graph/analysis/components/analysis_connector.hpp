@@ -1,13 +1,13 @@
 #pragma once
 
+#include "initial_value.hpp"
+#include "handler/fmu_handler.hpp"
 
 #include "utils/node.hpp"
-
-#include "SSP1_SystemStructureParameter_Ext.hpp"
-
 #include "ssp4sim_definitions.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
+#include "ssp4cpp/ssp.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -65,5 +65,7 @@ namespace ssp4sim::analysis::graph
 
         std::string to_string() const override;
     };
+
+    std::map<std::string, std::unique_ptr<AnalysisConnector>> create_connectors(ssp4cpp::Ssp &ssp_ref, handler::FmuHandler *fmu_handler, ssp4cpp::utils::log::Logger *log);
 
 }

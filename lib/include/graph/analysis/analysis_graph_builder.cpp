@@ -23,135 +23,13 @@ namespace ssp4sim::analysis::graph
     {
     }
 
-    std::map<std::string, std::unique_ptr<AnalysisModel>> AnalysisGraphBuilder::create_models(ssp4cpp::Ssp &ssp_ref)
-    {
-        LOG_TRACE_L1(log, "[{func}] init", __func__);
-        std::map<std::string, std::unique_ptr<AnalysisModel>> models;
-
-        for (auto &resource : ext::ssp::get_resources(*ssp_ref.ssd))
-        {
-            auto ssp_resource_name = resource->name.value_or("null");
-
-            auto fmu = fmu_handler->fmu_info_map[ssp_resource_name].get();
-            auto m = std::make_unique<AnalysisModel>(ssp_resource_name, resource->source, fmu);
-
-            if (fmu->model_description->CoSimulation)
-            {
-                auto co_sim = *fmu->model_description->CoSimulation;
-                m->set_interpolation_data(co_sim.canInterpolateInputs.value_or(false), co_sim.maxOutputDerivativeOrder.value_or(0));
-            }
-
-            LOG_DEBUG(log, "[{func}] New Model: {model}", __func__, m->name);
-            models[m->name] = std::move(m);
-        }
-        LOG_TRACE_L1(log, "[{func}] exit", __func__);
-        return models;
-    }
-
-    std::map<std::string, std::unique_ptr<AnalysisConnector>> AnalysisGraphBuilder::create_connectors(ssp4cpp::Ssp &ssp_ref)
-    {
-        LOG_TRACE_L1(log, "[{func}] init", __func__);
-        std::map<std::string, std::unique_ptr<AnalysisConnector>> items;
-        if (ssp_ref.ssd->System.Elements.has_value())
-        {
-
-            auto mapping_start_values = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(ssp_ref);
-
-            for (auto &component : ssp_ref.ssd->System.Elements.value().Components)
-            {
-                if (!component.name.has_value())
-                {
-                    LOG_ERROR(log, "[{func}] Component does not specify name attribute, Its optional but needed for this application {component}", __func__);
-                    throw std::runtime_error("Component without name");
-                }
-
-                auto component_name = component.name.value();
-
-                if (!fmu_handler->fmu_info_map.contains(component_name))
-                {
-                    LOG_ERROR(log, "[{func}] Fmu not found, {component}", __func__, component_name);
-                    throw std::runtime_error("Fmu not found");
-                }
-                auto fmu = fmu_handler->fmu_info_map[component_name].get();
-
-                auto md = fmu->model_description;
-
-                auto variables = ext::fmi2::model_variables::get_variables(*md, {types::Causality::input, types::Causality::output, types::Causality::parameter});
-
-                for (auto &var : variables)
-                {
-                    LOG_DEBUG(log, "[{func}] Creating Connector: {component}.{variable}", __func__, component_name, var.name);
-                    auto value_reference = var.valueReference.value();
-                    LOG_TRACE_L1(log, "[{func}] get_variable_type {}", __func__, value_reference);
-                    auto type = ext::fmi2::model_variables::get_variable_type(var);
-
-                    LOG_TRACE_L1(log, "[{func}] Create AnalysisConnector", __func__);
-                    auto c = std::make_unique<AnalysisConnector>(
-                        component_name, var.name, value_reference, type);
-
-                    c->causality = var.causality.value(); // it must have value to be selected in the list
-                    auto system_name = component_name + "." + var.name;
-
-                    auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
-                    if (start_value)
-                    {
-                        LOG_DEBUG(log, "[{func}] Applying start value for {name}", __func__, system_name);
-                        c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(var.name, type);
-                        c->initial_value->store_value(start_value);
-                    }
-
-                    if (mapping_start_values.contains(system_name))
-                    {
-                        LOG_DEBUG(log, "[{func}] Applying parameterset value to {name}, {type}", __func__, system_name, type.to_string());
-
-                        const auto &mapped_start_value = mapping_start_values.at(system_name);
-                        c->initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(mapped_start_value);
-                    }
-
-                    if (c->initial_value)
-                    {
-                        LOG_DEBUG(log, "[{func}] Initial value {value}", __func__, c->initial_value->to_string());
-                    }
-
-                    items[c->name] = std::move(c);
-                }
-            }
-        }
-        LOG_DEBUG(log, "[{func}] exit, Total connectors created: {count}", __func__, items.size());
-        return items;
-    }
-
-    std::map<std::string, std::unique_ptr<AnalysisConnection>> AnalysisGraphBuilder::create_connections(ssp4cpp::Ssp &ssp_ref)
-    {
-        LOG_TRACE_L1(log, "[{func}] init", __func__);
-        std::map<std::string, std::unique_ptr<AnalysisConnection>> items;
-        if (ssp_ref.ssd->System.Connections.has_value())
-        {
-            for (auto &connection : ssp_ref.ssd->System.Connections.value().Connections)
-            {
-                // System boundary connections, pass over for now
-                if (!connection.startElement.has_value() || !connection.endElement.has_value())
-                {
-                    LOG_WARNING_LIMIT_EVERY_N(100000, log, "[{func}] System level connections are not supported as of now", __func__);
-                    continue;
-                }
-                auto c = std::make_unique<AnalysisConnection>(&connection);
-                LOG_TRACE_L1(log, "[{func}] New Connection: {connection}", __func__, c->name);
-                c->delay = utils::time::s_to_ns(connection.information_delay.value_or(0));
-                items[c->name] = std::move(c);
-            }
-        }
-        LOG_DEBUG(log, "[{func}] exit, Total connections created: {count}", __func__, items.size());
-        return items;
-    }
-
     std::unique_ptr<AnalysisGraph> AnalysisGraphBuilder::build()
     {
         LOG_TRACE_L1(log, "[{func}] Building AnalysisGraph", __func__);
-        auto models = create_models(*ssp);
-        auto connectors = create_connectors(*ssp);
-        auto connections = create_connections(*ssp);
-        auto model_variables = create_model_variables(fmu_handler->fmu_ref_map);
+        auto models = create_models(*ssp, fmu_handler, log);
+        auto connectors = create_connectors(*ssp, fmu_handler, log);
+        auto connections = create_connections(*ssp, log);
+        auto model_variables = create_model_variables(fmu_handler->fmu_ref_map, log);
 
         connect_fmus(models);
         attach_connectors_to_models(connectors, models);
@@ -264,24 +142,6 @@ namespace ssp4sim::analysis::graph
                 target_connector->forward_derivatives_order = source_model->maxOutputDerivativeOrder;
             }
         }
-    }
-
-    std::map<std::string, std::unique_ptr<AnalysisModelVariable>>
-    AnalysisGraphBuilder::create_model_variables(std::map<std::string, ssp4cpp::Fmu *> &fmu_map)
-    {
-        LOG_TRACE_L1(log, "[{func}] init", __func__);
-        std::map<std::string, std::unique_ptr<AnalysisModelVariable>> items;
-        for (auto &[name, fmu] : fmu_map)
-        {
-            for (auto &variable : fmu->md->ModelVariables.ScalarVariable)
-            {
-                auto mv = std::make_unique<AnalysisModelVariable>(name, variable.name);
-                LOG_TRACE_L1(log, "[{func}] New ModelVariable: {variable}", __func__, mv->name);
-                items[mv->name] = std::move(mv);
-            }
-        }
-        LOG_TRACE_L1(log, "[{func}] exit, Total model variables created: {count}", __func__, items.size());
-        return items;
     }
 
     // Created the internal graph

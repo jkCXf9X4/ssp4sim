@@ -1,4 +1,9 @@
+
+
+#include "FMI2_Enums_Ext.hpp"
+
 #include "initial_value.hpp"
+
 
 #include <stdexcept>
 #include <type_traits>
