@@ -67,6 +67,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-034.md` | IMP-034 | Strip DuckDB result feature | Proposed | High | 5 source files deleted, 1 test deleted, 2 Python scripts deleted, build system (3 files), config (2 files), 30+ doc artifacts; large blast radius but mechanical removal |
 | `candidates/IMP-035.md` | IMP-035 | XML signal list with per-sink behavior | Proposed | Medium | Config pipeline, recorder interface, DataRecorder, new XML file format, docs; backward compatible when absent |
 | `candidates/IMP-036.md` | IMP-036 | Unified analysis graph node vector with Tarjan SCC for feedthrough detection | Proposed — Design Evaluation Only | Low-Medium | analysis_graph.hpp, analysis_graph.cpp, analysis_graph_builder.cpp, analysis_graph_builder.hpp |
+| `candidates/IMP-037.md` | IMP-037 | Pause, Play, Stop, and Set-Speed Lifecycle Controls for the Public API | Proposed | Medium | 10+ source files, C API, Python bindings, 5+ doc artifacts; large blast radius, threading and thread-safety risk |
+| `candidates/IMP-038.md` | IMP-038 | Clarify and Streamline Analysis Graph vs Simulation Graph Responsibilities | Proposed | Medium-High | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, graph.hpp/cpp, AD-003, module docs; large blast radius, high implementation complexity |
     
 ## Summary
 
@@ -108,6 +110,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-034 | Strip DuckDB result feature | High | None | 5 source files + 1 test + 2 scripts deleted; 30+ doc artifacts updated; mechanical removal, no behavioral change |
 | IMP-035 | XML signal list with per-sink behavior | Medium | None | Config pipeline + recorder filtering + XML parsing; backward compatible when absent |
 | IMP-036 | Unified analysis graph node vector with Tarjan SCC for feedthrough detection | Low-Medium | None | analysis_graph.hpp, analysis_graph.cpp, analysis_graph_builder.cpp, analysis_graph_builder.hpp |
+| IMP-037 | Pause, Play, Stop, and Set-Speed Lifecycle Controls for the Public API | Medium | None | 10+ source files, C API, Python bindings, 5+ doc artifacts; large blast radius, threading risk |
+| IMP-038 | Clarify and Streamline Analysis Graph vs Simulation Graph Responsibilities | Medium-High | None | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, graph.hpp/cpp, AD-003, module docs; large blast radius, high implementation complexity |
     
 ## Cross-Cutting Constraints
 

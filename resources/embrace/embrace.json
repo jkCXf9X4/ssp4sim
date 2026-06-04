@@ -6,7 +6,7 @@
         "stop_time": 2000,
         "timestep": 0.01,
         "tolerance": 1e-4,
-        "realtime": false,
+        "realtime": true,
         "working_dir": "./wd/embrace",
         "executor": {
             "method": "jacobi",
