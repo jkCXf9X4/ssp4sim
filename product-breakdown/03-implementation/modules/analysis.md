@@ -30,7 +30,7 @@ Builds a structural view of SSP models, connectors, and connections before execu
 ## Notable Patterns
 
 - The analysis graph direction is parent→child: A → B means A is parent of B.
-- **No model-to-model edges** — connectors point to their owning model via `connector.model`.
+- **No model-to-model edges** — this is an enforced invariant, not a temporary stage. The analysis graph is a pure connector/connection/variable graph. Model-to-model edges are derived in `GraphBuilder::derive_model_edges()` from the connection set.
 - System connectors (boundary connectors on `ModelKind::system` models) use hierarchical names.
 - The analysis graph is a read-only snapshot of the SSP structure, not a runtime execution graph.
 - Builder handles recursive traversal; graph objects handle self-analysis.

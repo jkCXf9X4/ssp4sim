@@ -35,6 +35,7 @@ namespace ssp4sim::graph
         void create_fmu_models();
         void create_data_storage_areas();
         void wire_connections();
+        void derive_model_edges();
     };
 
 }

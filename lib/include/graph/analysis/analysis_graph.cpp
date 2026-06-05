@@ -8,6 +8,7 @@
 
 #include "tarjan.hpp"
 #include "utils/map.hpp"
+#include "utils/node.hpp"
 
 #include <sstream>
 #include <utility>
@@ -15,10 +16,10 @@
 namespace ssp4sim::analysis::graph
 {
 
-AnalysisGraph::AnalysisGraph(std::map<std::string, std::unique_ptr<AnalysisModel>> models_,
-                                  std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors_,
-                                  std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_,
-                                  std::map<std::string, std::unique_ptr<AnalysisModelVariable>> model_variables_)
+    AnalysisGraph::AnalysisGraph(std::map<std::string, std::unique_ptr<AnalysisModel>> models_,
+                                 std::map<std::string, std::unique_ptr<AnalysisConnector>> connectors_,
+                                 std::map<std::string, std::unique_ptr<AnalysisConnection>> connections_,
+                                 std::map<std::string, std::unique_ptr<AnalysisModelVariable>> model_variables_)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.AnalysisGraph")),
           models(std::move(models_)),
           connectors(std::move(connectors_)),
@@ -35,13 +36,40 @@ AnalysisGraph::AnalysisGraph(std::map<std::string, std::unique_ptr<AnalysisModel
         return start_nodes;
     }
 
+    std::vector<ssp4sim::utils::graph::Node *> AnalysisGraph::get_nodes() const
+    {
+        std::vector<ssp4sim::utils::graph::Node *> nodes;
+        for (auto &[_, connector] : connectors)
+        {
+            nodes.push_back(connector.get());
+        }
+        for (auto &[_, var] : model_variables)
+        {
+            nodes.push_back(var.get());
+        }
+        return nodes;
+    }
+
+
+    std::vector<std::vector<utils::graph::Node *>> AnalysisGraph::strongly_connected_components() const
+    {
+        // Build a node list from connectors and model variables for algebraic loop detection
+        auto connector_var_nodes = get_nodes();
+
+        auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(
+            ssp4sim::utils::graph::Node::cast_to_parent_ptrs(connector_var_nodes));
+
+        return strong_system_graph;
+    }
+
     std::string AnalysisGraph::to_string() const
     {
-        auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(ssp4sim::utils::graph::Node::cast_to_parent_ptrs(nodes));
+        auto nodes = get_nodes();
+        auto strong_system_graph = strongly_connected_components();
 
         std::ostringstream oss;
-        oss << "Simulation Graph DOT:\n"
-            << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
+        oss << "Analysis Graph DOT:\n"
+             << ssp4sim::utils::graph::Node::to_dot(nodes) << "\n"
             << ssp4sim::utils::graph::ssc_to_string(strong_system_graph)
             << "\nStart nodes:\n";
 

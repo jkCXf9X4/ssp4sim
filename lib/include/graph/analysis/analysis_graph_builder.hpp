@@ -24,7 +24,6 @@ namespace ssp4sim::analysis::graph
         std::unique_ptr<AnalysisGraph> build();
 
     private:
-        void connect_fmus(std::map<std::string, std::unique_ptr<AnalysisModel>> &models);
         void attach_connectors_to_models(std::map<std::string, std::unique_ptr<AnalysisConnector>> &connectors, std::map<std::string, std::unique_ptr<AnalysisModel>> &models);
         void wire_connections(std::map<std::string, std::unique_ptr<AnalysisConnection>> &connections,
                               std::map<std::string, std::unique_ptr<AnalysisModel>> &models,

@@ -5,10 +5,15 @@ add_executable(ssp4sim_tests ${ALL_SRC})
 target_include_directories(
   ssp4sim_tests
   PRIVATE ${CMAKE_SOURCE_DIR}/lib/include
-          ${CMAKE_SOURCE_DIR}/lib/include/utils
+          ${CMAKE_SOURCE_DIR}/lib/include/execution
+          ${CMAKE_SOURCE_DIR}/lib/include/graph
+          ${CMAKE_SOURCE_DIR}/lib/include/graph/analysis
+          ${CMAKE_SOURCE_DIR}/lib/include/handler
           ${CMAKE_SOURCE_DIR}/lib/include/model
           ${CMAKE_SOURCE_DIR}/lib/include/schema_extensions
-          ${CMAKE_SOURCE_DIR}/lib/include/handler
+          ${CMAKE_SOURCE_DIR}/lib/include/signal
+          ${CMAKE_SOURCE_DIR}/lib/include/utils
+          ${CMAKE_SOURCE_DIR}/lib/include/utils/thread_pool
           ${CMAKE_SOURCE_DIR}/lib/public_include)
 
 target_link_libraries(ssp4sim_tests PUBLIC ssp4sim_lib)

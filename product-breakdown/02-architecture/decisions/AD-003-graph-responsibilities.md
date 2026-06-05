@@ -21,7 +21,7 @@ Introduce a clear separation of responsibilities between two graph layers:
 
 - Nodes exist for **models** (both FMU `Component` and nested `System`), **connectors** (variable-level), **connections** (with delay information), and **internal variables** (for algebraic loop detection via Tarjan's SCC).
 - The analysis graph mirrors the SSP's hierarchical structure: system models contain sub-models via `AnalysisModel::sub_models`.
-- No model-to-model edges at this stage — connectors point to their owning model via `connector.model`.
+- **No model-to-model edges** — this is an enforced invariant, not a temporary stage. Model-to-model edges are never built in the analysis graph. Connectors point to their owning model via `connector.model`.
 - Connector naming uses hierarchical paths (e.g., `"SuT.edrive_mass.M_A"`) for unambiguous resolution.
 
 ### Simulation Graph (`graph`)
@@ -56,7 +56,7 @@ Introduce a clear separation of responsibilities between two graph layers:
 ## Consequences
 
 - The analysis graph now supports nested SSPs with arbitrary nesting depth.
-- System-boundary connections are skipped in the simulation graph until hierarchical flattening logic is added.
+- `connect_fmus()` has been removed from `AnalysisGraphBuilder`. Model-to-model edges are now derived in `GraphBuilder::derive_model_edges()` from the analysis graph's connection set, ensuring a single source of truth.
 - Backward compatibility is preserved: flat SSPs (no nesting) produce identical analysis and simulation graphs.
 - The free functions `create_models()`, `create_connectors()`, `create_connections()` are now dead code and can be removed in a follow-up cleanup.
 - New recursive helper functions (`get_all_resources()`, `get_all_fmu_connections()`) were added to the SSP extension layer.

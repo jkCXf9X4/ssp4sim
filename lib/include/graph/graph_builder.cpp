@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <set>
 #include <utility>
 #include <fstream>
 
@@ -26,6 +27,7 @@ namespace ssp4sim::graph
         create_fmu_models();
         create_data_storage_areas();
         wire_connections();
+        derive_model_edges();
 
         LOG_DEBUG(log, "[{func}] - Allocate the input/output areas", __func__);
         for (auto &[ssp_resource_name, model] : models)
@@ -42,15 +44,6 @@ namespace ssp4sim::graph
                 }
 
                 recorder->add_storage(m->output_area.get());
-            }
-        }
-
-        LOG_DEBUG(log, "[{func}] - Create connections between models", __func__);
-        for (auto &[_, analysis_model] : analysis_graph->models)
-        {
-            for (auto &child : analysis_model->children)
-            {
-                models[analysis_model->name]->add_child(models[child->name].get());
             }
         }
 
@@ -160,6 +153,36 @@ namespace ssp4sim::graph
             LOG_TRACE_L1(log, "[{func}] Connection: {name}, delay {delay}", __func__, connection->name, connection->delay);
 
             target_model->connections.push_back(std::move(con_info));
+        }
+    }
+
+    void GraphBuilder::derive_model_edges()
+    {
+        LOG_DEBUG(log, "[{func}] Deriving model-to-model edges from connection graph", __func__);
+        // Collect unique (source_model, target_model) pairs from analysis connections
+        std::set<std::pair<std::string, std::string>> model_pairs;
+        for (auto &[_, connection] : analysis_graph->connections)
+        {
+            auto const &src = connection->source_model->name;
+            auto const &tgt = connection->target_model->name;
+            model_pairs.insert({src, tgt});
+        }
+
+        LOG_DEBUG(log, "[{func}] Found {count} unique model pairs", __func__, model_pairs.size());
+        for (auto &[source_name, target_name] : model_pairs)
+        {
+            LOG_TRACE_L1(log, "[{func}] - Model edge: {source} -> {target}", __func__, source_name, target_name);
+            if (!models.contains(source_name))
+            {
+                LOG_WARNING(log, "[{func}] Source model {name} not found in model map, skipping", __func__, source_name);
+                continue;
+            }
+            if (!models.contains(target_name))
+            {
+                LOG_WARNING(log, "[{func}] Target model {name} not found in model map, skipping", __func__, target_name);
+                continue;
+            }
+            models[source_name]->add_child(models[target_name].get());
         }
     }
 

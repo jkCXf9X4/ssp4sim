@@ -17,6 +17,10 @@ The simulation graph flattens the hierarchical analysis graph:
 - Connections through system boundaries are resolved to direct FMU→FMU edges
 - The result is a flat DAG of invocable nodes
 
+## Model-to-Model Edges
+
+Model-to-model edges are derived from the analysis graph's connection set, not inherited from analysis model children. `GraphBuilder::derive_model_edges()` iterates the analysis graph's connections, collects unique `(source_model, target_model)` pairs, and installs parent-child edges on `FmuModel` instances. This ensures that the simulation graph is the single place where runtime dependency edges are created.
+
 ## Execution Algorithm
 
 The execution algorithm is constructor-injectable, enabling easy change of algorithm

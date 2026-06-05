@@ -31,7 +31,6 @@ namespace ssp4sim::analysis::graph
         auto connections = create_connections(*ssp, log);
         auto model_variables = create_model_variables(fmu_handler->fmu_ref_map, log);
 
-        connect_fmus(models);
         attach_connectors_to_models(connectors, models);
         wire_connections(connections, models, connectors);
         wire_internal_dependencies(model_variables, connectors);
@@ -39,29 +38,6 @@ namespace ssp4sim::analysis::graph
 
         LOG_TRACE_L1(log, "[{func}] exit", __func__);
         return make_unique<AnalysisGraph>(std::move(models), std::move(connectors), std::move(connections), std::move(model_variables));
-    }
-
-    void AnalysisGraphBuilder::connect_fmus(std::map<std::string, std::unique_ptr<AnalysisModel>> &models)
-    {
-        auto fmu_connections = ext::ssp1::elements::get_fmu_connections(*ssp->ssd);
-
-        LOG_TRACE_L1(log, "[{func}] Connecting FMUs", __func__);
-        for (auto &[source, target] : fmu_connections)
-        {
-            LOG_TRACE_L1(log, "[{func}] - Connecting: {source} -> {target}", __func__, source, target);
-            if (!models.contains(source) || !models.contains(target))
-            {
-                LOG_ERROR(log,
-                          "[{func}] Unsupported hierarchical or unresolved SSP connection: {source} -> {target}",
-                          __func__,
-                          source,
-                          target);
-                throw std::runtime_error(
-                    "Unsupported hierarchical or unresolved SSP connection: " + source + " -> " + target
-                );
-            }
-            models[source]->add_child(models[target].get());
-        }
     }
 
     void AnalysisGraphBuilder::attach_connectors_to_models(std::map<std::string, std::unique_ptr<AnalysisConnector>> &connectors, std::map<std::string, std::unique_ptr<AnalysisModel>> &models)

@@ -14,8 +14,8 @@ The analysis graph contains:
 
 ## Key Design Decisions
 
-- **No model-to-model edges at this stage.** The analysis graph stays close to the SSP structure.
-  Model-to-model dependency edges are created later in the simulation graph.
+- **No model-to-model edges in the analysis graph.** This is an enforced invariant. The analysis graph is a pure connector/connection/variable graph. Model-to-model dependency edges are derived later in the simulation graph from the analysis graph's connection set.
+- **SCC operates on the connector/variable graph** for algebraic loop detection via Tarjan's algorithm on connectors and model variables, not on model nodes.
 - **Naming uses hierarchical paths.** A connector on component `edrive_mass` inside system `SuT` is
   named `"SuT.edrive_mass.M_A"`, enabling unambiguous resolution across nesting levels.
 - **System models have no FMU runtime.** They are structural containers with no executable counterpart.

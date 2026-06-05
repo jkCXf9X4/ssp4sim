@@ -7,6 +7,8 @@
 #include "graph/analysis/components/analysis_connector.hpp"
 #include "graph/analysis/components/analysis_internal.hpp"
 
+#include "utils/node.hpp"
+
 #include <map>
 #include <memory>
 #include <string>
@@ -34,6 +36,10 @@ namespace ssp4sim::analysis::graph
                       std::map<std::string, std::unique_ptr<AnalysisModelVariable>> model_variables_);
 
         std::vector<AnalysisModel *> get_start_nodes() const;
+
+        std::vector<ssp4sim::utils::graph::Node *> get_nodes() const;
+
+        std::vector<std::vector<utils::graph::Node *>> strongly_connected_components() const;
 
         std::string to_string() const override;
 
