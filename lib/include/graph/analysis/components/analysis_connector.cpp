@@ -1,5 +1,7 @@
 
 
+// DEPRECATED: Use lib/include/analysis/analysis_connector.hpp instead.
+// This file is kept for backward compatibility.
 #include "graph/analysis/components/analysis_connector.hpp"
 
 #include "handler/fmu_handler.hpp"

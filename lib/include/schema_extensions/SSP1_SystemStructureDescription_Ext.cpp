@@ -49,6 +49,37 @@ namespace ssp4sim::ext::ssp1
             }
             return resources;
         }
+
+        std::vector<TComponent *> get_resources(const TSystem &sys)
+        {
+            auto resources = vector<TComponent *>();
+            if (sys.Elements.has_value())
+            {
+                for (auto &comp : sys.Elements.value().Components)
+                {
+                    resources.push_back(const_cast<TComponent *>(&comp));
+                }
+                for (auto &sub_sys : sys.Elements.value().Systems)
+                {
+                    auto nested = get_resources(sub_sys);
+                    resources.insert(resources.end(), nested.begin(), nested.end());
+                }
+            }
+            return resources;
+        }
+
+        std::vector<Connector *> get_system_connectors(const TSystem &sys)
+        {
+            auto connectors = vector<Connector *>();
+            if (sys.Connectors.has_value())
+            {
+                for (auto &conn : sys.Connectors.value().Connectors)
+                {
+                    connectors.push_back(const_cast<Connector *>(&conn));
+                }
+            }
+            return connectors;
+        }
     }
 
     namespace elements

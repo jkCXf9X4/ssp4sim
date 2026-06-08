@@ -1,6 +1,8 @@
 # AD-003: Graph Responsibility Separation
 <!-- Layer: 02-architecture -->
-<!-- Status: Accepted -->
+<!-- Status: Superseded by AD-004 -->
+
+> **Status: Superseded by AD-004** — See [AD-004-analysis-system-responsibilities.md](AD-004-analysis-system-responsibilities.md) for the current architecture decision covering the analysis data model, recursive building, boundary connection handling, and the builder interface.
 
 ## Context
 

@@ -3,8 +3,8 @@
 
 #include "utils/timer.hpp"
 
-#include "analysis_graph_builder.hpp"
-#include "graph_builder.hpp"
+#include "analysis/analysis_system_builder.hpp"
+#include "graph/graph_builder.hpp"
 
 #include "signal/sinks/csv_recorder_sink.hpp"
 
@@ -88,12 +88,13 @@ namespace ssp4sim
         LOG_INFO(p->log, "[{func}] - Initializing fmus", __func__);
         p->fmu_handler->init();
 
-        LOG_INFO(p->log, "[{func}] - Creating analysis graph", __func__);
-        auto analysis_graph = analysis::graph::AnalysisGraphBuilder(p->ssp, p->fmu_handler.get()).build();
-        LOG_DEBUG(p->log, " -- {graph}", analysis_graph->to_string());
+        LOG_INFO(p->log, "[{func}] - Creating analysis system", __func__);
+        auto analysis_system = analysis::AnalysisSystemBuilder().build(p->ssp, p->fmu_handler.get());
+        LOG_DEBUG(p->log, " -- analysis system built");
+        // TODO: Add some kind of analysis system output
 
         LOG_INFO(p->log, "[{func}] - Creating simulation graph", __func__);
-        auto graph_builder = graph::GraphBuilder(analysis_graph.get(), p->recorder.get(), this->config);
+        auto graph_builder = graph::GraphBuilder(*analysis_system, p->recorder.get(), this->config);
         graph_builder.build();
 
         p->sim_graph = graph_builder.get_graph();

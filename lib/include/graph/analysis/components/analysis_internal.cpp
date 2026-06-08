@@ -1,3 +1,5 @@
+// DEPRECATED: Use lib/include/analysis/analysis_model_variable.hpp instead.
+// This file is kept for backward compatibility.
 #include "graph/analysis/components/analysis_internal.hpp"
 
 #include "graph/analysis/components/analysis_connector.hpp"

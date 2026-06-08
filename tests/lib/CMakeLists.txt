@@ -5,6 +5,7 @@ add_executable(ssp4sim_tests ${ALL_SRC})
 target_include_directories(
   ssp4sim_tests
   PRIVATE ${CMAKE_SOURCE_DIR}/lib/include
+          ${CMAKE_SOURCE_DIR}/lib/include/analysis
           ${CMAKE_SOURCE_DIR}/lib/include/execution
           ${CMAKE_SOURCE_DIR}/lib/include/graph
           ${CMAKE_SOURCE_DIR}/lib/include/graph/analysis

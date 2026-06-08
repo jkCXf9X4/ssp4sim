@@ -1,3 +1,5 @@
+// DEPRECATED: Use lib/include/analysis/analysis_model.hpp instead.
+// This file is kept for backward compatibility.
 #include "graph/analysis/components/analysis_model.hpp"
 
 #include "SSP_Ext.hpp"

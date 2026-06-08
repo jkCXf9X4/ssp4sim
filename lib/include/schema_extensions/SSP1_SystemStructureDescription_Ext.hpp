@@ -20,6 +20,12 @@ namespace ssp4sim::ext::ssp1
     namespace ssd
     {
         std::vector<TComponent *> get_resources(const SystemStructureDescription &ssd);
+
+        /// Recursively collect all components from a TSystem and its nested systems.
+        std::vector<TComponent *> get_resources(const TSystem &sys);
+
+        /// Collect system-level connectors (boundary connectors) from a TSystem.
+        std::vector<Connector *> get_system_connectors(const TSystem &sys);
     }
 
     namespace elements

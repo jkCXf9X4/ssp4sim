@@ -1,5 +1,7 @@
 # Analysis Graph
 
+> **DEPRECATED** — This module is superseded by `lib/include/analysis/`. New code should use `AnalysisSystem`, `AnalysisSystemBuilder`, and related classes in namespace `ssp4sim::analysis`. See `lib/include/analysis/analysis_system.md` for the current documentation.
+
 ## Responsibilities
 
 The analysis graph is the structural mirror of the SSP XML. It parses all SSP-relevant information

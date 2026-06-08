@@ -1,6 +1,8 @@
 #include "graph/graph_builder.hpp"
 
-#include "graph/analysis/analysis_graph.hpp"
+#include "analysis/analysis_model.hpp"
+#include "analysis/analysis_connector.hpp"
+#include "analysis/analysis_connection.hpp"
 #include "model/model_fmu.hpp"
 #include "utils/map.hpp"
 
@@ -10,11 +12,35 @@
 #include <utility>
 #include <fstream>
 
+namespace
+{
+    /// Find a connector by model name and (combined) connector name in the analysis system.
+    const ssp4sim::analysis::AnalysisConnector *
+    find_connector(const ssp4sim::analysis::AnalysisSystem &sys,
+                   const std::string &model_name,
+                   const std::string &connector_full_name)
+    {
+        for (auto *m : sys.get_all_models())
+        {
+            if (m->name != model_name)
+                continue;
+            for (auto &c : m->connectors)
+            {
+                if (c->name == connector_full_name)
+                    return c.get();
+            }
+        }
+        return nullptr;
+    }
+}
+
 namespace ssp4sim::graph
 {
-    GraphBuilder::GraphBuilder(AnalysisGraph *ag, ssp4sim::signal::DataRecorder *recorder, ssp4sim::SharedConfig *config)
+    GraphBuilder::GraphBuilder(const analysis::AnalysisSystem &analysis_system_,
+                               ssp4sim::signal::DataRecorder *recorder,
+                               ssp4sim::SharedConfig *config)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder")),
-          analysis_graph(ag),
+          analysis_system(analysis_system_),
           recorder(recorder),
           config(config)
     {
@@ -37,12 +63,10 @@ namespace ssp4sim::graph
             m->output_area->allocate();
             if (recorder)
             {
-                // register input storage if record_inputs config is enabled
                 if (m->record_inputs)
                 {
                     recorder->add_storage(m->input_area.get());
                 }
-
                 recorder->add_storage(m->output_area.get());
             }
         }
@@ -53,9 +77,16 @@ namespace ssp4sim::graph
     void GraphBuilder::create_fmu_models()
     {
         LOG_DEBUG(log, "[{func}] - Create the fmu models", __func__);
-        for (auto &[ssp_resource_name, analysis_model] : analysis_graph->models)
+        for (auto *analysis_model : analysis_system.get_all_models())
         {
-            auto m = std::make_unique<FmuModel>(ssp_resource_name, analysis_model->fmu, analysis_model->maxOutputDerivativeOrder);
+            // Skip models without FMU info (e.g., system containers)
+            if (!analysis_model->fmu)
+            {
+                LOG_DEBUG(log, "[{func}] -- Skipping model without FMU: {model}", __func__, analysis_model->name);
+                continue;
+            }
+
+            auto m = std::make_unique<FmuModel>(analysis_model->name, analysis_model->fmu, analysis_model->maxOutputDerivativeOrder);
             LOG_TRACE_L1(log, "[{func}] -- New Model: {model}", __func__, m->name);
 
             m->delay = analysis_model->delay;
@@ -70,15 +101,24 @@ namespace ssp4sim::graph
     {
         LOG_DEBUG(log, "[{func}] - Create the data storage areas within the model", __func__);
         auto start_value_log_file = std::ofstream(this->config->start_value_log_file, std::ios::out);
-        for (auto &[_, analysis_model] : analysis_graph->models)
+        for (auto *analysis_model : analysis_system.get_all_models())
         {
+            if (!analysis_model->fmu)
+                continue;
+
             auto model = dynamic_cast<FmuModel *>(models[analysis_model->name].get());
-            for (auto &[name, connector] : analysis_model->connectors)
+            if (!model)
+            {
+                LOG_WARNING(log, "[{func}] Model {name} not found in model map, skipping", __func__, analysis_model->name);
+                continue;
+            }
+
+            for (auto &connector : analysis_model->connectors)
             {
                 ConnectorInfo info;
-                info.type = connector->type;
+                info.type = connector->data_type;
                 info.size = connector->size;
-                info.name = name;
+                info.name = connector->name;
 
                 info.forward_derivatives = connector->forward_derivatives;
                 info.forward_derivatives_order = connector->forward_derivatives_order;
@@ -91,28 +131,28 @@ namespace ssp4sim::graph
                 {
                     info.initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(*connector->initial_value);
 
-                    auto value = ssp4sim::ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr());
+                    auto value = ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr());
 
                     LOG_TRACE_L1(log, "[{func}] -- Store start value for {} : {}", __func__, info.name, value);
-                    start_value_log_file << connector->causality << ", " << name << ", " <<  value << "\n";
+                    start_value_log_file << connector->causality << ", " << connector->name << ", " << value << "\n";
                 }
 
                 if (connector->causality == types::Causality::input)
                 {
-                    info.index = static_cast<uint32_t>(model->input_area->add(name, connector->type, connector->forward_derivatives_order));
+                    info.index = static_cast<uint32_t>(model->input_area->add(connector->name, connector->data_type, connector->forward_derivatives_order));
                     info.storage = model->input_area.get();
-                    model->inputs[name] = std::move(info);
+                    model->inputs[connector->name] = std::move(info);
                 }
                 else if (connector->causality == types::Causality::output)
                 {
-                    info.index = static_cast<uint32_t>(model->output_area->add(name, connector->type, connector->forward_derivatives_order));
+                    info.index = static_cast<uint32_t>(model->output_area->add(connector->name, connector->data_type, connector->forward_derivatives_order));
                     info.storage = model->output_area.get();
-                    model->outputs[name] = std::move(info);
+                    model->outputs[connector->name] = std::move(info);
                 }
                 else if (connector->causality == types::Causality::parameter)
                 {
                     info.index = static_cast<uint32_t>(-1);
-                    model->parameters[name] = std::move(info);
+                    model->parameters[connector->name] = std::move(info);
                 }
             }
         }
@@ -122,35 +162,58 @@ namespace ssp4sim::graph
     {
         LOG_DEBUG(log, "[{func}] - Hand the information regarding the connections over to the model", __func__);
 
-        for (auto &[_, connection] : analysis_graph->connections)
+        for (auto *connection : analysis_system.get_all_connections())
         {
-            auto source_model = dynamic_cast<FmuModel *>(models[connection->source_model->name].get());
-            auto target_model = dynamic_cast<FmuModel *>(models[connection->target_model->name].get());
+            // Skip boundary-crossing connections (not FMU-to-FMU)
+            if (connection->is_boundary_crossing)
+                continue;
 
-            auto &source_connector = source_model->outputs[connection->get_source_connector_name()];
-            auto &target_connector = target_model->inputs[connection->get_target_connector_name()];
+            auto source_model = dynamic_cast<FmuModel *>(models[connection->source_model].get());
+            auto target_model = dynamic_cast<FmuModel *>(models[connection->target_model].get());
+
+            if (!source_model || !target_model)
+            {
+                LOG_WARNING(log, "[{func}] Skipping connection {src}.{sc} -> {tgt}.{tc}: model not found",
+                            __func__, connection->source_model, connection->source_connector,
+                            connection->target_model, connection->target_connector);
+                continue;
+            }
+
+            auto source_connector_name = connection->source_model + "." + connection->source_connector;
+            auto target_connector_name = connection->target_model + "." + connection->target_connector;
+
+            auto &source_conn = source_model->outputs[source_connector_name];
+            auto &target_conn = target_model->inputs[target_connector_name];
 
             ConnectionInfo con_info;
-            con_info.type = source_connector.type;
-            con_info.size = source_connector.size;
+            con_info.type = source_conn.type;
+            con_info.size = source_conn.size;
 
             con_info.source_storage = source_model->output_area.get();
             con_info.target_storage = target_model->input_area.get();
-            con_info.source_index = source_connector.index;
-            con_info.target_index = target_connector.index;
+            con_info.source_index = source_conn.index;
+            con_info.target_index = target_conn.index;
 
-            con_info.forward_derivatives = source_connector.forward_derivatives;
-            con_info.forward_derivatives_order = source_connector.forward_derivatives_order;
+            con_info.forward_derivatives = source_conn.forward_derivatives;
+            con_info.forward_derivatives_order = source_conn.forward_derivatives_order;
 
             con_info.delay = connection->delay;
 
-            con_info.is_feedthrough = connection->source_connector->is_feedthrough;
+            // Resolve feedthrough from the analysis connector
+            auto *src_analysis_conn = find_connector(analysis_system,
+                                                      connection->source_model,
+                                                      source_connector_name);
+            con_info.is_feedthrough = src_analysis_conn ? src_analysis_conn->is_feedthrough : false;
             if (connection->delay > 0)
             {
                 con_info.is_feedthrough = false;
             }
 
-            LOG_TRACE_L1(log, "[{func}] Connection: {name}, delay {delay}", __func__, connection->name, connection->delay);
+            LOG_TRACE_L1(log, "[{func}] Connection: {src}.{sc} -> {tgt}.{tc}, delay {delay}",
+                         __func__,
+                         connection->source_model, connection->source_connector,
+                         connection->target_model, connection->target_connector,
+                         connection->delay);
 
             target_model->connections.push_back(std::move(con_info));
         }
@@ -159,13 +222,14 @@ namespace ssp4sim::graph
     void GraphBuilder::derive_model_edges()
     {
         LOG_DEBUG(log, "[{func}] Deriving model-to-model edges from connection graph", __func__);
-        // Collect unique (source_model, target_model) pairs from analysis connections
         std::set<std::pair<std::string, std::string>> model_pairs;
-        for (auto &[_, connection] : analysis_graph->connections)
+        for (auto *connection : analysis_system.get_all_connections())
         {
-            auto const &src = connection->source_model->name;
-            auto const &tgt = connection->target_model->name;
-            model_pairs.insert({src, tgt});
+            // Skip boundary-crossing connections
+            if (connection->is_boundary_crossing)
+                continue;
+
+            model_pairs.insert({connection->source_model, connection->target_model});
         }
 
         LOG_DEBUG(log, "[{func}] Found {count} unique model pairs", __func__, model_pairs.size());

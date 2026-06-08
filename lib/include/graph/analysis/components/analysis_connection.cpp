@@ -1,3 +1,5 @@
+// DEPRECATED: Use lib/include/analysis/analysis_connection.hpp instead.
+// This file is kept for backward compatibility.
 #include "graph/analysis/components/analysis_connection.hpp"
 
 #include "graph/analysis/components/analysis_connector.hpp"

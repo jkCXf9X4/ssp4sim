@@ -1,3 +1,6 @@
+// DEPRECATED: Use lib/include/analysis/analysis_model.hpp instead.
+// This file is kept for backward compatibility. New code should include
+// "analysis/analysis_model.hpp" from namespace ssp4sim::analysis.
 #pragma once
 
 #include "utils/node.hpp"

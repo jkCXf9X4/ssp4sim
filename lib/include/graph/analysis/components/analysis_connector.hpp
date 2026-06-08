@@ -1,3 +1,6 @@
+// DEPRECATED: Use lib/include/analysis/analysis_connector.hpp instead.
+// This file is kept for backward compatibility. New code should include
+// "analysis/analysis_connector.hpp" from namespace ssp4sim::analysis.
 #pragma once
 
 #include "initial_value.hpp"

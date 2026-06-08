@@ -66,3 +66,4 @@ this injects into the scheduling somehow...
 
 ---
 
+Move the find_connector to the AnalysisSystem
