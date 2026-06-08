@@ -69,7 +69,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-036.md` | IMP-036 | Unified analysis graph node vector with Tarjan SCC for feedthrough detection | Proposed — Design Evaluation Only | Low-Medium | analysis_graph.hpp, analysis_graph.cpp, analysis_graph_builder.cpp, analysis_graph_builder.hpp |
 | `candidates/IMP-037.md` | IMP-037 | Pause, Play, Stop, and Set-Speed Lifecycle Controls for the Public API | Proposed | Medium | 10+ source files, C API, Python bindings, 5+ doc artifacts; large blast radius, threading and thread-safety risk |
 | `candidates/IMP-038.md` | IMP-038 | Clarify and Streamline Analysis Graph vs Simulation Graph Responsibilities | Proposed | Medium-High | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, graph.hpp/cpp, AD-003, module docs; large blast radius, high implementation complexity |
-
+| `candidates/IMP-039.md` | IMP-039 | Evolve Analysis Graph into an Analysis System with Nested-SSP Support | Proposed | Medium-High | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, simulation.cpp, SSP parser, AD-003, module docs; large blast radius, high implementation complexity |
+ 
     
 ## Summary
 
@@ -113,6 +114,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-036 | Unified analysis graph node vector with Tarjan SCC for feedthrough detection | Low-Medium | None | analysis_graph.hpp, analysis_graph.cpp, analysis_graph_builder.cpp, analysis_graph_builder.hpp |
 | IMP-037 | Pause, Play, Stop, and Set-Speed Lifecycle Controls for the Public API | Medium | None | 10+ source files, C API, Python bindings, 5+ doc artifacts; large blast radius, threading risk |
 | IMP-038 | Clarify and Streamline Analysis Graph vs Simulation Graph Responsibilities | Medium-High | None | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, graph.hpp/cpp, AD-003, module docs; large blast radius, high implementation complexity |
+| IMP-039 | Evolve Analysis Graph into an Analysis System with Nested-SSP Support | Medium-High | None | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, simulation.cpp, SSP parser, AD-003, module docs; large blast radius, high implementation complexity |
     
 ## Cross-Cutting Constraints
 
