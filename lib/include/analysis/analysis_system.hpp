@@ -57,8 +57,20 @@ namespace ssp4sim::analysis
         /// Find a nested system by dot-separated path.
         AnalysisSystem *get_nested_system(const std::string &path) const;
 
+        /// Find a connector by model name and connector full name across all models.
+        const AnalysisConnector *find_connector(const std::string &model_name,
+                                                 const std::string &connector_full_name) const;
+
+        /// Flat summary of this system.
+        std::string to_string() const;
+
+        /// Hierarchical tree view of this system and its contents.
+        std::string tree_string() const;
+
     private:
         void collect_models(std::vector<AnalysisModel *> &out) const;
         void collect_connections(std::vector<AnalysisConnection *> &out) const;
+
+        std::string tree_string_impl(const std::string &indent) const;
     };
 }

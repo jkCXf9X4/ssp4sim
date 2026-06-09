@@ -66,4 +66,9 @@ this injects into the scheduling somehow...
 
 ---
 
-Move the find_connector to the AnalysisSystem
+1. Move the find_connector to the AnalysisSystem
+2. in analysis model:
+    // TODO: The feedthrough can pass thru many internal variables before entering out on the other side
+    // It can also ba a 1 to many mapping between in and out
+
+3. add som way to print the analysis system for visual inspection by the user

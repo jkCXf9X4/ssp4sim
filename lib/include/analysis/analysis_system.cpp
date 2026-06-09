@@ -106,4 +106,83 @@ namespace ssp4sim::analysis
         return nullptr;
     }
 
+    const AnalysisConnector *AnalysisSystem::find_connector(
+        const std::string &model_name,
+        const std::string &connector_full_name) const
+    {
+        for (auto *m : get_all_models())
+        {
+            if (m->name != model_name)
+                continue;
+            for (auto &c : m->connectors)
+            {
+                if (c->name == connector_full_name)
+                    return c.get();
+            }
+        }
+        return nullptr;
+    }
+
+    std::string AnalysisSystem::to_string() const
+    {
+        std::ostringstream oss;
+        oss << "System {\n"
+            << "  name: " << name << "\n"
+            << "  models: " << models.size() << "\n"
+            << "  boundary_connectors: " << connectors.size() << "\n"
+            << "  connections: " << connections.size() << "\n"
+            << "  nested_systems: " << nested_systems.size() << "\n"
+            << "}";
+        return oss.str();
+    }
+
+    std::string AnalysisSystem::tree_string() const
+    {
+        return tree_string_impl("");
+    }
+
+    std::string AnalysisSystem::tree_string_impl(const std::string &indent) const
+    {
+        std::ostringstream oss;
+        oss << indent << "System: " << name << "\n";
+
+        std::string child_indent = indent + "  ";
+
+        oss << child_indent << "Models (" << models.size() << "):\n";
+        for (const auto &m : models)
+        {
+            oss << child_indent << "  " << m->name << "\n";
+            if (m->model_variables.size() > 0 || m->connectors.size() > 0)
+            {
+                oss << child_indent << "    connectors: " << m->connectors.size() << "\n";
+                for (const auto &c : m->connectors)
+                {
+                    oss << child_indent << "      " << c->name << "\n";
+                }
+                oss << child_indent << "    model_variables: " << m->model_variables.size() << "\n";
+            }
+        }
+
+        oss << child_indent << "Boundary Connectors (" << connectors.size() << "):\n";
+        for (const auto &c : connectors)
+        {
+            oss << child_indent << "  " << c->name << "\n";
+        }
+
+        oss << child_indent << "Connections (" << connections.size() << "):\n";
+        for (const auto &c : connections)
+        {
+            oss << child_indent << "  " << c->source_model << "." << c->source_connector
+                << " -> " << c->target_model << "." << c->target_connector << "\n";
+        }
+
+        oss << child_indent << "Nested Systems (" << nested_systems.size() << "):\n";
+        for (const auto &ns : nested_systems)
+        {
+            oss << ns->tree_string_impl(child_indent + "  ");
+        }
+
+        return oss.str();
+    }
+
 } // namespace ssp4sim::analysis

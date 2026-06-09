@@ -116,6 +116,107 @@ TEST_CASE("AnalysisSystem get_nested_system traverses hierarchy", "[analysis_sys
 }
 
 // ---------------------------------------------------------------------------
+// AnalysisSystem find_connector (Task 1)
+// ---------------------------------------------------------------------------
+TEST_CASE("find_connector returns connector on direct model", "[analysis_system][find_connector]")
+{
+    AnalysisSystem sys("sys");
+    auto model = std::make_unique<AnalysisModel>("motor", "motor.fmu", nullptr);
+    model->connectors.push_back(
+        std::make_unique<AnalysisConnector>("motor", "M_A", 42, DataType::real));
+    sys.models.push_back(std::move(model));
+
+    auto *c = sys.find_connector("motor", "motor.M_A");
+    REQUIRE(c != nullptr);
+    REQUIRE(c->value_reference == 42);
+}
+
+TEST_CASE("find_connector returns null on missing model", "[analysis_system][find_connector]")
+{
+    AnalysisSystem sys("sys");
+    auto model = std::make_unique<AnalysisModel>("motor", "motor.fmu", nullptr);
+    model->connectors.push_back(
+        std::make_unique<AnalysisConnector>("motor", "M_A", 42, DataType::real));
+    sys.models.push_back(std::move(model));
+
+    auto *c = sys.find_connector("nonexistent", "motor.M_A");
+    REQUIRE(c == nullptr);
+}
+
+TEST_CASE("find_connector returns null on missing connector", "[analysis_system][find_connector]")
+{
+    AnalysisSystem sys("sys");
+    auto model = std::make_unique<AnalysisModel>("motor", "motor.fmu", nullptr);
+    model->connectors.push_back(
+        std::make_unique<AnalysisConnector>("motor", "M_A", 42, DataType::real));
+    sys.models.push_back(std::move(model));
+
+    auto *c = sys.find_connector("motor", "motor.M_B");
+    REQUIRE(c == nullptr);
+}
+
+TEST_CASE("find_connector finds connector on nested system model", "[analysis_system][find_connector]")
+{
+    AnalysisSystem root("root");
+    auto nested = std::make_unique<AnalysisSystem>("child");
+    auto model = std::make_unique<AnalysisModel>("nested_motor", "nested.fmu", nullptr);
+    model->connectors.push_back(
+        std::make_unique<AnalysisConnector>("nested_motor", "V_in", 7, DataType::real));
+    nested->models.push_back(std::move(model));
+    root.nested_systems.push_back(std::move(nested));
+
+    auto *c = root.find_connector("nested_motor", "nested_motor.V_in");
+    REQUIRE(c != nullptr);
+    REQUIRE(c->value_reference == 7);
+}
+
+// ---------------------------------------------------------------------------
+// AnalysisSystem to_string (Task 3)
+// ---------------------------------------------------------------------------
+TEST_CASE("to_string contains name and counts", "[analysis_system][to_string]")
+{
+    AnalysisSystem sys("top_system");
+    sys.models.push_back(std::make_unique<AnalysisModel>("m1", "m1.fmu", nullptr));
+    sys.connectors.push_back(std::make_unique<AnalysisConnector>("sys", "in", 1, DataType::real));
+
+    auto s = sys.to_string();
+    REQUIRE(s.find("top_system") != std::string::npos);
+    REQUIRE(s.find("models: 1") != std::string::npos);
+    REQUIRE(s.find("boundary_connectors: 1") != std::string::npos);
+    REQUIRE(s.find("connections: 0") != std::string::npos);
+    REQUIRE(s.find("nested_systems: 0") != std::string::npos);
+}
+
+// ---------------------------------------------------------------------------
+// AnalysisSystem tree_string (Task 3)
+// ---------------------------------------------------------------------------
+TEST_CASE("tree_string shows hierarchy", "[analysis_system][tree_string]")
+{
+    AnalysisSystem sys("root");
+    auto s = sys.tree_string();
+    REQUIRE(s.find("System: root") != std::string::npos);
+    REQUIRE(s.find("Models (0)") != std::string::npos);
+    REQUIRE(s.find("Connections (0)") != std::string::npos);
+}
+
+TEST_CASE("tree_string nests nested systems", "[analysis_system][tree_string]")
+{
+    AnalysisSystem root("root");
+    auto child = std::make_unique<AnalysisSystem>("child");
+    auto model = std::make_unique<AnalysisModel>("m1", "m1.fmu", nullptr);
+    model->connectors.push_back(
+        std::make_unique<AnalysisConnector>("m1", "out", 1, DataType::real));
+    child->models.push_back(std::move(model));
+    root.nested_systems.push_back(std::move(child));
+
+    auto s = root.tree_string();
+    REQUIRE(s.find("System: root") != std::string::npos);
+    REQUIRE(s.find("System: child") != std::string::npos);
+    REQUIRE(s.find("m1") != std::string::npos);
+    REQUIRE(s.find("out") != std::string::npos);
+}
+
+// ---------------------------------------------------------------------------
 // AnalysisModel
 // ---------------------------------------------------------------------------
 TEST_CASE("AnalysisModel construction and move", "[analysis_model]")

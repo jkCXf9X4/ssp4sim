@@ -12,28 +12,6 @@
 #include <utility>
 #include <fstream>
 
-namespace
-{
-    /// Find a connector by model name and (combined) connector name in the analysis system.
-    const ssp4sim::analysis::AnalysisConnector *
-    find_connector(const ssp4sim::analysis::AnalysisSystem &sys,
-                   const std::string &model_name,
-                   const std::string &connector_full_name)
-    {
-        for (auto *m : sys.get_all_models())
-        {
-            if (m->name != model_name)
-                continue;
-            for (auto &c : m->connectors)
-            {
-                if (c->name == connector_full_name)
-                    return c.get();
-            }
-        }
-        return nullptr;
-    }
-}
-
 namespace ssp4sim::graph
 {
     GraphBuilder::GraphBuilder(const analysis::AnalysisSystem &analysis_system_,
@@ -200,9 +178,9 @@ namespace ssp4sim::graph
             con_info.delay = connection->delay;
 
             // Resolve feedthrough from the analysis connector
-            auto *src_analysis_conn = find_connector(analysis_system,
-                                                      connection->source_model,
-                                                      source_connector_name);
+            auto *src_analysis_conn = analysis_system.find_connector(
+                connection->source_model,
+                source_connector_name);
             con_info.is_feedthrough = src_analysis_conn ? src_analysis_conn->is_feedthrough : false;
             if (connection->delay > 0)
             {
