@@ -33,9 +33,6 @@ namespace ssp4sim::analysis
 
         AnalysisSystemBuilder() = default;
 
-        /// Build an AnalysisSystem from an SSP archive path.
-        std::unique_ptr<AnalysisSystem> build(const std::string &ssp_path);
-
         /// Build an AnalysisSystem from an already-loaded SSP and FmuHandler.
         std::unique_ptr<AnalysisSystem> build(ssp4cpp::Ssp *ssp,
                                                handler::FmuHandler *fmu_handler);

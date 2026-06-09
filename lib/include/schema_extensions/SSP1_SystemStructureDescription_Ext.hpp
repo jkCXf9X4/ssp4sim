@@ -19,13 +19,65 @@ namespace ssp4sim::ext::ssp1
 
     namespace ssd
     {
-        std::vector<TComponent *> get_resources(const SystemStructureDescription &ssd);
 
-        /// Recursively collect all components from a TSystem and its nested systems.
-        std::vector<TComponent *> get_resources(const TSystem &sys);
+        // document what is does
+        template <typename SysFn>
+        void walk_system(
+            const ssp4cpp::ssp1::ssd::TSystem &sys,
+            const std::string &path_prefix,
+            SysFn &&on_system,
+            bool recursive = true)
+        {
 
-        /// Collect system-level connectors (boundary connectors) from a TSystem.
-        std::vector<Connector *> get_system_connectors(const TSystem &sys);
+            on_system(sys, path_prefix);
+
+            if (recursive)
+            {
+                for (const auto &sub_sys : elements.Systems)
+                {
+                    const auto sub_sys_name = sub_sys.name.value_or("unnamed");
+
+                    const auto sub_prefix = path_prefix.empty()
+                                                ? sub_sys_name
+                                                : path_prefix + "." + sub_sys_name;
+
+                    walk_system(sub_sys, sub_prefix, std::forward<SysFn>(on_system), recursive);
+                }
+            }
+        }
+
+        // document what is does
+        template <typename ComponentFn>
+        void walk_component(
+            const ssp4cpp::ssp1::ssd::TSystem &sys,
+            const std::string &path_prefix,
+            ComponentFn &&on_component,
+            bool recursive = true)
+        {
+            walk_system(
+                sys,
+                "",
+                [&](const auto &system, const std::string &prefix)
+                {
+                    if (system.Elements.has_value())
+                    {
+                        const auto sub_sys_name = sub_sys.name.value_or("unnamed");
+
+                        name = prefix.empty()
+                                   ? sub_sys_name
+                                   : prefix + "." + sub_sys_name;
+
+                        for (auto &comp : system.Elements.value().Components)
+                        {
+                            on_component(comp, name)
+                        }
+                    }
+                },
+                recursive);
+        }
+
+        std::vector<TComponent *> get_components(const SystemStructureDescription &ssd, bool recursive = false);
+
     }
 
     namespace elements

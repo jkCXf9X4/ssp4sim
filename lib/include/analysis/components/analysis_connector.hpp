@@ -11,15 +11,21 @@
 namespace ssp4sim::analysis
 {
 
+    class AnalysisModel;
+
     class AnalysisConnector
     {
     public:
-        std::string name;
-        std::string type_str;  // "IO" or "P"
-        types::Causality causality;
-        bool is_boundary = false;
 
-        int index = 0;
+        std::string name;
+
+        std::string component_name;
+        std::string connector_name;
+
+        types::Causality causality;
+
+        bool is_boundary = false; // system boundary
+
         uint64_t value_reference = 0;
 
         types::DataType data_type = types::DataType::unknown;
@@ -45,7 +51,7 @@ namespace ssp4sim::analysis
         AnalysisConnector(const AnalysisConnector &) = delete;
         AnalysisConnector &operator=(const AnalysisConnector &) = delete;
 
-        static std::string create_name(const std::string &component_name,
+        static std::string get_connector_name(const std::string &component_name,
                                         const std::string &connector_name_);
 
         std::string to_string() const;

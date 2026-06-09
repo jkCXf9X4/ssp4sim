@@ -2,6 +2,10 @@
 
 #include "analysis/analysis_graph_view.hpp"
 
+#include "handler/fmu_handler.hpp"
+
+#include "SSP1_SystemStructureDescription.hpp"
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -27,7 +31,7 @@ namespace ssp4sim::analysis
 
         AnalysisSystem() = default;
 
-        explicit AnalysisSystem(std::string name_);
+        explicit AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler);
 
         ~AnalysisSystem();
 
@@ -36,30 +40,6 @@ namespace ssp4sim::analysis
 
         AnalysisSystem(const AnalysisSystem &) = delete;
         AnalysisSystem &operator=(const AnalysisSystem &) = delete;
-
-        /// Build a transient graph view from connectors and model variables.
-        AnalysisGraphView build_analysis_graph() const;
-
-        /// Detect algebraic loops using Tarjan's SCC on the graph view.
-        std::vector<std::vector<utils::graph::Node *>> detect_algebraic_loops() const;
-
-        /// Recursively collect all models (from this system and nested systems).
-        std::vector<AnalysisModel *> get_all_models() const;
-
-        /// Recursively collect all connections (from this system and nested systems),
-        /// resolving boundary connectors where applicable.
-        std::vector<AnalysisConnection *> get_all_connections() const;
-
-        /// Find a connector by dot-separated path (e.g. "SuT.edrive_mass.M_A").
-        AnalysisConnector *get_connector(const std::string &system_path,
-                                         const std::string &connector_name) const;
-
-        /// Find a nested system by dot-separated path.
-        AnalysisSystem *get_nested_system(const std::string &path) const;
-
-        /// Find a connector by model name and connector full name across all models.
-        const AnalysisConnector *find_connector(const std::string &model_name,
-                                                 const std::string &connector_full_name) const;
 
         /// Flat summary of this system.
         std::string to_string() const;

@@ -3,6 +3,7 @@
 
 #include "ssp4cpp/utils/string.hpp"
 #include "utils/vector.hpp"
+#include "utils/map.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -24,10 +25,10 @@ namespace ssp4sim::ext::ssp1
 
     namespace
     {
-        ssp4cpp::utils::log::Logger* log()
+        ssp4cpp::utils::log::Logger *log()
         {
             // Cache this logger locally so we avoid eager header initialization.
-            static ssp4cpp::utils::log::Logger* logger =
+            static ssp4cpp::utils::log::Logger *logger =
                 ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1.ssv");
             return logger;
         }
@@ -35,51 +36,32 @@ namespace ssp4sim::ext::ssp1
 
     namespace ssd
     {
-        std::vector<TComponent *> get_resources(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd)
-        {
-            auto resources = vector<TComponent *>();
 
-            if (ssd.System.Elements.has_value())
-            {
-                for (auto &comp : ssd.System.Elements.value().Components)
+        // document what is does
+        std::map<std::string, TComponent *> get_component_map(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd, bool recursive)
+        {
+            auto resources = std::map<std::string, TComponent *>();
+
+            walk_component(
+                ssd.System,
+                "",
+                [&](const auto &component, const std::string &prefix)
                 {
-                    // Make sure that the object is cast as a non const
-                    resources.push_back(const_cast<TComponent *>(&comp));
-                }
-            }
+                    name = prefix + "." + comp.name;
+                    resources[name] = (const_cast<TComponent *>(&comp));
+                },
+                recursive);
+
             return resources;
         }
 
-        std::vector<TComponent *> get_resources(const TSystem &sys)
+        // document what is does
+        std::vector<TComponent *> get_components(const ssp4cpp::ssp1::ssd::SystemStructureDescription &ssd, bool recursive)
         {
-            auto resources = vector<TComponent *>();
-            if (sys.Elements.has_value())
-            {
-                for (auto &comp : sys.Elements.value().Components)
-                {
-                    resources.push_back(const_cast<TComponent *>(&comp));
-                }
-                for (auto &sub_sys : sys.Elements.value().Systems)
-                {
-                    auto nested = get_resources(sub_sys);
-                    resources.insert(resources.end(), nested.begin(), nested.end());
-                }
-            }
-            return resources;
+            auto map = get_component_map(ssd, recursive);
+            return utils::map_ns::map_to_value_vector_copy(map);
         }
 
-        std::vector<Connector *> get_system_connectors(const TSystem &sys)
-        {
-            auto connectors = vector<Connector *>();
-            if (sys.Connectors.has_value())
-            {
-                for (auto &conn : sys.Connectors.value().Connectors)
-                {
-                    connectors.push_back(const_cast<Connector *>(&conn));
-                }
-            }
-            return connectors;
-        }
     }
 
     namespace elements
@@ -139,7 +121,7 @@ namespace ssp4sim::ext::ssp1
                 {
                     if (!connection.startElement.has_value() || !connection.endElement.has_value())
                     {
-                        LOG_WARNING_LIMIT_EVERY_N(100000, log() , "[{func}] Start or endvalue missing for {connection}", __func__, connection.to_string());
+                        LOG_WARNING_LIMIT_EVERY_N(100000, log(), "[{func}] Start or endvalue missing for {connection}", __func__, connection.to_string());
                         continue;
                     }
                     auto p = std::make_pair(connection.startElement.value(), connection.endElement.value());

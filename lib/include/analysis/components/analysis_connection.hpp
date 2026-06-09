@@ -9,10 +9,14 @@ namespace ssp4sim::analysis
     class AnalysisConnection
     {
     public:
+        std::string name;
+        
         std::string source_model;
         std::string source_connector;
         std::string target_model;
         std::string target_connector;
+
+
         uint64_t delay = 0;
         bool is_boundary_crossing = false;
 
@@ -27,10 +31,13 @@ namespace ssp4sim::analysis
 
         ~AnalysisConnection() = default;
 
-        static std::string create_name(const std::string &src_model,
-                                        const std::string &src_con,
-                                        const std::string &tgt_model,
-                                        const std::string &tgt_con);
+        static std::string get_connection_name(const std::string &src_model,
+                                       const std::string &src_con,
+                                       const std::string &tgt_model,
+                                       const std::string &tgt_con);
+
+        static std::string AnalysisConnection::get_connector_name(const std::string &model,
+                                                                  const std::string &con);
 
         std::string to_string() const;
     };

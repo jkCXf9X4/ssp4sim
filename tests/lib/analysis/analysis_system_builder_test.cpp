@@ -1,8 +1,8 @@
-#include "analysis/analysis_system.hpp"
-#include "analysis/analysis_system_builder.hpp"
-#include "analysis/analysis_model.hpp"
-#include "analysis/analysis_connector.hpp"
-#include "analysis/analysis_connection.hpp"
+#include "analysis/components/analysis_system.hpp"
+#include "analysis/components/analysis_system_builder.hpp"
+#include "analysis/components/analysis_model.hpp"
+#include "analysis/components/analysis_connector.hpp"
+#include "analysis/components/analysis_connection.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -27,12 +27,26 @@ namespace
     }
 }
 
+    // this is for tests instead of custom build function in AnalysisSystemBuilder
+    std::unique_ptr<AnalysisSystem> get_analysis_system(const std::string &ssp_path)
+    {
+        if (!log) log = builder_log();
+        LOG_TRACE_L1(log, "[{func}] Building AnalysisSystem from {path}", __func__, ssp_path);
+
+        auto ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path);
+        auto fmu_handler = std::make_unique<handler::FmuHandler>(ssp.get());
+        fmu_handler->init();
+
+        return ssp4sim::analysis::AnalysisSystemBuilder().build(ssp.get(), fmu_handler.get());
+    }
+
+
 TEST_CASE("AnalysisSystemBuilder builds a flat SSP", "[analysis_builder]")
 {
     auto ssp_dir = flat_ssp_path();
     REQUIRE(fs::exists(ssp_dir / "SystemStructure.ssd"));
 
-    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+    auto sys = get_analysis_system(ssp_dir.string());
 
     REQUIRE(sys != nullptr);
     REQUIRE(sys->name == "system");
@@ -56,7 +70,7 @@ TEST_CASE("AnalysisSystemBuilder builds a flat SSP", "[analysis_builder]")
 TEST_CASE("AnalysisSystemBuilder builds flat SSP with correct model names", "[analysis_builder]")
 {
     auto ssp_dir = flat_ssp_path();
-    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+    auto sys = get_analysis_system(ssp_dir.string());
 
     auto models = sys->get_all_models();
     std::set<std::string> model_names;
@@ -70,7 +84,7 @@ TEST_CASE("AnalysisSystemBuilder builds flat SSP with correct model names", "[an
 TEST_CASE("AnalysisSystemBuilder builds flat SSP with system-level connectors present", "[analysis_builder]")
 {
     auto ssp_dir = flat_ssp_path();
-    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+    auto sys = get_analysis_system(ssp_dir.string());
 
     // Flat SSP may have system-level connectors or not; just verify the builder doesn't crash
     REQUIRE(sys != nullptr);
@@ -79,7 +93,7 @@ TEST_CASE("AnalysisSystemBuilder builds flat SSP with system-level connectors pr
 TEST_CASE("AnalysisSystemBuilder builds flat SSP with non-boundary connections", "[analysis_builder]")
 {
     auto ssp_dir = flat_ssp_path();
-    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+    auto sys = get_analysis_system(ssp_dir.string());
 
     auto connections = sys->get_all_connections();
     for (auto *conn : connections)
@@ -94,7 +108,7 @@ TEST_CASE("AnalysisSystemBuilder builds flat SSP with non-boundary connections",
 TEST_CASE("AnalysisSystemBuilder connectors have correct feedthrough state", "[analysis_builder]")
 {
     auto ssp_dir = flat_ssp_path();
-    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+    auto sys = get_analysis_system(ssp_dir.string());
 
     // Feedthrough is now computed from FMU ModelStructure dependencies.
     // Check actual feedthrough state for this model.

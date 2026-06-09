@@ -1,7 +1,9 @@
 #pragma once
 
-#include "analysis/analysis_connector.hpp"
-#include "analysis/analysis_model_variable.hpp"
+#include "analysis/components/analysis_connector.hpp"
+#include "analysis/components/analysis_model_variable.hpp"
+
+#include "handler/fmu_handler.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -32,14 +34,10 @@ namespace ssp4sim::analysis
         bool canInterpolateInputs = false;
         int maxOutputDerivativeOrder = 0;
 
-        /// Compute feedthrough marking on this model's connectors from FMU ModelStructure.
-        void compute_feedthrough(handler::FmuInfo *fmu_info);
 
         AnalysisModel() = default;
 
-        AnalysisModel(std::string name_,
-                      std::string source_file_,
-                      handler::FmuInfo *fmu_);
+        AnalysisModel(handler::FmuInfo *fmu_);
 
         ~AnalysisModel();
 
@@ -48,6 +46,11 @@ namespace ssp4sim::analysis
 
         AnalysisModel(const AnalysisModel &) = delete;
         AnalysisModel &operator=(const AnalysisModel &) = delete;
+
+        void create_connectors();
+        void create_model_variables();
+
+        // void compute_feedthrough(handler::FmuInfo *fmu_info);
 
         std::string to_string() const;
     };
