@@ -20,4 +20,4 @@ This artifact documents known limits, non-goals, and binding constraints that sh
 ## Traceability
 
 - Backward: Defined by the product-breakdown 00-intent layer framework.
-- Sources: `docs/development.md` (lines 49, 64, 87), `docs/linux_binary_distribution.md` (line 5), `docs/overview.md` (lines 5-6).
+- Sources: `docs/development.md` (lines 49, 64, 87), `docs/linux_binary_distribution.md` (line 5), `docs/README.md` (lines 5-6).

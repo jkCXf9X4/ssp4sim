@@ -22,4 +22,4 @@ This artifact enumerates the capabilities of SSP4SIM, each with a stable identif
 ## Traceability
 
 - Backward: Traces to intent outcomes in `product-breakdown/00-intent/outcomes.md`.
-- Sources: `readme.md` (feature list), `docs/overview.md` (notable characteristics), `docs/logging_guidlines.md`, `docs/configuration.md`.
+- Sources: `readme.md` (feature list), `docs/README.md` (notable characteristics), `docs/logging_guidlines.md`, `docs/configuration.md`.
