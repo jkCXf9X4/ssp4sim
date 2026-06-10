@@ -47,8 +47,8 @@ namespace ssp4sim::ext::ssp1
                 "",
                 [&](const auto &component, const std::string &prefix)
                 {
-                    name = prefix + "." + comp.name;
-                    resources[name] = (const_cast<TComponent *>(&comp));
+                    auto name_val = prefix + "." + component.name.value_or("unnamed");
+                    resources[name_val] = (const_cast<TComponent *>(&component));
                 },
                 recursive);
 

@@ -5,6 +5,8 @@
 #include "analysis/components/analysis_connector.hpp"
 #include "analysis/components/analysis_connection.hpp"
 
+#include "analysis/analysis_graph_factory.hpp"
+
 #include "tarjan.hpp"
 #include "utils/node.hpp"
 
@@ -24,6 +26,11 @@ namespace ssp4sim::analysis
                 ssp4cpp::utils::log::make_logger("ssp4sim.analysis.AnalysisSystem");
             return logger;
         }
+    }
+
+    AnalysisSystem::AnalysisSystem(const std::string &name_)
+        : name(name_)
+    {
     }
 
     AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler)
@@ -65,16 +72,36 @@ namespace ssp4sim::analysis
             nested_systems.push_back(std::move(nested));
         }
 
-        // // Process system-level (boundary) connectors
-
-        for (auto & connector : sys.Connectors)
+        // Process system-level (boundary) connectors
+        if (sys.Connectors.has_value())
         {
-            if (conn)
+            for (auto &connector : sys.Connectors.value().Connectors)
+            {
+                auto analysis_conn = std::make_unique<AnalysisConnector>(
+                    sys.name.value_or("unnamed"),
+                    connector.name,
+                    0, // no value reference for system-level connectors
+                    types::DataType::unknown);
+                analysis_conn->is_boundary = true;
+                analysis_conn->causality = connector.kind;
+                connectors.push_back(std::move(analysis_conn));
+            }
         }
-        // builder.process_boundary_connectors(*analysis_sys, sys);
 
-        // // Process connections at this system level
-        // builder.process_connections(*analysis_sys, sys);
+        // Process connections at this system level
+        if (sys.Connections.has_value())
+        {
+            for (auto &conn : sys.Connections.value().Connections)
+            {
+                std::string src_model = conn.startElement.value_or("");
+                std::string src_con  = conn.startConnector;
+                std::string tgt_model = conn.endElement.value_or("");
+                std::string tgt_con  = conn.endConnector;
+                auto analysis_conn = std::make_unique<AnalysisConnection>(
+                    src_model, src_con, tgt_model, tgt_con);
+                connections.push_back(std::move(analysis_conn));
+            }
+        }
     }
 
     AnalysisSystem::~AnalysisSystem() = default;
@@ -139,6 +166,108 @@ namespace ssp4sim::analysis
         }
 
         return oss.str();
+    }
+
+    std::vector<AnalysisModel *> AnalysisSystem::get_all_models() const
+    {
+        std::vector<AnalysisModel *> out;
+        collect_models(out);
+        return out;
+    }
+
+    std::vector<AnalysisConnection *> AnalysisSystem::get_all_connections() const
+    {
+        std::vector<AnalysisConnection *> out;
+        collect_connections(out);
+        return out;
+    }
+
+    void AnalysisSystem::collect_models(std::vector<AnalysisModel *> &out) const
+    {
+        for (auto &m : models)
+            out.push_back(m.get());
+        for (auto &sys : nested_systems)
+            sys->collect_models(out);
+    }
+
+    void AnalysisSystem::collect_connections(std::vector<AnalysisConnection *> &out) const
+    {
+        for (auto &c : connections)
+            out.push_back(c.get());
+        for (auto &sys : nested_systems)
+            sys->collect_connections(out);
+    }
+
+    AnalysisConnector *AnalysisSystem::get_connector(const std::string &system_path,
+                                                      const std::string &connector_name) const
+    {
+        if (system_path.empty() || system_path == name)
+        {
+            for (auto &conn : connectors)
+            {
+                if (conn->name == connector_name)
+                    return conn.get();
+            }
+            return nullptr;
+        }
+
+        auto dot_pos = system_path.find('.');
+        std::string head = (dot_pos == std::string::npos) ? system_path : system_path.substr(0, dot_pos);
+        std::string tail = (dot_pos == std::string::npos) ? "" : system_path.substr(dot_pos + 1);
+
+        for (auto &sys : nested_systems)
+        {
+            if (sys->name == head)
+                return sys->get_connector(tail, connector_name);
+        }
+        return nullptr;
+    }
+
+    AnalysisSystem *AnalysisSystem::get_nested_system(const std::string &path) const
+    {
+        if (path.empty() || path == name)
+            return const_cast<AnalysisSystem *>(this);
+
+        auto dot_pos = path.find('.');
+        std::string head = (dot_pos == std::string::npos) ? path : path.substr(0, dot_pos);
+        std::string tail = (dot_pos == std::string::npos) ? "" : path.substr(dot_pos + 1);
+
+        for (auto &sys : nested_systems)
+        {
+            if (sys->name == head)
+                return sys->get_nested_system(tail);
+        }
+        return nullptr;
+    }
+
+    const AnalysisConnector *AnalysisSystem::find_connector(
+        const std::string &model_name,
+        const std::string &connector_full_name) const
+    {
+        for (auto *m : get_all_models())
+        {
+            if (m->name != model_name)
+                continue;
+            for (auto &c : m->connectors)
+            {
+                if (c->name == connector_full_name)
+                    return c.get();
+            }
+        }
+        return nullptr;
+    }
+
+    std::vector<std::vector<utils::graph::Node *>> AnalysisSystem::detect_algebraic_loops() const
+    {
+        AnalysisGraphFactory factory(*this);
+        return factory.find_algebraic_loops();
+    }
+
+    AnalysisGraphView AnalysisSystem::build_analysis_graph() const
+    {
+        AnalysisGraphFactory factory(*this);
+        auto nodes = factory.build_transient_graph();
+        return AnalysisGraphView::from_nodes(std::move(nodes));
     }
 
 } // namespace ssp4sim::analysis

@@ -4,6 +4,8 @@
 #include "analysis/components/analysis_connector.hpp"
 #include "analysis/components/analysis_connection.hpp"
 
+#include "ssp4cpp/ssp.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
@@ -28,13 +30,10 @@ namespace
 }
 
     // this is for tests instead of custom build function in AnalysisSystemBuilder
-    std::unique_ptr<AnalysisSystem> get_analysis_system(const std::string &ssp_path)
+    std::unique_ptr<ssp4sim::analysis::AnalysisSystem> get_analysis_system(const std::string &ssp_path)
     {
-        if (!log) log = builder_log();
-        LOG_TRACE_L1(log, "[{func}] Building AnalysisSystem from {path}", __func__, ssp_path);
-
         auto ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path);
-        auto fmu_handler = std::make_unique<handler::FmuHandler>(ssp.get());
+        auto fmu_handler = std::make_unique<ssp4sim::handler::FmuHandler>(ssp.get());
         fmu_handler->init();
 
         return ssp4sim::analysis::AnalysisSystemBuilder().build(ssp.get(), fmu_handler.get());

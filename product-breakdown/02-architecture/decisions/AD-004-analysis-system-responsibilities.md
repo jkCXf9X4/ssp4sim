@@ -1,6 +1,6 @@
 # AD-004: AnalysisSystem — Responsibilities and Data Model Separation
 <!-- Layer: 02-architecture -->
-<!-- Status: Accepted -->
+<!-- Status: Superseded by AD-005 -->
 
 ## Context
 

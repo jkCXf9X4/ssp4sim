@@ -54,6 +54,12 @@ namespace ssp4sim::analysis
         static std::string get_connector_name(const std::string &component_name,
                                         const std::string &connector_name_);
 
+        static std::string create_name(const std::string &component_name,
+                                        const std::string &connector_name_)
+        {
+            return get_connector_name(component_name, connector_name_);
+        }
+
         std::string to_string() const;
     };
 

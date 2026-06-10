@@ -1,10 +1,10 @@
 # Analysis System (`lib/include/analysis/`)
 
-> **New module** — Supersedes `lib/include/graph/analysis/` for the analysis data model.
+> **Layer 1 implementation** — The analysis data model, part of the three-layer architecture (AD-005).
 
 ## Overview
 
-The Analysis System module provides a structural, runtime-free view of an SSP's model topology. It mirrors the SSP XML hierarchy while remaining agnostic of graph traversal concerns. Key differences from the old `AnalysisGraph`:
+The Analysis System module provides a structural, runtime-free view of an SSP's model topology. It mirrors the SSP XML hierarchy while remaining agnostic of graph traversal concerns. Key properties:
 
 - **No `utils::graph::Node` inheritance** — data objects are plain classes.
 - **`std::vector` storage** — models, connectors, and connections live in vectors, not maps.
@@ -23,6 +23,7 @@ The Analysis System module provides a structural, runtime-free view of an SSP's 
 | `analysis_connection.hpp` / `.cpp` | Connection wire data class |
 | `analysis_model_variable.hpp` / `.cpp` | Intra-FMU variable data class |
 | `analysis_graph_view.hpp` | Transient graph view for SCC/traversal |
+| `analysis_graph_factory.hpp` / `.cpp` | Layer 2 graph factory — builds transient graphs for algebraic loop detection |
 
 ## Key API
 
@@ -34,13 +35,13 @@ auto sys = analysis::AnalysisSystemBuilder().build("path/to/ssp.ssp");
 auto all_models = sys->get_all_models();
 auto all_connections = sys->get_all_connections();
 
-// Algebraic loop detection
+// Algebraic loop detection (delegates to AnalysisGraphFactory)
 auto sccs = sys->detect_algebraic_loops();
 
 // Connector resolution by path
 auto conn = sys->get_connector("SuT", "SuT.edrive_mass.M_A");
 ```
 
-## Deprecation
+## Architecture
 
-The old files under `lib/include/graph/analysis/components/` are deprecated but kept compilable. They continue to work for backward compatibility but should not be used for new code.
+See AD-005 (three-layer architecture) in `product-breakdown/02-architecture/decisions/`.

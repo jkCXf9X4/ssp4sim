@@ -47,33 +47,7 @@ namespace ssp4sim::analysis
                 return std::make_unique<ext::ssp1::ssv::StartValue>(it->second);
             }
 
-        void override_start_values()
-        {
-            auto param_mappings = ext::ssp1::ssv::get_start_value_mappings(*ssp);
-            // start values
-             // Process nested Systems (recursive)
-            // start with the lower levels to ensure that higher levels override parameter bindings
-            // these should be able to override all levels below
-
-            // start values need to be on a level by level approach
-            // if they are applied on a to high level the full path will differ
-            // dc motor should be a good example to apply
-
-
-                // override startvalues with component parameter bindings
-
-                // SSP parameter set overrides supersede FMU-provided start values
-                // auto override_iv = override_start_value(parameter_mappings, system_name);
-                // if (override_iv)
-                //     c->initial_value = std::move(override_iv);
-
-
-
-            // apply system level parameter bindings on all levels below
-        }
-        
-    
-            
+    }
 
 
     std::unique_ptr<AnalysisSystem> AnalysisSystemBuilder::build(ssp4cpp::Ssp *ssp,
@@ -84,11 +58,40 @@ namespace ssp4sim::analysis
         LOG_TRACE_L1(log, "[{func}] Building AnalysisSystem from SSP", __func__);
 
         auto analysis_sys = std::make_unique<AnalysisSystem>(ssp->ssd->System, fmu_handler);
-
-        override_start_values();
+        // Apply SSP parameter overrides
+        auto overrides = ext::ssp1::ssv::apply_parameter_mappings(ssp->ssd->System);
+        int override_count = 0;
+        for (auto *model : analysis_sys->get_all_models())
+        {
+            for (auto &connector : model->connectors)
+            {
+                auto key = AnalysisConnector::get_connector_name(
+                    connector->component_name, connector->connector_name);
+                auto override_val = override_start_value(overrides, key);
+                if (override_val)
+                {
+                    connector->initial_value = std::move(override_val);
+                    ++override_count;
+                }
+            }
+        }
+        LOG_TRACE_L1(log, "[{func}] Applied {} SSP parameter overrides", __func__, override_count);
 
         LOG_TRACE_L1(log, "[{func}] exit", __func__);
-        return result;
+        return analysis_sys;
+    }
+
+    std::unique_ptr<AnalysisSystem> AnalysisSystemBuilder::build(const std::string &ssp_path)
+    {
+        if (!log)
+            log = builder_log();
+        LOG_TRACE_L1(log, "[{func}] Building AnalysisSystem from path {path}", __func__, ssp_path);
+
+        auto ssp = std::make_unique<ssp4cpp::Ssp>(ssp_path);
+        auto fmu_handler = std::make_unique<handler::FmuHandler>(ssp.get());
+        fmu_handler->init();
+
+        return build(ssp.get(), fmu_handler.get());
     }
 
 } // namespace ssp4sim::analysis

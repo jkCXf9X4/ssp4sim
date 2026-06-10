@@ -4,7 +4,10 @@
 
 #include "handler/fmu_handler.hpp"
 
-#include "SSP1_SystemStructureDescription.hpp"
+#include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
+
+#include "utils/node.hpp"
+#include "utils/tarjan.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -31,6 +34,8 @@ namespace ssp4sim::analysis
 
         AnalysisSystem() = default;
 
+        explicit AnalysisSystem(const std::string &name);
+
         explicit AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler);
 
         ~AnalysisSystem();
@@ -46,6 +51,29 @@ namespace ssp4sim::analysis
 
         /// Hierarchical tree view of this system and its contents.
         std::string tree_string() const;
+
+        /// Get all models recursively (flattened).
+        std::vector<AnalysisModel *> get_all_models() const;
+
+        /// Get all connections recursively (flattened).
+        std::vector<AnalysisConnection *> get_all_connections() const;
+
+        /// Resolve a connector by system path and connector name.
+        AnalysisConnector *get_connector(const std::string &system_path,
+                                          const std::string &connector_name) const;
+
+        /// Get a nested system by dot-separated path.
+        AnalysisSystem *get_nested_system(const std::string &path) const;
+
+        /// Find a connector across all models by model name and full connector name.
+        const AnalysisConnector *find_connector(const std::string &model_name,
+                                                  const std::string &connector_full_name) const;
+
+        /// Detect algebraic loops using Tarjan SCC (delegates to AnalysisGraphFactory).
+        std::vector<std::vector<utils::graph::Node *>> detect_algebraic_loops() const;
+
+        /// Build a transient analysis graph view.
+        AnalysisGraphView build_analysis_graph() const;
 
     private:
         void collect_models(std::vector<AnalysisModel *> &out) const;

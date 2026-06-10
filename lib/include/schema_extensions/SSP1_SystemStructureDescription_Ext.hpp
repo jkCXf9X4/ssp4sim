@@ -33,6 +33,8 @@ namespace ssp4sim::ext::ssp1
 
             if (recursive)
             {
+                auto &elements = sys.Elements.value();
+
                 for (const auto &sub_sys : elements.Systems)
                 {
                     const auto sub_sys_name = sub_sys.name.value_or("unnamed");
@@ -61,15 +63,15 @@ namespace ssp4sim::ext::ssp1
                 {
                     if (system.Elements.has_value())
                     {
-                        const auto sub_sys_name = sub_sys.name.value_or("unnamed");
+                        const auto sub_sys_name = system.name.value_or("unnamed");
 
-                        name = prefix.empty()
-                                   ? sub_sys_name
-                                   : prefix + "." + sub_sys_name;
+                        const auto name = prefix.empty()
+                                       ? sub_sys_name
+                                       : prefix + "." + sub_sys_name;
 
                         for (auto &comp : system.Elements.value().Components)
                         {
-                            on_component(comp, name)
+                            on_component(comp, name);
                         }
                     }
                 },

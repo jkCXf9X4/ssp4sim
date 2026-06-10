@@ -31,13 +31,22 @@ namespace ssp4sim::analysis
 
         ~AnalysisConnection() = default;
 
-        static std::string get_connection_name(const std::string &src_model,
-                                       const std::string &src_con,
-                                       const std::string &tgt_model,
-                                       const std::string &tgt_con);
+static std::string get_connection_name(const std::string &src_model,
+                                        const std::string &src_con,
+                                        const std::string &tgt_model,
+                                        const std::string &tgt_con);
 
-        static std::string AnalysisConnection::get_connector_name(const std::string &model,
-                                                                  const std::string &con);
+        // TODO: THis seems like unnecessary duplication
+        static std::string create_name(const std::string &src_model,
+                                        const std::string &src_con,
+                                        const std::string &tgt_model,
+                                        const std::string &tgt_con)
+        {
+            return get_connection_name(src_model, src_con, tgt_model, tgt_con);
+        }
+
+static std::string get_connector_name(const std::string &model,
+                                               const std::string &con);
 
         std::string to_string() const;
     };

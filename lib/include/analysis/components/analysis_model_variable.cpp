@@ -23,15 +23,24 @@ namespace ssp4sim::analysis
     AnalysisModelVariable::AnalysisModelVariable(const ssp4cpp::fmi2::md::fmi2ScalarVariable &var)
         : name(var.name)
     {
+        component = "";
+        variable_name = var.name;
+        type = "";
         if (var.valueReference.has_value())
         {
             value_reference = var.valueReference.value();
         }
-        else
-        {
-            // if we need to use this for something
-            //throw std::runtime_error("Internal variable without name");
-        }
+    }
+
+    AnalysisModelVariable::AnalysisModelVariable(std::string component_,
+                                                  std::string var_name,
+                                                  std::string type_,
+                                                  std::string /*initial_value*/)
+        : component(std::move(component_)),
+          variable_name(var_name),
+          type(std::move(type_)),
+          name(AnalysisConnector::get_connector_name(this->component, this->variable_name))
+    {
     }
 
     std::string AnalysisModelVariable::to_string() const
@@ -39,6 +48,9 @@ namespace ssp4sim::analysis
         std::ostringstream oss;
         oss << "AnalysisModelVariable {"
             << "\n  name: " << name
+            << "\n  component: " << component
+            << "\n  variable_name: " << variable_name
+            << "\n  type: " << type
             << "\n  vr: " << value_reference
             << "\n  causality: " << causality.to_string()
             << "\n}";

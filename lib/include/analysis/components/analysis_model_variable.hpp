@@ -3,6 +3,7 @@
 #include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
 
 #include <string>
+#include <vector>
 
 namespace ssp4sim::analysis
 {
@@ -10,6 +11,9 @@ namespace ssp4sim::analysis
     class AnalysisModelVariable
     {
     public:
+        std::string component;
+        std::string variable_name;
+        std::string type;
         std::string name;
         unsigned int value_reference;
         ssp4cpp::fmi2::md::Causality causality;
@@ -22,6 +26,11 @@ namespace ssp4sim::analysis
         AnalysisModelVariable() = default;
 
         AnalysisModelVariable(const ssp4cpp::fmi2::md::fmi2ScalarVariable &var);
+
+        AnalysisModelVariable(std::string component,
+                              std::string var_name,
+                              std::string type,
+                              std::string initial_value);
 
         ~AnalysisModelVariable() = default;
 

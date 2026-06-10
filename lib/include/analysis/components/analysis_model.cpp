@@ -42,6 +42,11 @@ namespace ssp4sim::analysis
         // compute_feedthrough(fmu_info);
     }
 
+    AnalysisModel::AnalysisModel(const std::string &name_, const std::string &source_, handler::FmuInfo *fmu_)
+        : name(name_), source_file(source_), fmu(fmu_)
+    {
+    }
+
     AnalysisModel::~AnalysisModel() = default;
 
     std::string AnalysisModel::to_string() const
@@ -106,7 +111,7 @@ namespace ssp4sim::analysis
 
         for (auto &variable : fmu->model_description->ModelVariables.ScalarVariable)
         {
-            auto mv = std::make_unique<AnalysisModelVariable>(variable.name);
+            auto mv = std::make_unique<AnalysisModelVariable>(variable);
             LOG_TRACE_L1(log(), "[{func}] New ModelVariable: {variable}", __func__, mv->name);
 
             // populate variable dependencies

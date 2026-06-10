@@ -1,8 +1,8 @@
-#include "analysis/analysis_system.hpp"
-#include "analysis/analysis_model.hpp"
-#include "analysis/analysis_connector.hpp"
-#include "analysis/analysis_connection.hpp"
-#include "analysis/analysis_model_variable.hpp"
+#include "analysis/components/analysis_system.hpp"
+#include "analysis/components/analysis_model.hpp"
+#include "analysis/components/analysis_connector.hpp"
+#include "analysis/components/analysis_connection.hpp"
+#include "analysis/components/analysis_model_variable.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 

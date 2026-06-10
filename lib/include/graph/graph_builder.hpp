@@ -3,7 +3,7 @@
 #include "shared_config.hpp"
 #include "graph.hpp"
 
-#include "analysis/analysis_system.hpp"
+#include "analysis/components/analysis_system.hpp"
 
 #include <map>
 #include <memory>

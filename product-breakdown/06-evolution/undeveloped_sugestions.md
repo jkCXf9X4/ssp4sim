@@ -37,3 +37,46 @@ this injects into the scheduling somehow...
 
 ---
 
+
+
+void override_start_values(system)
+{
+
+    for subsystem in system.systems
+    {
+        override_start_values(subsystem)
+    }
+
+    for component in system.component
+    {
+        auto component_mappings = ext::ssp1::ssv::get_start_value_mappings(component);
+        apply component mapping
+    }
+    auto system_mappings = ext::ssp1::ssv::get_start_value_mappings(system);
+    apply system_mappings mapping
+}
+
+    
+    // start values
+        // Process nested Systems (recursive)
+    // start with the lower levels to ensure that higher levels override parameter bindings
+    // these should be able to override all levels below
+
+    // start values need to be on a level by level approach
+    // if they are applied on a to high level the full path will differ
+    // dc motor should be a good example to apply
+
+    auto param_mappings = ext::ssp1::ssv::get_start_value_mappings(*ssp);
+
+
+        // override startvalues with component parameter bindings
+
+        // SSP parameter set overrides supersede FMU-provided start values
+        // auto override_iv = override_start_value(parameter_mappings, system_name);
+        // if (override_iv)
+        //     c->initial_value = std::move(override_iv);
+
+
+
+    // apply system level parameter bindings on all levels below
+}

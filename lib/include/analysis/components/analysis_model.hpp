@@ -39,6 +39,8 @@ namespace ssp4sim::analysis
 
         AnalysisModel(handler::FmuInfo *fmu_);
 
+        AnalysisModel(const std::string &name_, const std::string &source_, handler::FmuInfo *fmu_);
+
         ~AnalysisModel();
 
         AnalysisModel(AnalysisModel &&) = default;

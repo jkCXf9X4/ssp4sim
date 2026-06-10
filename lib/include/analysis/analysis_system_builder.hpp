@@ -1,6 +1,6 @@
 #pragma once
 
-#include "analysis/analysis_system.hpp"
+#include "analysis/components/analysis_system.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -33,9 +33,12 @@ namespace ssp4sim::analysis
 
         AnalysisSystemBuilder() = default;
 
-        /// Build an AnalysisSystem from an already-loaded SSP and FmuHandler.
+/// Build an AnalysisSystem from an already-loaded SSP and FmuHandler.
         std::unique_ptr<AnalysisSystem> build(ssp4cpp::Ssp *ssp,
-                                               handler::FmuHandler *fmu_handler);
+                                                handler::FmuHandler *fmu_handler);
+
+        /// Build an AnalysisSystem from an SSP file path (convenience entry point).
+        std::unique_ptr<AnalysisSystem> build(const std::string &ssp_path);
 
         /// Process system-level (boundary) connectors from the SSD system node.
         void process_boundary_connectors(AnalysisSystem &sys,

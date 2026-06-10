@@ -1,9 +1,4 @@
-
-
-
 #include "SSP1_SystemStructureParameter_Ext.hpp"
-
-#include "ssp4cpp/ssp.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -26,7 +21,7 @@ namespace ssp4sim::ext::ssp1::ssv
         }
     }
 
-    types::DataType get_parameter_type(ssp4cpp::ssp1::ssv::TParameter &par)
+    types::DataType get_parameter_type(const ssp4cpp::ssp1::ssv::TParameter &par)
     {
         if (par.Boolean.has_value())
         {
@@ -54,62 +49,56 @@ namespace ssp4sim::ext::ssp1::ssv
         }
     }
 
-    void *get_parameter_value(ssp4cpp::ssp1::ssv::TParameter &par)
+    void *get_parameter_value(const ssp4cpp::ssp1::ssv::TParameter &par)
     {
-        if (par.Boolean.has_value())
+        auto &p = const_cast<ssp4cpp::ssp1::ssv::TParameter &>(par);
+        if (p.Boolean.has_value())
         {
-            return &par.Boolean.value().value;
+            return &p.Boolean.value().value;
         }
-        else if (par.Enumeration.has_value())
+        else if (p.Enumeration.has_value())
         {
-            return &par.Enumeration.value().value;
+            return &p.Enumeration.value().value;
         }
-        else if (par.Integer.has_value())
+        else if (p.Integer.has_value())
         {
-            return &par.Integer.value().value;
+            return &p.Integer.value().value;
         }
-        else if (par.Real.has_value())
+        else if (p.Real.has_value())
         {
-            return &par.Real.value().value;
+            return &p.Real.value().value;
         }
-        else if (par.String.has_value())
+        else if (p.String.has_value())
         {
-            return &par.String.value().value;
+            return &p.String.value().value;
         }
         return nullptr;
     }
 
-    std::vector<StartValue> get_start_values(std::vector<ssp4cpp::ParameterBindings> &bindings)
+    std::vector<StartValue> get_start_values(
+        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings)
     {
         LOG_TRACE_L1(log(), "[{func}] Init", __func__);
 
         std::vector<StartValue> start_values;
         for (auto &binding : bindings)
         {
-            for (auto &parameter : binding.ssv.Parameters.Parameters)
+            if (!binding.ParameterValues.has_value())
+                continue;
+            for (auto &parameter : binding.ParameterValues.value().ParameterSet.Parameters.Parameters)
             {
                 LOG_TRACE_L1(log(), "[{func}] - Store values, {}", __func__, parameter.name);
                 StartValue start_value(parameter.name, get_parameter_type(parameter));
                 start_value.store_value(get_parameter_value(parameter));
 
-                if (binding.ssm.has_value())
-                {
-                    for (auto &map : binding.ssm.value().MappingEntry)
-                    {
-                        if (start_value.name == map.source)
-                        {
-                            LOG_TRACE_L1(log(), "[{func}] Add mapping for {} - {}", __func__, parameter.name, map.target);
-                            start_value.mappings.push_back(map.target);
-                        }
-                    }
-                }
                 start_values.push_back(std::move(start_value));
             }
         }
         return start_values;
     }
 
-    std::map<std::string, StartValue> get_start_value_map(std::vector<StartValue> &start_values)
+    std::map<std::string, StartValue> get_start_value_map(
+        const std::vector<StartValue> &start_values)
     {
         std::map<std::string, StartValue> parameter_map;
         for (auto &value : start_values)
@@ -130,11 +119,50 @@ namespace ssp4sim::ext::ssp1::ssv
         return parameter_map;
     }
 
-
-    std::map<std::string, StartValue> get_start_value_mappings(ssp4cpp::Ssp &ssp)
+    std::map<std::string, StartValue> get_start_value_mappings(
+        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings)
     {
-        // Get initial values
-        auto initial_values = get_start_values(ssp.parameter_bindings);
-        return get_start_value_map(initial_values);
+        auto start_values = get_start_values(bindings);
+        return get_start_value_map(start_values);
+    }
+
+    std::map<std::string, StartValue> apply_parameter_mappings(
+        ssp4cpp::ssp1::ssd::TSystem &system)
+    {
+        std::map<std::string, StartValue> result;
+
+        if (system.Elements.has_value())
+        {
+            // Recurse into nested systems first (children)
+            for (auto &subsystem : system.Elements->Systems)
+            {
+                auto sub_map = apply_parameter_mappings(subsystem);
+                result.merge(sub_map);  // merge inserts only keys not already in result
+            }
+
+            // Apply component-level bindings
+            for (auto &component : system.Elements->Components)
+            {
+                if (component.ParameterBindings.has_value())
+                {
+                    auto comp_map = get_start_value_mappings(
+                        component.ParameterBindings->ParameterBindings);
+                    result.merge(comp_map);
+                }
+            }
+        }
+
+        // System-level bindings: overrides all children (both subsystems and components)
+        if (system.ParameterBindings.has_value())
+        {
+            auto sys_map = get_start_value_mappings(
+                system.ParameterBindings->ParameterBindings);
+            for (auto &[key, value] : sys_map)
+            {
+                result.insert_or_assign(key, std::move(value));
+            }
+        }
+
+        return result;
     }
 }
