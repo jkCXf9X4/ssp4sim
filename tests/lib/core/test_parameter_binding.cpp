@@ -237,24 +237,6 @@ TEST_CASE("get_start_value_map assembles name-to-StartValue map", "[parameter_bi
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 6: Nested sub-system parameter bindings (SKIP / xfail)
-// ---------------------------------------------------------------------------
-TEST_CASE("Nested sub-system parameter bindings are not traversed", "[parameter_binding]")
-{
-    SKIP("Nested system parameter bindings are not yet supported -- "
-         "get_parameter_bindings() in ssp4cpp/ssp.cpp only "
-         "traverses root System.ParameterBindings and "
-         "root System.Elements.Components[*].ParameterBindings. "
-         "Nested System elements inside Elements are skipped.");
-
-    // If executed, this test would:
-    // auto ssp = ssp4cpp::Ssp(SSP4SIM_PROJECT_ROOT "/resources/reference_ssp/models/ssp/dcmotor/ssp/");
-    // auto param_count = ssp.parameter_bindings.size();
-    // ... but the traversal code at ssp.cpp:62-117 only reads
-    // ssd.System.Elements.Components, never ssd.System.Elements.Systems,
-    // so nested bindings are not captured.
-}
-
 // ---------------------------------------------------------------------------
 // Test Case 7: External ParameterSet (constructed), no ParameterMapping
 // ---------------------------------------------------------------------------
@@ -403,4 +385,103 @@ TEST_CASE("Empty external ParameterSet edge case", "[parameter_binding]")
 
     REQUIRE(start_values.size() == 0);
     CHECK(start_values.empty());
+}
+
+// ---------------------------------------------------------------------------
+// Test Case 11: Real SSP fixture resolves external SSV/SSM (integration)
+// ---------------------------------------------------------------------------
+TEST_CASE("Real SSP fixture resolves external SSV/SSM", "[parameter_binding][integration]")
+{
+    auto ssp_path = std::filesystem::path(SSP4SIM_PROJECT_ROOT)
+        / "resources" / "reference_ssp" / "artifacts" / "models"
+        / "signal_nested_parameter_bindings" / "baseline";
+    REQUIRE(std::filesystem::exists(ssp_path / "SystemStructure.ssd"));
+
+    ssp4cpp::Ssp ssp(ssp_path);
+
+    // Root system: external SSV + SSM (add_k1=1.0, add_k2=1.0 mapped to add.k1, add.k2)
+    // + component step inline (height=1.0, offset=0.0, startTime=0.25)
+    REQUIRE(ssp.parameter_bindings.size() >= 2);
+
+    // Binding[0]: root system external SSV + SSM
+    {
+        auto &bind = ssp.parameter_bindings[0];
+
+        // External SSV: add_k1=1.0, add_k2=1.0
+        REQUIRE(bind.ssv.Parameters.Parameters.size() == 2);
+        CHECK(bind.ssv.Parameters.Parameters[0].name == "add_k1");
+        CHECK(bind.ssv.Parameters.Parameters[0].Real->value == 1.0);
+        CHECK(bind.ssv.Parameters.Parameters[1].name == "add_k2");
+        CHECK(bind.ssv.Parameters.Parameters[1].Real->value == 1.0);
+
+        // External SSM: add_k1 to add.k1, add_k2 to add.k2
+        REQUIRE(bind.ssm.has_value());
+        REQUIRE(bind.ssm->MappingEntry.size() == 2);
+        CHECK(bind.ssm->MappingEntry[0].source == "add_k1");
+        CHECK(bind.ssm->MappingEntry[0].target == "add.k1");
+        CHECK(bind.ssm->MappingEntry[1].source == "add_k2");
+        CHECK(bind.ssm->MappingEntry[1].target == "add.k2");
+    }
+
+    // Binding[1]: component step inline parameter set
+    {
+        auto &bind = ssp.parameter_bindings[1];
+        REQUIRE(bind.ssv.Parameters.Parameters.size() == 3);
+
+        // Find parameters by component-prefixed name (ssp4cpp prepends component name)
+        auto find_param = [&](const std::string &name) -> const ssp4cpp::ssp1::ssv::TParameter* {
+            for (auto &p : bind.ssv.Parameters.Parameters)
+                if (p.name == name) return &p;
+            return nullptr;
+        };
+
+        const auto *height = find_param("step.height");
+        REQUIRE(height != nullptr);
+        CHECK(height->Real->value == 1.0);
+
+        const auto *offset = find_param("step.offset");
+        REQUIRE(offset != nullptr);
+        CHECK(offset->Real->value == 0.0);
+
+        const auto *startTime = find_param("step.startTime");
+        REQUIRE(startTime != nullptr);
+        CHECK(startTime->Real->value == 0.25);
+    }
+
+    // Verify the assembled start-value map via get_start_value_mappings
+    auto start_map = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(ssp);
+
+    // Source names from SSV
+    CHECK(start_map.contains("add_k1"));
+    CHECK(start_map.contains("add_k2"));
+
+    // Mapped target names from SSM
+    CHECK(start_map.contains("add.k1"));
+    CHECK(start_map.contains("add.k2"));
+
+    // Component-level prefixed names
+    CHECK(start_map.contains("step.height"));
+    CHECK(start_map.contains("step.offset"));
+    CHECK(start_map.contains("step.startTime"));
+
+    // Verify types and values
+    auto check_real = [&](const std::string &name, double expected) {
+        auto it = start_map.find(name);
+        REQUIRE(it != start_map.end());
+        CHECK(it->second.type == ssp4sim::types::DataType::real);
+        CHECK(std::get<double>(it->second.value) == expected);
+    };
+    check_real("add_k1", 1.0);
+    check_real("add.k1", 1.0);
+    check_real("add_k2", 1.0);
+    check_real("add.k2", 1.0);
+    check_real("step.height", 1.0);
+    check_real("step.offset", 0.0);
+    check_real("step.startTime", 0.25);
+
+    // Known limitation: nested system inner's bindings (sine.*, gain.k)
+    // are not traversed by ssp4cpp's get_parameter_bindings()
+    WARN("Nested system parameter bindings are not traversed by ssp4cpp (known limitation). "
+         "This fixture has additional inline bindings inside the 'inner' nested system "
+         "that are not captured in ssp.parameter_bindings.");
 }

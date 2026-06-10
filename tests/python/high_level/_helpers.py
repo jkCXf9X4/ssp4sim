@@ -33,6 +33,7 @@ SOURCE_SSP_ROOT = (
 )
 REFERENCE_SSP_ROOTS = [REFERENCE_SSP_ROOT, SOURCE_SSP_ROOT]
 SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
+SSV_NAMESPACE = {"ssv": "http://ssp-standard.org/SSP1/SystemStructureParameterValues"}
 
 
 if not (PYTHON_API_BUILD / "pyssp4sim").exists():
@@ -181,3 +182,55 @@ def run_reference_ssp(ssp_root: Path, tmp_path: Path) -> Path:
 
     assert_result_file_is_complete(workdir / "result.csv")
     return workdir
+
+
+def assert_start_values_match_ssv(start_values_text: str, ssv_path: Path) -> None:
+    """Assert that every parameter in the SSV file appears in start_values.csv text.
+
+    Both artifacts describe the same resolved parameter state after a simulation run.
+    The SSV file is the reference; start_values.csv is the simulation output.
+    When nested system traversal is added to the graph builder, running this fixture
+    should produce a start_values.csv whose lines match all entries in the SSV file.
+    """
+    tree = ET.parse(str(ssv_path))
+    root = tree.getroot()
+
+    parameters = root.find("ssv:Parameters", SSV_NAMESPACE)
+    assert parameters is not None, f"No <ssv:Parameters> found in {ssv_path}"
+
+    for param in parameters.findall("ssv:Parameter", SSV_NAMESPACE):
+        name = param.get("name")
+        assert name is not None, f"Parameter without name in {ssv_path}"
+
+        # Determine type from child element (Real, Integer, String, Boolean)
+        elem = None
+        for child in param:
+            tag = child.tag.split("}")[-1]  # strip namespace
+            elem = child
+            break
+
+        assert elem is not None, f"Parameter {name} has no value element"
+
+        tag = elem.tag.split("}")[-1]
+        if tag == "Real":
+            value = float(elem.get("value", "0.0"))
+            formatted = f"{value:.6f}"
+        elif tag == "Integer":
+            value = int(elem.get("value", "0"))
+            formatted = str(value)
+        elif tag == "String":
+            value = elem.get("value", "")
+            formatted = value
+        elif tag == "Boolean":
+            raw = elem.get("value", "false")
+            value = 1 if raw.lower() == "true" else 0
+            formatted = str(value)
+        else:
+            raise ValueError(f"Unsupported SSV type: {tag}")
+
+        expected_line = f"0, {name}, {formatted}"
+        assert expected_line in start_values_text, (
+            f"Missing parameter in start_values.csv:\n"
+            f"  Expected: '{expected_line}'\n"
+            f"  SSV source: {name} = {value} (from {ssv_path.name})"
+        )
