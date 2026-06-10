@@ -20,7 +20,7 @@ namespace ssp4sim::ext::fmi2
     {
         fmi2ScalarVariable *get_variable(ModelVariables &mv, int index)
         {
-            if (index < 0 || index >= mv.ScalarVariable.size())
+            if (index < 0 || index > mv.ScalarVariable.size())
             {
                 throw std::invalid_argument("Index out of range");
             }
