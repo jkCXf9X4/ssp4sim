@@ -22,9 +22,9 @@ namespace ssp4sim::analysis
         }
     }
 
-    AnalysisModel::AnalysisModel(handler::FmuInfo *fmu_) : fmu(fmu_)
+    AnalysisModel::AnalysisModel(handler::FmuInfo *fmu_, const std::string &model_name) : fmu(fmu_)
     {
-        name = fmu_->system_name;
+        name = model_name.empty() ? fmu_->system_name : model_name;
         source_file =fmu->fmi_instance->path();
         
         if (fmu->model_description->CoSimulation)

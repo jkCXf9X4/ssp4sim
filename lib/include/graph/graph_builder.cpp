@@ -37,6 +37,11 @@ namespace ssp4sim::graph
         for (auto &[ssp_resource_name, model] : models)
         {
             auto m = dynamic_cast<FmuModel *>(model.get());
+            if (!m)
+            {
+                LOG_WARNING(log, "[{func}] Skipping model '{name}' with null FmuModel pointer", __func__, ssp_resource_name);
+                continue;
+            }
             m->input_area->allocate();
             m->output_area->allocate();
             if (recorder)
@@ -146,16 +151,19 @@ namespace ssp4sim::graph
             if (connection->is_boundary_crossing)
                 continue;
 
-            auto source_model = dynamic_cast<FmuModel *>(models[connection->source_model].get());
-            auto target_model = dynamic_cast<FmuModel *>(models[connection->target_model].get());
+            auto src_it = models.find(connection->source_model);
+            auto tgt_it = models.find(connection->target_model);
 
-            if (!source_model || !target_model)
+            if (src_it == models.end() || tgt_it == models.end())
             {
                 LOG_WARNING(log, "[{func}] Skipping connection {src}.{sc} -> {tgt}.{tc}: model not found",
                             __func__, connection->source_model, connection->source_connector,
                             connection->target_model, connection->target_connector);
                 continue;
             }
+
+            auto source_model = dynamic_cast<FmuModel *>(src_it->second.get());
+            auto target_model = dynamic_cast<FmuModel *>(tgt_it->second.get());
 
             auto source_connector_name = connection->source_model + "." + connection->source_connector;
             auto target_connector_name = connection->target_model + "." + connection->target_connector;

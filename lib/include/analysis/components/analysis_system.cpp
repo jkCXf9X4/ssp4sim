@@ -33,7 +33,7 @@ namespace ssp4sim::analysis
     {
     }
 
-    AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler)
+    AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler, const std::string &path_prefix)
         : name(sys.name.value_or("unnamed"))
     {
         if (!sys.Elements.has_value())
@@ -52,23 +52,26 @@ namespace ssp4sim::analysis
             }
 
             auto component_name = component.name.value();
+            auto fmu_lookup_name = path_prefix.empty() ? component_name : path_prefix + "." + component_name;
 
-            if (!fmu_handler->fmu_info_map.contains(component_name))
+            if (!fmu_handler->fmu_info_map.contains(fmu_lookup_name))
             {
-                LOG_ERROR(log(), "[{func}] FMU not found: {name}", __func__, component_name);
-                throw std::runtime_error("FMU not found: " + component_name);
+                LOG_ERROR(log(), "[{func}] FMU not found: {name}", __func__, fmu_lookup_name);
+                throw std::runtime_error("FMU not found: " + fmu_lookup_name);
             }
 
-            auto fmu_info = fmu_handler->fmu_info_map[component_name].get();
+            auto fmu_info = fmu_handler->fmu_info_map[fmu_lookup_name].get();
 
-            auto model = std::make_unique<AnalysisModel>(fmu_info);
+            auto model = std::make_unique<AnalysisModel>(fmu_info, component_name);
 
             models.push_back(std::move(model));
         }
 
         for (auto &sub_sys : elements.Systems)
         {
-            auto nested = std::make_unique<AnalysisSystem>(sub_sys, fmu_handler);
+            auto sub_sys_name = sub_sys.name.value_or("unnamed");
+            auto sub_prefix = path_prefix.empty() ? sub_sys_name : path_prefix + "." + sub_sys_name;
+            auto nested = std::make_unique<AnalysisSystem>(sub_sys, fmu_handler, sub_prefix);
             nested_systems.push_back(std::move(nested));
         }
 

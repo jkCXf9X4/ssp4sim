@@ -95,6 +95,14 @@ namespace ssp4sim::analysis
                             auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
                                 connector->component_name, connector->connector_name);
                             auto override_val = override_start_value(comp_map, key);
+
+                            // TODO: double check this...
+                            /* Fallback: try simple connector name without component prefix
+                               (inline component-level bindings without SSM mapping) */
+                            if (!override_val)
+                            {
+                                override_val = override_start_value(comp_map, connector->connector_name);
+                            }
                             if (override_val)
                             {
                                 connector->initial_value = std::move(override_val);

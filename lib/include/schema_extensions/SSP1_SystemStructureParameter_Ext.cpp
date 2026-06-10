@@ -160,15 +160,24 @@ namespace ssp4sim::ext::ssp1::ssv
         std::map<std::string, StartValue> result;
         for (auto &value : start_values)
         {
-            for (auto name : value.mappings)
+            if (value.mappings.empty())
             {
-                LOG_TRACE_L1(log(), "[{func}] Name: {name}", __func__, name);
-                if (result.find(name) != result.end())
+                /* Without SSM mappings, use the parameter name itself as the key.
+                   For system-level bindings this is "component.connector",
+                   for component-level bindings this is the simple connector name. */
+                result.insert_or_assign(value.name, std::move(value));
+            }
+            else
+            {
+                for (auto name : value.mappings)
                 {
-                    LOG_WARNING(log(), "Overwriting parameter: {name}", name);
+                    LOG_TRACE_L1(log(), "[{func}] Name: {name}", __func__, name);
+                    if (result.find(name) != result.end())
+                    {
+                        LOG_WARNING(log(), "Overwriting parameter: {name}", name);
+                    }
+                    result.insert_or_assign(name, std::move(value));
                 }
-
-                result.insert_or_assign(name, std::move(value));
             }
         }
         return result;

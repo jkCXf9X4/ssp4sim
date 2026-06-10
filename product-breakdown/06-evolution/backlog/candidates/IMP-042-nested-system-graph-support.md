@@ -1,0 +1,123 @@
+# IMP-042: Nested System Graph Support
+
+## Lifecycle Stage
+Candidate
+
+## Status
+Proposed
+
+## Layer
+03-implementation
+
+## Theme
+Enable end-to-end simulation of nested (hierarchical) SSP systems by resolving boundary-crossing connections, using path-prefixed model naming, and supporting system-level SSV+SSM parameter bindings.
+
+## Evidence
+- `lib/include/analysis/components/analysis_connection.hpp` — `is_boundary_crossing` field exists but is **never set to `true`** by the SSP parser (analysis_system.cpp lines 94–107). The constructor reads `startElement`/`endElement` with `value_or("")` which silently discards the boundary information.
+- `lib/include/graph/graph_builder.cpp` lines 148–205 — `wire_connections()` **skips** boundary connections entirely (`if (connection->is_boundary_crossing) continue`). Since no connection ever has this flag set, the code instead tries `models[connection->source_model]` with a system name (like `"SuT"`) which isn't in the models map, silently dropping the connection.
+- `lib/include/analysis/components/analysis_system.cpp` line 65 — Models are created with bare component names (`"edrive_mass"`) even when inside a nested system. The `path_prefix` is only used for FMU lookup, not for model naming. GraphBuilder keys models by bare name.
+- `lib/include/analysis/analysis_system_builder.cpp` lines 116–136 — System-level parameter overrides only iterate `analysis_sys.models` (component connectors), not `analysis_sys.connectors` (boundary connectors). No fallback exists for unprefixed connector keys, unlike the component-level path.
+- Tests `dcmotor_nested/baseline` and `signal_nested_parameter_bindings/baseline` are xfailed with reasons mentioning unresolved hierarchical connections and unsupported nested system connections.
+- `lib/include/graph/graph_builder.cpp` — the `IMD-005` fix (changing `operator[]` to `find()`) prevents crashes but connections are still silently dropped.
+
+## Current Pain Or Risk
+- **Silent disconnection**: Nested SSPs with boundary-crossing connections (e.g., `stimuli_model → SuT`) compile but simulation produces wrong results because signals never reach the nested components. No error is raised — the connections are silently dropped.
+- **Naming mismatch**: Models inside nested systems get bare names (`edrive_mass`) while connections reference them with system-prefixed names (`SuT.edrive_mass`). GraphBuilder cannot match them.
+- **No boundary parameter overrides**: System-level parameter bindings that target boundary connectors (not component connectors) are not applied. This limits the expressiveness of parameterization in hierarchical SSPs.
+- **Test coverage gap**: Two existing fixtures (`dcmotor_nested`, `signal_nested_parameter_bindings`) exercise hierarchical SSPs but are xfailed. The `signal_nested_external_bindings` fixture (IMD-005) also exercises a hierarchical pattern but its integration test only validates parameter binding resolution, not simulation execution.
+
+## Proposed Improvement
+
+### Approach 1: Boundary Connection Flattening (recommended)
+
+Resolve boundary-crossing connections by chasing them through the system hierarchy during graph construction:
+
+1. **Set `is_boundary_crossing` correctly** in `AnalysisSystem::AnalysisSystem(const TSystem&, ...)` (analysis_system.cpp lines 94–107). When `startElement` or `endElement` is `std::nullopt`, the connection references a system boundary — set `is_boundary_crossing=true`.
+
+2. **Add boundary resolution to GraphBuilder**: When `wire_connections()` encounters a boundary connection, instead of skipping it, walk into the referenced system's boundary-internal connections to find the actual FMU connector. For example:
+   - Connection `stimuli_model.U → SuT.U` (root level)
+   - Inside system `SuT`, there's a boundary-internal connection `SuT_U → emachine_model.U`
+   - Resolve: chase through the boundary to produce a direct FMU-to-FMU connection `stimuli_model.U → emachine_model.U`
+
+3. **Path-prefixed model naming**: Change `AnalysisSystem::AnalysisSystem(const TSystem&, ...)` to use path-prefixed names for models (e.g., `"SuT.edrive_mass"` instead of `"edrive_mass"`), or alternatively maintain a dual-name lookup that supports both bare and prefixed names.
+
+4. **Reconcile GraphBuilder model keys**: Ensure the keys used in `models` map (graph_builder.cpp line 79) match the connection source/target names that reference models inside nested systems.
+
+### Approach 2: System-Level Connector Support (complementary)
+
+Enable system-level parameter bindings to override boundary connectors:
+
+1. In `apply_overrides_in_system()` (analysis_system_builder.cpp lines 116–136), after processing component connectors, also iterate `analysis_sys.connectors` (boundary connectors).
+2. Add the same fallback logic that exists in the component-level path (try `"component.connector"` key, then fall back to bare connector name).
+
+### Approach 3: Stepwise Delivery
+
+Deliver the work in three independent phases:
+
+**Phase 1 — Boundary flag and naming** (small blast radius):
+- Set `is_boundary_crossing` correctly in `AnalysisSystem` constructor
+- Add path-prefixed model naming
+- Update GraphBuilder to match prefixed names
+- Update existing xfail tests to reflect new failure mode (or pass if resolution is complete)
+
+**Phase 2 — Connection flattening** (moderate blast radius):
+- Implement boundary resolution in `wire_connections()`
+- Resolve chained connections through system hierarchy
+- Enable execution for `dcmotor_nested` and `signal_nested_parameter_bindings`
+
+**Phase 3 — Boundary parameter overrides** (small blast radius):
+- Extend `apply_overrides_in_system()` to handle boundary connectors
+- Add fallback key resolution for system-level bindings
+- Verify with `signal_nested_external_bindings` and `signal_nested_parameter_bindings`
+
+## Expected Benefit
+- Existing `dcmotor_nested` and `signal_nested_parameter_bindings` fixtures execute end-to-end.
+- Boundary-crossing connections produce correct simulation results instead of silent disconnection.
+- System-level parameter bindings can override both component and boundary connectors.
+- The `signal_nested_external_bindings` fixture (IMD-005) becomes fully exercisable end-to-end.
+- All three fixtures graduate from xfail to pass.
+
+## Risk And Blast Radius
+
+| Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|
+| Boundary flattening creates incorrect FMU-to-FMU mappings | Medium | Wrong simulation results | Unit-test the flattener with known connection chains before integration |
+| Path-prefixed naming breaks existing flat-SSP tests | Low | Test regressions | All existing tests use flat SSPs (no nesting); prefixing should be no-op for empty prefix |
+| SSM-mapped system bindings conflict with component-level inline bindings | Low | Wrong parameter precedence | Existing precedence logic (DFS post-order, children before parent) is correct; test both override scenarios |
+| `dcmotor_nested` requires FMU binaries built | High | Integration tests can't run | Requires CI infrastructure to compile FMU stubs; unit-test the flattener with constructed graphs |
+
+Modules likely affected: `analysis_system.cpp`, `graph_builder.cpp`, `analysis_graph_factory.cpp`, `analysis_system_builder.cpp`, `SSP1_SystemStructureParameter_Ext.cpp`.
+
+## Task Contract Seed
+
+### Phase 1: Boundary flag and naming (3 sub-tasks)
+1.1. Modify `AnalysisSystem::AnalysisSystem(const TSystem&, ...)` to detect absent `startElement`/`endElement` and set `is_boundary_crossing=true` on connections.  
+1.2. Change model naming to use path-prefixed names when inside nested systems (e.g., `"SuT.edrive_mass"`).  
+1.3. Update `GraphBuilder` model-key lookups to match the new naming convention; verify no regression on flat-SSP tests.
+
+### Phase 2: Connection flattening (4 sub-tasks)
+2.1. Design the boundary-resolution algorithm: given a boundary-crossing connection `A → Sys`, find the boundary-internal connection inside `Sys` that includes the matching boundary connector.  
+2.2. Implement boundary resolution in `GraphBuilder::wire_connections()` — replace the `continue` with resolution logic.  
+2.3. Handle chained resolution (boundary inside boundary) recursively.  
+2.4. Test with `dcmotor_nested` and `signal_nested_parameter_bindings` — un-xfail if passing.
+
+### Phase 3: Boundary parameter overrides (2 sub-tasks)
+3.1. Extend `apply_overrides_in_system()` system-level path to also iterate `analysis_sys.connectors` (boundary connectors).  
+3.2. Add fallback key resolution for system-level bindings (try `"component.connector"`, then bare connector name).  
+3.3. Verify with system-level SSV+SSM bindings targeting boundary connectors.
+
+## Out Of Scope
+- FMU binary compilation or CI infrastructure (assumes FMU stubs are available)
+- Non-SSP simulation backends (OMSImulator, FMPy)
+- Performance optimization of the flattening algorithm
+- Parameter set precedence across multiple nesting levels (use SSP standard semantics)
+- Changes to `3rdParty/ssp4cpp`
+
+## Suggested Priority
+Medium — unblocks nested SSP simulation, which is a prerequisite for realistic multi-level system models.
+
+## Notes
+- This IMP builds on the foundation laid by IMP-041 (parameter binding coverage) and IMD-005 (fixture design and bug fixes discovered during integration testing).
+- The `is_boundary_crossing` flag mechanism is already designed and wired — it simply needs to be correctly set by the SSP parser.
+- The flat-SSP test suite (20+ tests covering `signal_sine_gain_add`, `signal_step_add`, etc.) provides a strong regression safety net.
+- The two new fixtures from IMD-005 (`signal_parameter_inline_with_mapping`, `signal_nested_external_bindings`) are also available for regression testing.
