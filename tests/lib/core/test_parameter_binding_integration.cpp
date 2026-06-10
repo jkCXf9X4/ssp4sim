@@ -192,11 +192,11 @@ TEST_CASE("Flat inline SSV with external SSM resolves correctly", "[parameter_bi
     CHECK(model_names.count("step") == 1);
     CHECK(model_names.size() == 1);
 
-    // step: height=1.0, offset=0.0, startTime=0.5
+    // step: height=1.0, offset=0.0, startTime=0.25
     auto *step = find_model(sys, "step");
     check_override(step, "height", 1.0);
     check_override(step, "offset", 0.0);
-    check_override(step, "startTime", 0.5);
+    check_override(step, "startTime", 0.25);
 }
 
 // ---------------------------------------------------------------------------
