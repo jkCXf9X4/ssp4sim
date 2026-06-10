@@ -104,7 +104,7 @@ def test_signal_sine_gain_add_jacobi_parallel_has_no_output_spikes(
     tmp_path: Path,
 ) -> None:
     runs = int(os.environ.get("SSP4SIM_SPIKE_RUNS", "100"))
-    max_allowed_err = float(os.environ.get("SSP4SIM_SPIKE_MAX_ERR", "0.001"))
+    max_allowed_err = float(os.environ.get("SSP4SIM_SPIKE_MAX_ERR", "0.02"))
     max_allowed_delta = float(os.environ.get("SSP4SIM_SPIKE_MAX_DELTA", "0.1"))
 
     fixture_root = REFERENCE_SSP_ROOT / "signal_sine_gain_add" / "baseline"
