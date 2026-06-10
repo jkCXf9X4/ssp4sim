@@ -47,6 +47,89 @@ namespace ssp4sim::analysis
                 return std::make_unique<ext::ssp1::ssv::StartValue>(it->second);
             }
 
+    /// Recursively walk the SSD tree DFS post-order and apply parameter overrides.
+    /// Children first (subsystems, then components), then system-level overrides.
+        static int apply_overrides_in_system(
+            ssp4cpp::ssp1::ssd::TSystem &ssd_sys,
+            ssp4sim::analysis::AnalysisSystem &analysis_sys,
+            const ssp4cpp::Ssp *ssp,
+            int count = 0)
+        {
+            // 1. Recurse into subsystems first (DFS post-order)
+            if (ssd_sys.Elements.has_value())
+            {
+                auto &elements = ssd_sys.Elements.value();
+                for (size_t i = 0; i < elements.Systems.size() && i < analysis_sys.nested_systems.size(); ++i)
+                {
+                    count = apply_overrides_in_system(
+                        elements.Systems[i],
+                        *analysis_sys.nested_systems[i],
+                        ssp,
+                        count);
+                }
+            }
+
+            // 2. Component-level overrides
+            if (ssd_sys.Elements.has_value())
+            {
+                auto &elements = ssd_sys.Elements.value();
+                for (auto &component : elements.Components)
+                {
+                    if (!component.ParameterBindings.has_value() || !component.name.has_value())
+                        continue;
+
+                    auto comp_map = ext::ssp1::ssv::get_start_value_mappings(
+                        component.ParameterBindings->ParameterBindings, ssp);
+
+                    if (comp_map.empty())
+                        continue;
+
+                    // Find matching AnalysisModel by component name
+                    for (auto &model : analysis_sys.models)
+                    {
+                        if (model->name != component.name.value())
+                            continue;
+
+                        for (auto &connector : model->connectors)
+                        {
+                            auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
+                                connector->component_name, connector->connector_name);
+                            auto override_val = override_start_value(comp_map, key);
+                            if (override_val)
+                            {
+                                connector->initial_value = std::move(override_val);
+                                ++count;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 3. System-level overrides (applied after children — naturally overrides them)
+            if (ssd_sys.ParameterBindings.has_value())
+            {
+                auto sys_map = ext::ssp1::ssv::get_start_value_mappings(
+                    ssd_sys.ParameterBindings->ParameterBindings, ssp);
+
+                for (auto &model : analysis_sys.models)
+                {
+                    for (auto &connector : model->connectors)
+                    {
+                        auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
+                            connector->component_name, connector->connector_name);
+                        auto override_val = override_start_value(sys_map, key);
+                        if (override_val)
+                        {
+                            connector->initial_value = std::move(override_val);
+                            ++count;
+                        }
+                    }
+                }
+            }
+
+            return count;
+        }
+
     }
 
 
@@ -58,23 +141,9 @@ namespace ssp4sim::analysis
         LOG_TRACE_L1(log, "[{func}] Building AnalysisSystem from SSP", __func__);
 
         auto analysis_sys = std::make_unique<AnalysisSystem>(ssp->ssd->System, fmu_handler);
-        // Apply SSP parameter overrides
-        auto overrides = ext::ssp1::ssv::apply_parameter_mappings(ssp->ssd->System);
-        int override_count = 0;
-        for (auto *model : analysis_sys->get_all_models())
-        {
-            for (auto &connector : model->connectors)
-            {
-                auto key = AnalysisConnector::get_connector_name(
-                    connector->component_name, connector->connector_name);
-                auto override_val = override_start_value(overrides, key);
-                if (override_val)
-                {
-                    connector->initial_value = std::move(override_val);
-                    ++override_count;
-                }
-            }
-        }
+        // Apply SSP parameter overrides recursively (DFS post-order: children before parent)
+        int override_count = apply_overrides_in_system(
+            ssp->ssd->System, *analysis_sys, ssp);
         LOG_TRACE_L1(log, "[{func}] Applied {} SSP parameter overrides", __func__, override_count);
 
         LOG_TRACE_L1(log, "[{func}] exit", __func__);

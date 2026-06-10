@@ -9,14 +9,15 @@
 #include <string>
 #include <vector>
 
+namespace ssp4cpp { class Ssp; }
+
 namespace ssp4sim::ext::ssp1::ssv
 {
     types::DataType get_parameter_type(const ssp4cpp::ssp1::ssv::TParameter &par);
     void *get_parameter_value(const ssp4cpp::ssp1::ssv::TParameter &par);
 
     std::map<std::string, StartValue> get_start_value_mappings(
-        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings);
+        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
+        const ssp4cpp::Ssp *ssp = nullptr);
 
-    std::map<std::string, StartValue> apply_parameter_mappings(
-        ssp4cpp::ssp1::ssd::TSystem &system);
 }
