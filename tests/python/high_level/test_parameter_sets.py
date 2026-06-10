@@ -9,6 +9,7 @@ from ._helpers import (
     REFERENCE_SSP_ROOT,
     REFERENCE_SSP_ROOTS,
     SOURCE_SSP_ROOT,
+    assert_start_values_match_ssv,
     run_reference_ssp,
 )
 
@@ -32,7 +33,7 @@ def resolve_test_root(ssp_root: Path) -> Path:
 
 
 @pytest.mark.parametrize(
-    "ssp_root, expected_lines",
+    "ssp_root, expected_lines, ssv_rel_path",
     [
         pytest.param(
             REFERENCE_SSP_ROOT / "signal_step_gain" / "baseline",
@@ -42,6 +43,7 @@ def resolve_test_root(ssp_root: Path) -> Path:
                 "0, step.offset, 1.000000",
                 "0, step.startTime, 0.250000",
             ],
+            None,
             id="signal_step_gain/baseline",
         ),
         pytest.param(
@@ -53,6 +55,7 @@ def resolve_test_root(ssp_root: Path) -> Path:
                 "Wgt_On_Whl;ZOH;0,1;150,0",
                 "Aircraft_state;ZOH;0,0;150,4",
             ],
+            None,
             id="scenario/baseline",
         ),
         pytest.param(
@@ -70,6 +73,7 @@ def resolve_test_root(ssp_root: Path) -> Path:
                 "0, add.k1, 1.000000",
                 "0, add.k2, 1.000000",
             ],
+            None,
             id="signal_sine_gain_add/baseline",
         ),
         pytest.param(
@@ -84,11 +88,13 @@ def resolve_test_root(ssp_root: Path) -> Path:
                 "0, sine.phase, 0.000000",
                 "0, sine.startTime, 0.000000",
             ],
+            None,
             id="signal_step_product/baseline",
         ),
         pytest.param(
             REFERENCE_SSP_ROOT / "VanDerPol" / "fast",
             ["0, fmu.mu, 2.000000"],
+            None,
             id="VanDerPol/fast",
         ),
         pytest.param(
@@ -101,6 +107,7 @@ def resolve_test_root(ssp_root: Path) -> Path:
                 "0, stimuli_model.Voltage_step.height, 12.000000",
                 "0, stimuli_model.MLoad.k, -0.500000",
             ],
+            None,
             id="dcmotor/baseline",
         ),
         pytest.param(
@@ -113,18 +120,35 @@ def resolve_test_root(ssp_root: Path) -> Path:
                 "0, stimuli_model.Voltage_step.height, 12.000000",
                 "0, stimuli_model.MLoad.k, -0.500000",
             ],
+            None,
             marks=pytest.mark.xfail(
                 reason="Unsupported hierarchical or unresolved SSP connection: stimuli_model -> SuT"
             ),
             id="dcmotor_nested/baseline",
         ),
+        pytest.param(
+            REFERENCE_SSP_ROOT / "signal_nested_parameter_bindings" / "baseline",
+            None,
+            Path("resources") / "signal_nested_parameter_bindings_final_values.ssv",
+            marks=pytest.mark.xfail(
+                reason="Nested system connections not supported: simulation crashes during init() "
+                       "with 'System level connections are not supported as of now'"
+            ),
+            id="signal_nested_parameter_bindings/baseline (xfail - nested systems)",
+        ),
     ],
 )
 def test_reference_ssp_applies_parameter_set_variants(
-    ssp_root: Path, expected_lines: list[str], tmp_path: Path
+    ssp_root: Path, expected_lines: list[str] | None, ssv_rel_path: Path | None, tmp_path: Path
 ) -> None:
     tmp_path = resolve_test_root(ssp_root)
     workdir = run_reference_ssp(ssp_root, tmp_path)
+
     if expected_lines:
         start_values_text = (workdir / "start_values.csv").read_text()
         assert_start_values_contain(start_values_text, expected_lines)
+
+    if ssv_rel_path is not None:
+        start_values_text = (workdir / "start_values.csv").read_text()
+        ssv_path = ssp_root / ssv_rel_path
+        assert_start_values_match_ssv(start_values_text, ssv_path)

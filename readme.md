@@ -31,7 +31,7 @@ sim.simulate()
 
 For structured per-layer documentation, see the [product-breakdown](product-breakdown/) directory.
 
-- [Overview](docs/overview.md): short feature-oriented summary and positioning.
+- [Documentation](docs/README.md): installation, usage, configuration, and development guides.
 - [Installation](docs/installation.md): release tarball and wheel consumption.
 - [Build from source](docs/build_from_source.md): local and container builds.
 - [Usage](docs/usage.md): CLI, Python API, examples, and result artifacts.

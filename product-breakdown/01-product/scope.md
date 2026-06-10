@@ -32,4 +32,4 @@ This artifact defines what is in scope and explicitly out of scope for SSP4SIM. 
 ## Traceability
 
 - Backward: Traces to constraints documented in `product-breakdown/00-intent/constraints.md`.
-- Sources: `readme.md` (features list), `docs/overview.md` (notable characteristics), `docs/usage.md` (result artifacts).
+- Sources: `readme.md` (features list), `docs/README.md` (notable characteristics), `docs/usage.md` (result artifacts).
