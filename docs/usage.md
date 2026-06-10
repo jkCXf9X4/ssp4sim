@@ -114,5 +114,11 @@ pyssp4sim ./resources/embrace/embrace.json
 ## Result Artifact Policy
 
 The result artifact policy and supporting tradeoffs are documented in
-[PD-001](../product-breakdown/01-product/decisions/PD-001.md) and the
-[capabilities page](../product-breakdown/01-product/capabilities.md).
+[PD-001](../product-breakdown/01-product/decisions/PD-001.md), the
+[capabilities page](../product-breakdown/01-product/capabilities.md), and the
+[result artifact strategy](../product-breakdown/01-product/result-artifact-strategy.md).
+
+## Logging Artifact Strategy
+
+The logging output tiers and their intended uses are documented in the
+[logging output artifact strategy](../product-breakdown/01-product/logging-output-artifact-strategy.md).
