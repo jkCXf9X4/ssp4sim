@@ -1,7 +1,5 @@
 #pragma once
 
-#include "analysis/analysis_graph_view.hpp"
-
 #include "handler/fmu_handler.hpp"
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
@@ -50,7 +48,7 @@ namespace ssp4sim::analysis
         std::string to_string() const;
 
         /// Hierarchical tree view of this system and its contents.
-        std::string tree_string() const;
+        std::string tree_string(const std::string &indent = "") const;
 
         /// Get all models recursively (flattened).
         std::vector<AnalysisModel *> get_all_models() const;
@@ -65,20 +63,16 @@ namespace ssp4sim::analysis
         /// Get a nested system by dot-separated path.
         AnalysisSystem *get_nested_system(const std::string &path) const;
 
-        /// Find a connector across all models by model name and full connector name.
-        const AnalysisConnector *find_connector(const std::string &model_name,
-                                                  const std::string &connector_full_name) const;
-
         /// Detect algebraic loops using Tarjan SCC (delegates to AnalysisGraphFactory).
         std::vector<std::vector<utils::graph::Node *>> detect_algebraic_loops() const;
 
-        /// Build a transient analysis graph view.
-        AnalysisGraphView build_analysis_graph() const;
+        /// Validate connector placement invariant:
+        /// system.connectors must be boundary connectors only,
+        /// model.connectors must be non-boundary connectors only.
+        void validate_connector_placement() const;
 
     private:
         void collect_models(std::vector<AnalysisModel *> &out) const;
         void collect_connections(std::vector<AnalysisConnection *> &out) const;
-
-        std::string tree_string_impl(const std::string &indent) const;
     };
 }

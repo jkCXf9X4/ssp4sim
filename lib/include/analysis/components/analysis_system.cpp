@@ -33,6 +33,34 @@ namespace ssp4sim::analysis
     {
     }
 
+    // Validate connector placement invariant:
+    //   system.connectors must be boundary connectors only
+    //   model.connectors must be model (non-boundary) connectors only
+    void AnalysisSystem::validate_connector_placement() const
+    {
+        for (auto &c : connectors)
+        {
+            if (!c->is_boundary)
+            {
+                LOG_WARNING(log(), "[{func}] System-level connector '{name}' is not marked as boundary. "
+                            "System connectors should only be boundary connectors.",
+                            __func__, c->name);
+            }
+        }
+        for (auto *m : get_all_models())
+        {
+            for (auto &c : m->connectors)
+            {
+                if (c->is_boundary)
+                {
+                    LOG_WARNING(log(), "[{func}] Model '{model}' connector '{conn}' is marked as boundary. "
+                                "Model connectors should not be boundary connectors.",
+                                __func__, m->name, c->name);
+                }
+            }
+        }
+    }
+
     AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler, const std::string &path_prefix)
         : name(sys.name.value_or("unnamed"))
     {
@@ -106,6 +134,8 @@ namespace ssp4sim::analysis
                 connections.push_back(std::move(analysis_conn));
             }
         }
+
+        validate_connector_placement();
     }
 
     AnalysisSystem::~AnalysisSystem() = default;
@@ -123,12 +153,7 @@ namespace ssp4sim::analysis
         return oss.str();
     }
 
-    std::string AnalysisSystem::tree_string() const
-    {
-        return tree_string_impl("");
-    }
-
-    std::string AnalysisSystem::tree_string_impl(const std::string &indent) const
+    std::string AnalysisSystem::tree_string(const std::string &indent) const
     {
         std::ostringstream oss;
         oss << indent << "System: " << name << "\n";
@@ -166,7 +191,7 @@ namespace ssp4sim::analysis
         oss << child_indent << "Nested Systems (" << nested_systems.size() << "):\n";
         for (const auto &ns : nested_systems)
         {
-            oss << ns->tree_string_impl(child_indent + "  ");
+            oss << ns->tree_string(child_indent + "  ");
         }
 
         return oss.str();
@@ -244,34 +269,10 @@ namespace ssp4sim::analysis
         return nullptr;
     }
 
-    const AnalysisConnector *AnalysisSystem::find_connector(
-        const std::string &model_name,
-        const std::string &connector_full_name) const
-    {
-        for (auto *m : get_all_models())
-        {
-            if (m->name != model_name)
-                continue;
-            for (auto &c : m->connectors)
-            {
-                if (c->name == connector_full_name)
-                    return c.get();
-            }
-        }
-        return nullptr;
-    }
-
     std::vector<std::vector<utils::graph::Node *>> AnalysisSystem::detect_algebraic_loops() const
     {
         AnalysisGraphFactory factory(*this);
         return factory.find_algebraic_loops();
-    }
-
-    AnalysisGraphView AnalysisSystem::build_analysis_graph() const
-    {
-        AnalysisGraphFactory factory(*this);
-        auto nodes = factory.build_transient_graph();
-        return AnalysisGraphView::from_nodes(std::move(nodes));
     }
 
 } // namespace ssp4sim::analysis

@@ -27,8 +27,7 @@
             },
             
             "sqlite": {
-                "enable": true,
-                "file" : "results.sqlite"
+                "enable": true
             },
             "wait_for": true
         },

@@ -4,6 +4,7 @@
 #include "utils/timer.hpp"
 
 #include "analysis/analysis_system_builder.hpp"
+#include "analysis/analysis_graph_factory.hpp"
 #include "graph/graph_builder.hpp"
 
 #include "signal/sinks/csv_recorder_sink.hpp"
@@ -95,7 +96,12 @@ namespace ssp4sim
 
         LOG_INFO(p->log, "[{func}] - Creating simulation graph", __func__);
         auto graph_builder = graph::GraphBuilder(*analysis_system, p->recorder.get(), this->config);
-        graph_builder.build();
+
+        // Build pre-resolved typed graphs from the analysis system (no string matching in GraphBuilder)
+        analysis::AnalysisGraphFactory graph_factory(*analysis_system);
+        auto graph_data = graph_factory.build_all();
+
+        graph_builder.build_with_data(graph_data);
 
         p->sim_graph = graph_builder.get_graph();
         LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());

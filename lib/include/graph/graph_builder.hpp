@@ -3,6 +3,7 @@
 #include "shared_config.hpp"
 #include "graph.hpp"
 
+#include "analysis/analysis_graph_factory.hpp"
 #include "analysis/components/analysis_system.hpp"
 
 #include <map>
@@ -27,29 +28,18 @@ namespace ssp4sim::graph
                      ssp4sim::signal::DataRecorder *recorder,
                      ssp4sim::SharedConfig *config);
 
-        void build();
+        /// Build the simulation graph using pre-resolved graph data (no string matching).
+        void build_with_data(analysis::AnalysisGraphData &graph_data);
 
         std::unique_ptr<Graph> get_graph();
 
         std::map<std::string, std::unique_ptr<Invocable>> get_models();
 
     private:
-        struct ResolvedConnection {
-            std::string source_model;
-            std::string source_connector;
-            std::string target_model;
-            std::string target_connector;
-            uint64_t delay;
-        };
-
         void create_fmu_models();
         void create_data_storage_areas();
-        void wire_connections();
-        void derive_model_edges();
-
-        std::string resolve_model_key(const std::string &name) const;
-        std::vector<ResolvedConnection> resolve_connection(
-            const analysis::AnalysisConnection *conn) const;
+        void wire_connections(analysis::AnalysisGraphData &graph_data);
+        void derive_model_edges(analysis::AnalysisGraphData &graph_data);
     };
 
 }

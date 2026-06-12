@@ -22,7 +22,6 @@ The Analysis System module provides a structural, runtime-free view of an SSP's 
 | `analysis_connector.hpp` / `.cpp` | Variable connector data class |
 | `analysis_connection.hpp` / `.cpp` | Connection wire data class |
 | `analysis_model_variable.hpp` / `.cpp` | Intra-FMU variable data class |
-| `analysis_graph_view.hpp` | Transient graph view for SCC/traversal |
 | `analysis_graph_factory.hpp` / `.cpp` | Layer 2 graph factory — builds transient graphs for algebraic loop detection |
 
 ## Key API

@@ -1,8 +1,6 @@
 #include "graph/graph_builder.hpp"
 
 #include "analysis/components/analysis_model.hpp"
-#include "analysis/components/analysis_connector.hpp"
-#include "analysis/components/analysis_connection.hpp"
 #include "model/model_fmu.hpp"
 #include "utils/map.hpp"
 
@@ -24,14 +22,14 @@ namespace ssp4sim::graph
     {
     }
 
-    void GraphBuilder::build()
+    void GraphBuilder::build_with_data(analysis::AnalysisGraphData &graph_data)
     {
-        LOG_DEBUG(log, "[{func}] init", __func__);
+        LOG_DEBUG(log, "[{func}] init with pre-resolved graph data", __func__);
 
         create_fmu_models();
         create_data_storage_areas();
-        wire_connections();
-        derive_model_edges();
+        wire_connections(graph_data);
+        derive_model_edges(graph_data);
 
         LOG_DEBUG(log, "[{func}] - Allocate the input/output areas", __func__);
         for (auto &[ssp_resource_name, model] : models)
@@ -141,161 +139,29 @@ namespace ssp4sim::graph
         }
     }
 
-    // Resolve a bare model name to a key in the models map (exact then suffix match)
-    std::string GraphBuilder::resolve_model_key(const std::string &name) const
+    void GraphBuilder::wire_connections(analysis::AnalysisGraphData &graph_data)
     {
-        if (name.empty()) return "";
-        if (models.contains(name)) return name;
-        std::string dot_name = "." + name;
-        for (auto &[key, _] : models)
+        LOG_DEBUG(log, "[{func}] - Winding connections using pre-resolved graph data", __func__);
+
+        // Use the pre-resolved connection list — no string matching needed
+        for (auto &entry : graph_data.resolved_connections)
         {
-            if (key.size() > dot_name.size() &&
-                key.substr(key.size() - dot_name.size()) == dot_name)
-            {
-                return key;
-            }
-        }
-        return "";
-    }
-
-    // Resolve a connection through the system hierarchy.
-    // For connections where source or target is a system name, chase through
-    // boundary connectors inside that system to find the actual FMU model.
-    std::vector<GraphBuilder::ResolvedConnection> GraphBuilder::resolve_connection(
-        const analysis::AnalysisConnection *conn) const
-    {
-        std::vector<ResolvedConnection> result;
-        std::string src_key = resolve_model_key(conn->source_model);
-        std::string tgt_key = resolve_model_key(conn->target_model);
-
-        // Case 1: Both are valid FMU model keys — use directly
-        if (!src_key.empty() && !tgt_key.empty())
-        {
-            result.push_back({src_key, conn->source_connector,
-                              tgt_key, conn->target_connector,
-                              conn->delay});
-            return result;
-        }
-
-        // Case 2: Source is an FMU model, target is a system name
-        // Resolve by finding the system and walking through its boundary
-        if (!src_key.empty() && tgt_key.empty() && !conn->target_model.empty())
-        {
-            auto *nested = analysis_system.get_nested_system(conn->target_model);
-            if (nested)
-            {
-                for (auto &inner : nested->connections)
-                {
-                    if (!inner->is_boundary_crossing) continue;
-                    if (inner->source_model != "") continue;
-                    if (inner->source_connector != conn->target_connector) continue;
-                    // The inner target model is a bare name — prefix with system name
-                    std::string inner_tgt = nested->name + "." + inner->target_model;
-                    inner_tgt = resolve_model_key(inner_tgt);
-                    if (inner_tgt.empty()) continue;
-                    result.push_back({src_key, conn->source_connector,
-                                      inner_tgt, inner->target_connector,
-                                      std::max(conn->delay, inner->delay)});
-                }
-            }
-            return result;
-        }
-
-        // Case 3: Target is an FMU model, source is a system name
-        if (!tgt_key.empty() && src_key.empty() && !conn->source_model.empty())
-        {
-            auto *nested = analysis_system.get_nested_system(conn->source_model);
-            if (nested)
-            {
-                for (auto &inner : nested->connections)
-                {
-                    if (!inner->is_boundary_crossing) continue;
-                    if (inner->source_model != "") continue;
-                    if (inner->source_connector != conn->source_connector) continue;
-                    std::string inner_tgt = nested->name + "." + inner->target_model;
-                    inner_tgt = resolve_model_key(inner_tgt);
-                    if (inner_tgt.empty()) continue;
-                    result.push_back({inner_tgt, inner->target_connector,
-                                      tgt_key, conn->target_connector,
-                                      std::max(conn->delay, inner->delay)});
-                }
-                // Also check for boundary OUTPUT connections (FMU feeds the boundary)
-                for (auto &inner : nested->connections)
-                {
-                    if (!inner->is_boundary_crossing) continue;
-                    if (inner->target_model != "") continue;   // Not a boundary OUTPUT
-                    if (inner->target_connector != conn->source_connector) continue;
-                    std::string inner_src = nested->name + "." + inner->source_model;
-                    inner_src = resolve_model_key(inner_src);
-                    if (inner_src.empty()) continue;
-                    result.push_back({inner_src, inner->source_connector,
-                                      tgt_key, conn->target_connector,
-                                      std::max(conn->delay, inner->delay)});
-                }
-            }
-            return result;
-        }
-
-        // Case 4: Boundary-crossing connection (one end is empty)
-        // Try to resolve using suffix matching for the non-empty side
-        if (conn->is_boundary_crossing)
-        {
-            if (!conn->target_model.empty())
-            {
-                std::string resolved = resolve_model_key(conn->target_model);
-                if (!resolved.empty())
-                {
-                    result.push_back({conn->source_model, conn->source_connector,
-                                      resolved, conn->target_connector,
-                                      conn->delay});
-                }
-            }
-        }
-
-        return result;
-    }
-
-    void GraphBuilder::wire_connections()
-    {
-        LOG_DEBUG(log, "[{func}] - Hand the information regarding the connections over to the model", __func__);
-
-        // Collect all connections, both original and resolved
-        std::vector<ResolvedConnection> resolved_conns;
-        for (auto *connection : analysis_system.get_all_connections())
-        {
-            auto resolved = resolve_connection(connection);
-            if (resolved.empty())
-            {
-                LOG_DEBUG(log, "[{func}] Skipping unresolvable connection {src}.{sc} -> {tgt}.{tc}",
-                          __func__, connection->source_model, connection->source_connector,
-                          connection->target_model, connection->target_connector);
-            }
-            resolved_conns.insert(resolved_conns.end(),
-                                  std::make_move_iterator(resolved.begin()),
-                                  std::make_move_iterator(resolved.end()));
-        }
-
-        for (auto &conn : resolved_conns)
-        {
-            auto src_it = models.find(conn.source_model);
-            auto tgt_it = models.find(conn.target_model);
+            auto src_it = models.find(entry.source_model);
+            auto tgt_it = models.find(entry.target_model);
 
             if (src_it == models.end() || tgt_it == models.end())
             {
-                LOG_WARNING(log, "[{func}] Skipping resolved connection {src}.{sc} -> {tgt}.{tc}: model not found",
-                            __func__, conn.source_model, conn.source_connector,
-                            conn.target_model, conn.target_connector);
+                LOG_WARNING(log, "[{func}] Skipping pre-resolved connection {src}.{sc} -> {tgt}.{tc}: model not found",
+                            __func__, entry.source_model, entry.source_connector,
+                            entry.target_model, entry.target_connector);
                 continue;
             }
 
             auto source_model = dynamic_cast<FmuModel *>(src_it->second.get());
             auto target_model = dynamic_cast<FmuModel *>(tgt_it->second.get());
 
-            auto source_connector_name = conn.source_model + "." + conn.source_connector;
-            auto target_connector_name = conn.target_model + "." + conn.target_connector;
-
-            auto &source_conn = source_model->outputs[source_connector_name];
-            auto &target_conn = target_model->inputs[target_connector_name];
+            auto &source_conn = source_model->outputs[entry.source_connector];
+            auto &target_conn = target_model->inputs[entry.target_connector];
 
             ConnectionInfo con_info;
             con_info.type = source_conn.type;
@@ -309,58 +175,76 @@ namespace ssp4sim::graph
             con_info.forward_derivatives = source_conn.forward_derivatives;
             con_info.forward_derivatives_order = source_conn.forward_derivatives_order;
 
-            con_info.delay = conn.delay;
+            con_info.delay = entry.delay;
 
-            // Resolve feedthrough from the analysis connector
-            auto *src_analysis_conn = analysis_system.find_connector(
-                conn.source_model,
-                source_connector_name);
-            con_info.is_feedthrough = src_analysis_conn ? src_analysis_conn->is_feedthrough : false;
-            if (conn.delay > 0)
+            // Resolve feedthrough from the pre-built connector node (no string matching)
+            // Find the source connector node in the graph data
+            bool feedthrough_found = false;
+            for (auto &conn_node : graph_data.connector_nodes)
+            {
+                if (conn_node->source &&
+                    conn_node->source->name == entry.source_connector &&
+                    conn_node->model &&
+                    conn_node->model->name == entry.source_model)
+                {
+                    con_info.is_feedthrough = conn_node->source->is_feedthrough;
+                    feedthrough_found = true;
+                    break;
+                }
+            }
+            if (!feedthrough_found)
+            {
+                con_info.is_feedthrough = false;
+            }
+            if (entry.delay > 0)
             {
                 con_info.is_feedthrough = false;
             }
 
             LOG_TRACE_L1(log, "[{func}] Connection: {src}.{sc} -> {tgt}.{tc}, delay {delay}",
                          __func__,
-                         conn.source_model, conn.source_connector,
-                         conn.target_model, conn.target_connector,
-                         conn.delay);
+                         entry.source_model, entry.source_connector,
+                         entry.target_model, entry.target_connector,
+                         entry.delay);
 
             target_model->connections.push_back(std::move(con_info));
         }
     }
 
-    void GraphBuilder::derive_model_edges()
+    void GraphBuilder::derive_model_edges(analysis::AnalysisGraphData &graph_data)
     {
-        LOG_DEBUG(log, "[{func}] Deriving model-to-model edges from connection graph", __func__);
-        std::set<std::pair<std::string, std::string>> model_pairs;
+        LOG_DEBUG(log, "[{func}] Deriving model-to-model edges from pre-built model graph", __func__);
 
-        // Resolve all connections (same as wire_connections)
-        for (auto *connection : analysis_system.get_all_connections())
+        // Use the pre-built model graph edges — no string matching needed
+        for (auto &node : graph_data.model_nodes)
         {
-            auto resolved = resolve_connection(connection);
-            for (auto &r : resolved)
-            {
-                model_pairs.insert({r.source_model, r.target_model});
-            }
-        }
+            if (!node->source)
+                continue;
 
-        LOG_DEBUG(log, "[{func}] Found {count} unique model pairs", __func__, model_pairs.size());
-        for (auto &[source_name, target_name] : model_pairs)
-        {
-            LOG_TRACE_L1(log, "[{func}] - Model edge: {source} -> {target}", __func__, source_name, target_name);
-            if (!models.contains(source_name))
+            auto src_it = models.find(node->source->name);
+            if (src_it == models.end())
             {
-                LOG_WARNING(log, "[{func}] Source model {name} not found in model map, skipping", __func__, source_name);
+                LOG_WARNING(log, "[{func}] Source model {name} not found in model map, skipping", __func__, node->source->name);
                 continue;
             }
-            if (!models.contains(target_name))
+
+            for (auto *child : node->children)
             {
-                LOG_WARNING(log, "[{func}] Target model {name} not found in model map, skipping", __func__, target_name);
-                continue;
+                auto *child_model_node = dynamic_cast<analysis::ModelNode *>(child);
+                if (!child_model_node || !child_model_node->source)
+                    continue;
+
+                auto tgt_it = models.find(child_model_node->source->name);
+                if (tgt_it == models.end())
+                {
+                    LOG_WARNING(log, "[{func}] Target model {name} not found in model map, skipping", __func__, child_model_node->source->name);
+                    continue;
+                }
+
+                LOG_TRACE_L1(log, "[{func}] - Model edge: {source} -> {target}", __func__,
+                            src_it->first, tgt_it->first);
+                src_it->second->add_child(tgt_it->second.get());
             }
-            models[source_name]->add_child(models[target_name].get());
         }
     }
 

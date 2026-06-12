@@ -1,5 +1,5 @@
 #include "analysis/components/analysis_system.hpp"
-#include "analysis/components/analysis_system_builder.hpp"
+#include "analysis/analysis_system_builder.hpp"
 #include "analysis/components/analysis_model.hpp"
 #include "analysis/components/analysis_connector.hpp"
 #include "analysis/components/analysis_connection.hpp"
