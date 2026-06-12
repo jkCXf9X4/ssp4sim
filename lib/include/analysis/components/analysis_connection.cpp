@@ -21,25 +21,14 @@ namespace ssp4sim::analysis
     AnalysisConnection::AnalysisConnection(std::string source_model_,
                                            std::string source_connector_,
                                            std::string target_model_,
-                                           std::string target_connector_,
-                                           uint64_t delay_,
-                                           bool is_boundary_crossing_)
+                                           std::string target_connector_)
         : source_model(source_model_),
           source_connector(source_connector_),
           target_model(target_model_),
-          target_connector(target_connector_),
-          delay(delay_),
-          is_boundary_crossing(is_boundary_crossing_)
+          target_connector(target_connector_)
     {
-        name = get_connection_name(source_model, source_connector, target_model, target_connector);
-    }
-
-    std::string AnalysisConnection::get_connection_name(const std::string &src_model,
-                                                        const std::string &src_con,
-                                                        const std::string &tgt_model,
-                                                        const std::string &tgt_con)
-    {
-        return AnalysisConnector::get_connector_name(src_model, src_con) + "->" + AnalysisConnector::get_connector_name(tgt_model, tgt_con);
+        // name is not used in this context, only for pretty prints
+        name = source_model + "." + source_connector + "->" + target_model + "." + target_connector;
     }
 
     std::string AnalysisConnection::to_string() const
@@ -49,7 +38,6 @@ namespace ssp4sim::analysis
             << "\n  source: " << source_model << "." << source_connector
             << "\n  target: " << target_model << "." << target_connector
             << "\n  delay: " << delay
-            << "\n  is_boundary_crossing: " << is_boundary_crossing
             << "\n}";
         return oss.str();
     }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "analysis_component.hpp"
+
 #include "handler/fmu_handler.hpp"
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
@@ -14,17 +16,15 @@
 
 namespace ssp4sim::analysis
 {
-    // Forward declarations for data objects (created in Commit 2)
+    // Forward declarations for data objects 
     class AnalysisModel;
     class AnalysisConnector;
     class AnalysisConnection;
     class AnalysisModelVariable;
 
-    class AnalysisSystem
+    class AnalysisSystem : public AnalysisComponent
     {
     public:
-        std::string name;
-
         std::vector<std::unique_ptr<AnalysisModel>> models;
         std::vector<std::unique_ptr<AnalysisConnector>> connectors;
         std::vector<std::unique_ptr<AnalysisConnection>> connections;
@@ -34,7 +34,7 @@ namespace ssp4sim::analysis
 
         explicit AnalysisSystem(const std::string &name);
 
-        AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler, const std::string &path_prefix = "");
+        AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler);
 
         ~AnalysisSystem();
 

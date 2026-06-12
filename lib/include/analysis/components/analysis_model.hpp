@@ -1,5 +1,7 @@
 #pragma once
 
+#include "analysis_component.hpp"
+
 #include "analysis/components/analysis_connector.hpp"
 #include "analysis/components/analysis_model_variable.hpp"
 
@@ -18,10 +20,9 @@ namespace ssp4sim::handler
 namespace ssp4sim::analysis
 {
 
-    class AnalysisModel
+    class AnalysisModel : public AnalysisComponent
     {
     public:
-        std::string name;
         std::string type;
         std::string source_file;
 
@@ -37,9 +38,7 @@ namespace ssp4sim::analysis
 
         AnalysisModel() = default;
 
-        AnalysisModel(handler::FmuInfo *fmu_, const std::string &model_name = "");
-
-        AnalysisModel(const std::string &name_, const std::string &source_, handler::FmuInfo *fmu_);
+        AnalysisModel(handler::FmuInfo *fmu_);
 
         ~AnalysisModel();
 
@@ -49,12 +48,12 @@ namespace ssp4sim::analysis
         AnalysisModel(const AnalysisModel &) = delete;
         AnalysisModel &operator=(const AnalysisModel &) = delete;
 
+        std::string to_string() const;
+
+    private:
         void create_connectors();
         void create_model_variables();
 
-        // void compute_feedthrough(handler::FmuInfo *fmu_info);
-
-        std::string to_string() const;
     };
 
 } // namespace ssp4sim::analysis

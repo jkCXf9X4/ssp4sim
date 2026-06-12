@@ -28,42 +28,10 @@ namespace ssp4sim::analysis
         }
     }
 
-    AnalysisSystem::AnalysisSystem(const std::string &name_)
-        : name(name_)
-    {
-    }
 
-    // Validate connector placement invariant:
-    //   system.connectors must be boundary connectors only
-    //   model.connectors must be model (non-boundary) connectors only
-    void AnalysisSystem::validate_connector_placement() const
+    AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler)
     {
-        for (auto &c : connectors)
-        {
-            if (!c->is_boundary)
-            {
-                LOG_WARNING(log(), "[{func}] System-level connector '{name}' is not marked as boundary. "
-                            "System connectors should only be boundary connectors.",
-                            __func__, c->name);
-            }
-        }
-        for (auto *m : get_all_models())
-        {
-            for (auto &c : m->connectors)
-            {
-                if (c->is_boundary)
-                {
-                    LOG_WARNING(log(), "[{func}] Model '{model}' connector '{conn}' is marked as boundary. "
-                                "Model connectors should not be boundary connectors.",
-                                __func__, m->name, c->name);
-                }
-            }
-        }
-    }
-
-    AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler, const std::string &path_prefix)
-        : name(sys.name.value_or("unnamed"))
-    {
+        name = sys.name.value_or("unnamed");
         if (!sys.Elements.has_value())
         {
             return;

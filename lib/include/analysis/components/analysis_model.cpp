@@ -22,9 +22,9 @@ namespace ssp4sim::analysis
         }
     }
 
-    AnalysisModel::AnalysisModel(handler::FmuInfo *fmu_, const std::string &model_name) : fmu(fmu_)
+    AnalysisModel::AnalysisModel(handler::FmuInfo *fmu_) : fmu(fmu_)
     {
-        name = model_name.empty() ? fmu_->system_name : model_name;
+        name = fmu_->system_name;
         source_file =fmu->fmi_instance->path();
         
         if (fmu->model_description->CoSimulation)
@@ -35,16 +35,7 @@ namespace ssp4sim::analysis
         }
 
         create_connectors();
-
         create_model_variables();
-
-        // Compute feedthrough from FMU ModelStructure
-        // compute_feedthrough(fmu_info);
-    }
-
-    AnalysisModel::AnalysisModel(const std::string &name_, const std::string &source_, handler::FmuInfo *fmu_)
-        : name(name_), source_file(source_), fmu(fmu_)
-    {
     }
 
     AnalysisModel::~AnalysisModel() = default;
@@ -82,7 +73,6 @@ namespace ssp4sim::analysis
                 name, var.name, value_reference, type);
 
             c->causality = var.causality.value();
-            c->is_boundary = false;
 
             auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
 
@@ -125,138 +115,5 @@ namespace ssp4sim::analysis
             model_variables.emplace_back(std::move(mv));
         }
     }
-
-    /// Compute feedthrough marking on this model's connectors from FMU ModelStructure.
-    ///
-    /// Uses FMI2 dependency data to trace direct and transitive paths from each
-    /// output connector back to input connectors.  For outputs whose direct
-    /// dependencies are internal (non-input) model variables, a BFS walks the
-    /// dependency chain through intermediate outputs until an input is found or
-    /// all paths are exhausted.  Supports 1-to-many input→output mappings.
-    // void AnalysisModel::compute_feedthrough(handler::FmuInfo *fmu_info)
-    // {
-    //     auto *md = fmu_info->model_description;
-    //     if (!md->ModelStructure.Outputs.has_value())
-    //         return;
-
-    //     // Build set of input connector names for quick lookup
-    //     std::unordered_set<std::string> input_connector_names;
-    //     for (const auto &conn : connectors)
-    //     {
-    //         if (conn->causality == types::Causality::input)
-    //             input_connector_names.insert(conn->name);
-    //     }
-
-    //     if (input_connector_names.empty())
-    //         return;
-
-    //     try
-    //     {
-    //         // Get all dependencies (output → dep_var) filtered by dependent kind
-    //         auto dependencies = ext::fmi2::dependency::get_dependencies_variables(
-    //             md->ModelStructure.Outputs.value().Unknowns,
-    //             md->ModelVariables,
-    //             ext::fmi2::DependenciesKind::dependent);
-
-    //         // Build adjacency: output variable pointer → list of (dep_var, kind)
-    //         std::unordered_map<const ext::fmi2::fmi2ScalarVariable *,
-    //                            std::vector<std::pair<const ext::fmi2::fmi2ScalarVariable *,
-    //                                                  ext::fmi2::DependenciesKind>>>
-    //             dep_map;
-
-    //         // Also collect the set of known output variables (those that appear
-    //         // as an Unknown in the ModelStructure) for transitive BFS.
-    //         std::unordered_set<const ext::fmi2::fmi2ScalarVariable *> output_variables;
-
-    //         for (const auto &[output_var, dep_var, kind] : dependencies)
-    //         {
-    //             dep_map[output_var].emplace_back(dep_var, kind);
-    //             output_variables.insert(output_var);
-    //         }
-
-    //         for (const auto &[output_var, dep_list] : dep_map)
-    //         {
-    //             (void)dep_list;
-    //             auto output_connector_name = name + "." + output_var->name;
-
-    //             // Check each direct dependency of this output
-    //             for (const auto &[dep_var, kind] : dep_map.at(output_var))
-    //             {
-    //                 (void)kind;
-    //                 auto dep_connector_name = name + "." + dep_var->name;
-
-    //                 if (input_connector_names.count(dep_connector_name))
-    //                 {
-    //                     // Direct feedthrough: output depends directly on an input
-    //                     for (auto &conn : connectors)
-    //                     {
-    //                         if (conn->name == output_connector_name)
-    //                         {
-    //                             conn->is_feedthrough = true;
-    //                             break;
-    //                         }
-    //                     }
-    //                 }
-    //                 else if (output_variables.count(dep_var))
-    //                 {
-    //                     // Transitive: dep_var is itself an output of some Unknown.
-    //                     // BFS through the dependency chain to find an input.
-    //                     std::unordered_set<const ext::fmi2::fmi2ScalarVariable *> visited;
-    //                     std::vector<const ext::fmi2::fmi2ScalarVariable *> stack;
-    //                     stack.push_back(dep_var);
-
-    //                     while (!stack.empty())
-    //                     {
-    //                         auto *cur = stack.back();
-    //                         stack.pop_back();
-
-    //                         if (!visited.insert(cur).second)
-    //                             continue;
-
-    //                         // Look up cur's own dependencies (it appears as an output)
-    //                         auto it = dep_map.find(cur);
-    //                         if (it == dep_map.end())
-    //                             continue;
-
-    //                         for (const auto &[next_dep, next_kind] : it->second)
-    //                         {
-    //                             (void)next_kind;
-    //                             auto next_name = name + "." + next_dep->name;
-
-    //                             if (input_connector_names.count(next_name))
-    //                             {
-    //                                 // Found a transitive path to an input
-    //                                 for (auto &conn : connectors)
-    //                                 {
-    //                                     if (conn->name == output_connector_name)
-    //                                     {
-    //                                         conn->is_feedthrough = true;
-    //                                         break;
-    //                                     }
-    //                                 }
-    //                                 // Clear the stack/visited to break out of BFS
-    //                                 // since we already marked this output.
-    //                                 stack.clear();
-    //                                 visited.clear();
-    //                                 break;
-    //                             }
-
-    //                             // Continue BFS if next_dep is also an output
-    //                             if (output_variables.count(next_dep))
-    //                             {
-    //                                 stack.push_back(next_dep);
-    //                             }
-    //                         }
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     catch (const std::exception &e)
-    //     {
-    //         LOG_WARNING(log(), "[{func}] Skipping feedthrough for FMU {fmu}: {reason}",
-    //                     __func__, name, e.what());
-    //     }
-    // }
 
 } // namespace ssp4sim::analysis

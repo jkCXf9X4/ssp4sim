@@ -1,5 +1,7 @@
 #pragma once
 
+#include "analysis_component.hpp"
+
 #include "initial_value.hpp"
 #include "ssp4sim_definitions.hpp"
 
@@ -13,18 +15,10 @@ namespace ssp4sim::analysis
 
     class AnalysisModel;
 
-    class AnalysisConnector
+    class AnalysisConnector : public AnalysisComponent
     {
     public:
-
-        std::string name;
-
-        std::string component_name;
-        std::string connector_name;
-
         types::Causality causality;
-
-        bool is_boundary = false; // system boundary
 
         uint64_t value_reference = 0;
 
@@ -32,14 +26,9 @@ namespace ssp4sim::analysis
         std::size_t size = 0;
         std::unique_ptr<ext::ssp1::ssv::StartValue> initial_value = nullptr;
 
-        bool forward_derivatives = false;
-        int forward_derivatives_order = 0;
-        bool is_feedthrough = false;
-
         AnalysisConnector() = default;
 
-        AnalysisConnector(std::string component_name,
-                          std::string connector_name_,
+        AnalysisConnector(std::string connector_name_,
                           uint64_t value_reference_,
                           types::DataType data_type_);
 
@@ -50,15 +39,6 @@ namespace ssp4sim::analysis
 
         AnalysisConnector(const AnalysisConnector &) = delete;
         AnalysisConnector &operator=(const AnalysisConnector &) = delete;
-
-        static std::string get_connector_name(const std::string &component_name,
-                                        const std::string &connector_name_);
-
-        static std::string create_name(const std::string &component_name,
-                                        const std::string &connector_name_)
-        {
-            return get_connector_name(component_name, connector_name_);
-        }
 
         std::string to_string() const;
     };

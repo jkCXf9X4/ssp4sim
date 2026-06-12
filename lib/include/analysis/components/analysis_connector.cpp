@@ -4,7 +4,6 @@
 
 #include "ssp4cpp/utils/log.hpp"
 
-
 #include <sstream>
 #include <utility>
 
@@ -20,27 +19,17 @@ namespace ssp4sim::analysis
         }
     }
 
-
-    AnalysisConnector::AnalysisConnector(std::string component_name_,
-                                          std::string connector_name_,
-                                          uint64_t value_reference_,
-                                          types::DataType data_type_)
-        : name(get_connector_name(component_name_, connector_name_)),
-          value_reference(value_reference_),
+    AnalysisConnector::AnalysisConnector(std::string connector_name_,
+                                         uint64_t value_reference_,
+                                         types::DataType data_type_)
+        : value_reference(value_reference_),
           data_type(data_type_),
           size(ext::fmi2::enums::get_data_type_size(data_type_))
     {
-        component_name = component_name_;
-        connector_name = connector_name_;
+        name = connector_name_;
     }
 
     AnalysisConnector::~AnalysisConnector() = default;
-
-    std::string AnalysisConnector::get_connector_name(const std::string &component_name,
-                                                 const std::string &connector_name_)
-    {
-        return component_name + "." + connector_name_;
-    }
 
     std::string AnalysisConnector::to_string() const
     {
@@ -50,7 +39,6 @@ namespace ssp4sim::analysis
             << "\n  vr: " << value_reference
             << "\n  type: " << data_type.to_string()
             << "\n  causality: " << causality.to_string()
-            << "\n  is_boundary: " << is_boundary
             << "\n}";
         return oss.str();
     }
