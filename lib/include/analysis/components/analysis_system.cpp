@@ -62,7 +62,7 @@ namespace ssp4sim::analysis
 
             auto fmu_info = fmu_handler->fmu_info_map[fmu_lookup_name].get();
 
-            auto model = std::make_unique<AnalysisModel>(fmu_info, component_name);
+            auto model = std::make_unique<AnalysisModel>(fmu_info, fmu_lookup_name);
 
             models.push_back(std::move(model));
         }
@@ -96,12 +96,13 @@ namespace ssp4sim::analysis
         {
             for (auto &conn : sys.Connections.value().Connections)
             {
+                bool is_boundary = !conn.startElement.has_value() || !conn.endElement.has_value();
                 std::string src_model = conn.startElement.value_or("");
                 std::string src_con  = conn.startConnector;
                 std::string tgt_model = conn.endElement.value_or("");
                 std::string tgt_con  = conn.endConnector;
                 auto analysis_conn = std::make_unique<AnalysisConnection>(
-                    src_model, src_con, tgt_model, tgt_con);
+                    src_model, src_con, tgt_model, tgt_con, 0, is_boundary);
                 connections.push_back(std::move(analysis_conn));
             }
         }

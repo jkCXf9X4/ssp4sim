@@ -71,7 +71,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-038.md` | IMP-038 | Clarify and Streamline Analysis Graph vs Simulation Graph Responsibilities | Proposed | Medium-High | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, graph.hpp/cpp, AD-003, module docs; large blast radius, high implementation complexity |
 | `candidates/IMP-039.md` | IMP-039 | Evolve Analysis Graph into an Analysis System with Nested-SSP Support | Proposed | Medium-High | analysis_graph.hpp/cpp, analysis_graph_builder.hpp/cpp, graph_builder.hpp/cpp, simulation.cpp, SSP parser, AD-003, module docs; large blast radius, high implementation complexity |
 | `candidates/IMP-040.md` | IMP-040 | Three-Layer Architecture — Analysis System, Analysis Graph, and Simulation Graph Separation | Proposed | Medium-High | analysis/ module, graph/ module, simulation.cpp, SSP extension layer, AD-003/AD-004, module docs, tests; medium risk, extends IMP-039 scope |
-| `candidates/IMP-041.md` | IMP-040 | Integration test: external SSV/SSM loading | Proposed | Medium | Low-Medium — test files only; no production code changes |
+| `done/IMP-041.md` | IMP-041 | Integration test: external SSV/SSM loading | Done | Medium | Low-Medium — test files only; no production code changes |
+| `done/IMP-042.md` | IMP-042 | Nested System Graph Support | Done | Medium | analysis_system.cpp, graph_builder.cpp, analysis_system_builder.cpp, SSP1_SystemStructureParameter_Ext.cpp; moderate blast radius, resolves boundary-crossing connection handling |
  
     
 ## Summary
@@ -120,6 +121,8 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-040 | Three-Layer Architecture — Analysis System, Analysis Graph, and Simulation Graph Separation | Medium-High | IMP-039 (see candidate) | analysis/ module, graph/ module, simulation.cpp, SSP extension layer, AD-003/AD-004, module docs, tests; medium risk, extends IMP-039 scope |
 | IMP-041 | Integration test: external SSV/SSM loading | Medium | None | Low-Medium — test files only; no production code changes |
     
+| IMP-042 | Nested System Graph Support | Medium | None | analysis_system.cpp, graph_builder.cpp, analysis_system_builder.cpp; moderate blast radius, enables hierarchical SSP simulation |
+
 ## Cross-Cutting Constraints
 
 1. **Layer ownership**: `product-breakdown/` holds "what the product is, who it is for, scope, stable decisions." `docs/` holds "runnable guidance: usage, install, build, development workflow, examples, profiling commands."

@@ -46,12 +46,32 @@ namespace ssp4sim::analysis
             }
         }
 
+        // Helper: try to resolve a model name to its path-prefixed form
+        auto resolve_model_name = [&](const std::string &name) -> std::string {
+            if (name.empty()) return "";
+            // Check if any model connector key ends with "." + name
+            for (auto *model : all_models)
+            {
+                if (model->name == name ||
+                    (model->name.size() > name.size() &&
+                     model->name.substr(model->name.size() - name.size() - 1) == "." + name))
+                {
+                    return model->name;
+                }
+            }
+            return name; // return as-is if not found
+        };
+
         // Wire connections: for each connection, add edge from source connector to target connector
         auto all_connections = system_.get_all_connections();
         for (auto *conn : all_connections)
         {
-            auto src_name = AnalysisConnector::get_connector_name(conn->source_model, conn->source_connector);
-            auto tgt_name = AnalysisConnector::get_connector_name(conn->target_model, conn->target_connector);
+            // Resolve model names to path-prefixed form
+            std::string src_model = resolve_model_name(conn->source_model);
+            std::string tgt_model = resolve_model_name(conn->target_model);
+
+            auto src_name = AnalysisConnector::get_connector_name(src_model, conn->source_connector);
+            auto tgt_name = AnalysisConnector::get_connector_name(tgt_model, conn->target_connector);
 
             auto src_it = node_map.find(src_name);
             auto tgt_it = node_map.find(tgt_name);

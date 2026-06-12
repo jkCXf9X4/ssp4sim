@@ -87,7 +87,13 @@ namespace ssp4sim::analysis
                     // Find matching AnalysisModel by component name
                     for (auto &model : analysis_sys.models)
                     {
-                        if (model->name != component.name.value())
+                        // Match against the last path component (bare name)
+                        // since model->name may be path-prefixed (e.g. "inner.sine")
+                        std::string model_bare_name = model->name;
+                        auto dot_pos = model_bare_name.rfind('.');
+                        if (dot_pos != std::string::npos)
+                            model_bare_name = model_bare_name.substr(dot_pos + 1);
+                        if (model_bare_name != component.name.value())
                             continue;
 
                         for (auto &connector : model->connectors)
@@ -102,6 +108,20 @@ namespace ssp4sim::analysis
                             if (!override_val)
                             {
                                 override_val = override_start_value(comp_map, connector->connector_name);
+                            }
+                            /* Fallback: try bare component name with connector name
+                               (for path-prefixed component names like "inner.sine" -> "sine.f") */
+                            if (!override_val)
+                            {
+                                std::string bare_component = connector->component_name;
+                                auto dot_pos = bare_component.rfind('.');
+                                if (dot_pos != std::string::npos)
+                                {
+                                    bare_component = bare_component.substr(dot_pos + 1);
+                                    auto bare_key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
+                                        bare_component, connector->connector_name);
+                                    override_val = override_start_value(comp_map, bare_key);
+                                }
                             }
                             if (override_val)
                             {
@@ -126,11 +146,43 @@ namespace ssp4sim::analysis
                         auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
                             connector->component_name, connector->connector_name);
                         auto override_val = override_start_value(sys_map, key);
+                        /* Fallback: try bare component name with connector name
+                           (for path-prefixed component names like "inner.sine" -> "sine.f") */
+                        if (!override_val)
+                        {
+                            std::string bare_component = connector->component_name;
+                            auto dot_pos = bare_component.rfind('.');
+                            if (dot_pos != std::string::npos)
+                            {
+                                bare_component = bare_component.substr(dot_pos + 1);
+                                auto bare_key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
+                                    bare_component, connector->connector_name);
+                                override_val = override_start_value(sys_map, bare_key);
+                            }
+                        }
                         if (override_val)
                         {
                             connector->initial_value = std::move(override_val);
                             ++count;
                         }
+                    }
+                }
+
+                // Also override boundary connectors
+                for (auto &connector : analysis_sys.connectors)
+                {
+                    auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
+                        connector->component_name, connector->connector_name);
+                    auto override_val = override_start_value(sys_map, key);
+                    // Fallback: try bare connector name
+                    if (!override_val)
+                    {
+                        override_val = override_start_value(sys_map, connector->connector_name);
+                    }
+                    if (override_val)
+                    {
+                        connector->initial_value = std::move(override_val);
+                        ++count;
                     }
                 }
             }

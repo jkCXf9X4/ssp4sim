@@ -56,7 +56,9 @@ namespace {
                const std::string &name)
     {
         for (auto *m : sys->get_all_models()) {
-            if (m->name == name) {
+            if (m->name == name ||
+                (m->name.size() > name.size() &&
+                 m->name.substr(m->name.size() - name.size() - 1) == "." + name)) {
                 return m;
             }
         }
@@ -219,8 +221,8 @@ TEST_CASE("Nested system with root external and nested inline bindings", "[param
 
     CHECK(model_names.count("step") == 1);
     CHECK(model_names.count("add") == 1);
-    CHECK(model_names.count("sine") == 1);
-    CHECK(model_names.count("gain") == 1);
+    CHECK(model_names.count("inner.sine") == 1);
+    CHECK(model_names.count("inner.gain") == 1);
     CHECK(model_names.size() == 4);
 
     // step: height=1.0, offset=0.0, startTime=0.25 (inline at component level)
@@ -266,7 +268,7 @@ TEST_CASE("Nested system with external bindings resolves correctly", "[parameter
         model_names.insert(m->name);
 
     CHECK(model_names.count("step") == 1);
-    CHECK(model_names.count("sine") == 1);
+    CHECK(model_names.count("inner.sine") == 1);
     CHECK(model_names.size() == 2);
 
     // step: height=1.0, offset=0.0, startTime=0.25 (inline at root component level)

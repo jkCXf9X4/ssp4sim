@@ -34,10 +34,22 @@ namespace ssp4sim::graph
         std::map<std::string, std::unique_ptr<Invocable>> get_models();
 
     private:
+        struct ResolvedConnection {
+            std::string source_model;
+            std::string source_connector;
+            std::string target_model;
+            std::string target_connector;
+            uint64_t delay;
+        };
+
         void create_fmu_models();
         void create_data_storage_areas();
         void wire_connections();
         void derive_model_edges();
+
+        std::string resolve_model_key(const std::string &name) const;
+        std::vector<ResolvedConnection> resolve_connection(
+            const analysis::AnalysisConnection *conn) const;
     };
 
 }

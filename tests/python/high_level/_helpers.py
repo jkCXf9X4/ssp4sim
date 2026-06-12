@@ -189,8 +189,9 @@ def assert_start_values_match_ssv(start_values_text: str, ssv_path: Path) -> Non
 
     Both artifacts describe the same resolved parameter state after a simulation run.
     The SSV file is the reference; start_values.csv is the simulation output.
-    When nested system traversal is added to the graph builder, running this fixture
-    should produce a start_values.csv whose lines match all entries in the SSV file.
+    With IMP-042 nested system graph support (resolve_connection / resolve_model_key in
+    graph_builder.cpp), running this fixture should produce a start_values.csv
+    whose lines match all entries in the SSV file.
     """
     tree = ET.parse(str(ssv_path))
     root = tree.getroot()

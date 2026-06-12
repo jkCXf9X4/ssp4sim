@@ -15,9 +15,6 @@ from ._helpers import (
 PARAMETRIZED_SSP_ROOTS = reference_params() + [
     pytest.param(
         SOURCE_SSP_ROOT / "dcmotor" / "ssp",
-        marks=pytest.mark.xfail(
-            reason="Unsupported hierarchical or unresolved SSP connection: stimuli_model -> SuT"
-        ),
         id="dcmotor_nested/baseline",
     ),
 ]
