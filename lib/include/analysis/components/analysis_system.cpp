@@ -29,7 +29,12 @@ namespace ssp4sim::analysis
     }
 
 
-    AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler)
+    AnalysisSystem::AnalysisSystem(const std::string &name_)
+    {
+        name = name_;
+    }
+
+    AnalysisSystem::AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler, const std::string &path_prefix)
     {
         name = sys.name.value_or("unnamed");
         if (!sys.Elements.has_value())
@@ -58,7 +63,7 @@ namespace ssp4sim::analysis
 
             auto fmu_info = fmu_handler->fmu_info_map[fmu_lookup_name].get();
 
-            auto model = std::make_unique<AnalysisModel>(fmu_info, fmu_lookup_name);
+            auto model = std::make_unique<AnalysisModel>(fmu_info, component_name);
 
             models.push_back(std::move(model));
         }
@@ -67,6 +72,7 @@ namespace ssp4sim::analysis
         {
             auto sub_sys_name = sub_sys.name.value_or("unnamed");
             auto sub_prefix = path_prefix.empty() ? sub_sys_name : path_prefix + "." + sub_sys_name;
+            
             auto nested = std::make_unique<AnalysisSystem>(sub_sys, fmu_handler, sub_prefix);
             nested_systems.push_back(std::move(nested));
         }
@@ -76,12 +82,13 @@ namespace ssp4sim::analysis
         {
             for (auto &connector : sys.Connectors.value().Connectors)
             {
+                // set input or output here!
                 auto analysis_conn = std::make_unique<AnalysisConnector>(
                     sys.name.value_or("unnamed"),
                     connector.name,
                     0, // no value reference for system-level connectors
                     types::DataType::unknown);
-                analysis_conn->is_boundary = true;
+
                 analysis_conn->causality = connector.kind;
                 connectors.push_back(std::move(analysis_conn));
             }
@@ -241,6 +248,27 @@ namespace ssp4sim::analysis
     {
         AnalysisGraphFactory factory(*this);
         return factory.find_algebraic_loops();
+    }
+
+    void AnalysisSystem::validate_connector_placement() const
+    {
+        // System-level connectors must be boundary connectors
+        for (auto &conn : connectors)
+        {
+            conn->is_boundary = true;
+        }
+        // Model-level connectors must be non-boundary connectors
+        for (auto &model : models)
+        {
+            for (auto &conn : model->connectors)
+            {
+                conn->is_boundary = false;
+            }
+        }
+        for (auto &sys : nested_systems)
+        {
+            sys->validate_connector_placement();
+        }
     }
 
 } // namespace ssp4sim::analysis

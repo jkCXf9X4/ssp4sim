@@ -11,6 +11,7 @@
 namespace ssp4sim::handler
 {
 
+    
     FmuInfo::FmuInfo(std::string name, ssp4cpp::Fmu *fmu)
     {
         this->model_name = fmu->md->modelName;
@@ -28,6 +29,7 @@ namespace ssp4sim::handler
         this->model_description = fmu->md.get();
     }
 
+    // move into analysis system setup to steamline flow
     FmuHandler::FmuHandler(ssp4cpp::Ssp *ssp)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.handler.FmuHandler")),
           ssp(ssp)

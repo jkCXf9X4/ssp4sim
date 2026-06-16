@@ -174,7 +174,7 @@ TEST_CASE("AnalysisModel construction and move", "[analysis_model]")
 
     AnalysisModel m2(std::move(m));
     REQUIRE(m2.name == "test_model");
-    REQUIRE(m.name.empty()); // moved-from state
+    // moved-from std::string is in valid but unspecified state; no empty check
 }
 
 TEST_CASE("AnalysisModel to_string includes key fields", "[analysis_model]")

@@ -30,6 +30,17 @@ namespace ssp4sim::analysis
         }
     }
 
+    AnalysisModelVariable::AnalysisModelVariable(std::string component_,
+                                                  std::string variable_name_,
+                                                  std::string type_,
+                                                  std::string /*start_value*/)
+        : component(std::move(component_)),
+          variable_name(std::move(variable_name_)),
+          type(std::move(type_))
+    {
+        name = component + "." + variable_name;
+    }
+
     std::string AnalysisModelVariable::to_string() const
     {
         std::ostringstream oss;

@@ -20,26 +20,24 @@ add test cases in the python suite to verify data of the simulation to check tha
 ---
 
 
-Lets continue and simplify the analysis system, analysis graph and simulation graph workflow
+I can see that the current diff introduces a large number of naming functions and flags that should be unnecessary with the current setup
 
-Reflecting on the solution, it is a bit nested and the separation is not as clean as visioned
+If we can set all default start values for all components first
 
-If we can make the distinction between the parts cleaner
+then recursively apply parameter bindings for the different levels where the naming of the current level and sublevels are applied on a x.y naming schema
 
-Create an improvement from evaluating this architecture change:
+that would mean that parameter bindings on a component level should only be applied on a variable name level
 
-Analysis system, model, connector, connection, and internal variables are graph nodes inheriting from utils::graph::Node
+a bottom level sub-system level should be applied on a component.variable
 
-Analysis system builder creates a hierarchical tree, just as it does presently 
+and a top level should only be applied on a component.variable or subsystem.component.variable
 
-Connectors should only be present where they are applicable, system.connectors should only contain system boundary connectors and model.connectors should only contain model connectors for easier matching
+This would mean that all system, model, variable, connector would only need one name
 
-Analysis graph builder (factory) do a text based matching and connects the nodes into multiple analysis graphs
+implications for implementation
 
-separate graphs for:
-model to model graph for simulation model execution order
-connector, connection, internal variable graph for finding the algebraic loops
+set all default variables for all levels and components
 
-Simulation graph builder takes the analysis objects with tree and graphs and constructs simulation model objects and final execution graph
+for each level we then build a map of the relevant variables and its name in the current context and apply the parameter binding to that map
 
-Lets also clean up AD-003, 004 and 005 -> remove them and incorporate a summary of the information of previous solutions in a new full covering decision 
+help me review and reason around this solution and its implications

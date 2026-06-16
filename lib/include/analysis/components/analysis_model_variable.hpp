@@ -13,6 +13,8 @@ namespace ssp4sim::analysis
     class AnalysisModelVariable : public AnalysisComponent
     {
     public:
+        std::string component;
+        std::string variable_name;
         std::string type;
         unsigned int value_reference;
         ssp4cpp::fmi2::md::Causality causality;
@@ -25,6 +27,11 @@ namespace ssp4sim::analysis
         AnalysisModelVariable() = default;
 
         AnalysisModelVariable(const ssp4cpp::fmi2::md::fmi2ScalarVariable &var);
+
+        AnalysisModelVariable(std::string component_,
+                              std::string variable_name_,
+                              std::string type_,
+                              std::string /*start_value*/);
 
         ~AnalysisModelVariable() = default;
 

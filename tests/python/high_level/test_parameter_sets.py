@@ -113,10 +113,10 @@ def resolve_test_root(ssp_root: Path) -> Path:
         pytest.param(
             SOURCE_SSP_ROOT / "dcmotor" / "ssp",
             [
-                "0, SuT.edrive_mass.damper.d, 0.001000",
-                "0, SuT.edrive_mass.inertia.J, 0.002000",
-                "0, SuT.emachine_model.emf.k, 0.100000",
-                "0, SuT.emachine_model.resistor.R, 0.500000",
+                "0, edrive_mass.damper.d, 0.001000",
+                "0, edrive_mass.inertia.J, 0.002000",
+                "0, emachine_model.emf.k, 0.100000",
+                "0, emachine_model.resistor.R, 0.500000",
                 "0, stimuli_model.Voltage_step.height, 12.000000",
                 "0, stimuli_model.MLoad.k, -0.500000",
             ],

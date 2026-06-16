@@ -75,3 +75,71 @@ TEST_CASE("Full pipeline: Ssp-based builder produces same result as path-based",
     REQUIRE(names.count("source") == 1);
     REQUIRE(names.count("sink") == 1);
 }
+
+TEST_CASE("Full pipeline: system connectors are all boundary, model connectors all non-boundary", "[analysis_integration][connector_placement]")
+{
+    auto ssp_dir = project_root() / "resources" / "reference_ssp" / "artifacts" / "models" /
+                   "pyfmu_csv_source_sink" / "baseline";
+    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+
+    // System-level connectors should all be boundary
+    for (auto &c : sys->connectors)
+    {
+        REQUIRE(c->is_boundary == true);
+    }
+
+    // Model-level connectors should all be non-boundary
+    for (auto *m : sys->get_all_models())
+    {
+        for (auto &c : m->connectors)
+        {
+            REQUIRE(c->is_boundary == false);
+        }
+    }
+}
+
+TEST_CASE("Full pipeline: no is_boundary_crossing connections after construction", "[analysis_integration][boundary_crossing]")
+{
+    auto ssp_dir = project_root() / "resources" / "reference_ssp" / "artifacts" / "models" /
+                   "pyfmu_csv_source_sink" / "baseline";
+    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+
+    // After construction, connections should have is_boundary_crossing reflecting
+    // whether start/end element was missing in the SSP XML
+    auto all_connections = sys->get_all_connections();
+    for (auto *conn : all_connections)
+    {
+        // Flat SSP has no boundary crossings
+        REQUIRE(conn->is_boundary_crossing == false);
+    }
+}
+
+TEST_CASE("Full pipeline: nested system connector placement invariant", "[analysis_integration][nested]")
+{
+    auto ssp_dir = project_root() / "resources" / "reference_ssp" / "artifacts" / "models" /
+                   "signal_nested_external_bindings" / "baseline";
+    auto sys = ssp4sim::analysis::AnalysisSystemBuilder().build(ssp_dir.string());
+
+    // Verify nested system structure
+    REQUIRE(sys->nested_systems.size() == 1);
+    REQUIRE(sys->nested_systems[0]->name == "inner");
+
+    // System-level boundary connectors
+    for (auto &c : sys->connectors)
+    {
+        REQUIRE(c->is_boundary == true);
+    }
+    for (auto &c : sys->nested_systems[0]->connectors)
+    {
+        REQUIRE(c->is_boundary == true);
+    }
+
+    // All model connectors are non-boundary
+    for (auto *m : sys->get_all_models())
+    {
+        for (auto &c : m->connectors)
+        {
+            REQUIRE(c->is_boundary == false);
+        }
+    }
+}

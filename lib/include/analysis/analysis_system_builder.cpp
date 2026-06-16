@@ -53,6 +53,7 @@ namespace ssp4sim::analysis
             ssp4cpp::ssp1::ssd::TSystem &ssd_sys,
             ssp4sim::analysis::AnalysisSystem &analysis_sys,
             const ssp4cpp::Ssp *ssp,
+            const std::string &path_prefix = "",
             int count = 0)
         {
             // 1. Recurse into subsystems first (DFS post-order)
@@ -61,10 +62,14 @@ namespace ssp4sim::analysis
                 auto &elements = ssd_sys.Elements.value();
                 for (size_t i = 0; i < elements.Systems.size() && i < analysis_sys.nested_systems.size(); ++i)
                 {
+                    auto &sub_ssd = elements.Systems[i];
+                    std::string sub_name = sub_ssd.name.value_or("unnamed");
+                    std::string sub_prefix = path_prefix.empty() ? sub_name : path_prefix + "." + sub_name;
                     count = apply_overrides_in_system(
-                        elements.Systems[i],
+                        sub_ssd,
                         *analysis_sys.nested_systems[i],
                         ssp,
+                        sub_prefix,
                         count);
                 }
             }
@@ -84,49 +89,21 @@ namespace ssp4sim::analysis
                     if (comp_map.empty())
                         continue;
 
-                    // Find matching AnalysisModel by component name
+                    // Find matching AnalysisModel by component name (bare, no path prefix)
                     for (auto &model : analysis_sys.models)
                     {
-                        // Match against the last path component (bare name)
-                        // since model->name may be path-prefixed (e.g. "inner.sine")
-                        std::string model_bare_name = model->name;
-                        auto dot_pos = model_bare_name.rfind('.');
-                        if (dot_pos != std::string::npos)
-                            model_bare_name = model_bare_name.substr(dot_pos + 1);
-                        if (model_bare_name != component.name.value())
+                        if (model->name != component.name.value())
                             continue;
 
                         for (auto &connector : model->connectors)
                         {
-                            auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
-                                connector->component_name, connector->connector_name);
-                            auto override_val = override_start_value(comp_map, key);
-
-                            // TODO: double check this...
-                            /* Fallback: try simple connector name without component prefix
-                               (inline component-level bindings without SSM mapping) */
-                            if (!override_val)
-                            {
-                                override_val = override_start_value(comp_map, connector->connector_name);
-                            }
-                            /* Fallback: try bare component name with connector name
-                               (for path-prefixed component names like "inner.sine" -> "sine.f") */
-                            if (!override_val)
-                            {
-                                std::string bare_component = connector->component_name;
-                                auto dot_pos = bare_component.rfind('.');
-                                if (dot_pos != std::string::npos)
-                                {
-                                    bare_component = bare_component.substr(dot_pos + 1);
-                                    auto bare_key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
-                                        bare_component, connector->connector_name);
-                                    override_val = override_start_value(comp_map, bare_key);
-                                }
-                            }
+                            auto override_val = override_start_value(comp_map, connector->connector_name);
                             if (override_val)
                             {
                                 connector->initial_value = std::move(override_val);
                                 ++count;
+                                LOG_TRACE_L1(builder_log(), "[{func}] Component override for {name}",
+                                    __func__, connector->connector_name);
                             }
                         }
                     }
@@ -143,27 +120,15 @@ namespace ssp4sim::analysis
                 {
                     for (auto &connector : model->connectors)
                     {
-                        auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
+                        std::string hier_name = AnalysisConnector::get_connector_name(
                             connector->component_name, connector->connector_name);
-                        auto override_val = override_start_value(sys_map, key);
-                        /* Fallback: try bare component name with connector name
-                           (for path-prefixed component names like "inner.sine" -> "sine.f") */
-                        if (!override_val)
-                        {
-                            std::string bare_component = connector->component_name;
-                            auto dot_pos = bare_component.rfind('.');
-                            if (dot_pos != std::string::npos)
-                            {
-                                bare_component = bare_component.substr(dot_pos + 1);
-                                auto bare_key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
-                                    bare_component, connector->connector_name);
-                                override_val = override_start_value(sys_map, bare_key);
-                            }
-                        }
+                        auto override_val = override_start_value(sys_map, hier_name);
                         if (override_val)
                         {
                             connector->initial_value = std::move(override_val);
                             ++count;
+                            LOG_TRACE_L1(builder_log(), "[{func}] System override for {name}",
+                                __func__, hier_name);
                         }
                     }
                 }
@@ -171,18 +136,13 @@ namespace ssp4sim::analysis
                 // Also override boundary connectors
                 for (auto &connector : analysis_sys.connectors)
                 {
-                    auto key = ssp4sim::analysis::AnalysisConnector::get_connector_name(
-                        connector->component_name, connector->connector_name);
-                    auto override_val = override_start_value(sys_map, key);
-                    // Fallback: try bare connector name
-                    if (!override_val)
-                    {
-                        override_val = override_start_value(sys_map, connector->connector_name);
-                    }
+                    auto override_val = override_start_value(sys_map, connector->connector_name);
                     if (override_val)
                     {
                         connector->initial_value = std::move(override_val);
                         ++count;
+                        LOG_TRACE_L1(builder_log(), "[{func}] Boundary override for {name}",
+                            __func__, connector->connector_name);
                     }
                 }
             }
@@ -203,7 +163,7 @@ namespace ssp4sim::analysis
         auto analysis_sys = std::make_unique<AnalysisSystem>(ssp->ssd->System, fmu_handler);
         // Apply SSP parameter overrides recursively (DFS post-order: children before parent)
         int override_count = apply_overrides_in_system(
-            ssp->ssd->System, *analysis_sys, ssp);
+            ssp->ssd->System, *analysis_sys, ssp, "");
         LOG_TRACE_L1(log, "[{func}] Applied {} SSP parameter overrides", __func__, override_count);
 
         LOG_TRACE_L1(log, "[{func}] exit", __func__);

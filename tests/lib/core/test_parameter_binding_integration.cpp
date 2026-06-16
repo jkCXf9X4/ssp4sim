@@ -3,6 +3,8 @@
 #include "analysis/components/analysis_model.hpp"
 #include "analysis/components/analysis_connector.hpp"
 
+#include "initial_value.hpp"  // StartValue
+
 #include "ssp4cpp/ssp.hpp"
 #include "handler/fmu_handler.hpp"
 
@@ -13,6 +15,17 @@
 #include <string>
 
 namespace fs = std::filesystem;
+
+// Forward declaration of get_start_values (defined in SSP1_SystemStructureParameter_Ext.cpp)
+namespace ssp4sim::ext::ssp1::ssv {
+    std::vector<StartValue> get_start_values(
+        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
+        const ssp4cpp::Ssp *ssp = nullptr);
+
+    std::map<std::string, StartValue> get_start_value_mappings(
+        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
+        const ssp4cpp::Ssp *ssp = nullptr);
+}
 
 namespace {
 
@@ -221,9 +234,12 @@ TEST_CASE("Nested system with root external and nested inline bindings", "[param
 
     CHECK(model_names.count("step") == 1);
     CHECK(model_names.count("add") == 1);
-    CHECK(model_names.count("inner.sine") == 1);
-    CHECK(model_names.count("inner.gain") == 1);
+    CHECK(model_names.count("sine") == 1);
+    CHECK(model_names.count("gain") == 1);
     CHECK(model_names.size() == 4);
+
+    // Note: With canonical naming, model names are bare local names (e.g., "sine" not "inner.sine").
+    // find_model() handles both bare and suffix-matched resolution.
 
     // step: height=1.0, offset=0.0, startTime=0.25 (inline at component level)
     auto *step = find_model(sys, "step");
@@ -268,7 +284,7 @@ TEST_CASE("Nested system with external bindings resolves correctly", "[parameter
         model_names.insert(m->name);
 
     CHECK(model_names.count("step") == 1);
-    CHECK(model_names.count("inner.sine") == 1);
+    CHECK(model_names.count("sine") == 1);
     CHECK(model_names.size() == 2);
 
     // step: height=1.0, offset=0.0, startTime=0.25 (inline at root component level)
@@ -282,4 +298,232 @@ TEST_CASE("Nested system with external bindings resolves correctly", "[parameter
     check_override(sine, "amplitude", 2.0);
     check_override(sine, "f", 5.0);
     check_override(sine, "offset", 0.5);
+}
+
+// ===========================================================================
+// Tests for get_start_values with external SSV/SSM (load_ssv / load_ssm paths)
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// Test Case 7: get_start_values with external SSV (no SSM)
+// ---------------------------------------------------------------------------
+TEST_CASE("get_start_values with external SSV (no SSM)", "[parameter_binding][get_start_values][external]")
+{
+    // Use the signal_step_gain fixture which has an external SSV file
+    auto fixture_dir = fixture_path("signal_step_gain");
+    auto ssp = std::make_unique<ssp4cpp::Ssp>(fixture_dir.string());
+
+    // Construct a ParameterBinding with source pointing to the external SSV
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    binding.source = "resources/signal_step_gain_parameters.ssv";
+
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings;
+    bindings.push_back(std::move(binding));
+
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_values(bindings, ssp.get());
+
+    REQUIRE(result.size() == 4);
+
+    // step.height -> Real, 2.0, default mapping (parameter name itself)
+    CHECK(result[0].name == "step.height");
+    CHECK(result[0].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[0].value));
+    CHECK(std::get<double>(result[0].value) == 2.0);
+    REQUIRE(result[0].mappings.size() == 1);
+    CHECK(result[0].mappings[0] == "step.height");
+
+    // step.offset -> Real, 1.0, default mapping (parameter name itself)
+    CHECK(result[1].name == "step.offset");
+    CHECK(result[1].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[1].value));
+    CHECK(std::get<double>(result[1].value) == 1.0);
+    REQUIRE(result[1].mappings.size() == 1);
+    CHECK(result[1].mappings[0] == "step.offset");
+
+    // step.startTime -> Real, 0.25, default mapping (parameter name itself)
+    CHECK(result[2].name == "step.startTime");
+    CHECK(result[2].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[2].value));
+    CHECK(std::get<double>(result[2].value) == 0.25);
+    REQUIRE(result[2].mappings.size() == 1);
+    CHECK(result[2].mappings[0] == "step.startTime");
+
+    // gain.k -> Real, 3.0, default mapping (parameter name itself)
+    CHECK(result[3].name == "gain.k");
+    CHECK(result[3].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[3].value));
+    CHECK(std::get<double>(result[3].value) == 3.0);
+    REQUIRE(result[3].mappings.size() == 1);
+    CHECK(result[3].mappings[0] == "gain.k");
+}
+
+// ---------------------------------------------------------------------------
+// Test Case 8: get_start_values with external SSV and external SSM
+// ---------------------------------------------------------------------------
+TEST_CASE("get_start_values with external SSV and external SSM", "[parameter_binding][get_start_values][external]")
+{
+    // Use the signal_step_add fixture which has external SSV + SSM files
+    auto fixture_dir = fixture_path("signal_step_add");
+    auto ssp = std::make_unique<ssp4cpp::Ssp>(fixture_dir.string());
+
+    // Construct a ParameterBinding with both external SSV source and external SSM source
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    binding.source = "resources/signal_step_add_parameters.ssv";
+
+    ssp4cpp::ssp1::ssd::ParameterMapping pm;
+    pm.source = "resources/signal_step_add_mapping.ssm";
+    binding.ParameterMapping = std::move(pm);
+
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings;
+    bindings.push_back(std::move(binding));
+
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_values(bindings, ssp.get());
+
+    REQUIRE(result.size() == 8);
+
+    // step_a_height -> Real, 1.5, mapped to step_a.height
+    CHECK(result[0].name == "step_a_height");
+    CHECK(result[0].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[0].value));
+    CHECK(std::get<double>(result[0].value) == 1.5);
+    REQUIRE(result[0].mappings.size() == 1);
+    CHECK(result[0].mappings[0] == "step_a.height");
+
+    // step_a_offset -> Real, 0.5, mapped to step_a.offset
+    CHECK(result[1].name == "step_a_offset");
+    CHECK(result[1].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[1].value));
+    CHECK(std::get<double>(result[1].value) == 0.5);
+    REQUIRE(result[1].mappings.size() == 1);
+    CHECK(result[1].mappings[0] == "step_a.offset");
+
+    // step_a_startTime -> Real, 0.25, mapped to step_a.startTime
+    CHECK(result[2].name == "step_a_startTime");
+    CHECK(result[2].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[2].value));
+    CHECK(std::get<double>(result[2].value) == 0.25);
+    REQUIRE(result[2].mappings.size() == 1);
+    CHECK(result[2].mappings[0] == "step_a.startTime");
+
+    // step_b_height -> Real, -0.5, mapped to step_b.height
+    CHECK(result[3].name == "step_b_height");
+    CHECK(result[3].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[3].value));
+    CHECK(std::get<double>(result[3].value) == -0.5);
+    REQUIRE(result[3].mappings.size() == 1);
+    CHECK(result[3].mappings[0] == "step_b.height");
+
+    // step_b_offset -> Real, 1.0, mapped to step_b.offset
+    CHECK(result[4].name == "step_b_offset");
+    CHECK(result[4].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[4].value));
+    CHECK(std::get<double>(result[4].value) == 1.0);
+    REQUIRE(result[4].mappings.size() == 1);
+    CHECK(result[4].mappings[0] == "step_b.offset");
+
+    // step_b_startTime -> Real, 0.5, mapped to step_b.startTime
+    CHECK(result[5].name == "step_b_startTime");
+    CHECK(result[5].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[5].value));
+    CHECK(std::get<double>(result[5].value) == 0.5);
+    REQUIRE(result[5].mappings.size() == 1);
+    CHECK(result[5].mappings[0] == "step_b.startTime");
+
+    // add_k1 -> Real, 1.0, mapped to add.k1
+    CHECK(result[6].name == "add_k1");
+    CHECK(result[6].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[6].value));
+    CHECK(std::get<double>(result[6].value) == 1.0);
+    REQUIRE(result[6].mappings.size() == 1);
+    CHECK(result[6].mappings[0] == "add.k1");
+
+    // add_k2 -> Real, 1.0, mapped to add.k2
+    CHECK(result[7].name == "add_k2");
+    CHECK(result[7].type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result[7].value));
+    CHECK(std::get<double>(result[7].value) == 1.0);
+    REQUIRE(result[7].mappings.size() == 1);
+    CHECK(result[7].mappings[0] == "add.k2");
+}
+
+// ---------------------------------------------------------------------------
+// Test Case 9: get_start_value_mappings with external SSV and external SSM
+// ---------------------------------------------------------------------------
+TEST_CASE("get_start_value_mappings with external SSV and external SSM", "[parameter_binding][get_start_value_mappings][external]")
+{
+    // Use the signal_step_add fixture which has external SSV + SSM files
+    auto fixture_dir = fixture_path("signal_step_add");
+    auto ssp = std::make_unique<ssp4cpp::Ssp>(fixture_dir.string());
+
+    // Construct a ParameterBinding with both external SSV source and external SSM source
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    binding.source = "resources/signal_step_add_parameters.ssv";
+
+    ssp4cpp::ssp1::ssd::ParameterMapping pm;
+    pm.source = "resources/signal_step_add_mapping.ssm";
+    binding.ParameterMapping = std::move(pm);
+
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings;
+    bindings.push_back(std::move(binding));
+
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings, ssp.get());
+
+    // 8 entries in the map, keyed by SSM target names
+    REQUIRE(result.size() == 8);
+
+    // step_a.height -> step_a_height, Real, 1.5
+    CHECK(result.count("step_a.height") == 1);
+    CHECK(result.at("step_a.height").name == "step_a_height");
+    CHECK(result.at("step_a.height").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("step_a.height").value));
+    CHECK(std::get<double>(result.at("step_a.height").value) == 1.5);
+
+    // step_a.offset -> step_a_offset, Real, 0.5
+    CHECK(result.count("step_a.offset") == 1);
+    CHECK(result.at("step_a.offset").name == "step_a_offset");
+    CHECK(result.at("step_a.offset").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("step_a.offset").value));
+    CHECK(std::get<double>(result.at("step_a.offset").value) == 0.5);
+
+    // step_a.startTime -> step_a_startTime, Real, 0.25
+    CHECK(result.count("step_a.startTime") == 1);
+    CHECK(result.at("step_a.startTime").name == "step_a_startTime");
+    CHECK(result.at("step_a.startTime").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("step_a.startTime").value));
+    CHECK(std::get<double>(result.at("step_a.startTime").value) == 0.25);
+
+    // step_b.height -> step_b_height, Real, -0.5
+    CHECK(result.count("step_b.height") == 1);
+    CHECK(result.at("step_b.height").name == "step_b_height");
+    CHECK(result.at("step_b.height").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("step_b.height").value));
+    CHECK(std::get<double>(result.at("step_b.height").value) == -0.5);
+
+    // step_b.offset -> step_b_offset, Real, 1.0
+    CHECK(result.count("step_b.offset") == 1);
+    CHECK(result.at("step_b.offset").name == "step_b_offset");
+    CHECK(result.at("step_b.offset").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("step_b.offset").value));
+    CHECK(std::get<double>(result.at("step_b.offset").value) == 1.0);
+
+    // step_b.startTime -> step_b_startTime, Real, 0.5
+    CHECK(result.count("step_b.startTime") == 1);
+    CHECK(result.at("step_b.startTime").name == "step_b_startTime");
+    CHECK(result.at("step_b.startTime").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("step_b.startTime").value));
+    CHECK(std::get<double>(result.at("step_b.startTime").value) == 0.5);
+
+    // add.k1 -> add_k1, Real, 1.0
+    CHECK(result.count("add.k1") == 1);
+    CHECK(result.at("add.k1").name == "add_k1");
+    CHECK(result.at("add.k1").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("add.k1").value));
+    CHECK(std::get<double>(result.at("add.k1").value) == 1.0);
+
+    // add.k2 -> add_k2, Real, 1.0
+    CHECK(result.count("add.k2") == 1);
+    CHECK(result.at("add.k2").name == "add_k2");
+    CHECK(result.at("add.k2").type == ssp4sim::types::DataType::real);
+    CHECK(std::holds_alternative<double>(result.at("add.k2").value));
+    CHECK(std::get<double>(result.at("add.k2").value) == 1.0);
 }

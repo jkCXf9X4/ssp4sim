@@ -34,7 +34,9 @@ namespace ssp4sim::analysis
 
         explicit AnalysisSystem(const std::string &name);
 
-        AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys, handler::FmuHandler *fmu_handler);
+        AnalysisSystem(const ssp4cpp::ssp1::ssd::TSystem &sys,
+                       handler::FmuHandler *fmu_handler,
+                       const std::string &path_prefix = "");
 
         ~AnalysisSystem();
 

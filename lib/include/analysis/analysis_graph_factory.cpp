@@ -21,16 +21,16 @@ namespace ssp4sim::analysis
             return logger;
         }
 
-        /// Helper: try to resolve a model name to its path-prefixed form.
+        /// Helper: resolve a model name to its canonical form.
+        /// With canonical naming, model names are bare local names,
+        /// so this is a direct equality check.
         std::string resolve_model_name(const std::string &name,
                                        const std::vector<AnalysisModel *> &all_models)
         {
             if (name.empty()) return "";
             for (auto *model : all_models)
             {
-                if (model->name == name ||
-                    (model->name.size() > name.size() &&
-                     model->name.substr(model->name.size() - name.size() - 1) == "." + name))
+                if (model->name == name)
                 {
                     return model->name;
                 }
@@ -102,7 +102,7 @@ namespace ssp4sim::analysis
                             inner->target_connector != connector_to_match)
                             continue;
 
-                        std::string inner_tgt = nested->name + "." + inner->target_model;
+                        std::string inner_tgt = inner->target_model;
                         inner_tgt = resolve_model_name(inner_tgt, all_models);
                         if (inner_tgt.empty()) continue;
 
@@ -183,7 +183,7 @@ namespace ssp4sim::analysis
                     if (!inner->is_boundary_crossing) continue;
                     if (inner->source_model != "") continue;
 
-                    std::string inner_tgt = nested->name + "." + inner->target_model;
+                    std::string inner_tgt = inner->target_model;
                     std::string inner_tgt_resolved = resolve_model_name(inner_tgt, all_models);
                     if (inner_tgt_resolved.empty()) continue;
 
@@ -220,7 +220,7 @@ namespace ssp4sim::analysis
                         if (!inner->is_boundary_crossing) continue;
                         if (inner->source_model != "") continue;
                         if (inner->source_connector != conn->target_connector) continue;
-                        std::string inner_tgt = nested->name + "." + inner->target_model;
+                        std::string inner_tgt = inner->target_model;
                         inner_tgt = resolve_model_name(inner_tgt, all_models);
                         if (inner_tgt.empty()) continue;
                         model_pairs.insert({src_model, inner_tgt});
@@ -237,7 +237,7 @@ namespace ssp4sim::analysis
                         if (!inner->is_boundary_crossing) continue;
                         if (inner->source_model != "") continue;
                         if (inner->source_connector != conn->source_connector) continue;
-                        std::string inner_tgt = nested->name + "." + inner->target_model;
+                        std::string inner_tgt = inner->target_model;
                         inner_tgt = resolve_model_name(inner_tgt, all_models);
                         if (inner_tgt.empty()) continue;
                         model_pairs.insert({inner_tgt, tgt_model});
@@ -247,7 +247,7 @@ namespace ssp4sim::analysis
                         if (!inner->is_boundary_crossing) continue;
                         if (inner->target_model != "") continue;
                         if (inner->target_connector != conn->source_connector) continue;
-                        std::string inner_src = nested->name + "." + inner->source_model;
+                        std::string inner_src = inner->source_model;
                         inner_src = resolve_model_name(inner_src, all_models);
                         if (inner_src.empty()) continue;
                         model_pairs.insert({inner_src, tgt_model});

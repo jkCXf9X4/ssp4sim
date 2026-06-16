@@ -38,6 +38,30 @@ namespace ssp4sim::analysis
         create_model_variables();
     }
 
+    AnalysisModel::AnalysisModel(handler::FmuInfo *fmu_, const std::string &model_name)
+        : fmu(fmu_)
+    {
+        name = model_name;
+        source_file = fmu->fmi_instance->path();
+
+        if (fmu->model_description->CoSimulation)
+        {
+            auto &co_sim = *fmu->model_description->CoSimulation;
+            this->canInterpolateInputs = co_sim.canInterpolateInputs.value_or(false);
+            this->maxOutputDerivativeOrder = co_sim.maxOutputDerivativeOrder.value_or(0);
+        }
+
+        create_connectors();
+        create_model_variables();
+    }
+
+    AnalysisModel::AnalysisModel(std::string name_, std::string source_file_, handler::FmuInfo *fmu_)
+        : source_file(std::move(source_file_)),
+          fmu(fmu_)
+    {
+        name = std::move(name_);
+    }
+
     AnalysisModel::~AnalysisModel() = default;
 
     std::string AnalysisModel::to_string() const
