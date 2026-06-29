@@ -14,8 +14,6 @@
 
 #include "config.hpp"
 
-#include "handler/fmu_handler.hpp"
-
 #include "execution/invocable.hpp"
 #include "graph/graph.hpp"
 
@@ -44,7 +42,6 @@ namespace ssp4sim
 
         std::string session_uuid;
 
-        std::unique_ptr<handler::FmuHandler> fmu_handler;
         std::unique_ptr<signal::DataRecorder> recorder = nullptr;
         std::unique_ptr<graph::Graph> sim_graph;
 
@@ -58,7 +55,6 @@ namespace ssp4sim
         p->session_uuid = utils::make_uuid_v4();
 
         LOG_INFO(p->log, "[{func}] Creating simulation", __func__);
-        p->fmu_handler = std::make_unique<handler::FmuHandler>(p->ssp);
 
         if (config->enable_recording)
         {
@@ -90,18 +86,16 @@ namespace ssp4sim
         p->fmu_handler->init();
 
         LOG_INFO(p->log, "[{func}] - Creating analysis system", __func__);
-        auto analysis_system = analysis::AnalysisSystemBuilder().build(p->ssp, p->fmu_handler.get());
+        auto analysis_system_builder = analysis::AnalysisSystemBuilder()
+        auto analysis_system =  analysis_system_builder.build(p->ssp);
         LOG_DEBUG(p->log, " -- analysis system built");
-        // TODO: Add some kind of analysis system output
+
+        analysis::AnalysisGraphFactory graph_factory(*analysis_system);
+
+        auto model_graph = graph_factory.model_graph();
 
         LOG_INFO(p->log, "[{func}] - Creating simulation graph", __func__);
-        auto graph_builder = graph::GraphBuilder(*analysis_system, p->recorder.get(), this->config);
-
-        // Build pre-resolved typed graphs from the analysis system (no string matching in GraphBuilder)
-        analysis::AnalysisGraphFactory graph_factory(*analysis_system);
-        auto graph_data = graph_factory.build_all();
-
-        graph_builder.build_with_data(graph_data);
+        auto graph_builder = graph::GraphBuilder(model_graph, p->recorder.get(), this->config);
 
         p->sim_graph = graph_builder.get_graph();
         LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());

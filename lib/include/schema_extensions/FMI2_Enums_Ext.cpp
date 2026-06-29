@@ -63,6 +63,29 @@ namespace ssp4sim::ext::fmi2
                 return "<bin>";
             }
         }
+
+        void *get_default_value(types::DataType type)
+        {
+            switch (type)
+            {
+            case types::DataType::boolean:
+                return (void *)&default_values::default_bool;
+                break;
+            case types::DataType::integer:
+            case types::DataType::enumeration:
+                return (void *)&default_values::default_int;
+                break;
+            case types::DataType::real:
+                return (void *)&default_values::default_real;
+                break;
+            case types::DataType::string:
+                return (void *)(&default_values::default_string);
+                break;
+            default:
+                throw std::runtime_error(std::format("[{}], Unreachable, type is unknown", __func__));
+                break;
+            }
+        }
     }
 
 }

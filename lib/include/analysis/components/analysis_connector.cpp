@@ -19,26 +19,22 @@ namespace ssp4sim::analysis
         }
     }
 
-    AnalysisConnector::AnalysisConnector(std::string component_name_,
-                                         std::string connector_name_,
+    AnalysisConnector::AnalysisConnector(std::string connector_name_,
                                          uint64_t value_reference_,
-                                         types::DataType data_type_)
-        : component_name(std::move(component_name_)),
-          connector_name(std::move(connector_name_)),
-          value_reference(value_reference_),
+                                         types::DataType data_type_,
+                                         types::Causality causality_)
+        : value_reference(value_reference_),
           data_type(data_type_),
-          size(ext::fmi2::enums::get_data_type_size(data_type_))
+          size(ext::fmi2::enums::get_data_type_size(data_type_)),
+            causality(causality_)
     {
-        name = component_name + "." + connector_name;
+        type = ComponentType::Connector;
+        name = connector_name_;
+        initial_value = std::make_unique<ext::ParameterValue>(name, data_type);
+
     }
 
     AnalysisConnector::~AnalysisConnector() = default;
-
-    std::string AnalysisConnector::get_connector_name(const std::string &component,
-                                                      const std::string &connector)
-    {
-        return component + "." + connector;
-    }
 
     std::string AnalysisConnector::to_string() const
     {

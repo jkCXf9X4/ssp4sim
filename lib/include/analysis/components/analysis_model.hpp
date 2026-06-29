@@ -1,11 +1,11 @@
 #pragma once
 
+#include "analysis_parameter_bindings.hpp"
+
 #include "analysis_component.hpp"
 
 #include "analysis/components/analysis_connector.hpp"
 #include "analysis/components/analysis_model_variable.hpp"
-
-#include "handler/fmu_handler.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -23,26 +23,21 @@ namespace ssp4sim::analysis
     class AnalysisModel : public AnalysisComponent
     {
     public:
-        std::string type;
-        std::string source_file;
 
         std::vector<std::unique_ptr<AnalysisConnector>> connectors;
         std::vector<std::unique_ptr<AnalysisModelVariable>> model_variables;
 
+        std::unique_ptr<AnalysisParameterBindings> parameter_bindings;
+
         uint64_t delay = 0;
-        handler::FmuInfo *fmu = nullptr;
+        std::unique_ptr<handler::FmuInfo> fmu;
 
         bool canInterpolateInputs = false;
         int maxOutputDerivativeOrder = 0;
 
-
         AnalysisModel() = default;
 
-        AnalysisModel(handler::FmuInfo *fmu_);
-
-        AnalysisModel(handler::FmuInfo *fmu_, const std::string &model_name);
-
-        AnalysisModel(std::string name_, std::string source_file_, handler::FmuInfo *fmu_);
+        AnalysisModel(std::string name_, std::string source_path, std::unique_ptr<AnalysisParameterBindings> parameter_bindings_);
 
         ~AnalysisModel();
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "analysis_component.hpp"
+#include "analysis_connector.hpp"
 
 #include <cstdint>
 #include <string>
@@ -16,18 +17,23 @@ namespace ssp4sim::analysis
         std::string target_model;
         std::string target_connector;
 
-        bool is_boundary_crossing = false;
+        AnalysisConnector *source;
+        AnalysisConnector *target;
 
         uint64_t delay = 0;
+
+        bool is_boundary = false;
 
         AnalysisConnection() = default;
 
         AnalysisConnection(std::string source_model_,
                            std::string source_connector_,
                            std::string target_model_,
-                           std::string target_connector_,
-                           uint64_t delay_ = 0,
-                           bool is_boundary_crossing_ = false);
+                           std::string target_connector_);
+
+        // resolved connection
+        AnalysisConnection(AnalysisConnector *source_,
+                           AnalysisConnector *target_);
 
         ~AnalysisConnection() = default;
 
@@ -37,12 +43,6 @@ namespace ssp4sim::analysis
         }
 
         std::string to_string() const;
-
-        /// Build a display name for a connection.
-        static std::string create_name(const std::string &src_model,
-                                       const std::string &src_conn,
-                                       const std::string &tgt_model,
-                                       const std::string &tgt_conn);
     };
 
 } // namespace ssp4sim::analysis

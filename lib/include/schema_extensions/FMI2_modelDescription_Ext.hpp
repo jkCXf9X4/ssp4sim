@@ -28,6 +28,8 @@ namespace ssp4sim::ext::fmi2
 
         void *get_variable_start_value(fmi2ScalarVariable &var);
 
+        void *get_variable_start_value_or_default(fmi2ScalarVariable &var);
+
         std::vector<fmi2ScalarVariable> get_variables(
             fmi2ModelDescription &md,
             std::initializer_list<types::Causality> causalities);

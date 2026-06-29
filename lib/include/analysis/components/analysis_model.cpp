@@ -3,6 +3,8 @@
 #include "FMI2_modelDescription_Ext.hpp"
 #include "FMI2_Enums_Ext.hpp"
 
+#include "fmu_info.hpp"
+
 #include "ssp4cpp/utils/log.hpp"
 
 #include <sstream>
@@ -22,27 +24,14 @@ namespace ssp4sim::analysis
         }
     }
 
-    AnalysisModel::AnalysisModel(handler::FmuInfo *fmu_) : fmu(fmu_)
+    AnalysisModel::AnalysisModel(std::string name_, std::string source_path, std::unique_ptr<AnalysisParameterBindings> parameter_bindings_)
     {
-        name = fmu_->system_name;
-        source_file =fmu->fmi_instance->path();
-        
-        if (fmu->model_description->CoSimulation)
-        {
-            auto &co_sim = *fmu->model_description->CoSimulation;
-            this->canInterpolateInputs = co_sim.canInterpolateInputs.value_or(false);
-            this->maxOutputDerivativeOrder = co_sim.maxOutputDerivativeOrder.value_or(0);
-        }
+        name = name_;
+        type = ComponentType::Model;
+        parameter_bindings = std::move(parameter_bindings_);
 
-        create_connectors();
-        create_model_variables();
-    }
-
-    AnalysisModel::AnalysisModel(handler::FmuInfo *fmu_, const std::string &model_name)
-        : fmu(fmu_)
-    {
-        name = model_name;
-        source_file = fmu->fmi_instance->path();
+        auto fmu_tmp = std::make_unique<ssp4cpp::Fmu>(source_path);
+        fmu = std::make_unique<handler::FmuInfo>(name, std::move(fmu_tmp));
 
         if (fmu->model_description->CoSimulation)
         {
@@ -53,13 +42,6 @@ namespace ssp4sim::analysis
 
         create_connectors();
         create_model_variables();
-    }
-
-    AnalysisModel::AnalysisModel(std::string name_, std::string source_file_, handler::FmuInfo *fmu_)
-        : source_file(std::move(source_file_)),
-          fmu(fmu_)
-    {
-        name = std::move(name_);
     }
 
     AnalysisModel::~AnalysisModel() = default;
@@ -69,11 +51,10 @@ namespace ssp4sim::analysis
         std::ostringstream oss;
         oss << "Model {"
             << "\n  name: " << name
-            << "\n  type: " << type
-            << "\n  source: " << source_file
+            << "\n  source: " << fmu->fmi_instance->path()
             << "\n  delay: " << delay
-            << "\n  connectors: " << connectors.size()
-            << "\n  model_variables: " << model_variables.size()
+            // << "\n  connectors: " << connectors.size()
+            // << "\n  model_variables: " << model_variables.size()
             << "\n}";
         return oss.str();
     }
@@ -93,20 +74,16 @@ namespace ssp4sim::analysis
             auto value_reference = var.valueReference.value();
             auto type = ext::fmi2::model_variables::get_variable_type(var);
 
-            auto c = std::make_unique<AnalysisConnector>(
-                name, var.name, value_reference, type);
+            auto c = std::make_unique<AnalysisConnector>(name, var.name, value_reference, type, var.causality.value());
 
-            c->causality = var.causality.value();
+            c->model = this; // make sure model is not moved after this or pointer will be dangling
 
-            auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
+            auto start_value = ext::fmi2::model_variables::get_variable_start_value_or_default(var);
 
-            if (start_value)
-            {
-                auto sv = std::make_unique<ext::ssp1::ssv::StartValue>(var.name, type);
-                sv->store_value(start_value);
+            auto sv = std::make_unique<ext::ParameterValue>(var.name, type);
+            sv->store_value(start_value);
 
-                c->initial_value = std::move(sv);
-            }
+            c->initial_value = std::move(sv);
 
             connectors.push_back(std::move(c));
         }
@@ -115,6 +92,8 @@ namespace ssp4sim::analysis
     void AnalysisModel::create_model_variables()
     {
         LOG_TRACE_L1(log(), "[{func}] init", __func__);
+
+        model_variables.clear();
 
         auto md = fmu->model_description;
 
@@ -127,6 +106,8 @@ namespace ssp4sim::analysis
         {
             auto mv = std::make_unique<AnalysisModelVariable>(variable);
             LOG_TRACE_L1(log(), "[{func}] New ModelVariable: {variable}", __func__, mv->name);
+
+            mv->model = this; // make sure model is not moved after this or pointer will be dangling
 
             // populate variable dependencies
             for (auto &dep_coup : dependencies)

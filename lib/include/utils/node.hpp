@@ -20,7 +20,7 @@ namespace ssp4sim::utils::graph
     class Node : public virtual types::IWritable
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger *log = nullptr;
         std::string name;
         std::vector<Node *> children = {};
         std::vector<Node *> parents = {};
@@ -38,6 +38,8 @@ namespace ssp4sim::utils::graph
         Node(const Node &other);
 
         virtual std::string to_string() const override;
+
+        std::string Node::get_tree(const std::string &indent = "") const;
 
         /* === Relationship management ======================================= */
 
@@ -80,6 +82,12 @@ namespace ssp4sim::utils::graph
         std::vector<Node *> get_ancestors();
 
         /* === Generic helpers ================================================= */
+
+        template <typename T>
+        T *as()
+        {
+            return dynamic_cast<T *>(this);
+        }
 
         template <typename T>
         static std::vector<Node *> cast_to_parent_ptrs(const std::vector<T *> &node)

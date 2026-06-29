@@ -13,10 +13,10 @@ namespace ssp4sim::ext::ssp1::ssv
 {
     namespace
     {
-        ssp4cpp::utils::log::Logger* log()
+        ssp4cpp::utils::log::Logger *log()
         {
             // Cache this logger locally so we avoid eager header initialization.
-            static ssp4cpp::utils::log::Logger* logger =
+            static ssp4cpp::utils::log::Logger *logger =
                 ssp4cpp::utils::log::make_logger("ssp4sim.ext.ssp.ssp1.ssv");
             return logger;
         }
@@ -76,46 +76,24 @@ namespace ssp4sim::ext::ssp1::ssv
         return nullptr;
     }
 
-    std::vector<StartValue> get_start_values(
+    // https://ssp-standard.org/docs/2.0.1/#_parameterbindings
+    // When no parameter mapping is specified as part of the binding, then all the parameter values provided by the parameter source are applied using their original names. If a parameter matching this name is found in the system, the parameter value is applied. Otherwise that parameter value is ignored.
+
+    // When a parameter mapping is specified as part of the binding, then only the mapped parameter values are applied, using their mapped-to names. Non-mapped parameter values are not applied in this case.
+
+    std::map<std::string, ssp4cpp::ssp1::ssv::TParameter> get_parameter_mapping(
         const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
         const ssp4cpp::Ssp *ssp)
     {
         LOG_TRACE_L1(log(), "[{func}] Init", __func__);
 
-        std::vector<StartValue> start_values;
-
+        std::map<std::string, ssp4cpp::ssp1::ssv::TParameter> mapping;
         for (auto &binding : bindings)
         {
-            // Build SSM mapping lookup for this binding
-            std::map<std::string, std::vector<std::string>> ssm_mapping;
-            if (binding.ParameterMapping.has_value())
-            {
-                auto &pm = binding.ParameterMapping.value();
-
-                // External .ssm file reference
-                if (pm.source.has_value() && ssp)
-                {
-                    LOG_TRACE_L1(log(), "[{func}] Loading .ssm file: {source}", __func__, pm.source.value());
-                    auto ssm = ssp->load_ssm(pm.source.value());
-                    for (auto &entry : ssm.MappingEntry)
-                    {
-                        ssm_mapping[entry.source].push_back(entry.target);
-                    }
-                }
-
-                // Inline mapping entries
-                if (pm.ParameterMapping.has_value())
-                {
-                    for (auto &entry : pm.ParameterMapping.value().MappingEntry)
-                    {
-                        ssm_mapping[entry.source].push_back(entry.target);
-                    }
-                }
-            }
-
             // Resolve parameter source - external file or inline
             const ssp4cpp::ssp1::ssv::TParameters *params = nullptr;
             ssp4cpp::ssp1::ssv::ParameterSet param_set_holder;
+
             if (binding.source.has_value() && ssp)
             {
                 // Load from external .ssv file
@@ -129,59 +107,74 @@ namespace ssp4sim::ext::ssp1::ssv
                 params = &binding.ParameterValues.value().ParameterSet.Parameters;
             }
 
-            if (!params)
-                continue;
-
-            // Single parameter handling path
-            for (auto &parameter : params->Parameters)
+            // Build SSM mapping lookup for this binding
+            std::vector<std::pair<std::string, std::string>> ssm_mapping;
+            if (binding.ParameterMapping.has_value())
             {
-                LOG_TRACE_L1(log(), "[{func}] - Store values, {}", __func__, parameter.name);
-                StartValue start_value(parameter.name, get_parameter_type(parameter));
-                start_value.store_value(get_parameter_value(parameter));
+                auto &pm = binding.ParameterMapping.value();
 
-                auto it = ssm_mapping.find(parameter.name);
-                if (it != ssm_mapping.end())
+                // External .ssm file reference
+                if (pm.source.has_value() && ssp)
                 {
-                    start_value.mappings = it->second;
+                    LOG_TRACE_L1(log(), "[{func}] Loading .ssm file: {source}", __func__, pm.source.value());
+                    auto ssm = ssp->load_ssm(pm.source.value());
+                    for (auto &entry : ssm.MappingEntry)
+                    {
+                        ssm_mapping.push_back(std::make_pair(entry.source, entry.target));
+                    }
                 }
 
-                start_values.push_back(std::move(start_value));
-            }
-        }
-        return start_values;
-    }
+                // Inline mapping entries
+                if (pm.ParameterMapping.has_value())
+                {
+                    for (auto &entry : pm.ParameterMapping.value().MappingEntry)
+                    {
+                        ssm_mapping.push_back(std::make_pair(entry.source, entry.target));
+                    }
+                }
 
-    std::map<std::string, StartValue> get_start_value_mappings(
-        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
-        const ssp4cpp::Ssp *ssp)
-    {
-        auto start_values = get_start_values(bindings, ssp);
-
-        std::map<std::string, StartValue> result;
-        for (auto &value : start_values)
-        {
-            if (value.mappings.empty())
-            {
-                /* Without SSM mappings, use the parameter name itself as the key.
-                   For system-level bindings this is "component.connector",
-                   for component-level bindings this is the simple connector name. */
-                result.insert_or_assign(value.name, std::move(value));
+                // Only map those with mapping if mapping exists
+                for (auto parameter : params->Parameters)
+                {
+                    for (auto &[source, target] : ssm_mapping)
+                    {
+                        // only add the once that have matching names according to the standard
+                        if (source == parameter.name)
+                        {
+                            mapping[target] = parameter;
+                        }
+                    }
+                }
             }
             else
             {
-                for (auto name : value.mappings)
+                // no parameter mapping - add all according to name
+                for (auto parameter : params->Parameters)
                 {
-                    LOG_TRACE_L1(log(), "[{func}] Name: {name}", __func__, name);
-                    if (result.find(name) != result.end())
-                    {
-                        LOG_WARNING(log(), "Overwriting parameter: {name}", name);
-                    }
-                    result.insert_or_assign(name, std::move(value));
+                    mapping[parameter.name] = parameter;
                 }
             }
         }
-        return result;
+        return mapping;
     }
 
+    std::map<std::string, std::unique_ptr<ext::ParameterValue>> get_start_value_mappings(
+        const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
+        const ssp4cpp::Ssp *ssp)
+    {
+        std::map<std::string, std::unique_ptr<ext::ParameterValue>> result;
+
+        auto map = get_parameter_mapping(bindings, ssp);
+
+        for (auto &[name, parameter] : map)
+        {
+            auto start_value = std::make_unique<ParameterValue>(parameter.name, get_parameter_type(parameter));
+            start_value->store_value(get_parameter_value(parameter));
+
+            result[name] = std::move(start_value);
+        }
+
+        return result;
+    }
 
 }

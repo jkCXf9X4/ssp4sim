@@ -110,7 +110,7 @@ namespace ssp4sim::graph
 
                 if (connector->initial_value)
                 {
-                    info.initial_value = std::make_unique<ext::ssp1::ssv::StartValue>(*connector->initial_value);
+                    info.initial_value = std::make_unique<ext::ParameterValue>(*connector->initial_value);
 
                     auto value = ext::fmi2::enums::data_type_to_string(info.type, info.initial_value->raw_ptr());
 

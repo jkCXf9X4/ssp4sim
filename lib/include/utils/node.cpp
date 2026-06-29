@@ -41,6 +41,21 @@ namespace ssp4sim::utils::graph
         return oss.str();
     }
 
+    std::string Node::get_tree(const std::string &indent) const
+    {
+        std::ostringstream oss;
+        oss << indent << "Node: " << this->name << "\n";
+
+        std::string child_indent = indent + "-";
+
+        for (const auto &child : this->children)
+        {
+            oss << child->get_tree(child_indent);
+        }
+
+        return oss.str();
+    }
+
     /* === Relationship management ======================================= */
 
     void Node::add_child(Node *node)

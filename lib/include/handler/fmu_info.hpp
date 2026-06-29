@@ -1,14 +1,16 @@
 #pragma once
 
 
+
 #include "fmi4c_adapter.hpp"
 
-#include "utils/map.hpp"
+// #include "utils/map.hpp"
 
+#include "ssp4cpp/fmu.hpp"
 #include "ssp4cpp/utils/log.hpp"
 
-#include <map>
-#include <memory>
+// #include <map>
+// #include <memory>
 #include <string>
 
 namespace ssp4cpp
@@ -43,22 +45,5 @@ namespace ssp4sim::handler
         // can not be copied, has unique pointers
         FmuInfo(const FmuInfo &) = delete;
         FmuInfo &operator=(const FmuInfo &) = delete;
-    };
-
-    class FmuHandler
-    {
-    public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
-        ssp4cpp::Ssp *ssp;
-
-        std::map<std::string, std::unique_ptr<ssp4cpp::Fmu>> fmu_map;
-        std::map<std::string, ssp4cpp::Fmu *> fmu_ref_map; // Non owning
-
-        std::map<std::string, std::unique_ptr<FmuInfo>> fmu_info_map;
-
-        FmuHandler(ssp4cpp::Ssp *ssp);
-
-        void init();
     };
 }

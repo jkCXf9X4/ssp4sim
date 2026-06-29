@@ -65,7 +65,7 @@ namespace ssp4sim::ext::fmi2
             }
             else
             {
-                throw std::runtime_error("Unknown type");
+                return types::DataType::unknown;
             }
         }
 
@@ -94,6 +94,20 @@ namespace ssp4sim::ext::fmi2
             return nullptr;
         }
 
+        void *get_variable_start_value_or_default(fmi2ScalarVariable &var)
+        {
+            auto start_value = get_variable_start_value(var);
+            if (start_value != nullptr)
+            {
+                return start_value;
+            }
+            else
+            {
+                auto type = get_variable_type(var);
+                return fmi2::enums::get_default_value(type);
+            }
+        }
+
         std::vector<fmi2ScalarVariable> get_variables(
             fmi2ModelDescription &md,
             std::initializer_list<types::Causality> causalities)
@@ -102,7 +116,7 @@ namespace ssp4sim::ext::fmi2
             for (auto &var : md.ModelVariables.ScalarVariable)
             {
                 auto var_causality = var.causality.value_or(types::Causality::unknown);
-                
+
                 auto causality_present = utils::list::is_in_list(var_causality, causalities);
                 if (causality_present)
                 {
@@ -126,7 +140,8 @@ namespace ssp4sim::ext::fmi2
         {
             std::vector<IndexDependencyCoupling> result{};
 
-            for (auto [dependency, dependency_kind] : std::views::zip(u.dependencies, u.dependenciesKind)) {
+            for (auto [dependency, dependency_kind] : std::views::zip(u.dependencies, u.dependenciesKind))
+            {
 
                 if (kind == DependenciesKind::unknown || dependency_kind == kind)
                 {

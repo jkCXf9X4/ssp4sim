@@ -40,7 +40,7 @@ namespace ssp4sim::graph
 
         ssp4cpp::utils::log::Logger* log = nullptr;
 
-        std::unique_ptr<ssp4sim::ext::ssp1::ssv::StartValue> initial_value;
+        std::unique_ptr<ssp4sim::ext::ParameterValue> initial_value;
 
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;

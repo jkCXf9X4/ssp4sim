@@ -2,16 +2,16 @@
 
 #include "FMI2_Enums_Ext.hpp"
 
-#include "initial_value.hpp"
+#include "parameter_value.hpp"
 
 
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
 
-namespace ssp4sim::ext::ssp1::ssv
+namespace ssp4sim::ext
 {
-    StartValue::StartValue(std::string name, types::DataType type)
+    ParameterValue::ParameterValue(std::string name, types::DataType type)
         : name(std::move(name)), type(type)
     {
         mappings.push_back(this->name);
@@ -35,7 +35,7 @@ namespace ssp4sim::ext::ssp1::ssv
         }
     }
 
-    std::string StartValue::to_string() const
+    std::string ParameterValue::to_string() const
     {
         std::ostringstream oss;
         oss << "Model { \n"
@@ -46,7 +46,7 @@ namespace ssp4sim::ext::ssp1::ssv
         return oss.str();
     }
 
-    void StartValue::store_value(void *raw_value)
+    void ParameterValue::store_value(void *raw_value)
     {
         switch (type)
         {
@@ -67,7 +67,7 @@ namespace ssp4sim::ext::ssp1::ssv
         }
     }
 
-    void *StartValue::raw_ptr()
+    void *ParameterValue::raw_ptr()
     {
         if (std::holds_alternative<std::monostate>(value))
         {
@@ -78,7 +78,7 @@ namespace ssp4sim::ext::ssp1::ssv
                           { return &v; }, value);
     }
 
-    const void *StartValue::raw_ptr() const
+    const void *ParameterValue::raw_ptr() const
     {
         if (std::holds_alternative<std::monostate>(value))
         {

@@ -10,18 +10,18 @@
 #include <variant>
 #include <vector>
 
-namespace ssp4sim::ext::ssp1::ssv
+namespace ssp4sim::ext
 {
-    using StartValueData = std::variant<std::monostate, double, int, std::string>;
+    using ParameterValueData = std::variant<std::monostate, double, int, std::string>;
 
-    struct StartValue : public types::IWritable
+    struct ParameterValue : public types::IWritable
     {
         std::string name;
         std::vector<std::string> mappings; // name + mappings
         types::DataType type = types::DataType::unknown;
-        StartValueData value;
+        ParameterValueData value;
 
-        StartValue(std::string name, types::DataType type);
+        ParameterValue(std::string name, types::DataType type);
 
         std::string to_string() const override;
 

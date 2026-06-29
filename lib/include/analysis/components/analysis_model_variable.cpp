@@ -1,5 +1,4 @@
 #include "analysis/components/analysis_model_variable.hpp"
-#include "analysis/components/analysis_connector.hpp"
 
 #include "FMI2_modelDescription_Ext.hpp"
 
@@ -23,22 +22,11 @@ namespace ssp4sim::analysis
     AnalysisModelVariable::AnalysisModelVariable(const ssp4cpp::fmi2::md::fmi2ScalarVariable &var)
     {
         name = var.name;
-        type = "";
+        type = ComponentType::ModelVariable;
         if (var.valueReference.has_value())
         {
             value_reference = var.valueReference.value();
         }
-    }
-
-    AnalysisModelVariable::AnalysisModelVariable(std::string component_,
-                                                  std::string variable_name_,
-                                                  std::string type_,
-                                                  std::string /*start_value*/)
-        : component(std::move(component_)),
-          variable_name(std::move(variable_name_)),
-          type(std::move(type_))
-    {
-        name = component + "." + variable_name;
     }
 
     std::string AnalysisModelVariable::to_string() const
@@ -46,7 +34,6 @@ namespace ssp4sim::analysis
         std::ostringstream oss;
         oss << "AnalysisModelVariable {"
             << "\n  name: " << name
-            << "\n  type: " << type
             << "\n  vr: " << value_reference
             << "\n  causality: " << causality.to_string()
             << "\n}";
