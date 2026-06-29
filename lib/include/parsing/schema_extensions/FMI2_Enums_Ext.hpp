@@ -14,13 +14,11 @@ namespace ssp4sim::ext::fmi2
     namespace enums
     {
 
-        namespace default_values
-        {
-            const bool default_bool = false;
-            const double default_real = 0.0;
-            const int default_int = 0;
-            const std::string default_string = "";
-        }
+        using DefaultValue = std::variant<
+            bool,
+            int,
+            double,
+            std::string_view>;
 
         /**
          * @brief  Return the in-memory size (in bytes) of a single value
@@ -30,8 +28,7 @@ namespace ssp4sim::ext::fmi2
 
         std::string data_type_to_string(types::DataType type, void *data);
 
-        // this contains dangerous solution... remove if possible
-        void *get_default_value(types::DataType type);
+        DefaultValue get_default_value(types::DataType type);
     }
 
 }

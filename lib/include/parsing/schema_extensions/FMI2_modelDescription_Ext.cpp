@@ -94,20 +94,6 @@ namespace ssp4sim::ext::fmi2
             return nullptr;
         }
 
-        void *get_variable_start_value_or_default(fmi2ScalarVariable &var)
-        {
-            auto start_value = get_variable_start_value(var);
-            if (start_value != nullptr)
-            {
-                return start_value;
-            }
-            else
-            {
-                auto type = get_variable_type(var);
-                return fmi2::enums::get_default_value(type);
-            }
-        }
-
         std::vector<fmi2ScalarVariable> get_variables(
             fmi2ModelDescription &md,
             std::initializer_list<types::Causality> causalities)
@@ -130,22 +116,22 @@ namespace ssp4sim::ext::fmi2
     namespace dependency
     {
 
-        std::vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u)
+        std::vector<VariableIndexDependency> get_dependencies_index(Unknown &u)
         {
             return get_dependencies_index(u, DependenciesKind::unknown);
         }
 
         // output index, dependency index , kind
-        std::vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u, DependenciesKind kind)
+        std::vector<VariableIndexDependency> get_dependencies_index(Unknown &u, DependenciesKind kind)
         {
-            std::vector<IndexDependencyCoupling> result{};
+            std::vector<VariableIndexDependency> result{};
 
             for (auto [dependency, dependency_kind] : std::views::zip(u.dependencies, u.dependenciesKind))
             {
 
                 if (kind == DependenciesKind::unknown || dependency_kind == kind)
                 {
-                    auto t = std::make_tuple(u.index, dependency, dependency_kind);
+                    auto t = VariableIndexDependency{u.index, dependency, dependency_kind};
                     result.emplace_back(std::move(t));
                 }
             }
@@ -153,15 +139,15 @@ namespace ssp4sim::ext::fmi2
             return result;
         }
 
-        std::vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv)
+        std::vector<VariableDependency> get_dependencies_variables(Unknown &u, ModelVariables &mv)
         {
             // should add 'all'
             return get_dependencies_variables(u, mv, DependenciesKind::unknown);
         }
 
-        std::vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv, DependenciesKind kind)
+        std::vector<VariableDependency> get_dependencies_variables(Unknown &u, ModelVariables &mv, DependenciesKind kind)
         {
-            auto result = std::vector<VariableDependencyCoupling>();
+            auto result = std::vector<VariableDependency>();
 
             auto dependencies = get_dependencies_index(u, kind);
 
@@ -170,15 +156,15 @@ namespace ssp4sim::ext::fmi2
                 auto output = model_variables::get_variable(mv, index);
                 auto dep = model_variables::get_variable(mv, dependency);
 
-                auto t = VariableDependencyCoupling(output, dep, kind);
+                auto t = VariableDependency{output, dep, kind};
                 result.push_back(t);
             }
             return result;
         }
 
-        std::vector<VariableDependencyCoupling> get_dependencies_variables(std::vector<Unknown> &us, ModelVariables &mv, DependenciesKind kind)
+        std::vector<VariableDependency> get_dependencies_variables(std::vector<Unknown> &us, ModelVariables &mv, DependenciesKind kind)
         {
-            auto result = std::vector<VariableDependencyCoupling>();
+            auto result = std::vector<VariableDependency>();
 
             for (auto &u : us)
             {

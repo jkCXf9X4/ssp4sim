@@ -158,18 +158,18 @@ namespace ssp4sim::ext::ssp1::ssv
         return mapping;
     }
 
-    std::map<std::string, std::unique_ptr<ext::ParameterValue>> get_start_value_mappings(
+    std::map<std::string, ext::ParameterValue> get_start_value_mappings(
         const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
         const ssp4cpp::Ssp *ssp)
     {
-        std::map<std::string, std::unique_ptr<ext::ParameterValue>> result;
+        std::map<std::string, ext::ParameterValue> result;
 
         auto map = get_parameter_mapping(bindings, ssp);
 
         for (auto &[name, parameter] : map)
         {
-            auto start_value = std::make_unique<ParameterValue>(parameter.name, get_parameter_type(parameter));
-            start_value->store_value(get_parameter_value(parameter));
+            auto start_value = ParameterValue(parameter.name, get_parameter_type(parameter));
+            start_value.store_value(get_parameter_value(parameter));
 
             result[name] = std::move(start_value);
         }

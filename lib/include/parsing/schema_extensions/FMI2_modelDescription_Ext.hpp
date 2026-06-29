@@ -37,24 +37,38 @@ namespace ssp4sim::ext::fmi2
 
     namespace dependency
     {
-        using IndexDependencyCoupling = std::tuple<int, int, DependenciesKind>;
-        using VariableDependencyCoupling = std::tuple<fmi2ScalarVariable *, fmi2ScalarVariable *, DependenciesKind>;
+
+        struct VariableIndexDependency
+        {
+            // target depends on dependency
+            int target;
+            int dependency;
+            DependenciesKind kind;
+        }
+
+        struct VariableDependency
+        {
+            // target depends on dependency
+            fmi2ScalarVariable * target;
+            fmi2ScalarVariable * dependency;
+            DependenciesKind kind;
+        }
 
         // Unknowns
         /** @brief Get variable dependencies for an Unknown by index. */
-        std::vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u);
+        std::vector<VariableIndexDependency> get_dependencies_index(Unknown &u);
 
         /** @brief Get variable dependencies for an Unknown filtered by kind. */
-        std::vector<IndexDependencyCoupling> get_dependencies_index(Unknown &u, DependenciesKind kind);
+        std::vector<VariableIndexDependency> get_dependencies_index(Unknown &u, DependenciesKind kind);
 
         /** @brief Resolve variable dependencies for a single Unknown. */
-        std::vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv);
+        std::vector<VariableDependency> get_dependencies_variables(Unknown &u, ModelVariables &mv);
 
         /** @brief Resolve variable dependencies filtered by kind. */
-        std::vector<VariableDependencyCoupling> get_dependencies_variables(Unknown &u, ModelVariables &mv, DependenciesKind kind);
+        std::vector<VariableDependency> get_dependencies_variables(Unknown &u, ModelVariables &mv, DependenciesKind kind);
 
         /** @brief Resolve dependencies for multiple Unknowns filtered by kind. */
-        std::vector<VariableDependencyCoupling> get_dependencies_variables(std::vector<Unknown> &us, ModelVariables &mv, DependenciesKind kind);
+        std::vector<VariableDependency> get_dependencies_variables(std::vector<Unknown> &us, ModelVariables &mv, DependenciesKind kind);
     }
 
 }

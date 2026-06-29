@@ -24,7 +24,7 @@ namespace ssp4sim::ext::ssp1::ssv
         const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
         const ssp4cpp::Ssp *ssp);
 
-    std::map<std::string, std::unique_ptr<ext::ParameterValue>> get_start_value_mappings(
+    std::map<std::string, ext::ParameterValue> get_start_value_mappings(
         const std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> &bindings,
         const ssp4cpp::Ssp *ssp);
 

@@ -24,16 +24,17 @@ namespace ssp4sim::analysis
         }
     }
 
-    AnalysisModel::AnalysisModel(std::string name_, std::string source_path, std::unique_ptr<AnalysisParameterBindings> parameter_bindings_)
+    AnalysisModel::AnalysisModel(std::string name_,
+                                 std::string source_path,
+                                 std::map<std::string, ext::ParameterValue> parameter_bindings_)
+        : name(name_),
+          parameter_bindings(parameter_bindings_);
     {
-        name = name_;
         type = ComponentType::Model;
-        parameter_bindings = std::move(parameter_bindings_);
 
-        auto fmu_tmp = std::make_unique<ssp4cpp::Fmu>(source_path);
-        fmu = std::make_unique<handler::FmuInfo>(name, std::move(fmu_tmp));
+        auto fmu = std::make_shared<ssp4cpp::Fmu>(source_path);
 
-        if (fmu->model_description->CoSimulation)
+        if (fmu->md->CoSimulation)
         {
             auto &co_sim = *fmu->model_description->CoSimulation;
             this->canInterpolateInputs = co_sim.canInterpolateInputs.value_or(false);
@@ -43,8 +44,6 @@ namespace ssp4sim::analysis
         create_connectors();
         create_model_variables();
     }
-
-    AnalysisModel::~AnalysisModel() = default;
 
     std::string AnalysisModel::to_string() const
     {
@@ -64,26 +63,22 @@ namespace ssp4sim::analysis
     {
         connectors.clear();
 
-        auto md = fmu->model_description;
-
         auto variables = ext::fmi2::model_variables::get_variables(
-            *md, {types::Causality::input, types::Causality::output, types::Causality::parameter});
+            *fmu->md, {types::Causality::input, types::Causality::output, types::Causality::parameter});
 
         for (auto &var : variables)
         {
             auto value_reference = var.valueReference.value();
             auto type = ext::fmi2::model_variables::get_variable_type(var);
 
-            auto c = std::make_unique<AnalysisConnector>(name, var.name, value_reference, type, var.causality.value());
+            auto c = AnalysisConnector(name, var.name, value_reference, type, var.causality.value());
 
-            c->model = this; // make sure model is not moved after this or pointer will be dangling
-
-            auto start_value = ext::fmi2::model_variables::get_variable_start_value_or_default(var);
-
-            auto sv = std::make_unique<ext::ParameterValue>(var.name, type);
-            sv->store_value(start_value);
-
-            c->initial_value = std::move(sv);
+            auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
+            // overwrite default
+            if (start_value != nullptr)
+            {
+                start_value->store_value(start_value);
+            }
 
             connectors.push_back(std::move(c));
         }
@@ -95,19 +90,15 @@ namespace ssp4sim::analysis
 
         model_variables.clear();
 
-        auto md = fmu->model_description;
-
         auto dependencies = ext::fmi2::dependency::get_dependencies_variables(
-            md->ModelStructure.Outputs.value().Unknowns,
-            md->ModelVariables,
+            fmu->md->ModelStructure.Outputs.value().Unknowns,
+            fmu->md->ModelVariables,
             ext::fmi2::DependenciesKind::dependent);
 
-        for (auto &variable : fmu->model_description->ModelVariables.ScalarVariable)
+        for (auto &variable : fmu->md->ModelVariables.ScalarVariable)
         {
-            auto mv = std::make_unique<AnalysisModelVariable>(variable);
+            auto mv = AnalysisModelVariable(variable);
             LOG_TRACE_L1(log(), "[{func}] New ModelVariable: {variable}", __func__, mv->name);
-
-            mv->model = this; // make sure model is not moved after this or pointer will be dangling
 
             // populate variable dependencies
             for (auto &dep_coup : dependencies)

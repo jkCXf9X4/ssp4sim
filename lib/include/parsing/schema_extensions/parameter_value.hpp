@@ -17,8 +17,11 @@ namespace ssp4sim::ext
     struct ParameterValue : public types::IWritable
     {
         std::string name;
-        std::vector<std::string> mappings; // name + mappings
+        // std::vector<std::string> mappings; // name + mappings
+
         types::DataType type = types::DataType::unknown;
+        std::size_t size;
+
         ParameterValueData value;
 
         ParameterValue(std::string name, types::DataType type);

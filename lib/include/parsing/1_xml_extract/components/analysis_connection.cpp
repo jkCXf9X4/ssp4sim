@@ -25,16 +25,11 @@ namespace ssp4sim::analysis
           target_model(target_model_), target_connector(target_connector_)
     {
         type = ComponentType::Connection;
+        
         // name is not used in this context, only for pretty prints
         name = source_model + "." + source_connector + "->" + target_model + "." + target_connector;
 
         is_boundary = source_model == "" or target_model_ == "";
-    }
-
-    AnalysisConnection::AnalysisConnection(AnalysisConnector *source_, AnalysisConnector *target_)
-        : source(source_), target(target_)
-    {
-        name = source->name + "->" + target->name;
     }
 
     std::string AnalysisConnection::to_string() const

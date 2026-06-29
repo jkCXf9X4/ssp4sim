@@ -4,7 +4,6 @@
 #include "analysis/components/analysis_connector.hpp"
 #include "analysis/components/analysis_connection.hpp"
 
-
 #include "tarjan.hpp"
 #include "utils/node.hpp"
 
@@ -30,12 +29,17 @@ namespace ssp4sim::analysis
     {
         type = ComponentType::System;
         name = sys.name.value_or("unnamed");
+
         if (!sys.Elements.has_value())
         {
             return;
         }
 
-        bindings = std::make_unique<AnalysisParameterBindings>(sys.ParameterBindings, ssp);
+        if (sys.ParameterBindings.has_value())
+        {
+            bindings = ext::ssp1::ssv::get_start_value_mappings(
+                sys.ParameterBindings->ParameterBindings, ssp);
+        }
 
         auto &elements = sys.Elements.value();
 
@@ -49,18 +53,17 @@ namespace ssp4sim::analysis
 
             auto component_name = component.name.value();
 
-            auto comp_bindings = std::make_unique<AnalysisParameterBindings>(component.ParameterBindings, ssp);
+            auto comp_bindings = AnalysisParameterBindings(component.ParameterBindings, ssp);
 
+            auto model = AnalysisModel(component_name, ssp->dir / component.source, comp_bindings);
 
-            auto model = std::make_unique<AnalysisModel>(component_name, ssp->dir / component.source, std::move(comp_bindings));
-
-            models.push_back(std::move(model));
+            models.push_back(model);
         }
 
         for (auto &sub_sys : elements.Systems)
         {
-            auto nested = std::make_unique<AnalysisSystem>(sub_sys, ssp);
-            nested_systems.push_back(std::move(nested));
+            auto nested = AnalysisSystem(sub_sys, ssp);
+            nested_systems.push_back(nested);
         }
 
         // Process system-level (boundary) connectors
@@ -68,13 +71,13 @@ namespace ssp4sim::analysis
         {
             for (auto &connector : sys.Connectors.value().Connectors)
             {
-                auto analysis_conn = std::make_unique<AnalysisConnector>(
+                auto analysis_conn = AnalysisConnector(
                     connector.name,
                     0, // no value reference for system-level connectors
                     types::DataType::unknown,
                     connector.kind);
 
-                connectors.push_back(std::move(analysis_conn));
+                connectors.push_back(analysis_conn);
             }
         }
 
@@ -91,42 +94,12 @@ namespace ssp4sim::analysis
 
                 auto analysis_conn = std::make_unique<AnalysisConnection>(src_model_str, src_con, tgt_model_str, tgt_con);
 
-                connections.push_back(std::move(analysis_conn));
+                // add optional delay....
 
-                // AnalysisConnector *source;
-                // AnalysisConnector *target;
-
-                // if (src_model_str == "")
-                // {
-                //     source = find_connector(conn.startConnector, this->connectors);
-                // }
-                // else if (tgt_model_str == "")
-                // {
-                //     target = find_connector(conn.endConnector, this->connectors);
-                // }
-                // else
-                // {
-                //     auto src_model = find_model(src_model_str, this->models);
-                //     auto tgt_model = find_model(tgt_model_str, this->models);
-
-                //     source = find_connector(conn.startConnector, src_model->connectors);
-                //     target = find_connector(conn.endConnector, tgt_model->connectors);
-                // }
-
-                // if (source && target)
-                // {
-                //     auto analysis_conn = std::make_unique<AnalysisConnection>(source, target);
-                //     connections.push_back(std::move(analysis_conn));
-                // }
-                // else
-                // {
-                //     throw std::runtime_error("Connection did not match naming");
-                // }
+                connections.push_back(analysis_conn);
             }
         }
     }
-
-
 
     AnalysisSystem::~AnalysisSystem() = default;
 

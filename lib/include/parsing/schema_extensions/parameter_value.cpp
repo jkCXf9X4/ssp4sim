@@ -14,25 +14,10 @@ namespace ssp4sim::ext
     ParameterValue::ParameterValue(std::string name, types::DataType type)
         : name(std::move(name)), type(type)
     {
-        mappings.push_back(this->name);
+        // mappings.push_back(this->name);
 
-        switch (this->type)
-        {
-        case types::DataType::real:
-            value = 0.0;
-            break;
-        case types::DataType::boolean:
-        case types::DataType::integer:
-        case types::DataType::enumeration:
-            value = 0;
-            break;
-        case types::DataType::string:
-            value = std::string();
-            break;
-        case types::DataType::unknown:
-            value = std::monostate();
-            break;
-        }
+        size = fmi2::enums::get_data_type_size(type);
+        value = fmi2::enums::get_default_value(type);
     }
 
     std::string ParameterValue::to_string() const
