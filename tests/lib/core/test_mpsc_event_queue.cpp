@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include "signal/mpsc_event_queue.hpp"
+#include "simulation/signal/mpsc_event_queue.hpp"
 
 #include <algorithm>
 #include <atomic>

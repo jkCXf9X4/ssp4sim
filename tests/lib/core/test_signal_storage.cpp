@@ -1,4 +1,4 @@
-#include "signal/storage.hpp"
+#include "simulation/signal/storage.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 

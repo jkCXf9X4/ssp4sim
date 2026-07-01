@@ -1,5 +1,5 @@
 #include <catch.hpp>
-#include "utils/node.hpp"
+#include "utils/primitives/node.hpp"
 
 using ssp4sim::utils::graph::Node;
 

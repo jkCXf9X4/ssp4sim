@@ -1,6 +1,6 @@
 #include <catch.hpp>
 
-#include <utils/node.hpp>
+#include <utils/primitives/node.hpp>
 
 #include <vector>
 #include <string>

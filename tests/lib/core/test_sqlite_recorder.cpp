@@ -1,9 +1,9 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "signal/sinks/sqlite_recorder_sink.hpp"
+#include "simulation/signal/sinks/sqlite_recorder_sink.hpp"
 
-#include "utils/time.hpp"
+#include "utils/time/time.hpp"
 
 #include <sqlite3.h>
 

@@ -1,6 +1,6 @@
-#include "fmi4c_adapter.hpp"
+#include "utils/fmi/fmi4c_adapter.hpp"
 
-#include "utils/time.hpp"
+#include "utils/time/time.hpp"
 
 #include <catch.hpp>
 

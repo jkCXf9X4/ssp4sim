@@ -1,11 +1,10 @@
 #include <catch.hpp>
 #include "ssp4cpp/utils/log.hpp"
 
-#include "signal/sinks/csv_recorder_sink.hpp"
-#include "utils/time.hpp"
-#include "utils/allocator.hpp"
-#include "signal/recorder.hpp"
-#include "utils/model.hpp"
+#include "simulation/signal/sinks/csv_recorder_sink.hpp"
+#include "utils/time/time.hpp"
+#include "utils/memory/allocator.hpp"
+#include "simulation/signal/recorder.hpp"
 
 #include "ssp4sim_definitions.hpp"
 

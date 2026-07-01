@@ -1,4 +1,4 @@
-#include "utils/ring_buffer.hpp"
+#include "utils/primitives/ring_buffer.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 

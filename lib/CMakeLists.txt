@@ -9,12 +9,27 @@ target_include_directories(
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/public_include
 
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser/elements
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser/schema_extensions
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis/elements
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation/elements
           ${CMAKE_CURRENT_LIST_DIR}/include/utils
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/fmi
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/graph
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/io
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/memory
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/primitives
           ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/time
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/graph_executor
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/graph_executor/execution
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal/sinks
           )
 
 # The library is linked into shared modules (Python extension), so force PIC.

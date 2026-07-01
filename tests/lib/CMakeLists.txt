@@ -5,16 +5,27 @@ add_executable(ssp4sim_tests ${ALL_SRC})
 target_include_directories(
   ssp4sim_tests
   PRIVATE ${CMAKE_SOURCE_DIR}/lib/include
-          ${CMAKE_SOURCE_DIR}/lib/include/analysis
-          ${CMAKE_SOURCE_DIR}/lib/include/execution
-          ${CMAKE_SOURCE_DIR}/lib/include/graph
-          ${CMAKE_SOURCE_DIR}/lib/include/graph/analysis
-          ${CMAKE_SOURCE_DIR}/lib/include/handler
-          ${CMAKE_SOURCE_DIR}/lib/include/model
-          ${CMAKE_SOURCE_DIR}/lib/include/schema_extensions
-          ${CMAKE_SOURCE_DIR}/lib/include/signal
+          ${CMAKE_SOURCE_DIR}/lib/include/pre
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/1_ssp_parser
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/1_ssp_parser/elements
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/1_ssp_parser/schema_extensions
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/2_analysis
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/2_analysis/elements
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation/elements
+          ${CMAKE_SOURCE_DIR}/lib/include/simulation
+          ${CMAKE_SOURCE_DIR}/lib/include/simulation/graph_executor
+          ${CMAKE_SOURCE_DIR}/lib/include/simulation/graph_executor/execution
+          ${CMAKE_SOURCE_DIR}/lib/include/simulation/signal
+          ${CMAKE_SOURCE_DIR}/lib/include/simulation/signal/sinks
           ${CMAKE_SOURCE_DIR}/lib/include/utils
+          ${CMAKE_SOURCE_DIR}/lib/include/utils/fmi
+          ${CMAKE_SOURCE_DIR}/lib/include/utils/graph
+          ${CMAKE_SOURCE_DIR}/lib/include/utils/io
+          ${CMAKE_SOURCE_DIR}/lib/include/utils/memory
+          ${CMAKE_SOURCE_DIR}/lib/include/utils/primitives
           ${CMAKE_SOURCE_DIR}/lib/include/utils/thread_pool
+          ${CMAKE_SOURCE_DIR}/lib/include/utils/time
           ${CMAKE_SOURCE_DIR}/lib/public_include)
 
 target_link_libraries(ssp4sim_tests PUBLIC ssp4sim_lib)

@@ -1,4 +1,4 @@
-#include "model/model_connection.hpp"
+#include "pre/3_simulation/elements/model_connection.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
