@@ -16,11 +16,6 @@ Configuration drives all runtime behavior: SSP path, executor method, timing, re
 
 ## Flow 2: SSP Archive to Execution Graph
 
-```
-SSP Archive → AnalysisGraphBuilder → AnalysisGraph (models, connectors, connections)
-AnalysisGraph → GraphBuilder → Graph (executable nodes, executor)
-```
-
 The SSP is first analyzed to build a structural view, then transformed into an executable graph.
 
 ## Flow 3: Simulation Step Data

@@ -105,9 +105,9 @@ class Simulation {
     }
 
     class AnalysisGraph {
-        +models: std::map<string, std::unique_ptr<AnalysisModel>>
-        +connectors: std::map<string, std::unique_ptr<AnalysisConnector>>
-        +connections: std::map<string, std::unique_ptr<AnalysisConnection>>
+        +models: std::map<string, std::unique_ptr<SspModel>>
+        +connectors: std::map<string, std::unique_ptr<SspConnector>>
+        +connections: std::map<string, std::unique_ptr<Connection>>
         +AnalysisGraph(models, connectors, connections)
     }
 

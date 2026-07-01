@@ -86,7 +86,7 @@ namespace ssp4sim
         p->fmu_handler->init();
 
         LOG_INFO(p->log, "[{func}] - Creating analysis system", __func__);
-        auto analysis_system_builder = analysis::AnalysisSystemBuilder()
+        auto analysis_system_builder = analysis::SspSystemBuilder()
         auto analysis_system =  analysis_system_builder.build(p->ssp);
         LOG_DEBUG(p->log, " -- analysis system built");
 
