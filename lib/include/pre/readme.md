@@ -154,4 +154,9 @@ Find direct feedthru items by linking all internal variables
 
 # Build up simulation graph
 
-the analysis graph builder is responsible to build the analysis model-model graph, utilize this for building the final simulation graph 
+utilize analysis model-model graph for building the final simulation graph 
+
+The final output should be the simulation nodes that can be inserted into the graph runner
+
+TODO:
+Package the simulation nodes into a simulation_graph object that has ownage of the nodes
