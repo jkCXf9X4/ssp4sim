@@ -27,4 +27,7 @@ namespace ssp4sim::utils::time
     uint64_t time_now_ns();
 
     std::string time_now_str();
+
+/// @brief Current Unix epoch time in seconds (UTC).
+std::int64_t current_epoch_seconds();
 }

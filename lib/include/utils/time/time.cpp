@@ -42,4 +42,11 @@ namespace ssp4sim::utils::time
         return std::format("{:%Y-%m-%d_%H-%M-%S}", zoned_time{current_zone(), now});
     }
 
+    std::int64_t current_epoch_seconds()
+    {
+        using namespace std::chrono;
+        const auto now = system_clock::now();
+        return duration_cast<seconds>(now.time_since_epoch()).count();
+    }
+
 }

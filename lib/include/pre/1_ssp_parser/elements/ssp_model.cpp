@@ -70,6 +70,10 @@ SspModel::SspModel(std::string name_,
             auto value_reference = var.valueReference.value();
             auto type = ext::fmi2::model_variables::get_variable_type(var);
 
+            // Connector names include the model prefix so the flat connector map
+            // in SspGraphBuilder can disambiguate connectors across models.
+            // The lookup key is constructed as source_model + "." + source_connector
+            // in graph_builder.cpp, which matches this naming.
             auto connector_name = name + "." + var.name;
             auto c = SspConnector(connector_name, value_reference, type, var.causality.value());
 

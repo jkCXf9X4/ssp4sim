@@ -28,15 +28,9 @@ namespace ssp4sim::graph
 
         void build(analysis::AnalysisGraphData *graph_data);
 
-        std::unique_ptr<Graph> get_graph();
-
         std::map<std::string, std::unique_ptr<Invocable>> get_models();
 
     private:
-        /// Owns the FmuInfo objects created during build().
-        //TODO: move the ownage of the FmuInfo to the model_fmu
-        std::vector<std::unique_ptr<handler::FmuInfo>> fmu_infos;
-
         void create_fmu_models(analysis::AnalysisGraphData &graph_data);
         void create_data_storage_areas(analysis::AnalysisGraphData &graph_data);
         void wire_connections(analysis::AnalysisGraphData &graph_data);

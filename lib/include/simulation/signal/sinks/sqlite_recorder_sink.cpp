@@ -6,7 +6,6 @@
 
 #include <sqlite3.h>
 
-#include <chrono>
 #include <cstdint>
 #include <format>
 #include <stdexcept>
@@ -26,14 +25,6 @@ namespace ssp4sim::signal
             }
 
             return db == nullptr ? "unknown SQLite error" : sqlite3_errmsg(db);
-        }
-
-        // TODO: Move to some util...
-        std::int64_t current_epoch_seconds()
-        {
-            using namespace std::chrono;
-            const auto now = system_clock::now();
-            return duration_cast<seconds>(now.time_since_epoch()).count();
         }
     }
 
@@ -59,7 +50,7 @@ namespace ssp4sim::signal
         }
         else
         {
-            const auto epoch = current_epoch_seconds();
+            const auto epoch = utils::time::current_epoch_seconds();
             filename = working_dir / std::format("{}_{}.sqlite", epoch, session_uuid);
         }
 

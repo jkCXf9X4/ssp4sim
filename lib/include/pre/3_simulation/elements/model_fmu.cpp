@@ -18,10 +18,10 @@
 namespace ssp4sim::graph
 {
 
-    FmuModel::FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu, size_t maxOutputDerivativeOrder)
+    FmuModel::FmuModel(std::string name, std::unique_ptr<ssp4sim::handler::FmuInfo> fmu, size_t maxOutputDerivativeOrder)
         : log(ssp4cpp::utils::log::make_logger(std::format("models.{}", name)))
     {
-        this->fmu = fmu;
+        this->fmu = std::move(fmu);
         this->name = std::move(name);
         this->maxOutputDerivativeOrder = maxOutputDerivativeOrder;
 
@@ -34,7 +34,7 @@ namespace ssp4sim::graph
     FmuModel::~FmuModel()
     {
         LOG_TRACE_L1(log, "[{func}] Destroying FmuModel", __func__);
-        if (fmu != nullptr && fmu->model != nullptr)
+        if (fmu && fmu->model)
         {
             fmu->model->terminate();
         }

@@ -71,11 +71,10 @@ namespace ssp4sim::graph
                 continue;
             }
 
-            // Create FmuInfo from the SspModel's FMU pointer and store it
-            fmu_infos.push_back(std::make_unique<handler::FmuInfo>(analysis_model->name, analysis_model->fmu.get()));
-            auto *fmu_info = fmu_infos.back().get();
+            // Create FmuInfo from the SspModel's FMU pointer and transfer ownership to FmuModel
+            auto fmu_info = std::make_unique<handler::FmuInfo>(analysis_model->name, analysis_model->fmu.get());
 
-            auto m = std::make_unique<FmuModel>(analysis_model->name, fmu_info, analysis_model->maxOutputDerivativeOrder);
+            auto m = std::make_unique<FmuModel>(analysis_model->name, std::move(fmu_info), analysis_model->maxOutputDerivativeOrder);
             LOG_TRACE_L1(log, "[{func}] -- New Model: {model}", __func__, m->name);
 
             m->delay = analysis_model->delay;
@@ -122,7 +121,7 @@ namespace ssp4sim::graph
                 info.name = connector->name;
 
                 info.value_ref = connector->value_reference;
-                info.fmu = model->fmu;
+                info.fmu = model->fmu.get();
 
                 // Store the initial value if available
                 info.initial_value = std::make_unique<ext::ParameterValue>(connector->initial_value);
@@ -358,11 +357,6 @@ namespace ssp4sim::graph
                 }
             }
         }
-    }
-
-    std::unique_ptr<Graph> GraphBuilder::get_graph()
-    {
-        return std::make_unique<Graph>(ssp4sim::utils::map_ns::map_unique_to_ref(models), recorder);
     }
 
     std::map<std::string, std::unique_ptr<Invocable>> GraphBuilder::get_models()

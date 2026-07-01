@@ -3,10 +3,7 @@
 
 #include "utils/time/timer.hpp"
 
-#include "pre/1_ssp_parser/ssp_parser.hpp"
-#include "pre/2_analysis/tree_builder.hpp"
-#include "pre/2_analysis/graph_builder.hpp"
-#include "pre/3_simulation/sim_graph_builder.hpp"
+#include "pre/simulation_pipeline.hpp"
 
 #include "signal/sinks/csv_recorder_sink.hpp"
 
@@ -23,6 +20,7 @@
 #include "ssp4cpp/fmu.hpp"
 
 #include "utils/io/io.hpp"
+#include "utils/primitives/map.hpp"
 #include "utils/primitives/uuid.hpp"
 
 #include <cstdint>
@@ -43,10 +41,9 @@ namespace ssp4sim
 
         std::string session_uuid;
 
+        SimulationPipelineResult setup_results;
         std::unique_ptr<signal::DataRecorder> recorder = nullptr;
-        std::unique_ptr<graph::Graph> sim_graph;
-
-        std::map<std::string, std::unique_ptr<graph::Invocable>> nodes;
+        std::unique_ptr<graph::GraphExecutor> sim_graph;
     };
 
     Simulation::Simulation(ssp4cpp::Ssp *ssp, ssp4sim::SharedConfig *config) : p(std::make_unique<SimulationPrivate>())
@@ -83,31 +80,12 @@ namespace ssp4sim
     {
         LOG_INFO(p->log, "[{func}] Initializing simulation", __func__);
 
-        LOG_INFO(p->log, "[{func}] - Creating analysis system", __func__);
-        auto analysis_system = analysis::SspSystemBuilder().build(p->ssp);
-        LOG_DEBUG(p->log, " -- analysis system built");
+        setup_results = pre::build_simulation_graph(p->ssp, p->recorder.get(), this->config);
 
-        // TODO: Wrap the intire pre step in a module to enable tighter testing and integration
-// in essence: insert the ssp and get back the sim_graph
+        LOG_INFO(p->log, "[{func}] - Creating simulation graph executor", __func__);
+        p->sim_graph = std::make_unique<graph::GraphExecutor>(setup_results.get_models(), p->recorder.get());
 
-        LOG_INFO(p->log, "[{func}] - Building analysis tree", __func__);
-        analysis::SspTreeBuilder tree_builder;
-        auto *system_tree = tree_builder.build(&analysis_system);
-        LOG_DEBUG(p->log, " -- analysis tree built");
-
-        LOG_INFO(p->log, "[{func}] - Building analysis graph", __func__);
-        analysis::SspGraphBuilder graph_builder;
-        auto analysis_graph_data = graph_builder.build(system_tree);
-        LOG_DEBUG(p->log, " -- analysis graph built");
-
-        LOG_INFO(p->log, "[{func}] - Creating simulation graph", __func__);
-        auto sim_graph_builder = graph::GraphBuilder(p->recorder.get(), this->config);
-        sim_graph_builder.build(&analysis_graph_data);
-
-        p->sim_graph = sim_graph_builder.get_graph();
         LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());
-
-        p->nodes = sim_graph_builder.get_models(); // transfer ownership of nodes to simulation
 
         LOG_INFO(p->log, "[{func}] - Init simulation graph", __func__);
         p->sim_graph->init();

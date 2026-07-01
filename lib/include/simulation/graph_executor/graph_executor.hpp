@@ -18,7 +18,7 @@
 
 namespace ssp4sim::graph
 {
-    class Graph final : public Invocable
+    class GraphExecutor final : public Invocable
     {
     public:
         ssp4cpp::utils::log::Logger* log = nullptr;
@@ -29,9 +29,9 @@ namespace ssp4sim::graph
         std::unique_ptr<ExecutionBase> executor;
         ssp4sim::signal::DataRecorder *recorder = nullptr;
 
-        Graph() = default;
+        GraphExecutor() = default;
 
-        Graph(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder);
+        GraphExecutor(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder);
 
         std::string to_string() const override;
 

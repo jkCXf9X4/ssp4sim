@@ -29,7 +29,7 @@ namespace ssp4sim::graph
 
         ssp4cpp::utils::log::Logger* log = nullptr;
 
-        handler::FmuInfo *fmu;
+        std::unique_ptr<handler::FmuInfo> fmu;
 
         std::unique_ptr<ssp4sim::signal::SignalStorage> input_area;
         std::unique_ptr<ssp4sim::signal::SignalStorage> output_area;
@@ -44,7 +44,7 @@ namespace ssp4sim::graph
         bool fmu_logging = false;
         bool record_inputs = false;
 
-        FmuModel(std::string name, ssp4sim::handler::FmuInfo *fmu, size_t maxOutputDerivativeOrder);
+        FmuModel(std::string name, std::unique_ptr<ssp4sim::handler::FmuInfo> fmu, size_t maxOutputDerivativeOrder);
 
         ~FmuModel();
 

@@ -16,15 +16,15 @@
 namespace ssp4sim::graph
 {
 
-    Graph::Graph(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.Graph"))
+    GraphExecutor::GraphExecutor(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphExecutor"))
     {
         this->recorder = recorder;
         this->node_map = node_map;
         nodes = ssp4sim::utils::map_ns::map_to_value_vector_copy(this->node_map);
     }
 
-    std::string Graph::to_string() const
+    std::string GraphExecutor::to_string() const
     {
         auto strong_system_graph = ssp4sim::utils::graph::strongly_connected_components(ssp4sim::utils::graph::Node::cast_to_parent_ptrs(nodes));
 
@@ -41,9 +41,9 @@ namespace ssp4sim::graph
         return oss.str();
     }
 
-    void Graph::init()
+    void GraphExecutor::init()
     {
-        LOG_DEBUG(log, "[{func}] Initializing Graph", __func__);
+        LOG_DEBUG(log, "[{func}] Initializing GraphExecutor", __func__);
 
         executor = ExecutorBuilder().build(nodes);
         executor->set_recorder(recorder);
@@ -52,7 +52,7 @@ namespace ssp4sim::graph
         executor->init();
     }
 
-    uint64_t Graph::invoke(StepData step_data)
+    uint64_t GraphExecutor::invoke(StepData step_data)
     {
         using clock = std::chrono::steady_clock;
         IF_LOG({
