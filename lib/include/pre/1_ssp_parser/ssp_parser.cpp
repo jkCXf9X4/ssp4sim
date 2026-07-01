@@ -1,11 +1,11 @@
-#include "analysis/analysis_system_builder.hpp"
+#include "ssp_parser.hpp"
 
-#include "SSP1_SystemStructureDescription_Ext.hpp"
-#include "SSP1_SystemStructureParameter_Ext.hpp"
-#include "SSP_Ext.hpp"
-#include "FMI2_modelDescription_Ext.hpp"
-#include "FMI2_Enums_Ext.hpp"
-#include "utils/time.hpp"
+#include "schema_extensions/SSP1_SystemStructureDescription_Ext.hpp"
+#include "schema_extensions/SSP1_SystemStructureParameter_Ext.hpp"
+#include "schema_extensions/SSP_Ext.hpp"
+#include "schema_extensions/FMI2_modelDescription_Ext.hpp"
+#include "schema_extensions/FMI2_Enums_Ext.hpp"
+#include "utils/time/time.hpp"
 
 #include "ssp4cpp/ssp.hpp"
 
@@ -35,7 +35,7 @@ namespace ssp4sim::analysis
     {
         LOG_TRACE_L1(log(), "[{func}] Building SspSystem from SSP", __func__);
 
-        analysis_system = SspSystem(ssp->ssd->System);
+        auto analysis_system = SspSystem(ssp->ssd->System, ssp);
         
         LOG_TRACE_L1(log(), "[{func}] exit", __func__);
         return analysis_system;

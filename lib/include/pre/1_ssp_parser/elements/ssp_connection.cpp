@@ -1,4 +1,4 @@
-#include "analysis/components/analysis_connection.hpp"
+#include "ssp_connection.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 

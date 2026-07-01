@@ -1,10 +1,10 @@
 #pragma once
 
 #include "shared_config.hpp"
-#include "graph.hpp"
+#include "graph_executor.hpp"
 
-#include "analysis/analysis_graph_factory.hpp"
-#include "analysis/components/analysis_system.hpp"
+#include "pre/ssp_graph_data.hpp"
+#include "utils/fmi/fmu_info.hpp"
 
 #include <map>
 #include <memory>
@@ -33,10 +33,14 @@ namespace ssp4sim::graph
         std::map<std::string, std::unique_ptr<Invocable>> get_models();
 
     private:
-        void create_fmu_models();
-        void create_data_storage_areas();
+        /// Owns the FmuInfo objects created during build().
+        //TODO: move the ownage of the FmuInfo to the model_fmu
+        std::vector<std::unique_ptr<handler::FmuInfo>> fmu_infos;
+
+        void create_fmu_models(analysis::AnalysisGraphData &graph_data);
+        void create_data_storage_areas(analysis::AnalysisGraphData &graph_data);
         void wire_connections(analysis::AnalysisGraphData &graph_data);
         void derive_model_edges(analysis::AnalysisGraphData &graph_data);
     };
 
-}
+} // namespace ssp4sim::graph

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "utils/ring_buffer.hpp"
+#include "utils/primitives/ring_buffer.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
+#include "pre/1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
 
 #include "ssp4sim_definitions.hpp"
 

@@ -2,8 +2,8 @@
 #include "SSP1_SystemStructureDescription_Ext.hpp"
 
 #include "ssp4cpp/utils/string.hpp"
-#include "utils/vector.hpp"
-#include "utils/map.hpp"
+#include "utils/primitives/vector.hpp"
+#include "utils/primitives/map.hpp"
 
 #include "ssp4sim_definitions.hpp"
 

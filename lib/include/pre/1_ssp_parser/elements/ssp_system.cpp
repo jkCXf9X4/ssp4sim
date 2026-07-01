@@ -1,11 +1,12 @@
-#include "analysis/components/analysis_system.hpp"
+#include "ssp_system.hpp"
 
-#include "analysis/components/analysis_model.hpp"
-#include "analysis/components/analysis_connector.hpp"
-#include "analysis/components/analysis_connection.hpp"
+#include "ssp_model.hpp"
+#include "ssp_connector.hpp"
+#include "ssp_connection.hpp"
 
-#include "tarjan.hpp"
-#include "utils/node.hpp"
+#include "../schema_extensions/SSP1_SystemStructureParameter_Ext.hpp"
+
+#include "utils/graph/tarjan.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -37,7 +38,7 @@ namespace ssp4sim::analysis
 
         if (sys.ParameterBindings.has_value())
         {
-            bindings = ext::ssp1::ssv::get_start_value_mappings(
+            parameter_bindings = ext::ssp1::ssv::get_start_value_mappings(
                 sys.ParameterBindings->ParameterBindings, ssp);
         }
 
@@ -53,7 +54,12 @@ namespace ssp4sim::analysis
 
             auto component_name = component.name.value();
 
-            auto comp_bindings = AnalysisParameterBindings(component.ParameterBindings, ssp);
+            std::map<std::string, ext::ParameterValue> comp_bindings;
+            if (component.ParameterBindings.has_value())
+            {
+                comp_bindings = ext::ssp1::ssv::get_start_value_mappings(
+                    component.ParameterBindings->ParameterBindings, ssp);
+            }
 
             auto model = SspModel(component_name, ssp->dir / component.source, comp_bindings);
 
@@ -92,16 +98,12 @@ namespace ssp4sim::analysis
                 std::string src_con = conn.startConnector;
                 std::string tgt_con = conn.endConnector;
 
-                auto analysis_conn = std::make_unique<Connection>(src_model_str, src_con, tgt_model_str, tgt_con);
+                auto analysis_conn = SspConnection(src_model_str, src_con, tgt_model_str, tgt_con);
 
-                // add optional delay....
-
-                connections.push_back(analysis_conn);
+                connections.push_back(std::move(analysis_conn));
             }
         }
     }
-
-    SspSystem::~SspSystem() = default;
 
     std::string SspSystem::to_string() const
     {

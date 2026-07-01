@@ -1,7 +1,7 @@
-#include "model/model_connection.hpp"
+#include "model_connection.hpp"
 
 
-#include "FMI2_Enums_Ext.hpp"
+#include "../../1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
 #include "signal/storage.hpp"
 
 #include <cstring>

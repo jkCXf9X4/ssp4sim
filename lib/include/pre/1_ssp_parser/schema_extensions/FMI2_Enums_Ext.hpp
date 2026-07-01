@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <string>
+#include <variant>
 
 namespace ssp4sim::ext::fmi2
 {

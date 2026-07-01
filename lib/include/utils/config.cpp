@@ -1,6 +1,6 @@
 #include "utils/config.hpp"
 
-#include "utils/time.hpp"
+#include "utils/time/time.hpp"
 
 #include <nlohmann/json.hpp>
 

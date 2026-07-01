@@ -24,6 +24,7 @@ namespace ssp4sim::ext
 
         ParameterValueData value;
 
+        ParameterValue() = default;
         ParameterValue(std::string name, types::DataType type);
 
         std::string to_string() const override;

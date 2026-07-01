@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ssp_component.hpp"
+#include "_ssp_item.hpp"
 #include "ssp_connector.hpp"
 
 #include <cstdint>

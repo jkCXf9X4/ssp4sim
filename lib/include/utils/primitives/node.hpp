@@ -39,7 +39,7 @@ namespace ssp4sim::utils::graph
 
         virtual std::string to_string() const override;
 
-        std::string Node::get_tree(const std::string &indent = "") const;
+        std::string get_tree(const std::string &indent = "") const;
 
         /* === Relationship management ======================================= */
 

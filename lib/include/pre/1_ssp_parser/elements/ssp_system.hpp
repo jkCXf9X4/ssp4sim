@@ -1,14 +1,14 @@
 #pragma once
 
 
-#include "ssp_component.hpp"
-#include "ssp_parameter_bindings.hpp"
+#include "_ssp_item.hpp"
+#include "../schema_extensions/parameter_value.hpp"
 
 #include "ssp4cpp/schema/ssp1/SSP1_SystemStructureDescription.hpp"
 #include "ssp4cpp/ssp.hpp"
 
-#include "utils/node.hpp"
-#include "utils/tarjan.hpp"
+#include "utils/primitives/node.hpp"
+#include "utils/graph/tarjan.hpp"
 
 #include <cstdint>
 #include <memory>

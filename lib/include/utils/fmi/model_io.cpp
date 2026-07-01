@@ -1,6 +1,6 @@
-#include "utils/model_io.hpp"
+#include "utils/fmi/model_io.hpp"
 
-#include "handler/fmi4c_adapter.hpp"
+#include "utils/fmi/fmi4c_adapter.hpp"
 
 #include <stdexcept>
 #include <string>

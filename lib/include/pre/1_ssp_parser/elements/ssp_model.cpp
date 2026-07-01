@@ -1,9 +1,7 @@
-#include "analysis/components/analysis_model.hpp"
+#include "ssp_model.hpp"
 
-#include "FMI2_modelDescription_Ext.hpp"
-#include "FMI2_Enums_Ext.hpp"
-
-#include "fmu_info.hpp"
+#include "../schema_extensions/FMI2_modelDescription_Ext.hpp"
+#include "../schema_extensions/FMI2_Enums_Ext.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -24,35 +22,32 @@ namespace ssp4sim::analysis
         }
     }
 
-    SspModel::SspModel(std::string name_,
+SspModel::SspModel(std::string name_,
                                  std::string source_path,
                                  std::map<std::string, ext::ParameterValue> parameter_bindings_)
-        : name(name_),
-          parameter_bindings(parameter_bindings_);
+    : parameter_bindings(parameter_bindings_)
+{
+    name = name_;
+    type = SspItemType::Model;
+
+    this->fmu = std::make_shared<ssp4cpp::Fmu>(source_path);
+
+    if (fmu->md->CoSimulation)
     {
-        type = SspItemType::Model;
-
-        auto fmu = std::make_shared<ssp4cpp::Fmu>(source_path);
-
-        if (fmu->md->CoSimulation)
-        {
-            auto &co_sim = *fmu->model_description->CoSimulation;
-            this->canInterpolateInputs = co_sim.canInterpolateInputs.value_or(false);
-            this->maxOutputDerivativeOrder = co_sim.maxOutputDerivativeOrder.value_or(0);
-        }
-
-        create_connectors();
+        auto &co_sim = *fmu->md->CoSimulation;
+        this->canInterpolateInputs = co_sim.canInterpolateInputs.value_or(false);
+        this->maxOutputDerivativeOrder = co_sim.maxOutputDerivativeOrder.value_or(0);
     }
+
+    create_connectors();
+}
 
     std::string SspModel::to_string() const
     {
         std::ostringstream oss;
         oss << "Model {"
             << "\n  name: " << name
-            << "\n  source: " << fmu->fmi_instance->path()
             << "\n  delay: " << delay
-            // << "\n  connectors: " << connectors.size()
-            // << "\n  model_variables: " << model_variables.size()
             << "\n}";
         return oss.str();
     }
@@ -61,7 +56,6 @@ namespace ssp4sim::analysis
     void SspModel::create_connectors()
     {
         connectors.clear();
-
 
         auto dependencies = ext::fmi2::dependency::get_dependencies_variables(
             fmu->md->ModelStructure.Outputs.value().Unknowns,
@@ -76,20 +70,20 @@ namespace ssp4sim::analysis
             auto value_reference = var.valueReference.value();
             auto type = ext::fmi2::model_variables::get_variable_type(var);
 
-            auto c = SspConnector(name, var.name, value_reference, type, var.causality.value());
+            auto connector_name = name + "." + var.name;
+            auto c = SspConnector(connector_name, value_reference, type, var.causality.value());
 
             auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
-            // overwrite default
             if (start_value != nullptr)
             {
-                start_value->store_value(start_value);
+                c.initial_value.store_value(start_value);
             }
 
             for (auto &dep_coup : dependencies)
             {
-                if (var.valueReference == std::get<0>(dep_coup)->valueReference)
+                if (var.valueReference == dep_coup.target->valueReference)
                 {
-                    c->dependencies.emplace_back(std::get<1>(dep_coup));
+                    c.dependencies.emplace_back(dep_coup.dependency);
                 }
             }
 
@@ -103,14 +97,14 @@ namespace ssp4sim::analysis
         for (auto &variable : fmu->md->ModelVariables.ScalarVariable)
         {
             auto mv = SspModelVariable(variable);
-            LOG_TRACE_L1(log(), "[{func}] New ModelVariable: {variable}", __func__, mv->name);
+            LOG_TRACE_L1(log(), "[{func}] New ModelVariable: {variable}", __func__, mv.name);
 
             // populate variable dependencies
             for (auto &dep_coup : dependencies)
             {
-                if (variable.valueReference == std::get<0>(dep_coup)->valueReference)
+                if (variable.valueReference == dep_coup.target->valueReference)
                 {
-                    mv->dependencies.emplace_back(std::get<1>(dep_coup));
+                    mv.dependencies.emplace_back(dep_coup.dependency);
                 }
             }
             model_variables.emplace_back(std::move(mv));

@@ -1,6 +1,6 @@
-#include "analysis/components/analysis_connector.hpp"
+#include "ssp_connector.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
+#include "../schema_extensions/FMI2_Enums_Ext.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -19,12 +19,12 @@ namespace ssp4sim::analysis
         }
     }
 
-    SspConnector::SspConnector(std::string connector_name_,
-                                         uint64_t value_reference_,
-                                         types::DataType data_type_,
-                                         types::Causality causality_);
-        : name(connector_name_)
+SspConnector::SspConnector(std::string connector_name_,
+                                          uint64_t value_reference_,
+                                          types::DataType data_type_,
+                                          types::Causality causality_)
         {
+            name = connector_name_;
             type = SspItemType::Connector;
             value_reference = value_reference_;
             data_type = data_type_;

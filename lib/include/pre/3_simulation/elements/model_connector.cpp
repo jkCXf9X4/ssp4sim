@@ -1,6 +1,7 @@
-#include "model/model_connector.hpp"
+#include "model_connector.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
+#include "../../1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
+#include "utils/fmi/model_io.hpp"
 
 #include <cstring>
 #include <sstream>

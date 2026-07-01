@@ -9,9 +9,9 @@
 
 #include "config.hpp"
 
-#include "model/model_fmu.hpp"
+#include "pre/3_simulation/elements/model_fmu.hpp"
 
-#include "utils/time.hpp"
+#include "utils/time/time.hpp"
 
 #include <assert.h>
 #include <algorithm>

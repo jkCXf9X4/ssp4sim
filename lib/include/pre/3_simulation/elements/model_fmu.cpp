@@ -1,12 +1,12 @@
-#include "model/model_fmu.hpp"
+#include "model_fmu.hpp"
 
-#include "config.hpp"
+#include "utils/config.hpp"
 #include "signal/storage.hpp"
-#include "handler/fmu_handler.hpp"
-#include "model/model_connection.hpp"
-#include "model/model_connector.hpp"
-#include "utils/time.hpp"
-#include "utils/timer.hpp"
+#include "utils/fmi/fmu_info.hpp"
+#include "model_connection.hpp"
+#include "model_connector.hpp"
+#include "utils/time/time.hpp"
+#include "utils/time/timer.hpp"
 
 #include <algorithm>
 #include <memory>

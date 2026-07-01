@@ -3,7 +3,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "utils/vector.hpp"
+#include "utils/primitives/vector.hpp"
 
 #include <ranges>
 #include <stdexcept>

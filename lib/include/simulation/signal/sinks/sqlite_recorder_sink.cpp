@@ -1,8 +1,8 @@
 #include "signal/sinks/sqlite_recorder_sink.hpp"
 #include "signal/sinks/sqlite_recorder_utils.hpp"
 
-#include "utils/io.hpp"
-#include "utils/time.hpp"
+#include "utils/io/io.hpp"
+#include "utils/time/time.hpp"
 
 #include <sqlite3.h>
 

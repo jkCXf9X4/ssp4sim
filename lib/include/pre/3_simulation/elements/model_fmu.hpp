@@ -9,7 +9,7 @@
 
 #include "signal/storage.hpp"
 
-#include "handler/fmu_handler.hpp"
+#include "utils/fmi/fmu_info.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 

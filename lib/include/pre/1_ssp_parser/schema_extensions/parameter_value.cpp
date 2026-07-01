@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace ssp4sim::ext
 {
@@ -17,7 +18,18 @@ namespace ssp4sim::ext
         // mappings.push_back(this->name);
 
         size = fmi2::enums::get_data_type_size(type);
-        value = fmi2::enums::get_default_value(type);
+        auto default_val = fmi2::enums::get_default_value(type);
+        std::visit([this](auto &&arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, bool>)
+                value = static_cast<int>(arg);
+            else if constexpr (std::is_same_v<T, int>)
+                value = arg;
+            else if constexpr (std::is_same_v<T, double>)
+                value = arg;
+            else if constexpr (std::is_same_v<T, std::string_view>)
+                value = std::string(arg);
+        }, default_val);
     }
 
     std::string ParameterValue::to_string() const

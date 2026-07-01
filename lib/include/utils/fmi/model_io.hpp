@@ -2,7 +2,7 @@
 
 #include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
 
-#include "handler/fmi4c_adapter.hpp"
+#include "utils/fmi/fmi4c_adapter.hpp"
 
 #include "ssp4sim_definitions.hpp"
 

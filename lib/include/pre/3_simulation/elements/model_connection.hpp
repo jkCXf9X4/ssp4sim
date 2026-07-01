@@ -6,8 +6,6 @@
 
 #include "signal/storage.hpp"
 
-#include "utils/model.hpp"
-
 #include <cstddef>
 #include <cstdint>
 #include <string>

@@ -1,9 +1,10 @@
 #pragma once
 
-#include "ssp_component.hpp"
+#include "_ssp_item.hpp"
 
-#include "parameter_value.hpp"
+#include "../schema_extensions/parameter_value.hpp"
 #include "ssp4sim_definitions.hpp"
+#include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -12,11 +13,6 @@
 
 namespace ssp4sim::analysis
 {
-
-    class SspModel
-    {
-        std::string name;
-    };
 
     class SspConnector : public SspItem
     {

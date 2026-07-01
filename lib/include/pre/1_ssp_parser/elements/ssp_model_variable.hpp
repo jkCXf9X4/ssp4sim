@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ssp_component.hpp"
+#include "_ssp_item.hpp"
 
 #include "ssp4cpp/schema/fmi2/FMI2_modelDescription.hpp"
 

@@ -1,19 +1,10 @@
-#include "analysis/analysis_system_builder.hpp"
+#include "graph_builder.hpp"
 
-#include "SSP1_SystemStructureDescription_Ext.hpp"
-#include "SSP1_SystemStructureParameter_Ext.hpp"
-#include "SSP_Ext.hpp"
-#include "FMI2_modelDescription_Ext.hpp"
-#include "FMI2_Enums_Ext.hpp"
-#include "utils/time.hpp"
-
-#include "ssp4cpp/ssp.hpp"
+#include "ssp4cpp/utils/log.hpp"
 
 #include <memory>
-#include <stdexcept>
 #include <string>
-#include <unordered_set>
-#include <utility>
+#include <unordered_map>
 #include <vector>
 
 namespace ssp4sim::analysis
@@ -29,82 +20,226 @@ namespace ssp4sim::analysis
             return logger;
         }
 
-        // create and place it in an owner vector
-        // t will be discarded when the application dies
-        template <typename T, typename U>
-        T* create(U item)
+        /// Collect all SspModelNode instances from the tree into a flat list.
+        /// Recursively visits children.
+        void collect_model_nodes(SspSystemNode *node,
+                                 std::vector<std::unique_ptr<SspModelNode>> &out,
+                                 std::unordered_map<std::string, SspModelNode *> &name_map)
         {
-            auto wrapper = std::make_unique<T>(item)
-            node_owner.emplace_back(std::move(wrapper));
-            return wrapper.get();
+            for (auto *child : node->children)
+            {
+                if (auto *model_node = dynamic_cast<SspModelNode *>(child))
+                {
+                    auto ptr = std::make_unique<SspModelNode>(model_node->source);
+                    auto *raw = ptr.get();
+                    raw->name = model_node->name;
+                    name_map[model_node->name] = raw;
+                    out.push_back(std::move(ptr));
+                }
+                else if (auto *sys_node = dynamic_cast<SspSystemNode *>(child))
+                {
+                    collect_model_nodes(sys_node, out, name_map);
+                }
+            }
         }
 
-
-        SspSystemNode build_graph(const SspSystemNode *node, std::string prefix)
+        /// Collect all SspConnectorNode instances from the tree into a flat list.
+        void collect_connector_nodes(SspSystemNode *node,
+                                     std::vector<std::unique_ptr<SspConnectorNode>> &out,
+                                     std::unordered_map<std::string, SspConnectorNode *> &name_map,
+                                     std::unordered_map<std::string, SspModelNode *> &model_name_map)
         {
-            // map< path, node>  
-            std::map<std::vector<std::string>, SspNode> 
-            for (auto child : node->children)
+            for (auto *child : node->children)
             {
-                if (auto p = dynamic_cast<SspSystemNode>(child))
+                if (auto *model_node = dynamic_cast<SspModelNode *>(child))
                 {
-                    build_graph(p);
+                    // Find the matching model node in the flat list by name
+                    auto it = model_name_map.find(model_node->name);
+                    SspModelNode *flat_model = (it != model_name_map.end()) ? it->second : nullptr;
+
+                    for (auto *grandchild : model_node->children)
+                    {
+                        if (auto *conn_node = dynamic_cast<SspConnectorNode *>(grandchild))
+                        {
+                            auto ptr = std::make_unique<SspConnectorNode>(conn_node->source);
+                            auto *raw = ptr.get();
+                            raw->name = conn_node->name;
+
+                            // Link connector to its model
+                            if (flat_model)
+                            {
+                                flat_model->add_child(raw);
+                            }
+
+                            name_map[conn_node->name] = raw;
+                            out.push_back(std::move(ptr));
+                        }
+                    }
+                }
+                else if (auto *sys_node = dynamic_cast<SspSystemNode *>(child))
+                {
+                    // System-level connectors (boundary connectors)
+                    for (auto *grandchild : sys_node->children)
+                    {
+                        if (auto *conn_node = dynamic_cast<SspConnectorNode *>(grandchild))
+                        {
+                            auto ptr = std::make_unique<SspConnectorNode>(conn_node->source);
+                            auto *raw = ptr.get();
+                            raw->name = conn_node->name;
+                            name_map[conn_node->name] = raw;
+                            out.push_back(std::move(ptr));
+                        }
+                    }
+
+                    collect_connector_nodes(sys_node, out, name_map, model_name_map);
                 }
             }
-
-            auto system_node = create<SspSystemNode>(system);
-            for (auto &sub_sys : system->nested_systems)
-            {
-                auto n = build_tree(sub_sys);
-                system_node->add_child(n);
-            }
-
-            for (auto &model : system->models)
-            {
-                auto model_node = create<SspModelNode>(model);
-                system_node->add_child(model_node);
-
-                for (auto &m_connector : model_node->connectors)
-                {
-                    auto model_connector_node = create<SspConnectorNode>(m_connector);
-                    model_node->add_child(model_connector_node);
-                }
-
-                for (auto &m_variable : model_node->model_variables)
-                {
-                    auto model_var_node = create<SspVariableNode>(m_variable);
-                    model_node->add_child(model_var_node);
-                }
-            }
-
-            for (auto &m_connector : system->connectors)
-            {
-                auto connector_node = create<SspConnectorNode>(m_connector);
-                system_node->add_child(connector_node);
-            }
-
-            for (auto &m_connection : system->connections)
-            {
-                auto connection_node = create<SspConnectionNode>(m_connection);
-                system_node->add_child(m_connection);
-            }
-
-            return (system_node);
         }
-    }
 
-    SspSystemNode SspGraphBuilder::build(const SspSystemNode *tree)
+    } // anonymous namespace
+
+    AnalysisGraphData SspGraphBuilder::build(const SspSystemNode *tree)
     {
-        node_owner.reserve(1000);
+        AnalysisGraphData data;
 
-        LOG_TRACE_L1(log(), "[{func}] Building SspSystem from SSP", __func__);
-        
-        system_tree = build_graph(tree);
+        LOG_TRACE_L1(log(), "[{func}] Building graph from tree", __func__);
 
-        LOG_INFO(log(), "[{}] Graph: {}", __func__, "-")
+        // --- Pass 1: collect model nodes ---
+        std::unordered_map<std::string, SspModelNode *> model_name_map;
+        collect_model_nodes(const_cast<SspSystemNode *>(tree),
+                            data.model_nodes, model_name_map);
+
+        LOG_DEBUG(log(), "[{func}] Collected {} model nodes", __func__, data.model_nodes.size());
+
+        // --- Pass 2: collect connector nodes and link to models ---
+        std::unordered_map<std::string, SspConnectorNode *> connector_name_map;
+        collect_connector_nodes(const_cast<SspSystemNode *>(tree),
+                                data.connector_nodes, connector_name_map,
+                                model_name_map);
+
+        LOG_DEBUG(log(), "[{func}] Collected {} connector nodes", __func__, data.connector_nodes.size());
+
+        // --- Pass 3: process connections ---
+        // Walk the tree's SspConnectionNode entries and build the
+        // model→connector→connection→connector→model graph
+        auto walk_connections = [&](SspNode<SspConnection> *conn_node, auto &&self_ref) -> void
+        {
+            // This is a simplified approach: find connectors by name from the flat maps
+            auto *conn = conn_node->source;
+
+            std::string source_conn_name = conn->source_model + "." + conn->source_connector;
+            std::string target_conn_name = conn->target_model + "." + conn->target_connector;
+
+            auto src_it = connector_name_map.find(source_conn_name);
+            auto tgt_it = connector_name_map.find(target_conn_name);
+
+            if (src_it == connector_name_map.end() || tgt_it == connector_name_map.end())
+            {
+                LOG_WARNING(log(), "[{func}] Could not resolve connection: {src} -> {tgt}",
+                            __func__, source_conn_name, target_conn_name);
+                return;
+            }
+
+            auto *src_connector = src_it->second;
+            auto *tgt_connector = tgt_it->second;
+
+            // Create the ResolvedConnection (owned by connection_sources)
+            auto rc = std::make_unique<ResolvedConnection>();
+            rc->delay = conn->delay;
+            rc->name = conn->name;
+            auto *rc_raw = rc.get();
+
+            // Create the SspNode wrapper (source pointer references rc_raw)
+            auto resolved = std::make_unique<SspNode<ResolvedConnection>>(rc_raw);
+            resolved->name = conn->name;
+            auto *resolved_raw = resolved.get();
+
+            // Build the graph chain:
+            // source model -> source connector -> connection -> target connector -> target model
+            src_connector->add_child(resolved_raw);
+            resolved_raw->add_child(tgt_connector);
+
+            // Find source and target models (connector's parent model)
+            for (auto *parent : src_connector->parents)
+            {
+                if (auto *m = dynamic_cast<SspModelNode *>(parent))
+                {
+                    // Edge already established by model.add_child(connector)
+                    break;
+                }
+            }
+
+            // The target connector's parent model was already linked in pass 2
+            // via connector.add_child(model) — but actually we need model as child of connector,
+            // not the other way around. Let's fix: the model owns the connector as child.
+            // For the graph chain: connector -> model, we need model as a child of connector.
+            // But the plan says connector_in.add_child(model_2). 
+            // Actually for the original chain: model → connector → connection → connector → model
+            // we need: source_model has_child source_connector (pass 2)
+            //          source_connector has_child connection (this pass)
+            //          connection has_child target_connector (this pass)
+            //          target_connector has_child target_model (we need this)
+            // But target_model can't be a child of target_connector AND own connector_nodes...
+            // 
+            // Actually the original plan was:
+            // model_1.add_child(connector_out.get())     -- connector is child of model
+            // connector_out.add_child(connection_1.get()) -- connection is child of connector
+            // connection_1.add_child(connector_in.get())  -- connector is child of connection
+            // connector_in.add_child(model_2.get())       -- model is child of connector
+            //
+            // So we need to add model as child of connector for the last step.
+            // But models are owned by model_nodes vector and connectors by connector_nodes.
+            // connector.add_child(model) is fine since it's a non-owning raw ptr.
+
+            // Find target model from connector's parent
+            for (auto *parent : tgt_connector->parents)
+            {
+                if (auto *m = dynamic_cast<SspModelNode *>(parent))
+                {
+                    tgt_connector->add_child(m);
+                    break;
+                }
+            }
+
+            data.connection_sources.push_back(std::move(rc));
+            data.connection_nodes.push_back(std::move(resolved));
+        };
+
+        // Walk all SspConnectionNode instances in the tree
+        // Use a recursive visitor
+        auto visit_tree = [&](SspNode<SspSystem> *sys_node, auto &&visit_ref) -> void
+        {
+            for (auto *child : sys_node->children)
+            {
+                if (auto *conn_node = dynamic_cast<SspConnectionNode *>(child))
+                {
+                    walk_connections(conn_node, walk_connections);
+                }
+                else if (auto *sub_sys = dynamic_cast<SspSystemNode *>(child))
+                {
+                    visit_ref(sub_sys, visit_ref);
+                }
+                else if (auto *model_node = dynamic_cast<SspModelNode *>(child))
+                {
+                    // Model nodes might contain connections at a deeper level
+                    // but connections are at system level in the tree
+                    for (auto *grandchild : model_node->children)
+                    {
+                        if (auto *conn_node = dynamic_cast<SspConnectionNode *>(grandchild))
+                        {
+                            walk_connections(conn_node, walk_connections);
+                        }
+                    }
+                }
+            }
+        };
+
+        visit_tree(const_cast<SspSystemNode *>(tree), visit_tree);
+
+        LOG_DEBUG(log(), "[{func}] Created {} connection nodes", __func__, data.connection_nodes.size());
 
         LOG_TRACE_L1(log(), "[{func}] exit", __func__);
-        return system_tree;
+        return data;
     }
 
 } // namespace ssp4sim::analysis

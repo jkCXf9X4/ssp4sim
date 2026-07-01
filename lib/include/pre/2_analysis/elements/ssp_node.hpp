@@ -1,11 +1,17 @@
 #pragma once
 
-#include "ssp_item.hpp"
+#include "../../1_ssp_parser/elements/_ssp_item.hpp"
+#include "../../1_ssp_parser/elements/ssp_system.hpp"
+#include "../../1_ssp_parser/elements/ssp_model.hpp"
+#include "../../1_ssp_parser/elements/ssp_connector.hpp"
+#include "../../1_ssp_parser/elements/ssp_connection.hpp"
+#include "../../1_ssp_parser/elements/ssp_model_variable.hpp"
 
-#include "utils/node.hpp"
+#include "utils/primitives/node.hpp"
 #include "ssp4sim_definitions.hpp"
 
 #include <cstdint>
+#include <map>
 #include <string>
 #include <stdexcept>
 #include <format>
@@ -22,8 +28,9 @@ namespace ssp4sim::analysis
         T *source;
 
         explicit SspNode(T *source_)
-            : name(source_->name), source(source_)
+            : source(source_)
         {
+            name = source_->name;
         }
 
         template <std::derived_from<SspItem> U>
@@ -40,8 +47,9 @@ namespace ssp4sim::analysis
                             to_string(source->type)));
         }
 
-        template <std::derived_from<SspItem> U>
-        std::vector<U *> get_children_of_type()
+        /// Get children cast to a specific Node subclass (e.g. SspConnectorNode).
+        template <typename U>
+        std::vector<U *> get_child_nodes() const
         {
             std::vector<U *> out;
             for (auto child : children)
@@ -80,7 +88,7 @@ namespace ssp4sim::analysis
     /// Convenience aliases for the typed specializations.
     using SspModelNode = SspNode<SspModel>;
     using SspConnectorNode = SspNode<SspConnector>;
-    using SspConnectionNode = SspNode<Connection>;
+    using SspConnectionNode = SspNode<SspConnection>;
     using SspVariableNode = SspNode<SspModelVariable>;
     using SspSystemNode = SspNode<SspSystem>;
 

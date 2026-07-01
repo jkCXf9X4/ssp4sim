@@ -1,6 +1,6 @@
-#include "analysis/components/analysis_model_variable.hpp"
+#include "ssp_model_variable.hpp"
 
-#include "FMI2_modelDescription_Ext.hpp"
+#include "../schema_extensions/FMI2_modelDescription_Ext.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 

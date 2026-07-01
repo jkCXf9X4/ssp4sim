@@ -1,11 +1,11 @@
 #pragma once
 
-#include "ssp_parameter_bindings.hpp"
+#include "../schema_extensions/parameter_value.hpp"
 
-#include "ssp_component.hpp"
+#include "_ssp_item.hpp"
 
-#include "analysis/components/analysis_connector.hpp"
-#include "analysis/components/analysis_model_variable.hpp"
+#include "ssp_connector.hpp"
+#include "ssp_model_variable.hpp"
 
 #include "ssp4cpp/fmu.hpp"
 
@@ -35,7 +35,7 @@ namespace ssp4sim::analysis
 
         SspModel(std::string name_,
                       std::string source_path,
-                      td::map<std::string, ext::ParameterValue> parameter_bindings_);
+                      std::map<std::string, ext::ParameterValue> parameter_bindings_);
 
         std::string to_string() const;
 

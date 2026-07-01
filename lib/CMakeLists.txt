@@ -9,17 +9,13 @@ target_include_directories(
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/public_include
 
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
-         ${CMAKE_CURRENT_LIST_DIR}/include/execution
-         ${CMAKE_CURRENT_LIST_DIR}/include/graph
-         ${CMAKE_CURRENT_LIST_DIR}/include/graph/analysis
-         ${CMAKE_CURRENT_LIST_DIR}/include/handler
-         ${CMAKE_CURRENT_LIST_DIR}/include/model
-         ${CMAKE_CURRENT_LIST_DIR}/include/schema_extensions
-         ${CMAKE_CURRENT_LIST_DIR}/include/utils
-         ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
-         ${CMAKE_CURRENT_LIST_DIR}/include/analysis
-          ${CMAKE_CURRENT_LIST_DIR}/include/signal
-         )
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/graph_executor
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/graph_executor/execution
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal
+          )
 
 # The library is linked into shared modules (Python extension), so force PIC.
 set_target_properties(ssp4sim_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)

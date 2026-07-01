@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ssp4cpp/utils/log.hpp"
-#include "utils/time.hpp"
+#include "utils/time/time.hpp"
 
 #include <chrono>
 #include <cstdint>

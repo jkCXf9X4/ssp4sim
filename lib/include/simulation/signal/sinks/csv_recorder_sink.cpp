@@ -1,8 +1,8 @@
 #include "signal/sinks/csv_recorder_sink.hpp"
 
-#include "FMI2_Enums_Ext.hpp"
-#include "utils/time.hpp"
-#include "utils/io.hpp"
+#include "pre/1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
+#include "utils/time/time.hpp"
+#include "utils/io/io.hpp"
 
 #include <algorithm>
 #include <utility>

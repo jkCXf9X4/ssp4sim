@@ -1,4 +1,4 @@
-#include "utils/allocator.hpp"
+#include "utils/memory/allocator.hpp"
 
 namespace ssp4sim::utils
 {

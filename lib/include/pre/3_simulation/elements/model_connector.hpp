@@ -4,11 +4,9 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "utils/model.hpp"
-
 #include "signal/storage.hpp"
-#include "handler/fmu_handler.hpp"
-#include "model/initial_value.hpp"
+#include "utils/fmi/fmu_info.hpp"
+#include "../../1_ssp_parser/schema_extensions/parameter_value.hpp"
 
 #include <cstddef>
 #include <cstdint>

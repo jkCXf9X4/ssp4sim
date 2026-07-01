@@ -44,7 +44,7 @@ namespace ssp4sim::ext::fmi2
             int target;
             int dependency;
             DependenciesKind kind;
-        }
+        };
 
         struct VariableDependency
         {
@@ -52,7 +52,7 @@ namespace ssp4sim::ext::fmi2
             fmi2ScalarVariable * target;
             fmi2ScalarVariable * dependency;
             DependenciesKind kind;
-        }
+        };
 
         // Unknowns
         /** @brief Get variable dependencies for an Unknown by index. */

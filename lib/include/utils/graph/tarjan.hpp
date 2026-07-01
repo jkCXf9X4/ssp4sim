@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "utils/node.hpp"
+#include "utils/primitives/node.hpp"
 
 #include <string>
 #include <vector>

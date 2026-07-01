@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ssp_graph_data.hpp"
+#include "../ssp_graph_data.hpp"
 
 #include <memory>
 #include <string>
@@ -12,11 +12,7 @@ namespace ssp4sim::analysis
     {
     public:
 
-        SspSystem analysis_system;
-
-        SspSystemBuilder() = default;
-
-        /// Build an SspSystem from an already-loaded SSP and FmuHandler.
+        /// Build an SspSystem from an already-loaded SSP.
         SspSystem build(ssp4cpp::Ssp *ssp);
     };
 

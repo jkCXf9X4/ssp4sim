@@ -3,7 +3,7 @@
 #include "ssp4sim_definitions.hpp"
 
 #include "signal/storage.hpp"
-#include "utils/ring_buffer.hpp"
+#include "utils/primitives/ring_buffer.hpp"
 
 #include <atomic>
 #include <cstddef>

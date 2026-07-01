@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ssp4sim_definitions.hpp"
-#include "utils/node.hpp"
+#include "utils/primitives/node.hpp"
 
 #include <cstdint>
 #include <string>

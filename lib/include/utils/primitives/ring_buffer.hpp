@@ -3,7 +3,7 @@
 #include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4sim_definitions.hpp"
-#include "utils/allocator.hpp"
+#include "utils/memory/allocator.hpp"
 
 #include <cstddef>
 #include <cstdint>
