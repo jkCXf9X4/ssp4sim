@@ -13,7 +13,8 @@
 
 namespace ssp4sim::graph
 {
-
+            // TODO: If we break out the recorder this unit will be easier to test 
+            // Evaluate how the, the config should be adapted to create a default if the file is not available 
     GraphBuilder::GraphBuilder(ssp4sim::signal::DataRecorder *recorder,
                                ssp4sim::SharedConfig *config)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder")),
@@ -42,6 +43,7 @@ namespace ssp4sim::graph
             }
             m->input_area->allocate();
             m->output_area->allocate();
+
             if (recorder)
             {
                 if (m->record_inputs)
@@ -88,7 +90,6 @@ namespace ssp4sim::graph
     void GraphBuilder::create_data_storage_areas(analysis::AnalysisGraphData &graph_data)
     {
         LOG_DEBUG(log, "[{func}] - Create the data storage areas within the model", __func__);
-        auto start_value_log_file = std::ofstream(this->config->start_value_log_file, std::ios::out);
 
         for (auto &model_node : graph_data.model_nodes)
         {

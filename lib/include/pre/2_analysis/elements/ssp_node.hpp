@@ -44,7 +44,7 @@ namespace ssp4sim::analysis
             throw std::runtime_error(
                 std::format("Node '{}' cannot be cast from {}",
                             name,
-                            to_string(source->type)));
+                            ssp4sim::analysis::to_string(source->type)));
         }
 
         /// Get children cast to a specific Node subclass (e.g. SspConnectorNode).
