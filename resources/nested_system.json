@@ -1,6 +1,6 @@
 {
     "simulation": {
-        "ssp": "resources/reference_ssp/artifacts/models/resources/signal_nested_parameter_bindings/baseline",
+        "ssp": "resources/reference_ssp/artifacts/models/signal_nested_parameter_bindings/baseline",
         "ssd": "SystemStructure.ssd",
         "start_time": 0.0,
         "stop_time": 1.0,

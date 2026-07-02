@@ -49,6 +49,19 @@ namespace ssp4sim::analysis
                                      std::unordered_map<std::string, SspConnectorNode *> &name_map,
                                      std::unordered_map<std::string, SspModelNode *> &model_name_map)
         {
+            // Process the current system's own boundary connectors (direct children)
+            for (auto *child : node->children)
+            {
+                if (auto *conn_node = dynamic_cast<SspConnectorNode *>(child))
+                {
+                    auto ptr = std::make_unique<SspConnectorNode>(conn_node->source);
+                    auto *raw = ptr.get();
+                    raw->name = node->name + "." + conn_node->source->name;
+                    name_map[raw->name] = raw;
+                    out.push_back(std::move(ptr));
+                }
+            }
+
             for (auto *child : node->children)
             {
                 if (auto *model_node = dynamic_cast<SspModelNode *>(child))
@@ -88,19 +101,6 @@ namespace ssp4sim::analysis
                 }
                 else if (auto *sys_node = dynamic_cast<SspSystemNode *>(child))
                 {
-                    // System-level connectors (boundary connectors)
-                    for (auto *grandchild : sys_node->children)
-                    {
-                        if (auto *conn_node = dynamic_cast<SspConnectorNode *>(grandchild))
-                        {
-                            auto ptr = std::make_unique<SspConnectorNode>(conn_node->source);
-                            auto *raw = ptr.get();
-                            raw->name = conn_node->name;
-                            name_map[conn_node->name] = raw;
-                            out.push_back(std::move(ptr));
-                        }
-                    }
-
                     collect_connector_nodes(sys_node, out, name_map, model_name_map);
                 }
             }
@@ -130,15 +130,26 @@ namespace ssp4sim::analysis
         LOG_DEBUG(log(), "[{func}] Collected {} connector nodes", __func__, data.connector_nodes.size());
 
         // --- Pass 3: process connections ---
-        // Walk the tree's SspConnectionNode entries and build the
+// Walk the tree's SspConnectionNode entries and build the
         // model→connector→connection→connector→model graph
-        auto walk_connections = [&](SspNode<SspConnection> *conn_node, auto &&self_ref) -> void
+        auto walk_connections = [&](SspConnectionNode *conn_node, SspSystemNode *current_sys, auto &&self_ref) -> void
         {
             // This is a simplified approach: find connectors by name from the flat maps
             auto *conn = conn_node->source;
 
-            std::string source_conn_name = conn->source_model + "." + conn->source_connector;
-            std::string target_conn_name = conn->target_model + "." + conn->target_connector;
+            // When source_model or target_model is empty, the connection references
+            // a boundary connector of the containing system. Use the system name
+            // as the model prefix so the qualified key matches how we store
+            // system-level connectors (system_name.connector_name).
+            std::string source_model = conn->source_model.empty()
+                ? current_sys->name
+                : conn->source_model;
+            std::string target_model = conn->target_model.empty()
+                ? current_sys->name
+                : conn->target_model;
+
+            std::string source_conn_name = source_model + "." + conn->source_connector;
+            std::string target_conn_name = target_model + "." + conn->target_connector;
 
             auto src_it = connector_name_map.find(source_conn_name);
             auto tgt_it = connector_name_map.find(target_conn_name);
@@ -174,14 +185,15 @@ namespace ssp4sim::analysis
         };
 
         // Walk all SspConnectionNode instances in the tree
-        // Use a recursive visitor
-        auto visit_tree = [&](SspNode<SspSystem> *sys_node, auto &&visit_ref) -> void
+        // Use a recursive visitor; pass the current system context
+        // so boundary connections resolve correctly.
+        auto visit_tree = [&](SspSystemNode *sys_node, auto &&visit_ref) -> void
         {
             for (auto *child : sys_node->children)
             {
                 if (auto *conn_node = dynamic_cast<SspConnectionNode *>(child))
                 {
-                    walk_connections(conn_node, walk_connections);
+                    walk_connections(conn_node, sys_node, walk_connections);
                 }
                 else if (auto *sub_sys = dynamic_cast<SspSystemNode *>(child))
                 {
@@ -195,7 +207,7 @@ namespace ssp4sim::analysis
                     {
                         if (auto *conn_node = dynamic_cast<SspConnectionNode *>(grandchild))
                         {
-                            walk_connections(conn_node, walk_connections);
+                            walk_connections(conn_node, sys_node, walk_connections);
                         }
                     }
                 }

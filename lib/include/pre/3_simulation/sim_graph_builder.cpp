@@ -12,6 +12,7 @@
 #include <set>
 #include <utility>
 #include <fstream>
+#include <vector>
 
 namespace ssp4sim::graph
 {
@@ -195,10 +196,39 @@ namespace ssp4sim::graph
 
                 // Find the peer model — check both parent and child directions
                 auto *peer_model_node = find_peer_model(peer_conn_node);
+
+                // If the direct peer has no model, it may be a system boundary
+                // connector. Trace through its downstream connections to find
+                // the actual model connector.
                 if (!peer_model_node || !peer_model_node->source)
                 {
-                    LOG_WARNING(log, "[{func}] Could not find peer model for connector {name}", __func__, peer_connector->name);
-                    continue;
+                    analysis::SspConnectorNode *resolved_peer = peer_conn_node;
+                    bool found = false;
+                    for (int depth = 0; depth < 16; ++depth)
+                    {
+                        auto next_conns = resolved_peer->template get_child_nodes<
+                            analysis::SspNode<analysis::ResolvedConnection>>();
+                        if (next_conns.empty())
+                            break;
+                        auto next_peers = next_conns[0]->template get_child_nodes<
+                            analysis::SspConnectorNode>();
+                        if (next_peers.empty())
+                            break;
+                        resolved_peer = next_peers[0];
+                        peer_model_node = find_peer_model(resolved_peer);
+                        if (peer_model_node && peer_model_node->source)
+                        {
+                            peer_conn_node = resolved_peer;
+                            peer_connector = peer_conn_node->source;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found)
+                    {
+                        LOG_WARNING(log, "[{func}] Could not find peer model for connector {name}", __func__, peer_connector->name);
+                        continue;
+                    }
                 }
 
                 auto tgt_it = models.find(peer_model_node->source->name);
@@ -355,6 +385,42 @@ namespace ssp4sim::graph
                         for (auto *child : peer_conn_node->children)
                         {
                             peer_model_node = dynamic_cast<analysis::SspModelNode *>(child);
+                            if (peer_model_node)
+                                break;
+                        }
+                    }
+
+                    // Trace through system boundary connectors to find the
+                    // actual model peer.
+                    if (!peer_model_node)
+                    {
+                        analysis::SspConnectorNode *resolved_peer = peer_conn_node;
+                        for (int depth = 0; depth < 16; ++depth)
+                        {
+                            auto next_conns = resolved_peer->template get_child_nodes<
+                                analysis::SspNode<analysis::ResolvedConnection>>();
+                            if (next_conns.empty())
+                                break;
+                            auto next_peers = next_conns[0]->template get_child_nodes<
+                                analysis::SspConnectorNode>();
+                            if (next_peers.empty())
+                                break;
+                            resolved_peer = next_peers[0];
+                            for (auto *parent : resolved_peer->parents)
+                            {
+                                peer_model_node = dynamic_cast<analysis::SspModelNode *>(parent);
+                                if (peer_model_node)
+                                    break;
+                            }
+                            if (!peer_model_node)
+                            {
+                                for (auto *child : resolved_peer->children)
+                                {
+                                    peer_model_node = dynamic_cast<analysis::SspModelNode *>(child);
+                                    if (peer_model_node)
+                                        break;
+                                }
+                            }
                             if (peer_model_node)
                                 break;
                         }
