@@ -74,9 +74,11 @@ TEST_CASE("get_default_value returns correct defaults", "[schema_extensions]")
         CHECK(std::get<std::string_view>(dv).empty());
     }
 
-    SECTION("Unknown throws")
+    SECTION("Unknown returns int 0")
     {
-        REQUIRE_THROWS_AS(get_default_value(DataType::unknown), std::runtime_error);
+        auto dv = get_default_value(DataType::unknown);
+        REQUIRE(std::holds_alternative<int>(dv));
+        CHECK(std::get<int>(dv) == 0);
     }
 }
 

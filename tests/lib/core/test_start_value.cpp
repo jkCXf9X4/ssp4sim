@@ -45,9 +45,11 @@ TEST_CASE("ParameterValue initializes defaults by data type", "[ParameterValue]"
         REQUIRE(reinterpret_cast<std::string *>(start_value.raw_ptr())->empty());
     }
 
-    SECTION("unknown throws on construction")
+    SECTION("unknown creates monostate value")
     {
-        REQUIRE_THROWS_AS(ParameterValue("model.unknown", DataType::unknown), std::runtime_error);
+        ParameterValue start_value("model.unknown", DataType::unknown);
+        REQUIRE(std::holds_alternative<std::monostate>(start_value.value));
+        REQUIRE(start_value.raw_ptr() == nullptr);
     }
 }
 
@@ -92,9 +94,11 @@ TEST_CASE("ParameterValue stores values according to its declared data type", "[
         REQUIRE(std::get<std::string>(start_value.value) == input);
     }
 
-    SECTION("unknown throws on construction")
+    SECTION("unknown creates monostate value")
     {
-        REQUIRE_THROWS_AS(ParameterValue("model.unknown", DataType::unknown), std::runtime_error);
+        ParameterValue start_value("model.unknown", DataType::unknown);
+        REQUIRE(std::holds_alternative<std::monostate>(start_value.value));
+        REQUIRE(start_value.raw_ptr() == nullptr);
     }
 }
 
@@ -139,7 +143,10 @@ TEST_CASE("ParameterValue to_string includes key value information", "[Parameter
 
     SECTION("unknown value rendering")
     {
-        REQUIRE_THROWS_AS(ParameterValue("plant.unknown", DataType::unknown), std::runtime_error);
+        ParameterValue start_value("plant.unknown", DataType::unknown);
+        const auto rendered = start_value.to_string();
+        REQUIRE(rendered.find("Name: plant.unknown") != std::string::npos);
+        REQUIRE(rendered.find("Value: <bin>") != std::string::npos);
     }
 }
 

@@ -81,6 +81,9 @@ namespace ssp4sim::ext::fmi2
             case types::DataType::string:
                 return "";
 
+            case types::DataType::unknown:
+                return 0;
+
             default:
                 throw std::runtime_error("Unknown type");
             }
