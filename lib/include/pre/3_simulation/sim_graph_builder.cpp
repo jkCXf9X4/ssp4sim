@@ -2,6 +2,7 @@
 
 #include "pre/3_simulation/elements/model_fmu.hpp"
 #include "pre/3_simulation/elements/model_connector.hpp"
+#include "signal/recorder.hpp"
 #include "utils/fmi/fmu_info.hpp"
 #include "utils/primitives/map.hpp"
 
@@ -13,17 +14,13 @@
 
 namespace ssp4sim::graph
 {
-            // TODO: If we break out the recorder this unit will be easier to test 
-            // Evaluate how the, the config should be adapted to create a default if the file is not available 
-    GraphBuilder::GraphBuilder(ssp4sim::signal::DataRecorder *recorder,
-                               ssp4sim::SharedConfig *config)
+    GraphBuilder::GraphBuilder(bool record_inputs)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder")),
-          recorder(recorder),
-          config(config)
+          record_inputs(record_inputs)
     {
     }
 
-    void GraphBuilder::build(analysis::AnalysisGraphData *graph_data)
+    std::map<std::string, std::unique_ptr<Invocable>> GraphBuilder::build(analysis::AnalysisGraphData *graph_data)
     {
         LOG_DEBUG(log, "[{func}] init with pre-resolved graph data", __func__);
 
@@ -43,18 +40,10 @@ namespace ssp4sim::graph
             }
             m->input_area->allocate();
             m->output_area->allocate();
-
-            if (recorder)
-            {
-                if (m->record_inputs)
-                {
-                    recorder->add_storage(m->input_area.get());
-                }
-                recorder->add_storage(m->output_area.get());
-            }
         }
 
         LOG_DEBUG(log, "[{func}] exit", __func__);
+        return std::move(models);
     }
 
     void GraphBuilder::create_fmu_models(analysis::AnalysisGraphData &graph_data)
@@ -80,7 +69,7 @@ namespace ssp4sim::graph
             LOG_TRACE_L1(log, "[{func}] -- New Model: {model}", __func__, m->name);
 
             m->delay = analysis_model->delay;
-            m->record_inputs = this->config->record_inputs;
+            m->record_inputs = this->record_inputs;
             LOG_DEBUG(log, "[{func}] Model: {model}, delay {delay}", __func__, m->name, m->delay);
 
             models[analysis_model->name] = std::move(m);
@@ -360,9 +349,25 @@ namespace ssp4sim::graph
         }
     }
 
-    std::map<std::string, std::unique_ptr<Invocable>> GraphBuilder::get_models()
+    void register_model_storages(
+        const std::map<std::string, std::unique_ptr<Invocable>> &models,
+        ssp4sim::signal::DataRecorder *recorder)
     {
-        return std::move(models);
+        if (!recorder)
+            return;
+
+        for (auto &[name, model] : models)
+        {
+            auto m = dynamic_cast<FmuModel *>(model.get());
+            if (!m)
+                continue;
+
+            if (m->record_inputs)
+            {
+                recorder->add_storage(m->input_area.get());
+            }
+            recorder->add_storage(m->output_area.get());
+        }
     }
 
 } // namespace ssp4sim::graph

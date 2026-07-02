@@ -1,14 +1,17 @@
 #pragma once
 
-#include "shared_config.hpp"
-#include "graph_executor.hpp"
-
 #include "pre/ssp_graph_data.hpp"
 #include "utils/fmi/fmu_info.hpp"
+#include "execution/invocable.hpp"
 
 #include <map>
 #include <memory>
 #include <string>
+
+namespace ssp4sim::signal
+{
+    class DataRecorder;
+}
 
 namespace ssp4sim::graph
 {
@@ -18,17 +21,13 @@ namespace ssp4sim::graph
     public:
         ssp4cpp::utils::log::Logger *log = nullptr;
 
-        ssp4sim::signal::DataRecorder *recorder;
-        ssp4sim::SharedConfig *config;
+        bool record_inputs;
 
         std::map<std::string, std::unique_ptr<Invocable>> models;
 
-        GraphBuilder(ssp4sim::signal::DataRecorder *recorder,
-                     ssp4sim::SharedConfig *config);
+        explicit GraphBuilder(bool record_inputs);
 
-        void build(analysis::AnalysisGraphData *graph_data);
-
-        std::map<std::string, std::unique_ptr<Invocable>> get_models();
+        std::map<std::string, std::unique_ptr<Invocable>> build(analysis::AnalysisGraphData *graph_data);
 
     private:
         void create_fmu_models(analysis::AnalysisGraphData &graph_data);
@@ -36,5 +35,9 @@ namespace ssp4sim::graph
         void wire_connections(analysis::AnalysisGraphData &graph_data);
         void derive_model_edges(analysis::AnalysisGraphData &graph_data);
     };
+
+    void register_model_storages(
+        const std::map<std::string, std::unique_ptr<Invocable>> &models,
+        ssp4sim::signal::DataRecorder *recorder);
 
 } // namespace ssp4sim::graph

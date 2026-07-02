@@ -48,7 +48,6 @@ namespace ssp4sim::pre
     /// from these models.
     SimulationPipelineResult build_simulation_graph(
         ssp4cpp::Ssp *ssp,
-        signal::DataRecorder *recorder,
-        SharedConfig *config);
+        bool set_record_inputs);
 
 } // namespace ssp4sim::pre

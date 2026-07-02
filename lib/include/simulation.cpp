@@ -4,6 +4,7 @@
 #include "utils/time/timer.hpp"
 
 #include "pre/simulation_pipeline.hpp"
+#include "pre/3_simulation/sim_graph_builder.hpp"
 
 #include "simulation/signal/sinks/csv_recorder_sink.hpp"
 
@@ -80,9 +81,11 @@ namespace ssp4sim
     {
         LOG_INFO(p->log, "[{func}] Initializing simulation", __func__);
 
-        p->setup_results = pre::build_simulation_graph(p->ssp, p->recorder.get(), this->config);
+        p->setup_results = pre::build_simulation_graph(p->ssp, this->config->record_inputs);
+        graph::register_model_storages(p->setup_results.models, p->recorder.get());
 
         LOG_INFO(p->log, "[{func}] - Creating simulation graph executor", __func__);
+
         p->sim_graph = std::make_unique<graph::GraphExecutor>(p->setup_results.get_models(), p->recorder.get());
 
         LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());

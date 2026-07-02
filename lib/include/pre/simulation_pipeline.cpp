@@ -16,8 +16,7 @@ namespace ssp4sim::pre
 
     SimulationPipelineResult build_simulation_graph(
         ssp4cpp::Ssp *ssp,
-        signal::DataRecorder *recorder,
-        SharedConfig *config)
+        bool set_record_inputs)
     {
         auto log = ssp4cpp::utils::log::make_logger("ssp4sim.pre.SimulationPipeline");
 
@@ -36,13 +35,12 @@ namespace ssp4sim::pre
         LOG_DEBUG(log, " -- analysis graph built");
 
         LOG_INFO(log, "[{func}] - Creating simulation models", __func__);
-        auto sim_graph_builder = graph::GraphBuilder(recorder, config);
-        sim_graph_builder.build(&analysis_graph_data);
+        auto sim_graph_builder = graph::GraphBuilder(set_record_inputs);
 
         SimulationPipelineResult result;
-        result.models = sim_graph_builder.get_models();
+        result.models = sim_graph_builder.build(&analysis_graph_data);
 
-        LOG_INFO(log, "[{func}] - Pipeline complete, {} models built", __func__, result.models.size());
+                LOG_INFO(log, "[{func}] - Pipeline complete, {} models built", __func__, result.models.size());
         return result;
     }
 
