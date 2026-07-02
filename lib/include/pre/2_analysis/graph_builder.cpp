@@ -155,51 +155,9 @@ namespace ssp4sim::analysis
             auto *resolved_raw = resolved.get();
 
             // Build the graph chain:
-            // source model -> source connector -> connection -> target connector -> target model
+            // source connector -> connection -> target connector
             src_connector->add_child(resolved_raw);
             resolved_raw->add_child(tgt_connector);
-
-            // Find source and target models (connector's parent model)
-            for (auto *parent : src_connector->parents)
-            {
-                if (auto *m = dynamic_cast<SspModelNode *>(parent))
-                {
-                    // Edge already established by model.add_child(connector)
-                    break;
-                }
-            }
-
-            // The target connector's parent model was already linked in pass 2
-            // via connector.add_child(model) — but actually we need model as child of connector,
-            // not the other way around. Let's fix: the model owns the connector as child.
-            // For the graph chain: connector -> model, we need model as a child of connector.
-            // But the plan says connector_in.add_child(model_2). 
-            // Actually for the original chain: model → connector → connection → connector → model
-            // we need: source_model has_child source_connector (pass 2)
-            //          source_connector has_child connection (this pass)
-            //          connection has_child target_connector (this pass)
-            //          target_connector has_child target_model (we need this)
-            // But target_model can't be a child of target_connector AND own connector_nodes...
-            // 
-            // Actually the original plan was:
-            // model_1.add_child(connector_out.get())     -- connector is child of model
-            // connector_out.add_child(connection_1.get()) -- connection is child of connector
-            // connection_1.add_child(connector_in.get())  -- connector is child of connection
-            // connector_in.add_child(model_2.get())       -- model is child of connector
-            //
-            // So we need to add model as child of connector for the last step.
-            // But models are owned by model_nodes vector and connectors by connector_nodes.
-            // connector.add_child(model) is fine since it's a non-owning raw ptr.
-
-            // Find target model from connector's parent
-            for (auto *parent : tgt_connector->parents)
-            {
-                if (auto *m = dynamic_cast<SspModelNode *>(parent))
-                {
-                    tgt_connector->add_child(m);
-                    break;
-                }
-            }
 
             data.connection_sources.push_back(std::move(rc));
             data.connection_nodes.push_back(std::move(resolved));

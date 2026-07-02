@@ -65,12 +65,6 @@ namespace ssp4sim::analysis
                     auto *conn_node = create_node<SspConnectorNode>(owner, &m_connector);
                     model_node->add_child(conn_node);
                 }
-
-                for (auto &m_variable : model.model_variables)
-                {
-                    auto *var_node = create_node<SspVariableNode>(owner, &m_variable);
-                    model_node->add_child(var_node);
-                }
             }
 
             for (auto &m_connector : system->connectors)

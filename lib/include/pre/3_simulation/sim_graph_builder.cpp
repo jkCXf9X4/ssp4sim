@@ -2,6 +2,7 @@
 
 #include "pre/3_simulation/elements/model_fmu.hpp"
 #include "pre/3_simulation/elements/model_connector.hpp"
+#include "pre/1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
 #include "signal/recorder.hpp"
 #include "utils/fmi/fmu_info.hpp"
 #include "utils/primitives/map.hpp"
@@ -106,8 +107,7 @@ namespace ssp4sim::graph
 
                 ConnectorInfo info;
                 info.type = connector->data_type;
-                // size is not available on Gen1 SspConnector directly
-                info.size = 1;
+                info.size = ssp4sim::ext::fmi2::enums::get_data_type_size(connector->data_type);
                 info.name = connector->name;
 
                 info.value_ref = connector->value_reference;
