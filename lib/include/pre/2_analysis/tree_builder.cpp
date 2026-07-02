@@ -9,7 +9,9 @@
 
 #include "ssp4cpp/ssp.hpp"
 
+#include <map>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_set>
@@ -85,6 +87,125 @@ namespace ssp4sim::analysis
 
             return system_node;
         }
+
+        // -----------------------------------------------------------------------
+        // Parameter set application
+        // -----------------------------------------------------------------------
+
+        /// Flatten all descendants of @p node into a map keyed by path segments.
+        /// The node itself is not included.
+        static void flatten_subtree(
+            utils::graph::Node *node,
+            std::map<std::vector<std::string>, utils::graph::Node *> &out,
+            std::vector<std::string> prefix = {})
+        {
+            for (auto *child : node->children)
+            {
+                auto child_prefix = prefix;
+                child_prefix.push_back(child->name);
+                out.emplace(child_prefix, child);
+                flatten_subtree(child, out, child_prefix);
+            }
+        }
+
+        /// Apply a ParameterValue to a target node.
+        /// Currently supports SspConnectorNode (sets initial_value).
+        /// Other node types are logged at trace level and skipped.
+        static void apply_value_to_node(
+            utils::graph::Node *target,
+            const ext::ParameterValue &param_value,
+            const std::string &key)
+        {
+            if (auto *conn_node = dynamic_cast<SspConnectorNode *>(target))
+            {
+                conn_node->source->initial_value = param_value;
+                LOG_TRACE_L1(log(), "[{func}] Applied parameter '{key}' to connector '{name}'",
+                             __func__, key, conn_node->name);
+            }
+            else
+            {
+                LOG_TRACE_L1(log(), "[{func}] Parameter '{key}' matched node '{name}' but type not supported for value application",
+                             __func__, key, target->name);
+            }
+        }
+
+        /// Apply parameter bindings from @p node to its descendants.
+        /// Uses post-order traversal (children before parent) so that lower-level
+        /// bindings are applied first, matching SSP semantics.
+        ///
+        /// Parameter keys are dotted paths (e.g. "sine.amplitude" or "gain.k").
+        /// Each key is matched as a suffix against the reconstructed dotted path
+        /// of every descendant, with a dot boundary check to avoid false matches.
+        static void apply_parameters(utils::graph::Node *node)
+        {
+            // Post-order: recurse into children first
+            for (auto *child : node->children)
+            {
+                apply_parameters(child);
+            }
+
+            // Only SspSystemNode and SspModelNode carry parameter_bindings
+            std::map<std::string, ext::ParameterValue> *bindings = nullptr;
+
+            if (auto *sys_node = dynamic_cast<SspSystemNode *>(node))
+            {
+                bindings = &sys_node->source->parameter_bindings;
+            }
+            else if (auto *model_node = dynamic_cast<SspModelNode *>(node))
+            {
+                bindings = &model_node->source->parameter_bindings;
+            }
+
+            if (!bindings || bindings->empty())
+            {
+                return;
+            }
+
+            // Flatten all descendants of this node
+            std::map<std::vector<std::string>, utils::graph::Node *> flat;
+            flatten_subtree(node, flat);
+
+            if (flat.empty())
+            {
+                return;
+            }
+
+            // Match each parameter key against flattened descendants
+            for (const auto &[key, param_value] : *bindings)
+            {
+                bool matched = false;
+
+                for (const auto &[path, target] : flat)
+                {
+                    // Reconstruct dotted path from segments
+                    std::string dotted_path;
+                    for (size_t i = 0; i < path.size(); ++i)
+                    {
+                        if (i > 0)
+                            dotted_path += ".";
+                        dotted_path += path[i];
+                    }
+
+                    // Suffix match with dot boundary:
+                    // The key must match the end of dotted_path, and either
+                    // the match covers the whole path or is preceded by a dot.
+                    if (dotted_path.size() >= key.size() &&
+                        dotted_path.compare(dotted_path.size() - key.size(), key.size(), key) == 0 &&
+                        (dotted_path.size() == key.size() ||
+                         dotted_path[dotted_path.size() - key.size() - 1] == '.'))
+                    {
+                        apply_value_to_node(target, param_value, key);
+                        matched = true;
+                    }
+                }
+
+                if (!matched)
+                {
+                    LOG_TRACE_L1(log(), "[{func}] Parameter '{key}' did not match any descendant",
+                                 __func__, key);
+                }
+            }
+        }
     }
 
     SspSystemNode *SspTreeBuilder::build(SspSystem *analysis_system)
@@ -97,9 +218,10 @@ namespace ssp4sim::analysis
 
         LOG_INFO(log(), "[{func}] Tree built with {} nodes", __func__, node_owner.size());
 
-        // TODO: implement parameter set application
-        // apply_parameters(system_tree, analysis_system);
-        LOG_WARNING(log(), "[{func}] Parametersets not applied!", __func__);
+        // Apply parameter sets: post-order traversal matching parameter bindings
+        // against flattened descendants using dotted-path suffix matching.
+        apply_parameters(system_tree);
+        LOG_INFO(log(), "[{func}] Parameter sets applied", __func__);
 
         LOG_TRACE_L1(log(), "[{func}] exit", __func__);
         return system_tree;
