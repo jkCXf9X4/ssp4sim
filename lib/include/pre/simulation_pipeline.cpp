@@ -1,6 +1,7 @@
 #include "simulation_pipeline.hpp"
 
 #include "pre/1_ssp_parser/ssp_parser.hpp"
+#include "pre/1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
 #include "pre/2_analysis/tree_builder.hpp"
 #include "pre/2_analysis/graph_builder.hpp"
 #include "pre/3_simulation/sim_graph_builder.hpp"
@@ -14,6 +15,7 @@
 
 #include <cstdlib>
 #include <fstream>
+#include <functional>
 
 namespace ssp4sim::pre
 {
@@ -50,6 +52,51 @@ namespace ssp4sim::pre
             for (auto &n : analysis_graph_data.connection_nodes)
                 all_nodes.push_back(n.get());
             std::ofstream(config->working_dir / "graph_output.dot") << utils::graph::Node::to_dot(all_nodes);
+        }
+
+        // Write start_values.csv — log every connector with a valid initial value.
+        // Traverse the tree to build qualified names that include subsystem prefixes.
+        // Connector node names already include the parent model name (model.var).
+        // For model nodes we pass the prefix unchanged; for system nodes we append
+        // the subsystem name; for boundary connectors we use the system-qualified name.
+        {
+            auto start_value_log = std::ofstream(config->start_value_log_file, std::ios::out);
+            std::function<void(utils::graph::Node *, std::string)> write_connectors;
+            write_connectors = [&](utils::graph::Node *node, const std::string &prefix)
+            {
+                for (auto *child : node->children)
+                {
+                    if (auto *conn = dynamic_cast<analysis::SspConnectorNode *>(child))
+                    {
+                        auto *src = conn->source;
+                        if (!src)
+                            continue;
+                        auto *raw = src->initial_value.raw_ptr();
+                        if (!raw)
+                            continue;
+                        auto value_str = ext::fmi2::enums::data_type_to_string(src->data_type, raw);
+                        std::string qualified =
+                            prefix.empty() ? conn->name : prefix + "." + conn->name;
+                        start_value_log << static_cast<int>(src->causality) << ", "
+                                        << qualified << ", "
+                                        << value_str << "\n";
+                    }
+                    else if (dynamic_cast<analysis::SspModelNode *>(child))
+                    {
+                        // Model children (connectors) already have model.var names.
+                        // Pass prefix unchanged so the qualified name becomes
+                        // <system_prefix>.<model_name>.<var_name>.
+                        write_connectors(child, prefix);
+                    }
+                    else if (dynamic_cast<analysis::SspSystemNode *>(child))
+                    {
+                        std::string child_prefix =
+                            prefix.empty() ? child->name : prefix + "." + child->name;
+                        write_connectors(child, child_prefix);
+                    }
+                }
+            };
+            write_connectors(system_tree, "");
         }
 
         LOG_INFO(log, "[{func}] - Creating simulation models", __func__);

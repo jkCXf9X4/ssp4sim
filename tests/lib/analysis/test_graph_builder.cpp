@@ -117,6 +117,19 @@ TEST_CASE("SspGraphBuilder builds correct graph structure for sine_gain_add",
                 break;
             }
         }
+        // Input/parameter connectors have the model as child (signal flow
+        // toward model) rather than parent.  Check both directions.
+        if (!has_model_parent)
+        {
+            for (auto *child : c->children)
+            {
+                if (dynamic_cast<ssp4sim::analysis::SspModelNode *>(child))
+                {
+                    has_model_parent = true;
+                    break;
+                }
+            }
+        }
         // System-level (boundary) connectors may not have a model parent,
         // but all model-level connectors should
         CHECK(has_model_parent);
