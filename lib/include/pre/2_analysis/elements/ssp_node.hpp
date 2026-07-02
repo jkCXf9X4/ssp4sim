@@ -62,6 +62,21 @@ namespace ssp4sim::analysis
             return out;
         }
 
+        /// Get parents cast to a specific Node subclass (e.g. SspConnectorNode).
+        template <typename U>
+        std::vector<U *> get_parent_nodes() const
+        {
+            std::vector<U *> out;
+            for (auto parent : parents)
+            {
+                if (auto p = dynamic_cast<U *>(parent))
+                {
+                    out.push_back(p);
+                }
+            }
+            return out;
+        }
+
         static std::map<std::vector<std::string>, SspNode *> flatten(SspNode *node, const std::vector<std::string> &prefix = {})
         {
             // map< path, node>

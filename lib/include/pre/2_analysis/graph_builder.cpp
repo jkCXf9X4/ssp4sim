@@ -65,11 +65,21 @@ namespace ssp4sim::analysis
                             auto *raw = ptr.get();
                             raw->name = conn_node->name;
 
-                            // Link connector to its model
-                            if (flat_model)
-                            {
-                                flat_model->add_child(raw);
-                            }
+// Link connector to its model with correct signal-flow direction:
+                    // input and parameter connectors point toward the model,
+                    // output connectors point away from the model.
+                    if (flat_model)
+                    {
+                        if (conn_node->source->causality == types::Causality::input ||
+                            conn_node->source->causality == types::Causality::parameter)
+                        {
+                            raw->add_child(flat_model);
+                        }
+                        else
+                        {
+                            flat_model->add_child(raw);
+                        }
+                    }
 
                             name_map[conn_node->name] = raw;
                             out.push_back(std::move(ptr));
