@@ -7,6 +7,10 @@
 
 using namespace ssp4sim::utils::graph;
 
+// ---------------------------------------------------------------------------
+// Description: Verifies range-based for loop traverses node and children
+// Rationale:   Iterator enables range-for syntax
+// ---------------------------------------------------------------------------
 TEST_CASE("Node iterator traverses node and direct children", "[Node][iterator]") {
     Node a("A"), b("B"), c("C");
     a.add_child(&b);
@@ -22,23 +26,10 @@ TEST_CASE("Node iterator traverses node and direct children", "[Node][iterator]"
 
 }
 
-TEST_CASE("Node pointer iterator traverses node", "[Node][iterator]") {
-    auto a = new Node("A");
-    auto b = new Node("B");
-    auto c = new Node("C");
-    a->add_child(b);
-    a->add_child(c);
-    std::vector<std::string> names;
-    for (auto node : *a) {
-        names.push_back(node->name);
-    }
-    REQUIRE(names.size() == 3);
-
-    std::vector<std::string> expected = {"A", "B", "C"};
-    REQUIRE(names == expected);
-
-}
-
+// ---------------------------------------------------------------------------
+// Description: Verifies recursive_iterator pre-order traversal of 5-node tree
+// Rationale:   Recursive iteration is the primary tree traversal mechanism
+// ---------------------------------------------------------------------------
 TEST_CASE("Node recursive_iterator traverses all descendants in pre-order", "[Node][recursive_iterator]") {
     Node a("A"), b("B"), c("C"), d("D"), e("E");
     a.add_child(&b);

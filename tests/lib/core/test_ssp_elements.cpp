@@ -14,15 +14,15 @@ using ssp4sim::types::Causality;
 using ssp4sim::types::DataType;
 
 // ---------------------------------------------------------------------------
+// Description: Verifies SspItem::to_string works via concrete derived type
+// Rationale:   SspItem is abstract; tested through SspConnector
+// Creep flag:  Presentation detail — to_string format may change
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // SspItem base class
 // ---------------------------------------------------------------------------
 TEST_CASE("SspItem base class", "[ssp_elements]")
 {
-    SECTION("Default construction")
-    {
-        // SspItem is abstract (virtual to_string), but we can test via derived
-    }
-
     SECTION("to_string returns name with format placeholder")
     {
         // Test via a concrete derived type
@@ -32,6 +32,11 @@ TEST_CASE("SspItem base class", "[ssp_elements]")
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies SspConnector construction with all causality types
+//              and data types, plus default empty dependencies
+// Rationale:   Connectors are the fundamental unit of SSP signal topology
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // SspConnector construction and field access
 // ---------------------------------------------------------------------------
@@ -73,6 +78,11 @@ TEST_CASE("SspConnector construction", "[ssp_elements]")
 }
 
 // ---------------------------------------------------------------------------
+// Description: Verifies SspConnector::to_string includes key fields
+// Rationale:   Debug/logging utility
+// Creep flag:  Presentation detail
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // SspConnector to_string
 // ---------------------------------------------------------------------------
 TEST_CASE("SspConnector to_string", "[ssp_elements]")
@@ -85,6 +95,11 @@ TEST_CASE("SspConnector to_string", "[ssp_elements]")
     CHECK(str.find("input") != std::string::npos);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies SspConnection construction for standard, boundary
+//              (empty source/target), and non-boundary connections
+// Rationale:   Boundary detection is critical for correct graph topology
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // SspConnection construction and field access
 // ---------------------------------------------------------------------------
@@ -126,6 +141,10 @@ TEST_CASE("SspConnection construction", "[ssp_elements]")
 }
 
 // ---------------------------------------------------------------------------
+// Description: Verifies set_custom sets delay (default 0, custom value)
+// Rationale:   Delay is the primary mechanism for feedthrough control
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // SspConnection set_custom
 // ---------------------------------------------------------------------------
 TEST_CASE("SspConnection set_custom sets delay", "[ssp_elements]")
@@ -151,6 +170,11 @@ TEST_CASE("SspConnection set_custom sets delay", "[ssp_elements]")
 }
 
 // ---------------------------------------------------------------------------
+// Description: Verifies SspConnection::to_string includes name and delay
+// Rationale:   Debug/logging utility
+// Creep flag:  Presentation detail
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // SspConnection to_string
 // ---------------------------------------------------------------------------
 TEST_CASE("SspConnection to_string", "[ssp_elements]")
@@ -162,6 +186,11 @@ TEST_CASE("SspConnection to_string", "[ssp_elements]")
     CHECK(str.find("3") != std::string::npos);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies SspItemType::to_string produces readable names
+// Rationale:   Debug/logging utility
+// Creep flag:  Presentation detail
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // SspItemType to_string
 // ---------------------------------------------------------------------------

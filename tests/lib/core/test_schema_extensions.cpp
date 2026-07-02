@@ -14,6 +14,10 @@ using ssp4sim::ext::fmi2::enums::get_default_value;
 using ssp4sim::types::DataType;
 
 // ---------------------------------------------------------------------------
+// Description: Verifies get_data_type_size returns correct sizeof for all types
+// Rationale:   Size mapping required for memory allocation and serialization
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // get_data_type_size
 // ---------------------------------------------------------------------------
 TEST_CASE("get_data_type_size returns correct sizes", "[schema_extensions]")
@@ -26,6 +30,10 @@ TEST_CASE("get_data_type_size returns correct sizes", "[schema_extensions]")
     CHECK(get_data_type_size(DataType::unknown) == 0);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies get_default_value returns FMI 2.0 defaults per type
+// Rationale:   Default values must match FMI 2.0 specification
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // get_default_value
 // ---------------------------------------------------------------------------
@@ -72,6 +80,13 @@ TEST_CASE("get_default_value returns correct defaults", "[schema_extensions]")
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies ParameterValue edge cases (empty name, long name,
+//              raw_ptr round-trip, overwrite, default construction)
+// Rationale:   Robustness — empty names appear in boundary connections;
+//              long names appear in deeply nested SSPs
+// Creep flag:  "Long name" test uses a qualitative string, not a boundary value
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // ParameterValue edge cases
 // ---------------------------------------------------------------------------
@@ -151,6 +166,11 @@ TEST_CASE("ParameterValue edge cases", "[schema_extensions]")
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies data_type_to_string produces readable output per type
+// Rationale:   Debug/logging utility
+// Creep flag:  Presentation detail — format may change without behavioral impact
+// ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
 // data_type_to_string
 // ---------------------------------------------------------------------------

@@ -88,7 +88,8 @@ static ssp4cpp::ssp1::ssv::TParameter make_enum_param(const std::string &name, i
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 1: System-level SSV-only bindings
+// Description: Tests SSV-only binding with real, int, string parameters
+// Rationale:   Core parameter binding — values must be correctly typed
 // ---------------------------------------------------------------------------
 TEST_CASE("System-level SSV-only bindings with mixed types", "[parameter_binding]")
 {
@@ -150,7 +151,8 @@ TEST_CASE("System-level SSV-only bindings with mixed types", "[parameter_binding
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 2: System-level bindings with SSV and SSM
+// Description: Tests SSM remapping: source "k" → target "fmu.k"
+// Rationale:   SSM remapping is the standard SSP parameter override mechanism
 // ---------------------------------------------------------------------------
 TEST_CASE("System-level bindings with SSV and SSM parameter mapping", "[parameter_binding]")
 {
@@ -201,7 +203,8 @@ TEST_CASE("System-level bindings with SSV and SSM parameter mapping", "[paramete
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 3: Component-level bindings (prepended component prefix)
+// Description: Tests component-level binding with pre-prefixed names
+// Rationale:   Component-level bindings have different name resolution rules
 // ---------------------------------------------------------------------------
 TEST_CASE("Component-level parameter bindings with name prefix", "[parameter_binding]")
 {
@@ -235,7 +238,8 @@ TEST_CASE("Component-level parameter bindings with name prefix", "[parameter_bin
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 4: Empty bindings
+// Description: Verifies empty input produces empty output
+// Rationale:   Edge case — empty parameter sets must not crash
 // ---------------------------------------------------------------------------
 TEST_CASE("Empty bindings produce empty start values", "[parameter_binding]")
 {
@@ -245,8 +249,8 @@ TEST_CASE("Empty bindings produce empty start values", "[parameter_binding]")
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 5: get_start_value_mappings with SSM creates entries keyed by
-//             mapping target names
+// Description: Verifies SSM target names are map keys (not source names)
+// Rationale:   Consumers look up parameters by target (FMU connector) name
 // ---------------------------------------------------------------------------
 TEST_CASE("SSM mappings produce map entries keyed by target names", "[parameter_binding]")
 {
@@ -290,8 +294,10 @@ TEST_CASE("SSM mappings produce map entries keyed by target names", "[parameter_
 }
 
 // ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// Test Case 6: External ParameterSet (constructed), no ParameterMapping
+// Description: Tests external SSV without SSM (combinatorial coverage)
+// Rationale:   Inline vs external resolution happens upstream; both paths
+//              produce identical types at this layer
+// Creep flag:  Tests identical code path as SSV-only test (deliberate doc coverage)
 // ---------------------------------------------------------------------------
 TEST_CASE("External ParameterSet (constructed), no ParameterMapping", "[parameter_binding]")
 {
@@ -340,7 +346,9 @@ TEST_CASE("External ParameterSet (constructed), no ParameterMapping", "[paramete
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 7: Inline ParameterSet with external ParameterMapping (constructed)
+// Description: Tests inline SSV + external SSM (combinatorial coverage)
+// Rationale:   Combinatorial pattern coverage
+// Creep flag:  Tests identical code path (see file comment block lines 13-32)
 // ---------------------------------------------------------------------------
 TEST_CASE("Inline ParameterSet with external ParameterMapping (constructed)", "[parameter_binding]")
 {
@@ -388,7 +396,9 @@ TEST_CASE("Inline ParameterSet with external ParameterMapping (constructed)", "[
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 8: External ParameterSet with external ParameterMapping (constructed)
+// Description: Tests external SSV + external SSM (combinatorial coverage)
+// Rationale:   Combinatorial pattern coverage
+// Creep flag:  Tests identical code path (see file comment block lines 13-32)
 // ---------------------------------------------------------------------------
 TEST_CASE("External ParameterSet with external ParameterMapping (constructed)", "[parameter_binding]")
 {
@@ -435,7 +445,9 @@ TEST_CASE("External ParameterSet with external ParameterMapping (constructed)", 
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 9: Empty external ParameterSet edge case
+// Description: Tests empty external SSV edge case
+// Rationale:   Edge case — empty parameter sets must not crash
+// Creep flag:  "External" qualifier is meaningless at this layer
 // ---------------------------------------------------------------------------
 TEST_CASE("Empty external ParameterSet edge case", "[parameter_binding]")
 {
@@ -463,7 +475,8 @@ TEST_CASE("Empty external ParameterSet edge case", "[parameter_binding]")
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 20: get_start_value_mappings overwrites duplicate SSM target keys
+// Description: Two bindings mapping to same SSM target; verifies last-write-wins
+// Rationale:   Last-write-wins semantics for duplicate targets must be explicit
 // ---------------------------------------------------------------------------
 TEST_CASE("get_start_value_mappings overwrites duplicate SSM target keys", "[parameter_binding]")
 {

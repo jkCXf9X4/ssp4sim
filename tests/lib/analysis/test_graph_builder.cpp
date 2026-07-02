@@ -48,7 +48,9 @@ namespace {
     } // anonymous namespace
 
 // ---------------------------------------------------------------------------
-// Test: signal_sine_gain_add — 4 models, 3 connections, flat (no nesting)
+// Description: Verifies graph structure for sine_gain_add (4 models, 3 conns)
+// Rationale:   Core graph structure for flat multi-model SSP
+// Creep flag:  Exact connector counts (18) tied to specific FMU implementations
 // ---------------------------------------------------------------------------
 TEST_CASE("SspGraphBuilder builds correct graph structure for sine_gain_add",
           "[graph_builder][analysis]")
@@ -122,7 +124,9 @@ TEST_CASE("SspGraphBuilder builds correct graph structure for sine_gain_add",
 }
 
 // ---------------------------------------------------------------------------
-// Test: signal_fanout_gain — 3 models, 2 connections (fanout pattern)
+// Description: Verifies graph structure for fanout_gain (3 models, 2 conns)
+// Rationale:   Fanout is a distinct topology pattern
+// Creep flag:  Exact connector counts tied to specific FMU implementations
 // ---------------------------------------------------------------------------
 TEST_CASE("SspGraphBuilder builds correct graph structure for fanout_gain",
           "[graph_builder][analysis]")
@@ -158,7 +162,9 @@ TEST_CASE("SspGraphBuilder builds correct graph structure for fanout_gain",
 }
 
 // ---------------------------------------------------------------------------
-// Test: signal_step_gain — 2 models, 1 connection, external SSV
+// Description: Verifies graph structure for step_gain (2 models, 1 conn)
+// Rationale:   Topology-specific coverage
+// Creep flag:  Exact connector counts tied to specific FMU implementations
 // ---------------------------------------------------------------------------
 TEST_CASE("SspGraphBuilder builds correct graph structure for step_gain",
           "[graph_builder][analysis]")
@@ -190,7 +196,9 @@ TEST_CASE("SspGraphBuilder builds correct graph structure for step_gain",
 }
 
 // ---------------------------------------------------------------------------
-// Test: signal_step_product — 3 models, 2 connections
+// Description: Verifies graph structure for step_product (3 models, 2 conns)
+// Rationale:   Topology-specific coverage
+// Creep flag:  Exact connector counts tied to specific FMU implementations
 // ---------------------------------------------------------------------------
 TEST_CASE("SspGraphBuilder builds correct graph structure for step_product",
           "[graph_builder][analysis]")
@@ -218,7 +226,9 @@ TEST_CASE("SspGraphBuilder builds correct graph structure for step_product",
 }
 
 // ---------------------------------------------------------------------------
-// Test: Graph structure integrity — model→connector→connection→connector→model
+// Description: Verifies model→connector parent linkage and connection→connector
+//              child linkage
+// Rationale:   Graph integrity — every connection resolves to connector edges
 // ---------------------------------------------------------------------------
 TEST_CASE("SspGraphBuilder produces valid graph chain integrity",
           "[graph_builder][analysis]")
@@ -257,7 +267,8 @@ TEST_CASE("SspGraphBuilder produces valid graph chain integrity",
 }
 
 // ---------------------------------------------------------------------------
-// Test: System with models but no connections
+// Description: Verifies single model with zero connections
+// Rationale:   Edge case — disconnected models must produce valid graphs
 // ---------------------------------------------------------------------------
 TEST_CASE("SspGraphBuilder handles models without connections", "[graph_builder][analysis]")
 {

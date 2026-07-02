@@ -9,6 +9,11 @@
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
+// ---------------------------------------------------------------------------
+// Description: Verifies aligned layout, correct offsets, mem_size stride,
+//              and derivative pointer arithmetic
+// Rationale:   Misaligned access causes crashes; wrong offsets corrupt data
+// ---------------------------------------------------------------------------
 TEST_CASE("SignalStorage allocates variable and derivative layout", "[SignalStorage]")
 {
     SignalStorage storage(3, "signals");
@@ -39,6 +44,10 @@ TEST_CASE("SignalStorage allocates variable and derivative layout", "[SignalStor
     REQUIRE(second_derivative - first_derivative == static_cast<std::ptrdiff_t>(sizeof(double)));
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies alignment for mixed types (int, double, string)
+// Rationale:   Mixed-type alignment is the most error-prone layout scenario
+// ---------------------------------------------------------------------------
 TEST_CASE("SignalStorage aligns mixed-type values and derivatives", "[SignalStorage]")
 {
     SignalStorage storage(2, "signals");
@@ -67,6 +76,11 @@ TEST_CASE("SignalStorage aligns mixed-type values and derivatives", "[SignalStor
     REQUIRE(reinterpret_cast<std::uintptr_t>(area1_string) % alignof(std::string) == 0);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies push/get_time/find_area/find_latest_valid_area
+//              through wraparound
+// Rationale:   Timestamp-based lookup is the primary access pattern
+// ---------------------------------------------------------------------------
 TEST_CASE("SignalStorage pushes timestamps and finds areas", "[SignalStorage]")
 {
     SignalStorage storage(3, "signals");
@@ -97,6 +111,10 @@ TEST_CASE("SignalStorage pushes timestamps and finds areas", "[SignalStorage]")
     REQUIRE(index_found == third);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies null returns for out-of-range derivative requests
+// Rationale:   Safety — prevents null-pointer dereference
+// ---------------------------------------------------------------------------
 TEST_CASE("SignalStorage returns null for derivative requests outside valid range", "[SignalStorage]")
 {
     SignalStorage storage(2, "signals");
@@ -116,6 +134,10 @@ TEST_CASE("SignalStorage returns null for derivative requests outside valid rang
     REQUIRE(storage.get_derivative(area, derivative_index, 3) == nullptr);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies double-allocate throws std::runtime_error
+// Rationale:   Double allocation corrupts memory layout
+// ---------------------------------------------------------------------------
 TEST_CASE("SignalStorage allocate can only be called once", "[SignalStorage]")
 {
     SignalStorage storage(2, "signals");
@@ -125,6 +147,10 @@ TEST_CASE("SignalStorage allocate can only be called once", "[SignalStorage]")
     REQUIRE_THROWS_AS(storage.allocate(), std::runtime_error);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies get_or_push reuses areas for the same timestamp
+// Rationale:   Coalescing prevents duplicate allocations per timestep
+// ---------------------------------------------------------------------------
 TEST_CASE("SignalStorage get_or_push reuses existing timestamp areas", "[SignalStorage]")
 {
     SignalStorage storage(3, "signals");

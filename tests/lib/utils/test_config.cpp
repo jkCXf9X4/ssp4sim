@@ -12,6 +12,14 @@
 using namespace ssp4sim::utils;
 namespace fs = std::filesystem;
 
+// ---------------------------------------------------------------------------
+// Description: Comprehensive config system tests covering file loading,
+//              missing/malformed files, required values, defaults, type
+//              mismatches, path resolution, and recording config parsing
+// Rationale:   Config is the primary user-facing interface for simulation setup
+// Creep flag:  Single TEST_CASE with 11 SECTIONS sharing mutable global state
+//              (Config::loadFromFile). Section ordering matters — fragile.
+// ---------------------------------------------------------------------------
 TEST_CASE("Config tests", "[config]")
 {
     const fs::path project_root{SSP4SIM_PROJECT_ROOT};

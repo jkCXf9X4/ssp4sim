@@ -78,6 +78,12 @@ namespace
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Full pipeline: copy fixture, write config, init, simulate,
+//              verify result.csv and sim*.log exist
+// Rationale:   Top-level smoke test exercising entire simulator entry point.
+//              Per tests/README.md, this should be the only C++ high-level test.
+// ---------------------------------------------------------------------------
 TEST_CASE("Simulator smoke test runs one complete unpacked SSP", "[high_level][smoke]")
 {
     const auto workdir = project_root() / "build" / "test_cpp_high_level" / "pyfmu_csv_source_sink";

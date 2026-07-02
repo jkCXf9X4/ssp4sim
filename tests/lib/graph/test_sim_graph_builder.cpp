@@ -15,7 +15,9 @@ using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
 // ---------------------------------------------------------------------------
-// ConnectionInfo::retrieve_model_inputs — data routing with delay
+// Description: Verifies retrieve_model_inputs copies data with zero delay,
+//              positive delay, and for integer types
+// Rationale:   Core data routing — inputs copied from source to target storage
 // ---------------------------------------------------------------------------
 TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
           "[sim_graph_builder]")
@@ -116,7 +118,9 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
 }
 
 // ---------------------------------------------------------------------------
-// ConnectionInfo::retrieve_model_inputs — edge cases
+// Description: Verifies no-valid-source-data logs warning (no crash) and
+//              empty connections list is no-op
+// Rationale:   Robustness — missing data must not crash
 // ---------------------------------------------------------------------------
 TEST_CASE("ConnectionInfo::retrieve_model_inputs handles edge cases",
           "[sim_graph_builder]")
@@ -165,7 +169,9 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs handles edge cases",
 }
 
 // ---------------------------------------------------------------------------
-// ConnectionInfo to_string
+// Description: Verifies to_string includes storage names and feedthrough flag
+// Rationale:   Debug/logging utility
+// Creep flag:  Presentation detail
 // ---------------------------------------------------------------------------
 TEST_CASE("ConnectionInfo to_string includes key fields", "[sim_graph_builder]")
 {
@@ -193,7 +199,9 @@ src.add("s", DataType::real, 0);
 }
 
 // ---------------------------------------------------------------------------
-// ConnectorInfo to_string
+// Description: Verifies ConnectorInfo::to_string includes key fields
+// Rationale:   Debug/logging utility
+// Creep flag:  Presentation detail
 // ---------------------------------------------------------------------------
 TEST_CASE("ConnectorInfo to_string includes key fields", "[sim_graph_builder]")
 {
@@ -211,7 +219,8 @@ TEST_CASE("ConnectorInfo to_string includes key fields", "[sim_graph_builder]")
 }
 
 // ---------------------------------------------------------------------------
-// ConnectorInfo::set_initial_input_area — copies initial values to storage
+// Description: Verifies set_initial_input_area writes initial value to storage
+// Rationale:   Initial value propagation required for correct simulation startup
 // ---------------------------------------------------------------------------
 TEST_CASE("ConnectorInfo::set_initial_input_area copies initial values",
           "[sim_graph_builder]")
@@ -245,7 +254,8 @@ TEST_CASE("ConnectorInfo::set_initial_input_area copies initial values",
 }
 
 // ---------------------------------------------------------------------------
-// ConnectorInfo::set_initial_input_area — no initial value is a no-op
+// Description: Verifies no crash and default 0.0 when no initial value set
+// Rationale:   Robustness — missing initial values must not crash
 // ---------------------------------------------------------------------------
 TEST_CASE("ConnectorInfo::set_initial_input_area skips connectors without initial_value",
           "[sim_graph_builder]")
@@ -277,7 +287,8 @@ TEST_CASE("ConnectorInfo::set_initial_input_area skips connectors without initia
 }
 
 // ---------------------------------------------------------------------------
-// FmuModel::has_feedthrough_outputs and feedthrough_connections
+// Description: Verifies feedthrough flag logic (zero-delay = feedthrough)
+// Rationale:   Feedthrough detection determines simulation loop ordering
 // ---------------------------------------------------------------------------
 TEST_CASE("FmuModel feedthrough detection", "[sim_graph_builder]")
 {

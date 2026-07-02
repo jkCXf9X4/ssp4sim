@@ -43,7 +43,8 @@ namespace {
 } // anonymous namespace
 
 // ---------------------------------------------------------------------------
-// Tree structure: model and connector hierarchy
+// Description: Verifies tree hierarchy for sine_gain_add (4 models, 3 conns)
+// Rationale:   Core tree structure for flat multi-model SSP
 // ---------------------------------------------------------------------------
 TEST_CASE("SspTreeBuilder builds correct model hierarchy for sine_gain_add",
           "[tree_builder][analysis]")
@@ -82,7 +83,8 @@ TEST_CASE("SspTreeBuilder builds correct model hierarchy for sine_gain_add",
 }
 
 // ---------------------------------------------------------------------------
-// Tree structure: fanout pattern
+// Description: Verifies tree hierarchy for fanout_gain (3 models, 2 conns)
+// Rationale:   Fanout topology coverage
 // ---------------------------------------------------------------------------
 TEST_CASE("SspTreeBuilder builds correct hierarchy for fanout_gain",
           "[tree_builder][analysis]")
@@ -106,7 +108,8 @@ TEST_CASE("SspTreeBuilder builds correct hierarchy for fanout_gain",
 }
 
 // ---------------------------------------------------------------------------
-// Tree structure: single model, no connections
+// Description: Verifies single model with zero connections
+// Rationale:   Edge case — disconnected models must produce valid trees
 // ---------------------------------------------------------------------------
 TEST_CASE("SspTreeBuilder handles system with no connections",
           "[tree_builder][analysis]")
@@ -124,7 +127,8 @@ TEST_CASE("SspTreeBuilder handles system with no connections",
 }
 
 // ---------------------------------------------------------------------------
-// Tree structure: connector naming includes model prefix
+// Description: Verifies connector names include model prefix ("model.")
+// Rationale:   Name prefixing required for correct parameter binding lookup
 // ---------------------------------------------------------------------------
 TEST_CASE("SspTreeBuilder connector names include model prefix",
           "[tree_builder][analysis]")
@@ -162,7 +166,8 @@ TEST_CASE("SspTreeBuilder connector names include model prefix",
 }
 
 // ---------------------------------------------------------------------------
-// Tree structure: parameter application via suffix matching
+// Description: Verifies gain.k = 3.0 after parameter binding
+// Rationale:   Parameter application is the primary purpose of the tree builder
 // ---------------------------------------------------------------------------
 TEST_CASE("SspTreeBuilder applies parameters to connector initial_values",
           "[tree_builder][analysis]")
@@ -199,7 +204,9 @@ TEST_CASE("SspTreeBuilder applies parameters to connector initial_values",
 }
 
 // ---------------------------------------------------------------------------
-// Tree structure: node ownership and lifetime
+// Description: Verifies node_owner retains all created SspNode wrappers
+// Rationale:   Node ownership ensures no dangling pointers
+// Creep flag:  Assertion >= 10 is a lower bound; exact count varies by fixture
 // ---------------------------------------------------------------------------
 TEST_CASE("SspTreeBuilder node_owner retains all nodes",
           "[tree_builder][analysis]")
@@ -209,14 +216,15 @@ TEST_CASE("SspTreeBuilder node_owner retains all nodes",
     auto *tree = build_tree_from(&sys, tree_builder);
 
     // node_owner retains all created SspNode<T> wrappers.
-    // The exact count depends on how many connectors the FMU model description exposes
-    // (which differs from the SSD connector list). At minimum: 1 system + 2 models
-    // + 1 connection = 4 nodes. In practice it will be significantly more.
-    CHECK(tree_builder.node_owner.size() >= 4);
+    // For signal_step_gain: 1 system + 2 models + ~7 connectors + 1 connection
+    // = at least 11 nodes. Use >= 10 as a safe lower bound.
+    CHECK(tree_builder.node_owner.size() >= 10);
 }
 
 // ---------------------------------------------------------------------------
-// Tree structure: connection node naming
+// Description: Verifies connection name format "src.out->tgt.in"
+// Rationale:   Connection naming convention for debugging
+// Creep flag:  Name format is a presentation detail
 // ---------------------------------------------------------------------------
 TEST_CASE("SspTreeBuilder connection nodes have descriptive names",
           "[tree_builder][analysis]")

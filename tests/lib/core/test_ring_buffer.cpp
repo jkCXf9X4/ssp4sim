@@ -9,11 +9,19 @@
 
 using ssp4sim::utils::RingBuffer;
 
+// ---------------------------------------------------------------------------
+// Description: Verifies RingBuffer rejects construction with zero capacity
+// Rationale:   Zero-capacity buffers cause division-by-zero in push/find logic
+// ---------------------------------------------------------------------------
 TEST_CASE("RingBuffer rejects zero capacity", "[RingBuffer]")
 {
     REQUIRE_THROWS_AS(RingBuffer(0, sizeof(std::uint32_t)), std::runtime_error);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies push grows until full then overwrites oldest entries
+// Rationale:   Core ring-buffer contract — wraparound and overwrite semantics
+// ---------------------------------------------------------------------------
 TEST_CASE("RingBuffer push grows until full then overwrites oldest", "[RingBuffer]")
 {
     constexpr std::size_t kCapacity = 3;
@@ -53,6 +61,10 @@ TEST_CASE("RingBuffer push grows until full then overwrites oldest", "[RingBuffe
     REQUIRE(buffer.nr_inserts == 4);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies get_item provides aligned storage and bounds-checking
+// Rationale:   Memory safety — misaligned access causes faults on ARM
+// ---------------------------------------------------------------------------
 TEST_CASE("RingBuffer get_item provides aligned storage and bounds checks", "[RingBuffer]")
 {
     constexpr std::size_t element_size = sizeof(std::uint64_t);
@@ -88,6 +100,12 @@ TEST_CASE("RingBuffer get_item provides aligned storage and bounds checks", "[Ri
     REQUIRE_THROWS_AS(buffer.get_item(buffer.capacity), std::runtime_error);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies get_index_from_pos_rev follows head/tail ordering
+//              before and after wraparound
+// Rationale:   Reverse-position lookup is used by signal storage for
+//              Nth-most-recent-value queries
+// ---------------------------------------------------------------------------
 TEST_CASE("RingBuffer index helpers follow head/tail ordering", "[RingBuffer]")
 {
     RingBuffer buffer(3, sizeof(int));
@@ -126,6 +144,10 @@ TEST_CASE("RingBuffer index helpers follow head/tail ordering", "[RingBuffer]")
     REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(2))) == 20);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies timestamp-index mapping through wraparound/overwrite
+// Rationale:   Timestamp lookup is the primary access pattern for signal routing
+// ---------------------------------------------------------------------------
 TEST_CASE("RingBuffer tracks timestamps and finds valid indices", "[RingBuffer]")
 {
     RingBuffer buffer(3, sizeof(int));

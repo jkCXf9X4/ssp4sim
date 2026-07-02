@@ -8,6 +8,10 @@
 using ssp4sim::ext::ParameterValue;
 using ssp4sim::types::DataType;
 
+// ---------------------------------------------------------------------------
+// Description: Verifies ParameterValue default initialization per FMI type
+// Rationale:   Defaults must match FMI 2.0 semantics; unknown type rejected
+// ---------------------------------------------------------------------------
 TEST_CASE("ParameterValue initializes defaults by data type", "[ParameterValue]")
 {
     SECTION("real defaults to 0.0")
@@ -47,6 +51,10 @@ TEST_CASE("ParameterValue initializes defaults by data type", "[ParameterValue]"
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies store_value round-trip for all FMI data types
+// Rationale:   Core storage contract — values must be retrievable in correct type
+// ---------------------------------------------------------------------------
 TEST_CASE("ParameterValue stores values according to its declared data type", "[ParameterValue]")
 {
     SECTION("real")
@@ -90,6 +98,11 @@ TEST_CASE("ParameterValue stores values according to its declared data type", "[
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies raw_ptr returns aligned dereferenceable pointers
+//              for const and non-const access
+// Rationale:   Raw pointer access is the primary FMU parameter interface
+// ---------------------------------------------------------------------------
 TEST_CASE("ParameterValue exposes mutable and const raw pointers", "[ParameterValue]")
 {
     ParameterValue start_value("model.real", DataType::real);
@@ -106,6 +119,11 @@ TEST_CASE("ParameterValue exposes mutable and const raw pointers", "[ParameterVa
     REQUIRE(*const_ptr == 3.25);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies to_string includes name and formatted value
+// Rationale:   Debug/logging utility
+// Creep flag:  Presentation detail — format may change without behavioral impact
+// ---------------------------------------------------------------------------
 TEST_CASE("ParameterValue to_string includes key value information", "[ParameterValue]")
 {
     SECTION("real value rendering")
@@ -125,6 +143,10 @@ TEST_CASE("ParameterValue to_string includes key value information", "[Parameter
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies deep copy preserves name, type, value, separate storage
+// Rationale:   Copy semantics required for parameter propagation through pipeline
+// ---------------------------------------------------------------------------
 TEST_CASE("ParameterValue supports copy construction", "[ParameterValue]")
 {
     ParameterValue original("copy.source", DataType::string);
@@ -140,6 +162,10 @@ TEST_CASE("ParameterValue supports copy construction", "[ParameterValue]")
     REQUIRE(copy.raw_ptr() != original.raw_ptr());
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies deep assignment and self-assignment safety
+// Rationale:   Self-assignment safety is standard C++ correctness requirement
+// ---------------------------------------------------------------------------
 TEST_CASE("ParameterValue supports copy assignment", "[ParameterValue]")
 {
     ParameterValue source("assign.source", DataType::real);

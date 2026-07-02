@@ -18,7 +18,8 @@ using ssp4sim::types::Causality;
 using ssp4sim::types::DataType;
 
 // ---------------------------------------------------------------------------
-// SspNode::as<U>() — typed dynamic cast of the wrapped source
+// Description: Verifies SspNode::as<U>() returns correct typed source pointer
+// Rationale:   Type-safe downcasting is the primary analysis tree access pattern
 // ---------------------------------------------------------------------------
 TEST_CASE("SspNode::as<U>() casts source to correct type", "[ssp_node]")
 {
@@ -35,7 +36,8 @@ TEST_CASE("SspNode::as<U>() casts source to correct type", "[ssp_node]")
 }
 
 // ---------------------------------------------------------------------------
-// SspNode::get_child_nodes<U>() — typed child filtering
+// Description: Verifies get_child_nodes<U>() filters children by type
+// Rationale:   Typed child iteration is the primary tree traversal mechanism
 // ---------------------------------------------------------------------------
 TEST_CASE("SspNode::get_child_nodes<U>() filters children by type", "[ssp_node]")
 {
@@ -80,7 +82,8 @@ TEST_CASE("SspNode::get_child_nodes<U>() filters children by type", "[ssp_node]"
 }
 
 // ---------------------------------------------------------------------------
-// SspNode parent/child linkage via add_child
+// Description: Verifies add_child establishes bidirectional parent/child linkage
+// Rationale:   Bidirectional linkage required for graph traversal both ways
 // ---------------------------------------------------------------------------
 TEST_CASE("SspNode add_child establishes bidirectional linkage", "[ssp_node]")
 {
@@ -113,7 +116,8 @@ TEST_CASE("SspNode add_child establishes bidirectional linkage", "[ssp_node]")
 }
 
 // ---------------------------------------------------------------------------
-// SspNode name propagation from source
+// Description: Verifies node.name matches source.name
+// Rationale:   Name propagation is the primary identification mechanism
 // ---------------------------------------------------------------------------
 TEST_CASE("SspNode name is propagated from source", "[ssp_node]")
 {
@@ -125,7 +129,9 @@ TEST_CASE("SspNode name is propagated from source", "[ssp_node]")
 }
 
 // ---------------------------------------------------------------------------
-// SspNode with SspConnection source
+// Description: Verifies SspConnectionNode wraps source_model, target_model,
+//              delay, is_boundary correctly
+// Rationale:   Connection node wrapping must preserve all connection fields
 // ---------------------------------------------------------------------------
 TEST_CASE("SspNode<SspConnection> wraps connection correctly", "[ssp_node]")
 {
@@ -140,7 +146,8 @@ TEST_CASE("SspNode<SspConnection> wraps connection correctly", "[ssp_node]")
 }
 
 // ---------------------------------------------------------------------------
-// SspNode with boundary connection
+// Description: Verifies boundary detection via empty source/target model
+// Rationale:   Boundary connections are a special case in SSP topology
 // ---------------------------------------------------------------------------
 TEST_CASE("SspNode<SspConnection> handles boundary connections", "[ssp_node]")
 {

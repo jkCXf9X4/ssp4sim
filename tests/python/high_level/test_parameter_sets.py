@@ -134,6 +134,14 @@ def resolve_test_root(ssp_root: Path) -> Path:
 def test_reference_ssp_applies_parameter_set_variants(
     ssp_root: Path, expected_lines: list[str] | None, ssv_rel_path: Path | None, tmp_path: Path
 ) -> None:
+    """Description: For each fixture variant, verify start_values.csv contains
+    expected parameter values.
+    Rationale: Parameter binding correctness across all binding patterns (inline,
+    external, SSV, SSM, nested).
+    Creep flag: dcmotor_nested uses SOURCE_SSP_ROOT vs REFERENCE_SSP_ROOT (two
+    fixture trees). signal_nested_parameter_bindings uses a different assertion
+    path (SSV file comparison) hidden inside the same parametrized test.
+    """
     tmp_path = resolve_test_root(ssp_root)
     workdir = run_reference_ssp(ssp_root, tmp_path)
 

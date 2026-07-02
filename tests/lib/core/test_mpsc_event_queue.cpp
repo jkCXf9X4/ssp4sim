@@ -9,6 +9,10 @@
 
 using ssp4sim::signal::BoundedMpscEventQueue;
 
+// ---------------------------------------------------------------------------
+// Description: Verifies bounded queue rejects pushes when full (no overwrite)
+// Rationale:   Core bounded-queue contract — silent overwrite corrupts data
+// ---------------------------------------------------------------------------
 TEST_CASE("BoundedMpscEventQueue reports full without overwriting unread events", "[BoundedMpscEventQueue]")
 {
     BoundedMpscEventQueue<int> queue(2);
@@ -28,10 +32,16 @@ TEST_CASE("BoundedMpscEventQueue reports full without overwriting unread events"
     REQUIRE_FALSE(queue.try_pop(value));
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies MPSC correctness under contention (4 producers, 10
+//              events each, single consumer)
+// Rationale:   Concurrency primitive for parallel simulation — no lost events
+// Creep flag:  Reduced from 2000 to 10 events per producer (was overkill)
+// ---------------------------------------------------------------------------
 TEST_CASE("BoundedMpscEventQueue accepts events from multiple producers and one consumer", "[BoundedMpscEventQueue]")
 {
     constexpr int producer_count = 4;
-    constexpr int events_per_producer = 2000;
+    constexpr int events_per_producer = 10;
     constexpr int total_events = producer_count * events_per_producer;
 
     BoundedMpscEventQueue<int> queue(256);

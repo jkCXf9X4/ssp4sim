@@ -83,7 +83,8 @@ namespace {
 } // anonymous namespace
 
 // ---------------------------------------------------------------------------
-// Test 1: Flat inline-only bindings resolve correctly
+// Description: Full pipeline with inline SSV (sine_gain_add fixture)
+// Rationale:   End-to-end parameter binding with inline SSV data
 // ---------------------------------------------------------------------------
 TEST_CASE("Flat inline-only bindings resolve correctly", "[parameter_binding][integration]")
 {
@@ -125,7 +126,8 @@ TEST_CASE("Flat inline-only bindings resolve correctly", "[parameter_binding][in
 }
 
 // ---------------------------------------------------------------------------
-// Test 2: Flat external-only bindings resolve correctly
+// Description: Full pipeline with external SSV (step_gain fixture)
+// Rationale:   End-to-end with external SSV
 // ---------------------------------------------------------------------------
 TEST_CASE("Flat external-only bindings resolve correctly", "[parameter_binding][integration]")
 {
@@ -152,7 +154,8 @@ TEST_CASE("Flat external-only bindings resolve correctly", "[parameter_binding][
 }
 
 // ---------------------------------------------------------------------------
-// Test 3: Flat external SSV+SSM bindings resolve correctly
+// Description: Full pipeline with external SSV+SSM (step_add fixture)
+// Rationale:   End-to-end with SSM remapping
 // ---------------------------------------------------------------------------
 TEST_CASE("Flat external SSV+SSM bindings resolve correctly", "[parameter_binding][integration]")
 {
@@ -187,7 +190,8 @@ TEST_CASE("Flat external SSV+SSM bindings resolve correctly", "[parameter_bindin
 }
 
 // ---------------------------------------------------------------------------
-// Test 4: Flat inline SSV with external SSM resolves correctly
+// Description: Full pipeline with inline SSV + external SSM
+// Rationale:   Combinatorial coverage
 // ---------------------------------------------------------------------------
 TEST_CASE("Flat inline SSV with external SSM resolves correctly", "[parameter_binding][integration]")
 {
@@ -209,7 +213,8 @@ TEST_CASE("Flat inline SSV with external SSM resolves correctly", "[parameter_bi
 }
 
 // ---------------------------------------------------------------------------
-// Test 5: Nested system with root external and nested inline bindings
+// Description: Nested SSP with bindings at multiple levels
+// Rationale:   Nested parameter resolution is the most complex scenario
 // ---------------------------------------------------------------------------
 TEST_CASE("Nested system with root external and nested inline bindings", "[parameter_binding][integration]")
 {
@@ -258,7 +263,8 @@ TEST_CASE("Nested system with root external and nested inline bindings", "[param
 }
 
 // ---------------------------------------------------------------------------
-// Test 6: Nested system with external bindings resolves correctly
+// Description: Nested SSP with external bindings at nested level
+// Rationale:   Coverage of external bindings in nested context
 // ---------------------------------------------------------------------------
 TEST_CASE("Nested system with external bindings resolves correctly", "[parameter_binding][integration]")
 {

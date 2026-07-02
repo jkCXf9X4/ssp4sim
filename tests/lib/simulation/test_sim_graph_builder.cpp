@@ -7,6 +7,10 @@
 using ssp4sim::signal::DataRecorder;
 
 // ---------------------------------------------------------------------------
+// Description: Verifies GraphBuilder constructor sets record_inputs flag
+// Rationale:   Configuration flag propagation
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // GraphBuilder construction
 // ---------------------------------------------------------------------------
 TEST_CASE("GraphBuilder constructs with record_inputs flag", "[sim_graph_builder]")
@@ -25,6 +29,10 @@ TEST_CASE("GraphBuilder constructs with record_inputs flag", "[sim_graph_builder
 }
 
 // ---------------------------------------------------------------------------
+// Description: Verifies register_model_storages handles null recorder
+// Rationale:   Robustness — null recorder must not crash
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
 // register_model_storages — null-safety
 // ---------------------------------------------------------------------------
 TEST_CASE("register_model_storages handles null recorder", "[sim_graph_builder]")
@@ -33,6 +41,10 @@ TEST_CASE("register_model_storages handles null recorder", "[sim_graph_builder]"
     REQUIRE_NOTHROW(ssp4sim::graph::register_model_storages(empty_models, nullptr));
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies register_model_storages skips non-FmuModel entries
+// Rationale:   Robustness — null model entries silently skipped
+// ---------------------------------------------------------------------------
 TEST_CASE("register_model_storages skips non-FmuModel entries", "[sim_graph_builder]")
 {
     DataRecorder recorder(false);

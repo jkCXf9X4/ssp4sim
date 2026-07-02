@@ -57,6 +57,10 @@ namespace
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies message callback capture and consume-once semantics
+// Rationale:   Message buffer management for C FMI library error reporting
+// ---------------------------------------------------------------------------
 TEST_CASE("detail message utilities capture the last message", "[fmi4c_adapter]")
 {
     detail::clear_last_message();
@@ -66,6 +70,10 @@ TEST_CASE("detail message utilities capture the last message", "[fmi4c_adapter]"
     REQUIRE(detail::consume_last_message().empty());
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies FmuInstance loads FMI 2.0 co-simulation FMUs
+// Rationale:   Core FMU loading contract — path, name, version, co-sim flag
+// ---------------------------------------------------------------------------
 TEST_CASE("FmuInstance loads FMI 2.0 co-simulation FMUs", "[fmi4c_adapter]")
 {
     auto fmu_path = scenario_fmu_path();
@@ -78,6 +86,10 @@ TEST_CASE("FmuInstance loads FMI 2.0 co-simulation FMUs", "[fmi4c_adapter]")
     REQUIRE(instance.supports_co_simulation());
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies FmuInstance throws on missing/invalid FMU path
+// Rationale:   Error handling — invalid paths must produce clear errors
+// ---------------------------------------------------------------------------
 TEST_CASE("FmuInstance surfaces load failures", "[fmi4c_adapter]")
 {
     auto invalid_path = repository_root() / "resources" / "scenario" / "missing.fmu";
@@ -97,6 +109,10 @@ TEST_CASE("FmuInstance surfaces load failures", "[fmi4c_adapter]")
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies CoSimulationModel enforces FMI 2.0 call order
+// Rationale:   FMI spec mandates strict lifecycle — violations caught early
+// ---------------------------------------------------------------------------
 TEST_CASE("CoSimulationModel enforces call order", "[fmi4c_adapter]")
 {
     auto fmu_path = scenario_fmu_path();
@@ -109,6 +125,12 @@ TEST_CASE("CoSimulationModel enforces call order", "[fmi4c_adapter]")
     REQUIRE_THROWS_AS(model.step(s_to_ns(0.1)), std::logic_error);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Full FMI lifecycle with scenario FMU (instantiate, setup,
+//              init, step, read, terminate); tests idempotency
+// Rationale:   End-to-end lifecycle verification with real FMU
+// Creep flag:  Hardcoded scenario schedule string couples to specific FMU content
+// ---------------------------------------------------------------------------
 TEST_CASE("CoSimulationModel runs scenario FMU lifecycle", "[fmi4c_adapter][integration]")
 {
     auto fmu_path = scenario_fmu_path();
@@ -143,6 +165,14 @@ double kxm(double k, double x, double m)
     return k * x + m;
 }
 
+// ---------------------------------------------------------------------------
+// Description: Full lifecycle with atmos FMU; verifies altitude gradient
+//              and derivative I/O (conditionally tested)
+// Rationale:   Integration test with real physics FMU
+// Creep flag:  (a) Hardcoded value references are FMU-internal details.
+//              (b) Derivative path silently passes if unsupported.
+//              (c) Couples to specific FMU physics (temp decreases with alt)
+// ---------------------------------------------------------------------------
 TEST_CASE("Atmos FMU computes ambient properties based on inputs", "[fmi4c_adapter][integration]")
 {
     constexpr uint64_t kTambVr = 335544320;
@@ -215,6 +245,12 @@ TEST_CASE("Atmos FMU computes ambient properties based on inputs", "[fmi4c_adapt
     REQUIRE(model.terminate());
 }
 
+// ---------------------------------------------------------------------------
+// Description: 10s simulation with ramping inputs; verifies EventCounter
+//              unchanged (no spurious solver events)
+// Rationale:   Ensures atmos FMU doesn't trigger false events during smooth ramps
+// Creep flag:  1000 steps is long-running; assertion only checks no-change case
+// ---------------------------------------------------------------------------
 TEST_CASE("Atmos FMU reports solver events via EventCounter", "[fmi4c_adapter][fmi4c_atmos]")
 {
     constexpr uint64_t kAltVr = 352321536;

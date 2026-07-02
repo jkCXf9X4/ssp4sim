@@ -103,6 +103,14 @@ def calculate_signal_sine_gain_add_spike_metrics(
 def test_signal_sine_gain_add_jacobi_parallel_has_no_output_spikes(
     tmp_path: Path,
 ) -> None:
+    """Description: Runs 100 simulations (configurable via env var), checks gain
+    output error <= 0.02 and delta <= 0.1.
+    Rationale: Regression test for Jacobi parallel solver output quality.
+    Creep flag: (a) 100 runs is the longest test in the suite. (b) Thresholds
+    (0.02, 0.1) are empirically determined. (c) Couples to specific solver config
+    (Jacobi parallel, 5 workers, forward derivatives). (d) Checks aggregate error
+    bounds, not just transient spikes despite "spike" name.
+    """
     runs = int(os.environ.get("SSP4SIM_SPIKE_RUNS", "100"))
     max_allowed_err = float(os.environ.get("SSP4SIM_SPIKE_MAX_ERR", "0.02"))
     max_allowed_delta = float(os.environ.get("SSP4SIM_SPIKE_MAX_DELTA", "0.1"))
