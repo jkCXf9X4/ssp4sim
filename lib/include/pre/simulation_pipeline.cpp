@@ -8,15 +8,19 @@
 #include "config.hpp"
 #include "execution/invocable.hpp"
 #include "signal/recorder.hpp"
+#include "shared_config.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
+
+#include <cstdlib>
+#include <fstream>
 
 namespace ssp4sim::pre
 {
 
     SimulationPipelineResult build_simulation_graph(
         ssp4cpp::Ssp *ssp,
-        bool set_record_inputs)
+        ssp4sim::SharedConfig *config)
     {
         auto log = ssp4cpp::utils::log::make_logger("ssp4sim.pre.SimulationPipeline");
 
@@ -34,13 +38,27 @@ namespace ssp4sim::pre
         auto analysis_graph_data = graph_builder.build(system_tree);
         LOG_DEBUG(log, " -- analysis graph built");
 
+        {
+            LOG_DEBUG(log, " -- writing debug output files");
+            std::ofstream(config->working_dir / "tree_output.txt") << system_tree->get_tree();
+
+            std::vector<utils::graph::Node *> all_nodes;
+            for (auto &n : analysis_graph_data.model_nodes)
+                all_nodes.push_back(n.get());
+            for (auto &n : analysis_graph_data.connector_nodes)
+                all_nodes.push_back(n.get());
+            for (auto &n : analysis_graph_data.connection_nodes)
+                all_nodes.push_back(n.get());
+            std::ofstream(config->working_dir / "graph_output.dot") << utils::graph::Node::to_dot(all_nodes);
+        }
+
         LOG_INFO(log, "[{func}] - Creating simulation models", __func__);
-        auto sim_graph_builder = graph::GraphBuilder(set_record_inputs);
+        auto sim_graph_builder = graph::GraphBuilder(config->record_inputs);
 
         SimulationPipelineResult result;
         result.models = sim_graph_builder.build(&analysis_graph_data);
 
-                LOG_INFO(log, "[{func}] - Pipeline complete, {} models built", __func__, result.models.size());
+        LOG_INFO(log, "[{func}] - Pipeline complete, {} models built", __func__, result.models.size());
         return result;
     }
 

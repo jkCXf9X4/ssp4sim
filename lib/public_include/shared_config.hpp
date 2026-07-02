@@ -22,7 +22,7 @@ namespace ssp4sim
         std::string ssp_path;
         std::string ssd;
 
-        std::filesystem::path working_dir;
+        std::filesystem::path working_dir = "./wd/default";
 
         uint64_t start_time;
         uint64_t end_time;

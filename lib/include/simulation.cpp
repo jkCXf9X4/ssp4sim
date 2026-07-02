@@ -81,7 +81,7 @@ namespace ssp4sim
     {
         LOG_INFO(p->log, "[{func}] Initializing simulation", __func__);
 
-        p->setup_results = pre::build_simulation_graph(p->ssp, this->config->record_inputs);
+        p->setup_results = pre::build_simulation_graph(p->ssp, this->config);
         graph::register_model_storages(p->setup_results.models, p->recorder.get());
 
         LOG_INFO(p->log, "[{func}] - Creating simulation graph executor", __func__);

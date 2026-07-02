@@ -48,6 +48,6 @@ namespace ssp4sim::pre
     /// from these models.
     SimulationPipelineResult build_simulation_graph(
         ssp4cpp::Ssp *ssp,
-        bool set_record_inputs);
+        ssp4sim::SharedConfig *config);
 
 } // namespace ssp4sim::pre

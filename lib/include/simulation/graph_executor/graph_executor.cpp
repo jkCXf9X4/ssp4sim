@@ -41,6 +41,7 @@ namespace ssp4sim::graph
         return oss.str();
     }
 
+    // TODO: inject recorder here instead to enable removing it from the object
     void GraphExecutor::init()
     {
         LOG_DEBUG(log, "[{func}] Initializing GraphExecutor", __func__);
