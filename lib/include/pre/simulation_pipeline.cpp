@@ -105,6 +105,13 @@ namespace ssp4sim::pre
         SimulationPipelineResult result;
         result.models = sim_graph_builder.build(&analysis_graph_data);
 
+        {
+            std::vector<utils::graph::Node *> model_nodes;
+            for (auto &[name, model] : result.models)
+                model_nodes.push_back(model.get());
+            std::ofstream(config->working_dir / "model_graph.dot") << utils::graph::Node::to_dot(model_nodes);
+        }
+
         LOG_INFO(log, "[{func}] - Pipeline complete, {} models built", __func__, result.models.size());
         return result;
     }
