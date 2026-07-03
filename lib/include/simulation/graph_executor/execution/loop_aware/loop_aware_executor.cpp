@@ -203,7 +203,7 @@ namespace ssp4sim::graph
         if (order.size() != dag.size())
         {
             LOG_ERROR(log, "[{func}] Cycle detected in SCC DAG! "
-                      "Ordered {ordered} of {total} components",
+                           "Ordered {ordered} of {total} components",
                       __func__, order.size(), dag.size());
         }
 
@@ -219,6 +219,7 @@ namespace ssp4sim::graph
         IF_LOG({
             LOG_DEBUG(log, "[{func}] stepdata: {stepdata}", __func__, step_data.to_string());
         });
+        auto macro_dt = step_data.end_time - step_data.start_time;
 
         // Walk the SCC DAG in topological order.
         for (auto scc_idx : execution_order)
@@ -226,20 +227,21 @@ namespace ssp4sim::graph
             auto &comp = sccs[scc_idx];
             auto n_iters = loop_iterations[scc_idx];
 
+            // Sequential (non-loop) SCC: write output at t_start so
+            // subsequent models in the chain can read it immediately
+            // (Gauss-Seidel principle). Parallel loop SCCs continue
+            // to write at t_end.
             if (n_iters == 1)
             {
                 // Non-loop SCC: execute each node sequentially.
                 // These nodes have no cyclic dependencies, so a single pass suffices.
-                // Sequential (non-loop) SCC: write output at t_start so
-                // subsequent models in the chain can read it immediately
-                // (Gauss-Seidel principle). Parallel loop SCCs continue
-                // to write at t_end.
                 auto s = StepData(step_data.start_time,
                                   step_data.end_time,
-                                  sub_step,
+                                  macro_dt,
                                   step_data.start_time,
                                   step_data.start_time);
 
+                // should always be 1?
                 for (auto *node : comp)
                 {
                     node->invoke(s);
@@ -250,32 +252,26 @@ namespace ssp4sim::graph
                 // Loop SCC: delegate to JacobiParallelTBB for parallel execution.
                 // Run n_iters iterations with a reduced timestep so that every
                 // node in the loop gets a chance to exchange messages.
-                auto macro_dt = step_data.end_time - step_data.start_time;
-                auto loop_dt = macro_dt / n_iters;
 
                 IF_LOG({
                     LOG_DEBUG(log, "[{func}] Loop SCC #{idx} ({size} nodes, "
-                              "{iters} iters, loop_dt={dt})",
+                                   "{iters} iters, loop_dt={dt})",
                               __func__, scc_idx, comp.size(), n_iters, loop_dt);
                 });
 
                 auto *loop_exec = loop_executors[scc_idx].get();
+    
+                auto sub_dt = macro_dt / n_iters;
+                auto sub_start = step_data.start_time;
 
-                for (std::size_t iter = 0; iter < n_iters; ++iter)
+                while (sub_start < step_data.end_time)
                 {
-                    auto iter_start = step_data.start_time + iter * loop_dt;
-                    auto iter_end = iter_start + loop_dt;
-
-                    // Sub-step within the loop iteration so nodes advance
-                    // through the full interval.
-                    auto t = iter_start;
-                    while (t < iter_end)
-                    {
-                        auto sub_end = std::min(t + sub_step, iter_end);
-                        auto s = StepData(t, sub_end, sub_step, t, sub_end);
-                        loop_exec->invoke(s);
-                        t = sub_end;
-                    }
+                    auto sub_end = std::min(sub_start + sub_dt, step_data.end_time);
+                    auto step = sub_end - sub_start;
+                    auto s = StepData(sub_start, sub_end, step, sub_start, sub_end);
+                    
+                    loop_exec->invoke(s);
+                    sub_start = sub_end;
                 }
             }
         }
