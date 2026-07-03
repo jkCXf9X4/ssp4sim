@@ -16,10 +16,55 @@
 
 namespace ssp4sim::graph
 {
+
+    static constexpr int kMaxBoundaryTraceDepth = 16;
+
     GraphBuilder::GraphBuilder(bool record_inputs)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder")),
           record_inputs(record_inputs)
     {
+    }
+
+    FmuModel* GraphBuilder::as_fmu(Invocable* invocable) {
+        return dynamic_cast<FmuModel*>(invocable);
+    }
+
+    analysis::SspModelNode* GraphBuilder::find_peer_model_node(analysis::SspConnectorNode* conn_node)
+    {
+        for (auto *parent : conn_node->parents)
+            if (auto *m = dynamic_cast<analysis::SspModelNode *>(parent))
+                return m;
+        for (auto *child : conn_node->children)
+            if (auto *m = dynamic_cast<analysis::SspModelNode *>(child))
+                return m;
+        return nullptr;
+    }
+
+    analysis::SspModelNode* GraphBuilder::trace_boundary_connectors(
+        analysis::SspConnectorNode* peer_conn_node,
+        analysis::SspConnectorNode*& resolved_peer,
+        analysis::SspConnector*& resolved_connector)
+    {
+        resolved_peer = peer_conn_node;
+        for (int depth = 0; depth < kMaxBoundaryTraceDepth; ++depth)
+        {
+            auto next_conns = resolved_peer->template get_child_nodes<
+                analysis::SspNode<analysis::ResolvedConnection>>();
+            if (next_conns.empty())
+                break;
+            auto next_peers = next_conns[0]->template get_child_nodes<
+                analysis::SspConnectorNode>();
+            if (next_peers.empty())
+                break;
+            resolved_peer = next_peers[0];
+            auto* peer_model_node = find_peer_model_node(resolved_peer);
+            if (peer_model_node && peer_model_node->source)
+            {
+                resolved_connector = resolved_peer->source;
+                return peer_model_node;
+            }
+        }
+        return nullptr;
     }
 
     std::map<std::string, std::unique_ptr<Invocable>> GraphBuilder::build(analysis::AnalysisGraphData *graph_data)
@@ -34,7 +79,7 @@ namespace ssp4sim::graph
         LOG_DEBUG(log, "[{func}] - Allocate the input/output areas", __func__);
         for (auto &[ssp_resource_name, model] : models)
         {
-            auto m = dynamic_cast<FmuModel *>(model.get());
+            auto m = as_fmu(model.get());
             if (!m)
             {
                 LOG_WARNING(log, "[{func}] Skipping model '{name}' with null FmuModel pointer", __func__, ssp_resource_name);
@@ -83,6 +128,42 @@ namespace ssp4sim::graph
     {
         LOG_DEBUG(log, "[{func}] - Create the data storage areas within the model", __func__);
 
+        auto process_connector = [&](analysis::SspConnectorNode *conn_node, FmuModel* model) -> void
+        {
+            auto *connector = conn_node->source;
+            if (!connector)
+                return;
+
+            ConnectorInfo info;
+            info.type = connector->data_type;
+            info.size = ssp4sim::ext::fmi2::enums::get_data_type_size(connector->data_type);
+            info.name = connector->name;
+
+            info.value_ref = connector->value_reference;
+            info.fmu = model->fmu.get();
+
+            // Store the initial value if available
+            info.initial_value = std::make_unique<ext::ParameterValue>(connector->initial_value);
+
+            if (connector->causality == types::Causality::input)
+            {
+                info.index = static_cast<uint32_t>(model->input_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
+                info.storage = model->input_area.get();
+                model->inputs[connector->name] = std::move(info);
+            }
+            else if (connector->causality == types::Causality::output)
+            {
+                info.index = static_cast<uint32_t>(model->output_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
+                info.storage = model->output_area.get();
+                model->outputs[connector->name] = std::move(info);
+            }
+            else if (connector->causality == types::Causality::parameter)
+            {
+                info.index = static_cast<uint32_t>(-1);
+                model->parameters[connector->name] = std::move(info);
+            }
+        };
+
         for (auto &model_node : graph_data.model_nodes)
         {
             auto *analysis_model = model_node->source;
@@ -93,7 +174,7 @@ namespace ssp4sim::graph
             if (model_it == models.end())
                 continue;
 
-            auto model = dynamic_cast<FmuModel *>(model_it->second.get());
+            auto model = as_fmu(model_it->second.get());
             if (!model)
                 continue;
 
@@ -101,66 +182,16 @@ namespace ssp4sim::graph
             // output/parameter connectors are children, input connectors are parents
             auto conn_children = model_node->template get_child_nodes<analysis::SspConnectorNode>();
             auto conn_parents = model_node->template get_parent_nodes<analysis::SspConnectorNode>();
-            auto process_connector = [&](analysis::SspConnectorNode *conn_node) -> void
-            {
-                auto *connector = conn_node->source;
-                if (!connector)
-                    return;
-
-                ConnectorInfo info;
-                info.type = connector->data_type;
-                info.size = ssp4sim::ext::fmi2::enums::get_data_type_size(connector->data_type);
-                info.name = connector->name;
-
-                info.value_ref = connector->value_reference;
-                info.fmu = model->fmu.get();
-
-                // Store the initial value if available
-                info.initial_value = std::make_unique<ext::ParameterValue>(connector->initial_value);
-
-                if (connector->causality == types::Causality::input)
-                {
-                    info.index = static_cast<uint32_t>(model->input_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
-                    info.storage = model->input_area.get();
-                    model->inputs[connector->name] = std::move(info);
-                }
-                else if (connector->causality == types::Causality::output)
-                {
-                    info.index = static_cast<uint32_t>(model->output_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
-                    info.storage = model->output_area.get();
-                    model->outputs[connector->name] = std::move(info);
-                }
-                else if (connector->causality == types::Causality::parameter)
-                {
-                    info.index = static_cast<uint32_t>(-1);
-                    model->parameters[connector->name] = std::move(info);
-                }
-            };
             for (auto *conn_node : conn_children)
-                process_connector(conn_node);
+                process_connector(conn_node, model);
             for (auto *conn_node : conn_parents)
-                process_connector(conn_node);
+                process_connector(conn_node, model);
         }
     }
 
     void GraphBuilder::wire_connections(analysis::AnalysisGraphData &graph_data)
     {
         LOG_DEBUG(log, "[{func}] - Wiring connections using connector->connection->connector graph", __func__);
-
-        // Helper: find the model that owns a connector, checking both parent
-        // and child directions (output connectors are children, input connectors
-        // are parents of the model in the graph).
-        auto find_peer_model = [](analysis::SspConnectorNode *conn_node)
-            -> analysis::SspModelNode *
-        {
-            for (auto *parent : conn_node->parents)
-                if (auto *m = dynamic_cast<analysis::SspModelNode *>(parent))
-                    return m;
-            for (auto *child : conn_node->children)
-                if (auto *m = dynamic_cast<analysis::SspModelNode *>(child))
-                    return m;
-            return nullptr;
-        };
 
         // Process a single connector: trace its connection edges and wire up
         // source-output → target-input.
@@ -196,36 +227,23 @@ namespace ssp4sim::graph
                     continue;
 
                 // Find the peer model — check both parent and child directions
-                auto *peer_model_node = find_peer_model(peer_conn_node);
+                auto *peer_model_node = find_peer_model_node(peer_conn_node);
 
                 // If the direct peer has no model, it may be a system boundary
                 // connector. Trace through its downstream connections to find
                 // the actual model connector.
                 if (!peer_model_node || !peer_model_node->source)
                 {
-                    analysis::SspConnectorNode *resolved_peer = peer_conn_node;
-                    bool found = false;
-                    for (int depth = 0; depth < 16; ++depth)
+                    analysis::SspConnectorNode* resolved_peer = nullptr;
+                    analysis::SspConnector* resolved_connector = nullptr;
+                    auto* traced = trace_boundary_connectors(peer_conn_node, resolved_peer, resolved_connector);
+                    if (traced)
                     {
-                        auto next_conns = resolved_peer->template get_child_nodes<
-                            analysis::SspNode<analysis::ResolvedConnection>>();
-                        if (next_conns.empty())
-                            break;
-                        auto next_peers = next_conns[0]->template get_child_nodes<
-                            analysis::SspConnectorNode>();
-                        if (next_peers.empty())
-                            break;
-                        resolved_peer = next_peers[0];
-                        peer_model_node = find_peer_model(resolved_peer);
-                        if (peer_model_node && peer_model_node->source)
-                        {
-                            peer_conn_node = resolved_peer;
-                            peer_connector = peer_conn_node->source;
-                            found = true;
-                            break;
-                        }
+                        peer_model_node = traced;
+                        peer_conn_node = resolved_peer;
+                        peer_connector = resolved_connector;
                     }
-                    if (!found)
+                    else
                     {
                         LOG_WARNING(log, "[{func}] Could not find peer model for connector {name}", __func__, peer_connector->name);
                         continue;
@@ -239,7 +257,7 @@ namespace ssp4sim::graph
                     continue;
                 }
 
-                auto target_model = dynamic_cast<FmuModel *>(tgt_it->second.get());
+                auto target_model = as_fmu(tgt_it->second.get());
                 if (!target_model)
                     continue;
 
@@ -341,7 +359,7 @@ namespace ssp4sim::graph
             if (src_it == models.end())
                 continue;
 
-            auto source_model = dynamic_cast<FmuModel *>(src_it->second.get());
+            auto source_model = as_fmu(src_it->second.get());
             if (!source_model)
                 continue;
 
@@ -372,7 +390,7 @@ namespace ssp4sim::graph
             if (src_it == models.end())
                 continue;
 
-            auto *source_fmu = dynamic_cast<FmuModel *>(src_it->second.get());
+            auto *source_fmu = as_fmu(src_it->second.get());
             if (!source_fmu)
                 continue;
 
@@ -390,57 +408,15 @@ namespace ssp4sim::graph
                         continue;
 
                     auto *peer_conn_node = peer_connectors[0];
-                    analysis::SspModelNode *peer_model_node = nullptr;
-                    for (auto *parent : peer_conn_node->parents)
-                    {
-                        peer_model_node = dynamic_cast<analysis::SspModelNode *>(parent);
-                        if (peer_model_node)
-                            break;
-                    }
-                    if (!peer_model_node)
-                    {
-                        for (auto *child : peer_conn_node->children)
-                        {
-                            peer_model_node = dynamic_cast<analysis::SspModelNode *>(child);
-                            if (peer_model_node)
-                                break;
-                        }
-                    }
+                    auto *peer_model_node = find_peer_model_node(peer_conn_node);
 
                     // Trace through system boundary connectors to find the
                     // actual model peer.
                     if (!peer_model_node)
                     {
-                        analysis::SspConnectorNode *resolved_peer = peer_conn_node;
-                        for (int depth = 0; depth < 16; ++depth)
-                        {
-                            auto next_conns = resolved_peer->template get_child_nodes<
-                                analysis::SspNode<analysis::ResolvedConnection>>();
-                            if (next_conns.empty())
-                                break;
-                            auto next_peers = next_conns[0]->template get_child_nodes<
-                                analysis::SspConnectorNode>();
-                            if (next_peers.empty())
-                                break;
-                            resolved_peer = next_peers[0];
-                            for (auto *parent : resolved_peer->parents)
-                            {
-                                peer_model_node = dynamic_cast<analysis::SspModelNode *>(parent);
-                                if (peer_model_node)
-                                    break;
-                            }
-                            if (!peer_model_node)
-                            {
-                                for (auto *child : resolved_peer->children)
-                                {
-                                    peer_model_node = dynamic_cast<analysis::SspModelNode *>(child);
-                                    if (peer_model_node)
-                                        break;
-                                }
-                            }
-                            if (peer_model_node)
-                                break;
-                        }
+                        analysis::SspConnectorNode* resolved_peer = nullptr;
+                        analysis::SspConnector* resolved_connector = nullptr;
+                        peer_model_node = trace_boundary_connectors(peer_conn_node, resolved_peer, resolved_connector);
                     }
 
                     if (!peer_model_node || !peer_model_node->source)
@@ -450,7 +426,7 @@ namespace ssp4sim::graph
                     if (tgt_it == models.end())
                         continue;
 
-                    auto *target_fmu = dynamic_cast<FmuModel *>(tgt_it->second.get());
+                    auto *target_fmu = as_fmu(tgt_it->second.get());
                     if (!target_fmu)
                         continue;
 
@@ -463,7 +439,7 @@ namespace ssp4sim::graph
         }
     }
 
-    void register_model_storages(
+    void GraphBuilder::register_model_storages(
         const std::map<std::string, std::unique_ptr<Invocable>> &models,
         ssp4sim::signal::DataRecorder *recorder)
     {
