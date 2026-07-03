@@ -11,6 +11,7 @@
 
 #include "execution/seidel/seidel_serial.hpp"
 #include "execution/seidel/seidel_parallel.hpp"
+#include "execution/loop_aware/loop_aware_executor.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -84,6 +85,11 @@ namespace ssp4sim::graph
         {
             LOG_INFO(log, "[{func}] Executor: DelayExecutorPartial", __func__);
             return std::make_unique<DelayExecutorPartial>(nodes);
+        }
+        else if (executor_method == "loop_aware")
+        {
+            LOG_INFO(log, "[{func}] Executor: LoopAwareExecutor", __func__);
+            return std::make_unique<LoopAwareExecutor>(nodes);
         }
 
         throw std::runtime_error("Unknown executor method");

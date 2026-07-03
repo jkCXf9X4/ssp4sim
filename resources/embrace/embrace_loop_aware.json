@@ -1,0 +1,46 @@
+{
+    "simulation": {
+        "ssp": "./resources/embrace/embrace_scen.ssp",
+        "ssd": "SystemStructure.ssd",
+        "start_time": 0.0,
+        "stop_time": 2000,
+        "timestep": 0.01,
+        "tolerance": 1e-4,
+        "realtime": false,
+        "working_dir": "./wd/embrace_loop_aware",
+        "executor": {
+            "method": "loop_aware",
+            "thread_pool_workers": 5,
+            "forward_derivatives": true,
+            "loop_aware": {
+                "sub_step": 0.001
+            },
+            "jacobi": {
+                "parallel": true,
+                "method": 1
+            },
+            "seidel": {
+                "parallel": false
+            }
+        },
+        "recording": {
+            "csv": {
+                "enable": false,
+                "interval": 0.0
+            },
+            
+            "sqlite": {
+                "enable": true
+            },
+            "wait_for": true,
+            "record_inputs": false
+        },
+        "log": {
+            "fmu": false,
+            "level_terminal": "info",
+            "level_file": "info",
+            "level_json": "tracel1",
+            "level_cutelog": "tracel1"
+        }
+    }
+}
