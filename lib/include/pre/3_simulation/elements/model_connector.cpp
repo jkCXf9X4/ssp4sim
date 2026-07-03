@@ -44,33 +44,42 @@ namespace ssp4sim::graph
                                                uint64_t time)
     {
         LOG_TRACE_L1(input_area->log, "[{func}] Set input start area", __func__);
-        auto area = input_area->push(time);
+        auto capacity = input_area->data->capacity;
 
-        for (auto &[name, input] : inputs)
+        // Push initial values into every ring buffer slot so that no matter
+        // which slot push() returns during pre(), it is pre-populated with
+        // valid starting values. This ensures FMUs receive sensible data on
+        // the first macro step when no source output is yet available.
+        for (std::size_t i = 0; i < capacity; ++i)
         {
-            if (!input.initial_value)
-            {
-                continue;
-            }
+            auto area = input_area->push(time);
 
-            auto data_ptr = input.initial_value->raw_ptr();
-            auto item = input_area->get_item(area, input.index);
-
-            auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, data_ptr);
-            LOG_DEBUG(input_area->log, "[{func}] Set initial input value for {name}, {type} : {data_type}", __func__, name, input.type.to_string(), data_type_str);
-
-            if (input.type == types::DataType::string)
+            for (auto &[name, input] : inputs)
             {
-                *(std::string *)item = *(std::string *)data_ptr;
+                if (!input.initial_value)
+                {
+                    continue;
+                }
+
+                auto data_ptr = input.initial_value->raw_ptr();
+                auto item = input_area->get_item(area, input.index);
+
+                auto data_type_str = ssp4sim::ext::fmi2::enums::data_type_to_string(input.type, data_ptr);
+                LOG_DEBUG(input_area->log, "[{func}] Set initial input value for {name}, {type} : {data_type}", __func__, name, input.type.to_string(), data_type_str);
+
+                if (input.type == types::DataType::string)
+                {
+                    *(std::string *)item = *(std::string *)data_ptr;
+                }
+                else
+                {
+                    std::memcpy(item, data_ptr, input.size);
+                }
             }
-            else
-            {
-                std::memcpy(item, data_ptr, input.size);
-            }
+            input_area->flag_new_data(area);
         }
-        input_area->flag_new_data(area);
 
-        LOG_TRACE_L1(input_area->log, "[{func}] Input area after initialization: {}", __func__, input_area->export_area(area));
+        LOG_TRACE_L1(input_area->log, "[{func}] Input area after initialization: {}", __func__, input_area->export_area(0));
     }
 
     void ConnectorInfo::write_data_to_model(std::unordered_map<std::string, ConnectorInfo> &inputs,

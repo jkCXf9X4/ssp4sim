@@ -230,11 +230,15 @@ namespace ssp4sim::graph
             {
                 // Non-loop SCC: execute each node sequentially.
                 // These nodes have no cyclic dependencies, so a single pass suffices.
+                // Sequential (non-loop) SCC: write output at t_start so
+                // subsequent models in the chain can read it immediately
+                // (Gauss-Seidel principle). Parallel loop SCCs continue
+                // to write at t_end.
                 auto s = StepData(step_data.start_time,
                                   step_data.end_time,
                                   sub_step,
                                   step_data.start_time,
-                                  step_data.end_time);
+                                  step_data.start_time);
 
                 for (auto *node : comp)
                 {

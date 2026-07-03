@@ -95,10 +95,10 @@ namespace ssp4sim::graph
             throw std::runtime_error(std::format("[{}] enter_initialization_mode failed for {}", __func__, name));
         }
 
-        LOG_TRACE_L1(log, "[{func}] Set input area", __func__);
+        LOG_TRACE_L1(log, "[{func}] Setup input area", __func__);
         ConnectorInfo::set_initial_input_area(this->input_area.get(), this->inputs, 0);
 
-        LOG_TRACE_L1(log, "[{func}] Set start values", __func__);
+        LOG_TRACE_L1(log, "[{func}] Set start values to fmu", __func__);
         ConnectorInfo::set_start_values(this->parameters);
         ConnectorInfo::set_start_values(this->inputs);
     }
