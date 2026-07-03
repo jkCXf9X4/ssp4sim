@@ -4,7 +4,6 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include <cstdint>
 #include <cstring>
 #include <string>
 #include <unordered_map>
@@ -14,6 +13,47 @@ using ssp4sim::graph::ConnectorInfo;
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
+namespace {
+    void init_storage(SignalStorage& storage, const std::string& signal_name,
+                      DataType type = DataType::real, size_t idx = 0)
+    {
+        storage.add(signal_name, type, idx);
+        storage.allocate();
+    }
+
+    auto make_connection(SignalStorage& src, SignalStorage& tgt,
+                         DataType type = DataType::real,
+                         uint32_t src_idx = 0, uint32_t tgt_idx = 0,
+                         uint64_t delay = 0)
+    {
+        ConnectionInfo con;
+        con.type = type;
+        con.size = (type == DataType::real) ? sizeof(double) : sizeof(int);
+        con.source_storage = &src;
+        con.target_storage = &tgt;
+        con.source_index = src_idx;
+        con.target_index = tgt_idx;
+        con.delay = delay;
+        return con;
+    }
+
+    template<typename T>
+    T read_storage_value(SignalStorage& storage, size_t area, size_t index)
+    {
+        T result{};
+        std::memcpy(&result, storage.get_item(area, index), sizeof(T));
+        return result;
+    }
+} // anonymous namespace
+
+constexpr size_t kStorageAreas = 10;
+constexpr double kExpectedValue = 42.0;
+constexpr int kExpectedIntValue = 99;
+constexpr double kInitialValue = 3.5;
+
+// NOTE: Despite the file name, this file tests ConnectionInfo and ConnectorInfo
+// helper methods used by SimGraphBuilder, not the SimGraphBuilder class itself.
+
 // ---------------------------------------------------------------------------
 // Description: Verifies retrieve_model_inputs copies data with zero delay,
 //              positive delay, and for integer types
@@ -22,30 +62,19 @@ using ssp4sim::types::DataType;
 TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
           "[sim_graph_builder]")
 {
-    SignalStorage src_storage(10, "source");
-    SignalStorage tgt_storage(10, "target");
+    SignalStorage src_storage(kStorageAreas, "source");
+    SignalStorage tgt_storage(kStorageAreas, "target");
 
-    // Add a signal to source storage
-    src_storage.add("source.signal", DataType::real, 0);
-    tgt_storage.add("target.signal", DataType::real, 0);
-    src_storage.allocate();
-    tgt_storage.allocate();
+    init_storage(src_storage, "source.signal");
+    init_storage(tgt_storage, "target.signal");
 
     // Write a value into source at time 0
     auto src_area = src_storage.push(0);
-    double input_val = 42.0;
+    double input_val = kExpectedValue;
     std::memcpy(src_storage.get_item(src_area, 0), &input_val, sizeof(double));
     src_storage.flag_new_data(src_area);
 
-    ConnectionInfo con;
-    con.type = DataType::real;
-    con.size = sizeof(double);
-    con.source_storage = &src_storage;
-    con.target_storage = &tgt_storage;
-    con.source_index = 0;
-    con.target_index = 0;
-    con.delay = 0;
-
+    auto con = make_connection(src_storage, tgt_storage);
     std::vector<ConnectionInfo> connections = {con};
 
     SECTION("Copies data with zero delay")
@@ -53,9 +82,7 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
         auto tgt_area = tgt_storage.push(0);
         ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 0);
 
-        double result = 0.0;
-        std::memcpy(&result, tgt_storage.get_item(tgt_area, 0), sizeof(double));
-        CHECK(result == 42.0);
+        CHECK(read_storage_value<double>(tgt_storage, tgt_area, 0) == kExpectedValue);
     }
 
     SECTION("Copies data with delay")
@@ -79,41 +106,27 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
         auto tgt_area = tgt_storage.push(10);
         ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 10);
 
-        double result = 0.0;
-        std::memcpy(&result, tgt_storage.get_item(tgt_area, 0), sizeof(double));
-        CHECK(result == 20.0);
+        CHECK(read_storage_value<double>(tgt_storage, tgt_area, 0) == 20.0);
     }
 
     SECTION("Copies integer data")
     {
-        SignalStorage int_src(10, "int_source");
-        SignalStorage int_tgt(10, "int_target");
-        int_src.add("source.int", DataType::integer, 0);
-        int_tgt.add("target.int", DataType::integer, 0);
-        int_src.allocate();
-        int_tgt.allocate();
+        SignalStorage int_src(kStorageAreas, "int_source");
+        SignalStorage int_tgt(kStorageAreas, "int_target");
+        init_storage(int_src, "source.int", DataType::integer);
+        init_storage(int_tgt, "target.int", DataType::integer);
 
         auto src_area = int_src.push(0);
-        int val = 99;
+        int val = kExpectedIntValue;
         std::memcpy(int_src.get_item(src_area, 0), &val, sizeof(int));
         int_src.flag_new_data(src_area);
 
-        ConnectionInfo int_con;
-        int_con.type = DataType::integer;
-        int_con.size = sizeof(int);
-        int_con.source_storage = &int_src;
-        int_con.target_storage = &int_tgt;
-        int_con.source_index = 0;
-        int_con.target_index = 0;
-        int_con.delay = 0;
-
+        auto int_con = make_connection(int_src, int_tgt, DataType::integer);
         std::vector<ConnectionInfo> int_cons = {int_con};
         auto tgt_area = int_tgt.push(0);
         ConnectionInfo::retrieve_model_inputs(int_cons, tgt_area, 0);
 
-        int result = 0;
-        std::memcpy(&result, int_tgt.get_item(tgt_area, 0), sizeof(int));
-        CHECK(result == 99);
+        CHECK(read_storage_value<int>(int_tgt, tgt_area, 0) == kExpectedIntValue);
     }
 }
 
@@ -127,44 +140,25 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs handles edge cases",
 {
     SECTION("No valid source data logs warning but does not crash")
     {
-        SignalStorage src(10, "src");
-        SignalStorage tgt(10, "tgt");
-        src.add("s", DataType::real, 0);
-        tgt.add("t", DataType::real, 0);
-        src.allocate();
-        tgt.allocate();
+        SignalStorage src(kStorageAreas, "src");
+        SignalStorage tgt(kStorageAreas, "tgt");
+        init_storage(src, "s");
+        init_storage(tgt, "t");
 
-        ConnectionInfo con;
-        con.type = DataType::real;
-        con.size = sizeof(double);
-        con.source_storage = &src;
-        con.target_storage = &tgt;
-        con.source_index = 0;
-        con.target_index = 0;
-        con.delay = 0;
-
+        auto con = make_connection(src, tgt);
         std::vector<ConnectionInfo> cons = {con};
         auto tgt_area = tgt.push(100); // No source data at time 100
         // Should not crash — just log a warning
         ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 100);
         // Target should remain unmodified (default 0.0)
-        double result = 0.0;
-        std::memcpy(&result, tgt.get_item(tgt_area, 0), sizeof(double));
-        CHECK(result == 0.0);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
     }
 
     SECTION("Empty connections list is a no-op")
     {
-        SignalStorage src(10, "src");
-        SignalStorage tgt(10, "tgt");
-        src.add("s", DataType::real, 0);
-        tgt.add("t", DataType::real, 0);
-        src.allocate();
-        tgt.allocate();
         std::vector<ConnectionInfo> empty;
-        auto tgt_area = tgt.push(0);
-        // Should not crash
-        ConnectionInfo::retrieve_model_inputs(empty, tgt_area, 0);
+        // Should not crash (tgt_area = 0, no storage needed with empty list)
+        ConnectionInfo::retrieve_model_inputs(empty, 0, 0);
     }
 }
 
@@ -175,21 +169,12 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs handles edge cases",
 // ---------------------------------------------------------------------------
 TEST_CASE("ConnectionInfo to_string includes key fields", "[sim_graph_builder]")
 {
-    SignalStorage src(10, "source_storage");
-    SignalStorage tgt(10, "target_storage");
-src.add("s", DataType::real, 0);
-        tgt.add("t", DataType::real, 0);
-        src.allocate();
-        tgt.allocate();
+    SignalStorage src(kStorageAreas, "source_storage");
+    SignalStorage tgt(kStorageAreas, "target_storage");
+    init_storage(src, "s");
+    init_storage(tgt, "t");
 
-        ConnectionInfo con;
-    con.type = DataType::real;
-    con.size = sizeof(double);
-    con.source_storage = &src;
-    con.target_storage = &tgt;
-    con.source_index = 0;
-    con.target_index = 1;
-    con.delay = 2;
+    auto con = make_connection(src, tgt, DataType::real, 0, 1, 2);
     con.is_feedthrough = true;
 
     auto str = con.to_string();
@@ -225,9 +210,8 @@ TEST_CASE("ConnectorInfo to_string includes key fields", "[sim_graph_builder]")
 TEST_CASE("ConnectorInfo::set_initial_input_area copies initial values",
           "[sim_graph_builder]")
 {
-    SignalStorage storage(10, "input_storage");
-    storage.add("model.input", DataType::real, 0);
-    storage.allocate();
+    SignalStorage storage(kStorageAreas, "input_storage");
+    init_storage(storage, "model.input");
 
     ConnectorInfo info;
     info.name = "model.input";
@@ -236,7 +220,7 @@ TEST_CASE("ConnectorInfo::set_initial_input_area copies initial values",
     info.index = 0;
     info.storage = &storage;
     info.initial_value = std::make_unique<ssp4sim::ext::ParameterValue>("model.input", DataType::real);
-    double init_val = 3.5;
+    double init_val = kInitialValue;
     info.initial_value->store_value(&init_val);
 
     std::unordered_map<std::string, ConnectorInfo> inputs;
@@ -248,9 +232,7 @@ TEST_CASE("ConnectorInfo::set_initial_input_area copies initial values",
     // Find which area holds time 0 data.
     size_t found_area = 0;
     storage.find_area(0, found_area);
-    double result = 0.0;
-    std::memcpy(&result, storage.get_item(found_area, 0), sizeof(double));
-    CHECK(result == 3.5);
+    CHECK(read_storage_value<double>(storage, found_area, 0) == kInitialValue);
 }
 
 // ---------------------------------------------------------------------------
@@ -260,9 +242,8 @@ TEST_CASE("ConnectorInfo::set_initial_input_area copies initial values",
 TEST_CASE("ConnectorInfo::set_initial_input_area skips connectors without initial_value",
           "[sim_graph_builder]")
 {
-    SignalStorage storage(10, "input_storage");
-    storage.add("model.input", DataType::real, 0);
-    storage.allocate();
+    SignalStorage storage(kStorageAreas, "input_storage");
+    init_storage(storage, "model.input");
 
     ConnectorInfo info;
     info.name = "model.input";
@@ -281,20 +262,19 @@ TEST_CASE("ConnectorInfo::set_initial_input_area skips connectors without initia
     // set_initial_input_area pushes at time 0. Find that area.
     size_t found_area = 0;
     storage.find_area(0, found_area);
-    double result = 1.0;
-    std::memcpy(&result, storage.get_item(found_area, 0), sizeof(double));
-    CHECK(result == 0.0);
+    CHECK(read_storage_value<double>(storage, found_area, 0) == 0.0);
 }
 
 // ---------------------------------------------------------------------------
-// Description: Verifies feedthrough flag logic (zero-delay = feedthrough)
-// Rationale:   Feedthrough detection determines simulation loop ordering
+// Description: Verifies feedthrough flag contract (zero-delay = feedthrough)
+// Rationale:   Feedthrough detection determines simulation loop ordering.
+//              These tests verify the expected contract of the wire_connections
+//              logic: is_feedthrough is set to (delay == 0). The first two
+//              sections confirm the expected field values; the wire_connections
+//              production code path is tested in test_model_connection.cpp.
 // ---------------------------------------------------------------------------
 TEST_CASE("FmuModel feedthrough detection", "[sim_graph_builder]")
 {
-    // These tests verify the feedthrough logic on ConnectionInfo objects
-    // without requiring a full FmuModel instance
-
     ConnectionInfo ft_con;
     ft_con.is_feedthrough = true;
     ft_con.delay = 0;
@@ -313,13 +293,81 @@ TEST_CASE("FmuModel feedthrough detection", "[sim_graph_builder]")
         CHECK(non_ft_con.is_feedthrough == false);
     }
 
-    SECTION("Feedthrough flag is set by wire_connections logic")
-    {
-        // The wire_connections method sets is_feedthrough = (resolved->delay == 0)
-        ft_con.is_feedthrough = (ft_con.delay == 0);
-        CHECK(ft_con.is_feedthrough == true);
+    // The wire_connections method sets is_feedthrough = (resolved->delay == 0).
+    // The first two sections above verify the expected outcome of that logic.
+    // Full production-path coverage lives in test_model_connection.cpp.
+}
 
-        non_ft_con.is_feedthrough = (non_ft_con.delay == 0);
-        CHECK(non_ft_con.is_feedthrough == false);
+// ---------------------------------------------------------------------------
+// Description: Verifies forward_derivatives and forward_derivatives_order
+//              fields on ConnectionInfo
+// Rationale:   These fields control derivative forwarding in retrieve_model_inputs
+// ---------------------------------------------------------------------------
+TEST_CASE("ConnectionInfo forward_derivatives fields", "[sim_graph_builder]")
+{
+    ConnectionInfo con;
+
+    SECTION("Defaults are false/zero")
+    {
+        CHECK(con.forward_derivatives == false);
+        CHECK(con.forward_derivatives_order == 0);
+    }
+
+    SECTION("Can set forward_derivatives true")
+    {
+        con.forward_derivatives = true;
+        CHECK(con.forward_derivatives == true);
+    }
+
+    SECTION("Can set forward_derivatives_order")
+    {
+        con.forward_derivatives_order = 3;
+        CHECK(con.forward_derivatives_order == 3);
+    }
+
+    SECTION("Both fields independently settable")
+    {
+        con.forward_derivatives = true;
+        con.forward_derivatives_order = 5;
+        CHECK(con.forward_derivatives == true);
+        CHECK(con.forward_derivatives_order == 5);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Description: Verifies forward_derivatives and forward_derivatives_order
+//              fields on ConnectorInfo, which are used by set_start_values
+// Rationale:   These fields control derivative forwarding behavior. Full
+//              set_start_values production-path testing requires FMU
+//              infrastructure (connector.fmu->model) and is not done here.
+// ---------------------------------------------------------------------------
+TEST_CASE("ConnectorInfo forward_derivatives fields", "[sim_graph_builder]")
+{
+    ConnectorInfo info;
+
+    SECTION("Defaults are false/zero")
+    {
+        CHECK(info.forward_derivatives == false);
+        CHECK(info.forward_derivatives_order == 0);
+    }
+
+    SECTION("Can set forward_derivatives true")
+    {
+        info.forward_derivatives = true;
+        CHECK(info.forward_derivatives == true);
+    }
+
+    SECTION("Can set forward_derivatives_order")
+    {
+        info.forward_derivatives_order = 2;
+        CHECK(info.forward_derivatives_order == 2);
+    }
+
+    SECTION("Both fields independently settable")
+    {
+        info.forward_derivatives = true;
+        info.forward_derivatives_order = 4;
+        CHECK(info.forward_derivatives == true);
+        CHECK(info.forward_derivatives_order == 4);
     }
 }
