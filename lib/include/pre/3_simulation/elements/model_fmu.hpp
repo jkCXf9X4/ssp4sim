@@ -40,6 +40,7 @@ namespace ssp4sim::graph
         std::vector<ConnectionInfo> connections;
 
         bool forward_derivatives = false;
+        bool canInterpolateInputs = false;
         size_t maxOutputDerivativeOrder = 0;
         bool fmu_logging = false;
         bool record_inputs = false;

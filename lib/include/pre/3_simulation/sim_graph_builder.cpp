@@ -72,6 +72,7 @@ namespace ssp4sim::graph
 
             m->delay = analysis_model->delay;
             m->record_inputs = this->record_inputs;
+            m->canInterpolateInputs = analysis_model->canInterpolateInputs;
             LOG_DEBUG(log, "[{func}] Model: {model}, delay {delay}", __func__, m->name, m->delay);
 
             models[analysis_model->name] = std::move(m);
@@ -119,13 +120,13 @@ namespace ssp4sim::graph
 
                 if (connector->causality == types::Causality::input)
                 {
-                    info.index = static_cast<uint32_t>(model->input_area->add(connector->name, connector->data_type, 0));
+                    info.index = static_cast<uint32_t>(model->input_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
                     info.storage = model->input_area.get();
                     model->inputs[connector->name] = std::move(info);
                 }
                 else if (connector->causality == types::Causality::output)
                 {
-                    info.index = static_cast<uint32_t>(model->output_area->add(connector->name, connector->data_type, 0));
+                    info.index = static_cast<uint32_t>(model->output_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
                     info.storage = model->output_area.get();
                     model->outputs[connector->name] = std::move(info);
                 }
@@ -302,6 +303,22 @@ namespace ssp4sim::graph
 
                 con_info.delay = resolved->delay;
                 con_info.is_feedthrough = (resolved->delay == 0);
+
+                // Forward derivatives: enable when source provides derivatives and
+                // target can interpolate them on real-typed signals.
+                if (actual_source->maxOutputDerivativeOrder > 0 &&
+                    actual_target->canInterpolateInputs &&
+                    source_conn->type == types::DataType::real &&
+                    target_conn->type == types::DataType::real)
+                {
+                    int order = static_cast<int>(actual_source->maxOutputDerivativeOrder);
+                    source_conn->forward_derivatives = true;
+                    source_conn->forward_derivatives_order = order;
+                    target_conn->forward_derivatives = true;
+                    target_conn->forward_derivatives_order = order;
+                    con_info.forward_derivatives = true;
+                    con_info.forward_derivatives_order = order;
+                }
 
                 LOG_TRACE_L1(log, "[{func}] Connection: {src}.{sc} -> {tgt}.{tc}, delay {delay}",
                              __func__,
