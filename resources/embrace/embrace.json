@@ -27,9 +27,10 @@
             },
             
             "sqlite": {
-                "enable": true
+                "enable": false
             },
-            "wait_for": true
+            "wait_for": true,
+            "record_inputs": false
         },
         "log": {
             "fmu": false,
