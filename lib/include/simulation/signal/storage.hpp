@@ -92,6 +92,7 @@ namespace ssp4sim::signal
         bool find_area(uint64_t time, size_t &found_index);
 
         bool find_latest_valid_area(uint64_t time, size_t &found_index);
+        bool find_next_valid_area(uint64_t time, size_t &found_index);
 
         std::uint64_t get_time(std::size_t area);
 

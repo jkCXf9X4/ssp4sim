@@ -235,11 +235,14 @@ namespace ssp4sim::graph
             {
                 // Non-loop SCC: execute each node sequentially.
                 // These nodes have no cyclic dependencies, so a single pass suffices.
+                // Write output at macro timestep end so the loop SCC
+                // can interpolate between the previous and current macro
+                // timestep outputs at sub-step times.
                 auto s = StepData(step_data.start_time,
                                   step_data.end_time,
                                   macro_dt,
                                   step_data.start_time,
-                                  step_data.start_time);
+                                  step_data.end_time);
 
                 // should always be 1?
                 for (auto *node : comp)

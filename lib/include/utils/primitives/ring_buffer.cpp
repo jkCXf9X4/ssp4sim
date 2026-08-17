@@ -140,4 +140,25 @@ namespace ssp4sim::utils
         return oss.str();
     }
 
+
+bool RingBuffer::find_next_valid_index(uint64_t time, std::size_t &index_found)
+    {
+        auto local_nr_inserts = nr_inserts;
+        for (std::size_t i = 0; i < local_nr_inserts && i < capacity; ++i)
+        {
+            int pos = (local_nr_inserts - i) % capacity;
+            if (timestamps[pos] > time)
+            {
+                IF_LOG({
+                    LOG_TRACE_L1(log, "[{func}] found next valid index, {index}", __func__, pos);
+                });
+
+                index_found = pos;
+                return true;
+            }
+        }
+        return false;
+    }
 }
+
+    

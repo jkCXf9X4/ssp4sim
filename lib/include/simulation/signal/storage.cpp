@@ -134,6 +134,11 @@ namespace ssp4sim::signal
         return data->find_latest_valid_index(time, found_index);
     }
 
+    bool SignalStorage::find_next_valid_area(uint64_t time, size_t &found_index)
+    {
+        return data->find_next_valid_index(time, found_index);
+    }
+
     std::uint64_t SignalStorage::get_time(std::size_t area)
     {
         return data->get_time(area);

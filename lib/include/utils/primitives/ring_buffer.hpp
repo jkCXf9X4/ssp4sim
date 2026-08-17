@@ -65,6 +65,10 @@ namespace ssp4sim::utils
 
         bool is_full();
 
+        /// Find the first stored timestamp strictly greater than \p time.
+        /// Searches from newest to oldest. Returns true if found.
+        bool find_next_valid_index(uint64_t time, std::size_t &index_found);
+
         std::string to_string() const override;
     };
 }
