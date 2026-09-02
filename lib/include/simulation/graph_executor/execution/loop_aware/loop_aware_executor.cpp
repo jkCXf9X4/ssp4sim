@@ -2,14 +2,18 @@
 
 #include "execution/executor_utils.hpp"
 
+#include "config.hpp"
+
 #include "utils/graph/tarjan.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <map>
 #include <queue>
 #include <set>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -113,14 +117,18 @@ namespace ssp4sim::graph
         execution_order = topological_sort(dag);
 
         // 5. Compute loop iterations for each SCC.
+        //    Default: iterate loop_size times so every node sees every other
+        //    node's output once. A nested (loop-within-loop) SCC needs more
+        //    iterations because its feedback path passes through inner loop
+        //    nodes as well. An explicit override can be set via config
+        //    `simulation.executor.loop_aware.iterations`.
+        auto configured_iters = utils::Config::getOr("simulation.executor.loop_aware.iterations", -1);
         loop_iterations.resize(sccs.size(), 1);
         for (std::size_t i = 0; i < sccs.size(); ++i)
         {
             if (sccs[i].size() > 1)
             {
-                // For loops, iterate loop_size times so every node sees every
-                // other node's output once.
-                loop_iterations[i] = sccs[i].size();
+                loop_iterations[i] = configured_iters > 0 ? configured_iters : sccs[i].size();
             }
         }
     }
@@ -253,28 +261,72 @@ namespace ssp4sim::graph
             else
             {
                 // Loop SCC: delegate to JacobiParallelTBB for parallel execution.
-                // Run n_iters iterations with a reduced timestep so that every
-                // node in the loop gets a chance to exchange messages.
+                // The SCC is relaxed by taking progressive forward sub-steps inside
+                // the macro step. The models cannot be reset, so every sub-step must
+                // advance time. Two sub-step scheduling modes are available via config:
+                //   "fixed"     - n_iters equal sub-steps (default, legacy behaviour)
+                //   "geometric" - sub-steps shrink by `factor`, so the last sub-steps
+                //                 converge on the macro-step end
+
+                auto *loop_exec = loop_executors[scc_idx].get();
+
+                // Build the sub-step schedule [start, end] for the macro step.
+                std::vector<std::pair<uint64_t, uint64_t>> schedule;
+                auto mode = utils::Config::getOr("simulation.executor.loop_aware.mode", std::string("fixed"));
+                auto factor = utils::Config::getOr("simulation.executor.loop_aware.factor", 0.8);
+
+                if (mode == "geometric" && factor > 0.0 && factor < 1.0)
+                {
+                    // Geometric spacing. Cumulative fractions follow a geometric
+                    // series so step k has duration proportional to factor^k:
+                    // the first sub-step is the largest and the last is the
+                    // smallest, concentrating relaxation right at the macro end.
+                    const double r = factor;
+                    const double denom = 1.0 - std::pow(r, static_cast<double>(n_iters));
+                    std::vector<uint64_t> ends;
+                    ends.reserve(n_iters + 1);
+                    for (std::size_t k = 0; k <= n_iters; ++k)
+                    {
+                        double frac = (k == n_iters)
+                            ? 1.0
+                            : (1.0 - std::pow(r, static_cast<double>(k))) / denom;
+                        ends.push_back(step_data.start_time
+                                       + static_cast<uint64_t>(std::llround(
+                                           static_cast<double>(macro_dt) * frac)));
+                    }
+                    for (std::size_t k = 0; k < n_iters; ++k)
+                    {
+                        if (ends[k + 1] > ends[k])
+                        {
+                            schedule.emplace_back(ends[k], ends[k + 1]);
+                        }
+                    }
+                }
+                else
+                {
+                    // Fixed spacing: macro step split into n_iters equal sub-steps.
+                    auto sub_dt = macro_dt / n_iters;
+                    auto sub_start = step_data.start_time;
+                    while (sub_start < step_data.end_time)
+                    {
+                        auto sub_end = std::min(sub_start + sub_dt, step_data.end_time);
+                        schedule.emplace_back(sub_start, sub_end);
+                        sub_start = sub_end;
+                    }
+                }
 
                 IF_LOG({
                     LOG_DEBUG(log, "[{func}] Loop SCC #{idx} ({size} nodes, "
-                                   "{iters} iters, loop_dt={dt})",
-                              __func__, scc_idx, comp.size(), n_iters, loop_dt);
+                                   "{iters} iters, mode={mode}, {steps} sub-steps)",
+                              __func__, scc_idx, comp.size(), n_iters, mode, schedule.size());
                 });
 
-                auto *loop_exec = loop_executors[scc_idx].get();
-    
-                auto sub_dt = macro_dt / n_iters;
-                auto sub_start = step_data.start_time;
-
-                while (sub_start < step_data.end_time)
+                for (auto &[sub_start, sub_end] : schedule)
                 {
-                    auto sub_end = std::min(sub_start + sub_dt, step_data.end_time);
                     auto step = sub_end - sub_start;
                     auto s = StepData(sub_start, sub_end, step, sub_start, sub_end);
-                    
+
                     loop_exec->invoke(s);
-                    sub_start = sub_end;
                 }
             }
         }

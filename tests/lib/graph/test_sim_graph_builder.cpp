@@ -80,7 +80,7 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
     SECTION("Copies data with zero delay")
     {
         auto tgt_area = tgt_storage.push(0);
-        ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 0);
+        ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 0, 0, 0);
 
         CHECK(read_storage_value<double>(tgt_storage, tgt_area, 0) == kExpectedValue);
     }
@@ -104,7 +104,7 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
         connections[0] = con;
 
         auto tgt_area = tgt_storage.push(10);
-        ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 10);
+        ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 10, 10, 10);
 
         CHECK(read_storage_value<double>(tgt_storage, tgt_area, 0) == 20.0);
     }
@@ -124,9 +124,83 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
         auto int_con = make_connection(int_src, int_tgt, DataType::integer);
         std::vector<ConnectionInfo> int_cons = {int_con};
         auto tgt_area = int_tgt.push(0);
-        ConnectionInfo::retrieve_model_inputs(int_cons, tgt_area, 0);
+        ConnectionInfo::retrieve_model_inputs(int_cons, tgt_area, 0, 0, 0);
 
         CHECK(read_storage_value<int>(int_tgt, tgt_area, 0) == kExpectedIntValue);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Description: Verifies retrieve_model_inputs resolves source area according
+//              to the precomputed DataAccessMode and time_offset
+// Rationale:   Graph build precomputes how a connection samples its source
+// ---------------------------------------------------------------------------
+TEST_CASE("ConnectionInfo::retrieve_model_inputs honors mode and time_offset",
+          "[sim_graph_builder]")
+{
+    SignalStorage src(kStorageAreas, "src");
+    SignalStorage tgt(kStorageAreas, "tgt");
+    init_storage(src, "s");
+    init_storage(tgt, "t");
+
+    // Source writes at 100, 200
+    auto a100 = src.push(100);
+    double v100 = 1.0;
+    std::memcpy(src.get_item(a100, 0), &v100, sizeof(double));
+    auto a200 = src.push(200);
+    double v200 = 2.0;
+    std::memcpy(src.get_item(a200, 0), &v200, sizeof(double));
+
+    // Step span [100, 300]; input_time 300. Latest at 300 -> v at 200.
+    auto tgt_area = tgt.push(300);
+
+    SECTION("StartTime samples at step_start")
+    {
+        ConnectionInfo con = make_connection(src, tgt);
+        con.mode = ssp4sim::graph::DataAccessMode::StartTime;
+        std::vector<ConnectionInfo> cons = {con};
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v100);
+    }
+
+    SECTION("StartTime with negative offset shifts earlier")
+    {
+        // Currently at latest valid (200) which is not at step_start.
+        ConnectionInfo con = make_connection(src, tgt);
+        con.mode = ssp4sim::graph::DataAccessMode::StartTime;
+        con.time_offset = -100; // sample at step_start(100) - 100 = 0 -> nothing yet
+        std::vector<ConnectionInfo> cons = {con};
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
+    }
+
+    SECTION("EndTime samples at step_end")
+    {
+        ConnectionInfo con = make_connection(src, tgt);
+        con.mode = ssp4sim::graph::DataAccessMode::EndTime;
+        std::vector<ConnectionInfo> cons = {con};
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v200);
+    }
+
+    SECTION("EndTime with negative offset samples before step_end")
+    {
+        ConnectionInfo con = make_connection(src, tgt);
+        con.mode = ssp4sim::graph::DataAccessMode::EndTime;
+        con.time_offset = -150; // step_end - 150 = 150 -> latest valid <=150 is 100
+        std::vector<ConnectionInfo> cons = {con};
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v100);
+    }
+
+    SECTION("Latest applies offset to input_time")
+    {
+        ConnectionInfo con = make_connection(src, tgt);
+        con.mode = ssp4sim::graph::DataAccessMode::Latest;
+        con.time_offset = -50; // input_time - 50 = 250 -> latest valid <=250 is 200
+        std::vector<ConnectionInfo> cons = {con};
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 300, 300);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v200);
     }
 }
 
@@ -149,7 +223,7 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs handles edge cases",
         std::vector<ConnectionInfo> cons = {con};
         auto tgt_area = tgt.push(100); // No source data at time 100
         // Should not crash — just log a warning
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 100);
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 100, 100, 100);
         // Target should remain unmodified (default 0.0)
         CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
     }
@@ -158,7 +232,7 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs handles edge cases",
     {
         std::vector<ConnectionInfo> empty;
         // Should not crash (tgt_area = 0, no storage needed with empty list)
-        ConnectionInfo::retrieve_model_inputs(empty, 0, 0);
+        ConnectionInfo::retrieve_model_inputs(empty, 0, 0, 0, 0);
     }
 }
 

@@ -126,7 +126,7 @@ namespace ssp4sim::graph
             LOG_INFO(log, "[{func}] Propagating at start_time {start_time}, input_area {input_area} timestamp {timestamp}", __func__, start, target_area, input_area->data->timestamps[target_area]);
         });
 
-        ConnectionInfo::retrieve_model_inputs(connections, target_area, start);
+        ConnectionInfo::retrieve_model_inputs(connections, target_area, start, start, start);
 
         ConnectorInfo::write_data_to_model(inputs, input_area.get(), target_area);
 
@@ -140,7 +140,7 @@ namespace ssp4sim::graph
         return start;
     }
 
-    void FmuModel::pre(uint64_t input_time)
+    void FmuModel::pre(uint64_t input_time, uint64_t step_start, uint64_t step_end)
     {
         IF_LOG({
             LOG_TRACE_L1(log, "[{func}] Init. current_time {current_time}, input_time {input_time}", __func__, current_time, input_time);
@@ -148,7 +148,7 @@ namespace ssp4sim::graph
 
         auto target_area = input_area->push(input_time);
 
-        ConnectionInfo::retrieve_model_inputs(connections, target_area, input_time);
+        ConnectionInfo::retrieve_model_inputs(connections, target_area, input_time, step_start, step_end);
 
         // record input data if record_inputs config is enabled
         if (record_inputs)
@@ -199,7 +199,7 @@ namespace ssp4sim::graph
             LOG_DEBUG(log, "[{func}] Init {name}, current_time {current_time}, stepdata: {stepdata}", __func__, name, current_time, step_data.to_string());
         });
 
-        pre(step_data.input_time);
+        pre(step_data.input_time, step_data.start_time, step_data.end_time);
 
         IF_LOG({
             LOG_DEBUG(log, "[{func}] Step until {end_time}", __func__, step_data.end_time);

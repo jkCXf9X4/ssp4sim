@@ -13,6 +13,17 @@
 
 namespace ssp4sim::graph
 {
+    /// How a connection reads its source data:
+    ///  - Latest:    zero-order hold on the newest data at/ before the requested input time
+    ///  - StartTime: sample the source at the start of the target model's step span
+    ///  - EndTime:   sample the source at the end of the target model's step span
+    enum class DataAccessMode : int
+    {
+        StartTime,
+        EndTime,
+        Latest
+    };
+
     struct ConnectionInfo : public types::IWritable
     {
         ConnectionInfo()
@@ -34,6 +45,9 @@ namespace ssp4sim::graph
 
         uint64_t delay = 0;
 
+        DataAccessMode mode = DataAccessMode::Latest;
+        int64_t time_offset = 0;
+
         bool is_feedthrough = false;
 
         bool forward_derivatives = false;
@@ -43,6 +57,8 @@ namespace ssp4sim::graph
 
         static void retrieve_model_inputs(std::vector<ConnectionInfo> &connections,
                                           int target_area,
-                                          uint64_t input_time);
+                                          uint64_t input_time,
+                                          uint64_t step_start,
+                                          uint64_t step_end);
     };
 }

@@ -21,6 +21,8 @@ namespace ssp4sim::graph
             << ", target_storage: " << target_storage->name
             << ", source_index: " << source_index
             << ", target_index: " << target_index
+            << ", mode: " << static_cast<int>(mode)
+            << ", time_offset: " << time_offset
             << ", forward_derivatives: " << forward_derivatives_order
             << ", is_feedthrough: " << (is_feedthrough ? "true" : "false")
             << " }";
@@ -29,7 +31,9 @@ namespace ssp4sim::graph
 
     void ConnectionInfo::retrieve_model_inputs(std::vector<ConnectionInfo> &connections,
                                                int target_area,
-                                               uint64_t input_time)
+                                               uint64_t input_time,
+                                               uint64_t step_start,
+                                               uint64_t step_end)
     {
         for (auto &connection : connections)
         {
@@ -39,8 +43,29 @@ namespace ssp4sim::graph
                 LOG_TRACE_L2(connection.log, "[{func}] Fetch valid data connection {}", __func__, connection.to_string());
             });
 
+            int64_t reference;
+            switch (connection.mode)
+            {
+                case DataAccessMode::StartTime:
+                    reference = static_cast<int64_t>(step_start);
+                    break;
+                case DataAccessMode::EndTime:
+                    reference = static_cast<int64_t>(step_end);
+                    break;
+                case DataAccessMode::Latest:
+                default:
+                    reference = static_cast<int64_t>(input_time);
+                    break;
+            }
+            reference += connection.time_offset;
+
+            int64_t lookup_time = reference - static_cast<int64_t>(connection.delay);
+
             size_t source_area;
-            if (connection.source_storage->find_latest_valid_area(input_time - connection.delay, source_area))
+            bool found = lookup_time >= 0 &&
+                         connection.source_storage->find_latest_valid_area(static_cast<std::uint64_t>(lookup_time), source_area);
+
+            if (found)
             {
                 IF_LOG({
                     LOG_DEBUG(connection.log, "[{func}] Valid source_storage area found, time {time}", __func__, connection.source_storage->data->timestamps[source_area]);
@@ -84,7 +109,7 @@ namespace ssp4sim::graph
             {
                 if (input_time > 1)
                 {
-                    LOG_WARNING(connection.log, "[{func}] No valid data for t {time}, connection: {connection}", __func__, input_time, connection.to_string());
+                    LOG_WARNING(connection.log, "[{func}] No valid data at lookup time {time}, connection: {connection}", __func__, lookup_time, connection.to_string());
                 }
             }
         }

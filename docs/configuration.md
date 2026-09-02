@@ -84,12 +84,15 @@ For CLI and Python invocation examples, see [Usage](usage.md).
 | Key | Type | Required | Default | Supported values / behavior |
 |---|---|---|---|---|
 | `simulation.executor.forward_derivatives` | `bool` | No | `true` | Enables derivative forwarding on model connections. |
-| `simulation.executor.method` | `string` | No | `jacobi` | `jacobi`, `seidel`, `custom_delay`, `custom_delay_partial`. |
+| `simulation.executor.method` | `string` | No | `jacobi` | `jacobi`, `seidel`, `custom_delay`, `custom_delay_partial`, `loop_aware`. |
 | `simulation.executor.thread_pool_workers` | `int` | No | `5` | Used by some parallel Jacobi modes. |
 | `simulation.executor.sub_step` | `double` | No | `simulation.timestep` | Seconds; used by executors that sub-step. |
 | `simulation.executor.jacobi.parallel` | `bool` | No | `false` | If `true`, uses a parallel Jacobi implementation. |
 | `simulation.executor.jacobi.method` | `int` | No | `1` | `1` = TBB, `2` = spin pool, `3` = futures. |
 | `simulation.executor.seidel.parallel` | `bool` | No | `false` | If `true`, uses `ParallelSeidel`; else `SerialSeidel`. |
+| `simulation.executor.loop_aware.iterations` | `int` | No | SCC node count | Number of internal sub-steps the `loop_aware` executor takes per macro step inside each loop SCC. Defaults to the SCC size (`1` = no sub-step relaxation). Nested (loop-within-loop) SCCs need a higher count because their feedback path passes through the inner loop nodes as well; the relaxation rate (Jacobi spectral radius) tightens with more iterations. |
+| `simulation.executor.loop_aware.mode` | `string` | No | `fixed` | How the macro step is subdivided for a loop SCC: `fixed` = `iterations` equal sub-steps; `geometric` = sub-steps shrink by `simulation.executor.loop_aware.factor`, so the smallest sub-steps land at the macro-step end. Both modes only advance time (models cannot be reset), so the loop relaxes as a moving wavefront toward the macro-step boundary. |
+| `simulation.executor.loop_aware.factor` | `double` | No | `0.8` | Geometric sub-step decay factor in `(0, 1)` used when `mode` is `geometric`. Smaller values concentrate relaxation closer to the macro-step end; zero-length sub-steps are dropped. |
 
 Notes:
 - Unknown `simulation.executor.method` throws runtime error.

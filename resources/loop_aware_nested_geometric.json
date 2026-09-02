@@ -1,0 +1,43 @@
+{
+    "simulation": {
+        "ssp": "./resources/reference_ssp/artifacts/models/signal_nested_algebraic_loop/baseline",
+        "ssd": "SystemStructure.ssd",
+        "start_time": 0.0,
+        "stop_time": 1.0,
+        "timestep": 0.001,
+        "tolerance": 1e-4,
+        "realtime": false,
+        "working_dir": "./wd/loop_aware_nested_geometric",
+        "executor": {
+            "method": "loop_aware",
+            "thread_pool_workers": 5,
+            "forward_derivatives": true,
+            "loop_aware": {
+                "mode": "geometric",
+                "iterations": 32,
+                "factor": 0.8
+            },
+            "jacobi": {
+                "parallel": true,
+                "method": 1
+            },
+            "seidel": {
+                "parallel": false
+            }
+        },
+        "recording": {
+            "csv": {
+                "enable": true,
+                "interval": 0.001
+            },
+            "wait_for": true
+        },
+        "log": {
+            "fmu": false,
+            "level_terminal": "info",
+            "level_file": "info",
+            "level_json": "tracel1",
+            "level_cutelog": "disable"
+        }
+    }
+}

@@ -322,6 +322,10 @@ namespace ssp4sim::graph
                 con_info.delay = resolved->delay;
                 con_info.is_feedthrough = (resolved->delay == 0);
 
+
+                con_info.mode = DataAccessMode::StartTime;
+                con_info.time_offset = 0;
+
                 // Forward derivatives: enable when source provides derivatives and
                 // target can interpolate them on real-typed signals.
                 if (actual_source->maxOutputDerivativeOrder > 0 &&

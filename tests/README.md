@@ -67,6 +67,14 @@ A separate smoke test exercises the packaged CLI through `venv/bin/pyssp4sim`
 against the local `resources/embrace/embrace.json` fixture with temporary
 output paths.
 
+The `loop_aware` executor is regression-tested against the algebraic-loop
+reference fixtures in `test_loop_aware_nested.py`: `signal_nested_algebraic_loop`
+(loop within loop) and `signal_algebraic_loop` (single loop). Each fixture is run
+with both loop sub-step scheduling modes (`fixed`, `geometric`) and the
+steady-state result is compared to the analytic fixed point. Nested loop SCCs
+need more internal sub-iterations than the default SCC node count to converge;
+the test pins that with `simulation.executor.loop_aware.iterations`.
+
 See product-breakdown/03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
 
 The reference sweep uses a `0.001` second simulation timestep. The `embrace`
