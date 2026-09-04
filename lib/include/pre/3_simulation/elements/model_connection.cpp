@@ -43,27 +43,39 @@ namespace ssp4sim::graph
                 LOG_TRACE_L2(connection.log, "[{func}] Fetch valid data connection {}", __func__, connection.to_string());
             });
 
-            int64_t reference;
-            switch (connection.mode)
-            {
-                case DataAccessMode::StartTime:
-                    reference = static_cast<int64_t>(step_start);
-                    break;
-                case DataAccessMode::EndTime:
-                    reference = static_cast<int64_t>(step_end);
-                    break;
-                case DataAccessMode::LatestTime:
-                default:
-                    reference = static_cast<int64_t>(input_time);
-                    break;
-            }
-            reference += connection.time_offset;
-
-            int64_t lookup_time = reference - static_cast<int64_t>(connection.delay);
-
             size_t source_area;
-            bool found = lookup_time >= 0 &&
-                         connection.source_storage->find_latest_valid_area(static_cast<std::uint64_t>(lookup_time), source_area);
+            bool found;
+            int64_t lookup_time;
+            if (connection.mode == DataAccessMode::Index)
+            {
+                // Direct index access: read exactly the requested source area
+                // instead of resolving the area from time.
+                source_area = static_cast<std::size_t>(connection.fixed_index);
+                found = connection.source_storage->ring->is_populated(source_area);
+            }
+            else
+            {
+                int64_t reference;
+                switch (connection.mode)
+                {
+                    case DataAccessMode::StartTime:
+                        reference = static_cast<int64_t>(step_start);
+                        break;
+                    case DataAccessMode::EndTime:
+                        reference = static_cast<int64_t>(step_end);
+                        break;
+                    case DataAccessMode::LatestTime:
+                    default:
+                        reference = static_cast<int64_t>(input_time);
+                        break;
+                }
+                reference += connection.time_offset;
+
+                lookup_time = reference - static_cast<int64_t>(connection.delay);
+
+                found = lookup_time >= 0 &&
+                        connection.source_storage->find_latest_valid_area(static_cast<std::uint64_t>(lookup_time), source_area);
+            }
 
             if (found)
             {

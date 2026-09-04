@@ -202,6 +202,27 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs honors mode and time_offset",
         ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 300, 300);
         CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v200);
     }
+
+    SECTION("Index reads the fixed source area regardless of time")
+    {
+        // Source already has data at areas a100 (1.0) and a200 (2.0).
+        ConnectionInfo con = make_connection(src, tgt);
+        con.mode = ssp4sim::graph::DataAccessMode::Index;
+        con.fixed_index = static_cast<int64_t>(a100);
+        std::vector<ConnectionInfo> cons = {con};
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v100);
+    }
+
+    SECTION("Index into an unpopulated area leaves target unmodified")
+    {
+        ConnectionInfo con = make_connection(src, tgt);
+        con.mode = ssp4sim::graph::DataAccessMode::Index;
+        con.fixed_index = static_cast<int64_t>(kStorageAreas - 1); // never written
+        std::vector<ConnectionInfo> cons = {con};
+        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
+    }
 }
 
 // ---------------------------------------------------------------------------

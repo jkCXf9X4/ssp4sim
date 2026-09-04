@@ -182,6 +182,16 @@ namespace ssp4sim::utils
         return write_count >= capacity;
     }
 
+    /** @brief True if physical slot \p index has been written at least once. */
+    bool RingBuffer::is_populated(std::size_t index)
+    {
+        if (index >= capacity)
+        {
+            return false;
+        }
+        return populated[index];
+    }
+
     /** @brief Human-readable summary of capacity / inserts / head. */
     std::string RingBuffer::to_string() const
     {

@@ -17,6 +17,8 @@ namespace ssp4sim::graph
     ///  - Latest:    zero-order hold on the newest data at/ before the requested input time
     ///  - StartTime: sample the source at the start of the target model's step span
     ///  - EndTime:   sample the source at the end of the target model's step span
+    ///  - Index:     read the source area at a fixed index (see `fixed_index`),
+    ///               ignoring time-based lookup.
     enum class DataAccessMode : int
     {
         StartTime,

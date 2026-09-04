@@ -139,6 +139,13 @@ Returns `true` when nothing has been written yet (`write_count == 0`).
 Returns `true` once the buffer has wrapped at least once
 (`write_count >= capacity`).
 
+### `bool is_populated(size_t index)`
+
+Returns `true` if the **physical** slot `index` has been written at least once.
+
+- Out-of-range indices (>= `capacity`) return `false` rather than throwing,
+  so this is a safe way to test whether direct (index-based) access is valid.
+
 ### `string to_string() const override`
 
 Returns a short human-readable summary: capacity, `write_count`, and `head`.

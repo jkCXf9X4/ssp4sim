@@ -65,6 +65,9 @@ namespace ssp4sim::utils
 
         bool is_full();
 
+        /// True if slot \p index (physical) has been written at least once.
+        bool is_populated(std::size_t index);
+
         /// Find the first stored timestamp strictly greater than \p time.
         /// Searches from newest to oldest. Returns true if found.
         bool find_next_valid_index(uint64_t time, std::size_t &index_found);
