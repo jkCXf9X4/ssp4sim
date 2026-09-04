@@ -147,13 +147,13 @@ namespace ssp4sim::graph
 
             if (connector->causality == types::Causality::input)
             {
-                info.index = static_cast<uint32_t>(model->input_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
+                info.index = static_cast<uint32_t>(model->input_area->add_variable(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
                 info.storage = model->input_area.get();
                 model->inputs[connector->name] = std::move(info);
             }
             else if (connector->causality == types::Causality::output)
             {
-                info.index = static_cast<uint32_t>(model->output_area->add(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
+                info.index = static_cast<uint32_t>(model->output_area->add_variable(connector->name, connector->data_type, model->maxOutputDerivativeOrder));
                 info.storage = model->output_area.get();
                 model->outputs[connector->name] = std::move(info);
             }

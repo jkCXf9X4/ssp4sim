@@ -22,8 +22,8 @@ TEST_CASE("ConnectionInfo is_feedthrough field", "[ConnectionInfo]")
     // Setup minimal SignalStorage for source/target pointers
     SignalStorage src_storage(1, "source");
     SignalStorage tgt_storage(1, "target");
-    src_storage.add("source.signal", DataType::real, 0);
-    tgt_storage.add("target.signal", DataType::real, 0);
+    src_storage.add_variable("source.signal", DataType::real, 0);
+    tgt_storage.add_variable("target.signal", DataType::real, 0);
 
     ConnectionInfo con;
     con.type = DataType::real;

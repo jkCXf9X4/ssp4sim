@@ -27,13 +27,13 @@ namespace ssp4sim::utils
         ssp4cpp::utils::log::Logger* log = nullptr;
 
         std::vector<std::uint64_t> timestamps;
-        std::vector<bool> used; // has the buffer been populated at least once
+        std::vector<bool> populated; // has the buffer been written at least once
 
         AlignedBufferPool buffers;
 
-        std::size_t head = 0;       /* current active position             */
-        std::size_t capacity = 0;   /* total usable slots                 */
-        std::size_t nr_inserts = 0; /* current number of elements stored  */
+        std::size_t head = 0;         /* current active position             */
+        std::size_t capacity = 0;     /* total usable slots                 */
+        std::size_t write_count = 0;  /* cumulative number of pushes         */
 
         RingBuffer(size_t capacity, size_t buffer_size);
         
@@ -51,7 +51,7 @@ namespace ssp4sim::utils
 
         std::uint64_t get_time(std::size_t index);
 
-        bool find_index(uint64_t time, std::size_t &index_found);
+        bool find_exact_index(uint64_t time, std::size_t &index_found);
 
         bool find_latest_valid_index(uint64_t time, std::size_t &index_found);
 
@@ -59,7 +59,7 @@ namespace ssp4sim::utils
         Return element at logical position `index` counting backwards from
         the head: index 0 == head, 1 == just before head, 2 == next-newest, …
         */
-        std::size_t get_index_from_pos_rev(std::size_t position);
+        std::size_t index_back_from_head(std::size_t position);
 
         bool is_empty();
 

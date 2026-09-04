@@ -21,7 +21,8 @@ namespace ssp4sim::graph
     {
         StartTime,
         EndTime,
-        Latest
+        LatestTime,
+        Index
     };
 
     struct ConnectionInfo : public types::IWritable
@@ -45,8 +46,9 @@ namespace ssp4sim::graph
 
         uint64_t delay = 0;
 
-        DataAccessMode mode = DataAccessMode::Latest;
+        DataAccessMode mode = DataAccessMode::LatestTime;
         int64_t time_offset = 0;
+        int64_t fixed_index = 0;
 
         bool is_feedthrough = false;
 

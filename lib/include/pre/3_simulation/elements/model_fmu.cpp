@@ -123,7 +123,7 @@ namespace ssp4sim::graph
         auto target_area = input_area->get_or_push(start);
 
         IF_LOG({
-            LOG_INFO(log, "[{func}] Propagating at start_time {start_time}, input_area {input_area} timestamp {timestamp}", __func__, start, target_area, input_area->data->timestamps[target_area]);
+            LOG_INFO(log, "[{func}] Propagating at start_time {start_time}, input_area {input_area} timestamp {timestamp}", __func__, start, target_area, input_area->ring->timestamps[target_area]);
         });
 
         ConnectionInfo::retrieve_model_inputs(connections, target_area, start, start, start);
@@ -133,7 +133,7 @@ namespace ssp4sim::graph
         auto area = output_area->get_or_push(start);
 
         IF_LOG({
-            LOG_INFO(log, "[{func}] Propagating at start_time {start}, output area {area} timestamp {timestamp}", __func__, start, area, output_area->data->timestamps[area]);
+            LOG_INFO(log, "[{func}] Propagating at start_time {start}, output area {area} timestamp {timestamp}", __func__, start, area, output_area->ring->timestamps[area]);
         });
 
         ConnectorInfo::read_values_from_model(outputs, output_area.get(), area);

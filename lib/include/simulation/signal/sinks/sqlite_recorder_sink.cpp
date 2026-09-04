@@ -151,7 +151,7 @@ namespace ssp4sim::signal
 
     void SqliteWALRecorderSink::on_storage_added(const SignalStorage *storage)
     {
-        if (storage == nullptr || storage->mem_size == 0)
+        if (storage == nullptr || storage->area_byte_size == 0)
         {
             return;
         }

@@ -162,7 +162,7 @@ namespace
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Consumer.output");
-        storage.add("Consumer.value", DataType::real, 1);
+        storage.add_variable("Consumer.value", DataType::real, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);
@@ -197,14 +197,14 @@ TEST_CASE("T-001: SQLite sink writes events with mixed types and verifies via SE
     SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
-    storage.add("Consumer.CPUtime", DataType::real, 1);
-    storage.add("Consumer.EventCounter", DataType::integer, 1);
-    storage.add("Consumer.enabled", DataType::boolean, 1);
-    storage.add("Consumer.label", DataType::string, 1);
+    storage.add_variable("Consumer.CPUtime", DataType::real, 1);
+    storage.add_variable("Consumer.EventCounter", DataType::integer, 1);
+    storage.add_variable("Consumer.enabled", DataType::boolean, 1);
+    storage.add_variable("Consumer.label", DataType::string, 1);
     storage.allocate();
 
     SignalStorage aux_storage(2, "Aux.output");
-    aux_storage.add("Aux.value", DataType::real, 1);
+    aux_storage.add_variable("Aux.value", DataType::real, 1);
     aux_storage.allocate();
 
     sink.on_storage_added(&storage);
@@ -291,7 +291,7 @@ TEST_CASE("T-002: SQLite sink verifies PRAGMA journal_mode=wal", "[DataRecorder]
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Test.model");
-        storage.add("Test.value", DataType::real, 1);
+        storage.add_variable("Test.value", DataType::real, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);
@@ -347,7 +347,7 @@ TEST_CASE("T-003: SQLite run counter and no metadata table", "[DataRecorder][SQL
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Consumer.output");
-        storage.add("Consumer.value", DataType::real, 1);
+        storage.add_variable("Consumer.value", DataType::real, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);
@@ -449,7 +449,7 @@ TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecor
     SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
-    storage.add("Consumer.value", DataType::real, 1);
+    storage.add_variable("Consumer.value", DataType::real, 1);
     storage.allocate();
 
     sink.on_storage_added(&storage);
@@ -458,7 +458,7 @@ TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecor
 
     // Create an event referencing a storage that was never registered
     SignalStorage unknown_storage(1, "Unknown.output");
-    unknown_storage.add("Unknown.value", DataType::real, 1);
+    unknown_storage.add_variable("Unknown.value", DataType::real, 1);
     unknown_storage.allocate();
 
     const auto timestamp = 1ULL * sim_time::nanoseconds_per_second;
@@ -523,7 +523,7 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
-    storage.add("Consumer.value", DataType::real, 1);
+    storage.add_variable("Consumer.value", DataType::real, 1);
     storage.allocate();
 
     sink.on_storage_added(&storage);
@@ -597,10 +597,10 @@ TEST_CASE("T-007: Row-count match for SQLite events", "[DataRecorder][SQLite]")
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", sqlite_path);
 
         SignalStorage storage(1, "Consumer.output");
-        storage.add("Consumer.CPUtime", DataType::real, 1);
-        storage.add("Consumer.EventCounter", DataType::integer, 1);
-        storage.add("Consumer.enabled", DataType::boolean, 1);
-        storage.add("Consumer.label", DataType::string, 1);
+        storage.add_variable("Consumer.CPUtime", DataType::real, 1);
+        storage.add_variable("Consumer.EventCounter", DataType::integer, 1);
+        storage.add_variable("Consumer.enabled", DataType::boolean, 1);
+        storage.add_variable("Consumer.label", DataType::string, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);

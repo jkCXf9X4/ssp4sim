@@ -52,7 +52,7 @@ namespace ssp4sim::graph
                 case DataAccessMode::EndTime:
                     reference = static_cast<int64_t>(step_end);
                     break;
-                case DataAccessMode::Latest:
+                case DataAccessMode::LatestTime:
                 default:
                     reference = static_cast<int64_t>(input_time);
                     break;
@@ -68,7 +68,7 @@ namespace ssp4sim::graph
             if (found)
             {
                 IF_LOG({
-                    LOG_DEBUG(connection.log, "[{func}] Valid source_storage area found, time {time}", __func__, connection.source_storage->data->timestamps[source_area]);
+                    LOG_DEBUG(connection.log, "[{func}] Valid source_storage area found, time {time}", __func__, connection.source_storage->ring->timestamps[source_area]);
                 });
 
                 auto source_item = connection.source_storage->get_item(static_cast<std::size_t>(source_area), connection.source_index);

@@ -10,15 +10,15 @@ using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
 // ---------------------------------------------------------------------------
-// Description: Verifies aligned layout, correct offsets, mem_size stride,
+// Description: Verifies aligned layout, correct offsets, area_byte_size stride,
 //              and derivative pointer arithmetic
 // Rationale:   Misaligned access causes crashes; wrong offsets corrupt data
 // ---------------------------------------------------------------------------
 TEST_CASE("SignalStorage allocates variable and derivative layout", "[SignalStorage]")
 {
     SignalStorage storage(3, "signals");
-    const auto real_index = storage.add("signals.real", DataType::real, 2);
-    const auto int_index = storage.add("signals.mode", DataType::integer, 0);
+    const auto real_index = storage.add_variable("signals.real", DataType::real, 2);
+    const auto int_index = storage.add_variable("signals.mode", DataType::integer, 0);
 
     storage.allocate();
 
@@ -33,7 +33,7 @@ TEST_CASE("SignalStorage allocates variable and derivative layout", "[SignalStor
     auto area1 = storage.push(200);
     auto *area1_real = storage.get_item(area1, real_index);
     REQUIRE(reinterpret_cast<std::uintptr_t>(area1_real) % alignof(double) == 0);
-    REQUIRE(reinterpret_cast<std::byte *>(area1_real) - reinterpret_cast<std::byte *>(area0_real) == static_cast<std::ptrdiff_t>(storage.mem_size));
+    REQUIRE(reinterpret_cast<std::byte *>(area1_real) - reinterpret_cast<std::byte *>(area0_real) == static_cast<std::ptrdiff_t>(storage.area_byte_size));
 
     auto *first_derivative = storage.get_derivative(area0, real_index, 1);
     auto *second_derivative = storage.get_derivative(area0, real_index, 2);
@@ -51,16 +51,16 @@ TEST_CASE("SignalStorage allocates variable and derivative layout", "[SignalStor
 TEST_CASE("SignalStorage aligns mixed-type values and derivatives", "[SignalStorage]")
 {
     SignalStorage storage(2, "signals");
-    const auto int_index = storage.add("signals.mode", DataType::integer, 0);
-    const auto real_index = storage.add("signals.real", DataType::real, 1);
-    const auto string_index = storage.add("signals.label", DataType::string, 0);
+    const auto int_index = storage.add_variable("signals.mode", DataType::integer, 0);
+    const auto real_index = storage.add_variable("signals.real", DataType::real, 1);
+    const auto string_index = storage.add_variable("signals.label", DataType::string, 0);
     storage.allocate();
 
     REQUIRE(storage.variables[int_index].position % alignof(int) == 0);
     REQUIRE(storage.variables[real_index].position % alignof(double) == 0);
-    REQUIRE(storage.variables[real_index].derivate_position % alignof(double) == 0);
+    REQUIRE(storage.variables[real_index].derivative_position % alignof(double) == 0);
     REQUIRE(storage.variables[string_index].position % alignof(std::string) == 0);
-    REQUIRE(storage.mem_size % alignof(std::max_align_t) == 0);
+    REQUIRE(storage.area_byte_size % alignof(std::max_align_t) == 0);
 
     const auto area0 = storage.push(10);
     const auto area1 = storage.push(20);
@@ -84,7 +84,7 @@ TEST_CASE("SignalStorage aligns mixed-type values and derivatives", "[SignalStor
 TEST_CASE("SignalStorage pushes timestamps and finds areas", "[SignalStorage]")
 {
     SignalStorage storage(3, "signals");
-    storage.add("signals.temperature", DataType::real, 1);
+    storage.add_variable("signals.temperature", DataType::real, 1);
     storage.allocate();
 
     auto first = storage.push(100);
@@ -118,8 +118,8 @@ TEST_CASE("SignalStorage pushes timestamps and finds areas", "[SignalStorage]")
 TEST_CASE("SignalStorage returns null for derivative requests outside valid range", "[SignalStorage]")
 {
     SignalStorage storage(2, "signals");
-    const auto no_derivative_index = storage.add("signals.mode", DataType::integer, 0);
-    const auto derivative_index = storage.add("signals.real", DataType::real, 2);
+    const auto no_derivative_index = storage.add_variable("signals.mode", DataType::integer, 0);
+    const auto derivative_index = storage.add_variable("signals.real", DataType::real, 2);
 
     REQUIRE(storage.get_item(0, 0) == nullptr);
     REQUIRE(storage.get_derivative(0, derivative_index, 1) == nullptr);
@@ -141,7 +141,7 @@ TEST_CASE("SignalStorage returns null for derivative requests outside valid rang
 TEST_CASE("SignalStorage allocate can only be called once", "[SignalStorage]")
 {
     SignalStorage storage(2, "signals");
-    storage.add("signals.value", DataType::integer, 0);
+    storage.add_variable("signals.value", DataType::integer, 0);
 
     REQUIRE_NOTHROW(storage.allocate());
     REQUIRE_THROWS_AS(storage.allocate(), std::runtime_error);
@@ -154,7 +154,7 @@ TEST_CASE("SignalStorage allocate can only be called once", "[SignalStorage]")
 TEST_CASE("SignalStorage get_or_push reuses existing timestamp areas", "[SignalStorage]")
 {
     SignalStorage storage(3, "signals");
-    storage.add("signals.temperature", DataType::real, 0);
+    storage.add_variable("signals.temperature", DataType::real, 0);
     storage.allocate();
 
     const auto first = storage.get_or_push(100);

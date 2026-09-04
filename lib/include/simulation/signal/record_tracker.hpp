@@ -59,7 +59,7 @@ namespace ssp4sim::signal
         {
             this->storage = storage;
             this->index = index;
-            buffers = std::make_unique<utils::RingBuffer>(capacity, storage->mem_size);
+            buffers = std::make_unique<utils::RingBuffer>(capacity, storage->area_byte_size);
         }
 
         bool try_push(std::size_t source_area, std::size_t &target_area)
@@ -70,8 +70,8 @@ namespace ssp4sim::signal
                 active_items.fetch_sub(1, std::memory_order_acq_rel);
                 return false;
             }
-            auto source = storage->data->get_item(source_area, false);
-            auto source_time = storage->data->get_time(source_area);
+            auto source = storage->ring->get_item(source_area, false);
+            auto source_time = storage->ring->get_time(source_area);
             target_area = buffers->push(source_time);
             std::memcpy(buffers->get_item(target_area), source, buffers->buffers.aligned_size);
 

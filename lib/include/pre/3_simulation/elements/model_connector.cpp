@@ -44,7 +44,7 @@ namespace ssp4sim::graph
                                                uint64_t time)
     {
         LOG_TRACE_L1(input_area->log, "[{func}] Set input start area", __func__);
-        auto capacity = input_area->data->capacity;
+        auto capacity = input_area->ring->capacity;
 
         // Push initial values into every ring buffer slot so that no matter
         // which slot push() returns during pre(), it is pre-populated with
@@ -87,7 +87,7 @@ namespace ssp4sim::graph
                                             int area)
     {
         IF_LOG({
-            LOG_DEBUG(storage->log, "[{func}] Write data to model, time: {time}", __func__, storage->data->timestamps[area]);
+            LOG_DEBUG(storage->log, "[{func}] Write data to model, time: {time}", __func__, storage->ring->timestamps[area]);
         });
 
         for (auto &[_, input] : inputs)
@@ -108,7 +108,7 @@ namespace ssp4sim::graph
                                                int area)
     {
         IF_LOG({
-            LOG_DEBUG(storage->log, "[{func}] Init, area {area}, time {time}", __func__, area, storage->data->timestamps[area]);
+            LOG_DEBUG(storage->log, "[{func}] Init, area {area}, time {time}", __func__, area, storage->ring->timestamps[area]);
         });
 
         for (auto &[_, output] : outputs)

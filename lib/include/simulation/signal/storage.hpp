@@ -35,10 +35,10 @@ namespace ssp4sim::signal
         size_t derivative_size;
         size_t derivative_alignment;
 
-        size_t total_size; // size of data and derivate
+        size_t total_size; // size of data and derivative
 
         size_t position;          // position in the item data chunk
-        size_t derivate_position; // position of the first derivate in the item data chunk
+        size_t derivative_position; // position of the first derivative in the item data chunk
     };
 
     class SignalStorage; // Forward
@@ -66,13 +66,13 @@ namespace ssp4sim::signal
 
         bool allocated = false;
 
-        std::unique_ptr<utils::RingBuffer> data;
+        std::unique_ptr<utils::RingBuffer> ring;
 
         std::vector<SignalInfo> variables;
-        size_t mem_size = 0;
+        size_t area_byte_size = 0;
 
-        std::vector<std::vector<std::byte *>> locations;          // absolute location in memory
-        std::vector<std::vector<std::byte *>> derivate_locations; // absolute location in memory
+        std::vector<std::vector<std::byte *>> locations;            // absolute location in memory
+        std::vector<std::vector<std::byte *>> derivative_locations; // absolute location in memory
 
         Callback new_data_callback = nullptr;
         void *new_data_callback_context = nullptr;
@@ -81,7 +81,7 @@ namespace ssp4sim::signal
 
         ~SignalStorage();
 
-        size_t add(std::string name, types::DataType type, size_t max_interpolation_order);
+        size_t add_variable(std::string name, types::DataType type, size_t max_interpolation_order);
 
         void allocate();
 

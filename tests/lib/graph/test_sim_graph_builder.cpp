@@ -17,7 +17,7 @@ namespace {
     void init_storage(SignalStorage& storage, const std::string& signal_name,
                       DataType type = DataType::real, size_t idx = 0)
     {
-        storage.add(signal_name, type, idx);
+        storage.add_variable(signal_name, type, idx);
         storage.allocate();
     }
 
@@ -196,7 +196,7 @@ TEST_CASE("ConnectionInfo::retrieve_model_inputs honors mode and time_offset",
     SECTION("Latest applies offset to input_time")
     {
         ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::Latest;
+        con.mode = ssp4sim::graph::DataAccessMode::LatestTime;
         con.time_offset = -50; // input_time - 50 = 250 -> latest valid <=250 is 200
         std::vector<ConnectionInfo> cons = {con};
         ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 300, 300);

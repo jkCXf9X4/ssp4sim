@@ -36,7 +36,7 @@ TEST_CASE("RingBuffer push grows until full then overwrites oldest", "[RingBuffe
     auto first_index = buffer.push();
     REQUIRE(first_index == expected_head);
     REQUIRE(buffer.head == expected_head);
-    REQUIRE(buffer.nr_inserts == 1);
+    REQUIRE(buffer.write_count == 1);
     REQUIRE_FALSE(buffer.is_empty());
 
     // second
@@ -44,21 +44,21 @@ TEST_CASE("RingBuffer push grows until full then overwrites oldest", "[RingBuffe
     auto second_index = buffer.push();
     REQUIRE(second_index == expected_head);
     REQUIRE(buffer.head == expected_head);
-    REQUIRE(buffer.nr_inserts == 2);
+    REQUIRE(buffer.write_count == 2);
 
     // 3 wraparound
     expected_head = 0;
     auto third_index = buffer.push();
     REQUIRE(third_index == expected_head);
     REQUIRE(buffer.head == expected_head);
-    REQUIRE(buffer.nr_inserts == 3);
+    REQUIRE(buffer.write_count == 3);
     REQUIRE(buffer.is_full());
 
     // 4 overwrite 
     expected_head = 1;
     auto fourth_index = buffer.push();
     REQUIRE(fourth_index == expected_head);
-    REQUIRE(buffer.nr_inserts == 4);
+    REQUIRE(buffer.write_count == 4);
 }
 
 // ---------------------------------------------------------------------------
@@ -101,7 +101,7 @@ TEST_CASE("RingBuffer get_item provides aligned storage and bounds checks", "[Ri
 }
 
 // ---------------------------------------------------------------------------
-// Description: Verifies get_index_from_pos_rev follows head/tail ordering
+// Description: Verifies index_back_from_head follows head/tail ordering
 //              before and after wraparound
 // Rationale:   Reverse-position lookup is used by signal storage for
 //              Nth-most-recent-value queries
@@ -114,13 +114,13 @@ TEST_CASE("RingBuffer index helpers follow head/tail ordering", "[RingBuffer]")
     auto idx1 = buffer.push();
     *reinterpret_cast<int *>(buffer.get_item(idx1)) = 10;
     // ensure this works while buffer is not full
-    auto index = buffer.get_index_from_pos_rev(0);
+    auto index = buffer.index_back_from_head(0);
     REQUIRE(index == idx1);
     REQUIRE(*reinterpret_cast<int *>(buffer.get_item(index)) == 10);
     
     auto idx2 = buffer.push();
     *reinterpret_cast<int *>(buffer.get_item(idx2)) = 20;
-    index = buffer.get_index_from_pos_rev(1);
+    index = buffer.index_back_from_head(1);
     REQUIRE(index == idx1);
     REQUIRE(*reinterpret_cast<int *>(buffer.get_item(index)) == 10);
 
@@ -129,9 +129,9 @@ TEST_CASE("RingBuffer index helpers follow head/tail ordering", "[RingBuffer]")
     REQUIRE(buffer.is_full());
 
     // Reverse lookup should walk newest to oldest.
-    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(0))) == 30);
-    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(1))) == 20);
-    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(2))) == 10);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.index_back_from_head(0))) == 30);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.index_back_from_head(1))) == 20);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.index_back_from_head(2))) == 10);
 
     // Overwrite oldest and confirm head/tail advance and value mapping update.
     auto idx4 = buffer.push();
@@ -139,9 +139,9 @@ TEST_CASE("RingBuffer index helpers follow head/tail ordering", "[RingBuffer]")
 
     REQUIRE(buffer.is_full());
 
-    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(0))) == 40);
-    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(1))) == 30);
-    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.get_index_from_pos_rev(2))) == 20);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.index_back_from_head(0))) == 40);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.index_back_from_head(1))) == 30);
+    REQUIRE(*reinterpret_cast<int *>(buffer.get_item(buffer.index_back_from_head(2))) == 20);
 }
 
 // ---------------------------------------------------------------------------
@@ -159,7 +159,7 @@ TEST_CASE("RingBuffer tracks timestamps and finds valid indices", "[RingBuffer]"
     REQUIRE(buffer.get_time(buffer.head) == 200);
     // ensure these work while buffer is not full
     size_t index_for_200;
-    REQUIRE(buffer.find_index(200, index_for_200) == true);
+    REQUIRE(buffer.find_exact_index(200, index_for_200) == true);
     REQUIRE(index_for_200 == idx_200);
     size_t index;
     REQUIRE(buffer.find_latest_valid_index(250, index) == true);
@@ -168,7 +168,7 @@ TEST_CASE("RingBuffer tracks timestamps and finds valid indices", "[RingBuffer]"
     auto idx3 = buffer.push(300);
     REQUIRE(buffer.get_time(buffer.head) == 300);
 
-    REQUIRE(buffer.find_index(200, index_for_200) == true);
+    REQUIRE(buffer.find_exact_index(200, index_for_200) == true);
     REQUIRE(index_for_200 == idx_200);
     REQUIRE(buffer.get_time(index_for_200) == 200);
 
@@ -177,7 +177,7 @@ TEST_CASE("RingBuffer tracks timestamps and finds valid indices", "[RingBuffer]"
     REQUIRE(buffer.find_latest_valid_index(50, index) == false);
 
     buffer.push(400); // overwrites oldest timestamp
-    REQUIRE(buffer.find_index(100, index) == false);
+    REQUIRE(buffer.find_exact_index(100, index) == false);
     REQUIRE(buffer.find_latest_valid_index(100, index) == false);
     REQUIRE(buffer.find_latest_valid_index(150, index) == false);
     REQUIRE(buffer.find_latest_valid_index(350, index) == true);

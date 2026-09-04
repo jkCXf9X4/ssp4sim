@@ -74,7 +74,7 @@ public:
     {
         events.push_back(event);
         storage_names.push_back(event.storage->name);
-        if (event.buffer && event.storage->mem_size >= sizeof(double))
+        if (event.buffer && event.storage->area_byte_size >= sizeof(double))
         {
             double value = 0.0;
             std::memcpy(&value, event.buffer, sizeof(double));
@@ -126,8 +126,8 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage storage(2, "signals");
-    storage.add("signals.real", DataType::real, 1);
-    storage.add("signals.int", DataType::integer, 1);
+    storage.add_variable("signals.real", DataType::real, 1);
+    storage.add_variable("signals.int", DataType::integer, 1);
     storage.allocate();
 
     recorder.add_storage(&storage);
@@ -156,8 +156,8 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage storage(2, "signals");
-    storage.add("signals.temperature", DataType::real, 1);
-    storage.add("signals.mode", DataType::integer, 0);
+    storage.add_variable("signals.temperature", DataType::real, 1);
+    storage.add_variable("signals.mode", DataType::integer, 0);
     storage.allocate();
 
     recorder.add_storage(&storage);
@@ -195,13 +195,13 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage primary(2, "primary");
-    primary.add("primary.temperature", DataType::real, 1);
-    primary.add("primary.mode", DataType::integer, 0);
+    primary.add_variable("primary.temperature", DataType::real, 1);
+    primary.add_variable("primary.mode", DataType::integer, 0);
     primary.allocate();
 
     SignalStorage secondary(2, "secondary");
-    secondary.add("secondary.pressure", DataType::real, 1);
-    secondary.add("secondary.index", DataType::integer, 2);
+    secondary.add_variable("secondary.pressure", DataType::real, 1);
+    secondary.add_variable("secondary.index", DataType::integer, 2);
     secondary.allocate();
 
     recorder.add_storage(&primary);
@@ -265,11 +265,11 @@ TEST_CASE("DataRecorder respects CSV recording interval", "[DataRecorder]")
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, sim_time::nanoseconds_per_second));
 
     SignalStorage primary(1, "primary");
-    primary.add("primary.temperature", DataType::real, 1);
+    primary.add_variable("primary.temperature", DataType::real, 1);
     primary.allocate();
 
     SignalStorage secondary(1, "secondary");
-    secondary.add("secondary.pressure", DataType::real, 1);
+    secondary.add_variable("secondary.pressure", DataType::real, 1);
     secondary.allocate();
 
     recorder.add_storage(&primary);
@@ -341,11 +341,11 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
     recorder.add_sink(std::move(sink));
 
     SignalStorage primary(2, "primary");
-    primary.add("primary.temperature", DataType::real, 1);
+    primary.add_variable("primary.temperature", DataType::real, 1);
     primary.allocate();
 
     SignalStorage secondary(2, "secondary");
-    secondary.add("secondary.pressure", DataType::real, 1);
+    secondary.add_variable("secondary.pressure", DataType::real, 1);
     secondary.allocate();
 
     recorder.add_storage(&primary);
@@ -407,7 +407,7 @@ TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten"
     recorder.add_sink(std::move(sink));
 
     SignalStorage storage(1, "signals");
-    storage.add("signals.temperature", DataType::real, 1);
+    storage.add_variable("signals.temperature", DataType::real, 1);
     storage.allocate();
 
     recorder.add_storage(&storage);
