@@ -1,11 +1,10 @@
 # Module: Data Access & Scheduling — Read-Target Resolver v2 (streamlined interface)
 
 <!-- Layer: 03-implementation -->
-<!-- Status: Implementation mockup (revision 2). NOT implemented, NOT final, no decision.
-     A fresh revision of data_access_read_target_resolver.md (v1), aimed at a much
-     smaller external surface: construct against the graph models only, expose ONE
-     read function that returns "the index or the viable time depending on mode" and
-     conceal the access logic from the copy path. -->
+<!-- Status: IMPLEMENTED (initial version) — lib/include/scheduling/read_target_resolver.{hpp,cpp}
+     + tests/lib/scheduling/test_read_target_resolver.cpp. Tests green (11072 assertions /
+     128 test cases suite-wide; resolver: 26 assertions / 12 cases). Still NOT a design decision;
+     the object-level FmuModel integration (copy_model_inputs wiring) is a follow-up. -->
 <!-- Sister docs:
    data_access_read_target_resolver.md          (v1 — full interface incl. UC-14 analysis)
    data_access_policy_architecture.md           (architecture reasoning, concept-level)
@@ -31,9 +30,36 @@ The determinism contract is unchanged from v1 (frontier-clamped, no live-head re
 unlinked reads stale-only, single committed-watermark truth). Only the **external surface**
 is simplified; the logic that was spread across the caller is now inside the resolver.
 
-The sketch is written against the repo's existing types (`Invocable`, `FmuModel`,
-`ConnectionInfo`, `SignalStorage`). **Mockup only — not implemented, not final, no decision
-is implied.**
+> **Implemented** in `lib/include/scheduling/read_target_resolver.{hpp,cpp}` (namespace
+> `ssp4sim::scheduling`; internal resolution core in `ssp4sim::scheduling::detail`).
+> Both the mockup sketches below and the implementation agree; where this document's
+> pseudo-code and the code differ, the code wins.
+
+## Implementation notes (initial version)
+
+- **File split** — the pure, storage-free resolution core lives in its own file pair so it
+  is independently unit-testable and the public resolver header stays a thin opaque class.
+  Dependency direction: the core **depends on** the public resolver header for its value
+  types; the resolver header **never drags in the core** — the core is linked only into the
+  resolver's `.cpp` and the tests:
+  | File | Contains | Depends on |
+  |---|---|---|
+  | `lib/include/scheduling/read_target_resolver.hpp` | `ResolvedRead`, `ResolverConfig`, `ReadTargetResolver` class | only `Invocable` / `FmuModel` / `SignalStorage` — NOT the core |
+  | `lib/include/scheduling/read_target_core.{hpp,cpp}` | `detail::{Edge, ModelStatus, edge_from, resolve_edge}` | `read_target_resolver.hpp` (public types), `ConnectionInfo`, `Invocable` |
+  | `lib/include/scheduling/read_target_resolver.cpp` | constructor, `mark_committed`, `resolve` (opaque `State`) | links `read_target_core.hpp` in |
+- `detail::ModelStatus` uses `std::atomic<std::uint64_t>` fields; it is held in the
+  resolver behind `std::unique_ptr` (atomics are non-movable, so it cannot be a map *value*).
+- `mark_committed` is a no-op for unregistered producers (graceful; returns, matching the
+  "unknown model ⇒ invalid read" behaviour of `resolve`).
+- Index-mode resolution returns the fixed slot as an area; the *populated* gate is applied
+  by the resolver shell (the pure `detail::resolve_edge` core cannot reach the storage).
+- Unlinked reads (UC-14) are auto-detected at construction: a connection whose
+  `source_storage` is not owned by any registered model's `output_area` is marked
+  `unlinked` and resolves stale-only to the committed area.
+- All resolver-private *tables* (`State::edges/status/owner/cfg`) are behind the opaque
+  `State*` completed only in the `.cpp` — the header exposes zero private layout.
+- The `copy_model_inputs` loop (below) is not yet wired into `FmuModel::pre`; that
+  integration (threading the resolver through the executor) is a follow-up.
 
 ---
 
@@ -73,8 +99,9 @@ public:
 
     // THE one read function. For target `model`, incoming connection `connection_idx`,
     // return the index to read OR the viable time to search, concealed by `mode`.
+    // No `input_time`: the Latest mode resolves to the latest committed index directly.
     ResolvedRead resolve(ssp4sim::graph::Invocable *model, size_t connection_idx,
-                         uint64_t input_time, uint64_t step_start, uint64_t step_end);
+                         uint64_t step_start, uint64_t step_end);
 
     // Everything else is private.
 };
@@ -101,7 +128,7 @@ struct Edge   // private
 {
     ssp4sim::signal::SignalStorage *source;   // producer output storage
     uint32_t  source_index;
-    DataAccessMode mode;      // StartTime / EndTime / LatestTime / Index
+    DataAccessMode mode;      // StartTime / EndTime / Latest / Index
     uint64_t  delay;
     int64_t   time_offset;
     int64_t   fixed_index;    // Index mode
@@ -128,14 +155,16 @@ lets `copy_model_inputs` iterate the model's own `connections` and just ask `res
 
 ```cpp
 ResolvedRead resolve(Invocable *model, size_t i,
-                     uint64_t input_time, uint64_t step_start, uint64_t step_end)
+                     uint64_t step_start, uint64_t step_end)
 {
     const Edge &e  = edges_[model][i];
     const ModelStatus &st = status_[e.source_producer];
     ResolvedRead r;
 
-    // UC-14 unlinked: stale-only by construction, direct to committed area, no search.
-    if (e.unlinked)
+    // Latest (default) / UC-14 unlinked: newest committed area, direct index, no scan,
+    // never the live head (determinism). No input_time — delay/time_offset are
+    // time-domain knobs and do not apply to the latest index.
+    if (e.unlinked || e.mode == DataAccessMode::Latest)
     {
         r.valid   = st.committed_count > 0;
         r.is_area = true;
@@ -154,15 +183,8 @@ ResolvedRead resolve(Invocable *model, size_t i,
         return r;
     }
 
-    // Time modes: pick the base handle the connection samples at.
-    uint64_t base;
-    switch (e.mode)
-    {
-        case DataAccessMode::StartTime:  base = step_start; break;
-        case DataAccessMode::EndTime:    base = step_end;   break;
-        case DataAccessMode::LatestTime:
-        default:                         base = input_time; break;
-    }
+    // Time modes (StartTime / EndTime): pick the base step handle the connection samples at.
+    uint64_t base = (e.mode == DataAccessMode::StartTime) ? step_start : step_end;
 
     // Not-yet-committed producer → no valid data (D2/D13) → skip copy this frame.
     if (st.committed_count == 0)
@@ -194,13 +216,14 @@ here and reduced to *"here is an index"* or *"here is a viable time"*.
 ```cpp
 // The *entire* read path. Runs once per model pre().
 // The resolver conceals all access policy; this loop only interprets `is_area`.
+// No input_time needed — Latest resolves to the latest committed index internally.
 void copy_model_inputs(ReadTargetResolver &res, FmuModel *target, int target_area,
-                       uint64_t input_time, uint64_t step_start, uint64_t step_end)
+                       uint64_t step_start, uint64_t step_end)
 {
     for (size_t i = 0; i < target->connections.size(); ++i)
     {
         ConnectionInfo &c = target->connections[i];
-        ResolvedRead r = res.resolve(target, i, input_time, step_start, step_end);
+        ResolvedRead r = res.resolve(target, i, step_start, step_end);
         if (!r.valid) continue;                       // keep init / skip this frame
 
         std::byte *src;
@@ -294,8 +317,17 @@ mapping; v2 is the streamlined external contract intended to make integration ag
 
 ## Future revisions
 
-This is mockup revision 2; the resolved design may differ. The non-negotiable anchors are:
-centralized per-model status, single committed frontier as the only mutable truth (M1b),
-frontier-clamped reads that never touch the live head (M1a/D2/D7), unlinked reads
-stale-only (UC-14), and `mark_committed` as the sole writer. Any future surface change must
-preserve those.
+The non-negotiable anchors are: centralized per-model status, single committed frontier as
+the only mutable truth (M1b), frontier-clamped reads that never touch the live head
+(M1a/D2/D7), unlinked reads stale-only (UC-14), and `mark_committed` as the sole writer.
+Any future surface change must preserve those.
+
+Status of the initial implementation (lib/include/scheduling/read_target_resolver.{hpp,cpp}):
+
+- [x] Constructor against `std::vector<Invocable*>` (FmuModel cast; non-Fmu nodes skipped)
+- [x] `mark_committed` (release-store) + `resolve` (index-or-time) public surface
+- [x] Pure `detail::resolve_edge` core, unit-tested (modes, delay/offset, clamp, first-commit
+      gate, Index, unlinked)
+- [ ] Wire `copy_model_inputs` into `FmuModel::pre` (thread resolver through executor) — follow-up
+- [ ] Build-time `validate()` (D8 lookback / capacity checks) — follow-up
+- [ ] Plan caching / edge roles / scopes (M2), joint-frame (D16) — deferred per design

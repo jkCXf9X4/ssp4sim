@@ -45,7 +45,7 @@ Each connection resolves its **source area by time** via `ConnectionInfo::mode`:
 |---|---|
 | `StartTime` | `step_start` |
 | `EndTime` | `step_end` |
-| `LatestTime` | `input_time` (zero-order hold) |
+| `Latest` | newest committed area (zero-order hold); named `LatestTime` in earlier frames, sampled `input_time` |
 | `Index` | **fixed physical slot** `fixed_index`, no time lookup (added recently, absolute semantics) |
 
 **Two corrections from review 3 — what the code *actually* does today differs from intent:**

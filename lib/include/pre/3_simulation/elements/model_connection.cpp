@@ -64,9 +64,9 @@ namespace ssp4sim::graph
                     case DataAccessMode::EndTime:
                         reference = static_cast<int64_t>(step_end);
                         break;
-                    case DataAccessMode::LatestTime:
+case DataAccessMode::Latest:
                     default:
-                        reference = static_cast<int64_t>(input_time);
+                        reference = input_time;
                         break;
                 }
                 reference += connection.time_offset;

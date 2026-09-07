@@ -14,7 +14,7 @@
 namespace ssp4sim::graph
 {
     /// How a connection reads its source data:
-    ///  - Latest:    zero-order hold on the newest data at/ before the requested input time
+    ///  - Latest:    newest committed data (zero-order hold on the latest index)
     ///  - StartTime: sample the source at the start of the target model's step span
     ///  - EndTime:   sample the source at the end of the target model's step span
     ///  - Index:     read the source area at a fixed index (see `fixed_index`),
@@ -23,7 +23,7 @@ namespace ssp4sim::graph
     {
         StartTime,
         EndTime,
-        LatestTime,
+        Latest,
         Index
     };
 
@@ -48,7 +48,7 @@ namespace ssp4sim::graph
 
         uint64_t delay = 0;
 
-        DataAccessMode mode = DataAccessMode::LatestTime;
+        DataAccessMode mode = DataAccessMode::Latest;
         int64_t time_offset = 0;
         int64_t fixed_index = 0;
 

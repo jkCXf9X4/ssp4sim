@@ -100,7 +100,7 @@ struct Edge
 {
     ssp4sim::signal::SignalStorage *source;      // producer output storage
     uint32_t source_index;                       // index into the producer's output area
-    DataAccessMode mode;                         // StartTime / EndTime / LatestTime / Index
+    DataAccessMode mode;                         // StartTime / EndTime / Latest / Index
     uint64_t delay;                              // from ConnectionInfo
     int64_t  time_offset;                        // from ConnectionInfo (only ever 0 today)
     Invocable *source_producer;                  // resolved via owner_ — the frontier owner
@@ -175,7 +175,8 @@ private:
 ### Resolution rule (the core of `resolve_one`)
 
 Per connection, with T = the time handle selected by `mode` (`StartTime` → `step_start`,
-`EndTime` → `step_end`, `LatestTime` → `input_time`, `Index` → no time), and then
+`EndTime` → `step_end`, `Index` → no time; in **v2** `Latest` resolves to the latest
+committed area index directly — no time involved, no `input_time`), and then
 `reference = T + time_offset − delay`:
 
 1. **Index mode** → read the fixed slot directly (`README: fixed physical slot`, absolute
