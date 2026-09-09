@@ -170,31 +170,6 @@ TEST_CASE("GraphAnalysis verify_placement flags backward edges", "[graph_analysi
 }
 
 // ---------------------------------------------------------------------------
-// Description: invoke walks the condensed graph in topo order, invoking each
-//              group's sub-nodes.
-// Rationale:   GraphAnalysis is itself an Invocable usable as a scheduler.
-// ---------------------------------------------------------------------------
-TEST_CASE("GraphAnalysis invoke runs components in topological order", "[graph_analysis]")
-{
-    std::vector<std::string> calls;
-    CountingInvocable a("a", &calls), b("b", &calls), c("c", &calls);
-    a.add_child(&b);
-    b.add_child(&a);   // loop {a, b}
-    b.add_child(&c);
-
-    std::vector<Invocable *> nodes{&a, &b, &c};
-    GraphAnalysis analysis(nodes);
-    analysis.analyze();
-
-    auto end_time = analysis.invoke(ssp4sim::graph::StepData(0, 10, 10));
-
-    REQUIRE(end_time == 10);
-    REQUIRE(calls.size() == 3);
-    REQUIRE(std::find(calls.begin(), calls.end(), "a") != calls.end());
-    REQUIRE(std::find(calls.begin(), calls.end(), "b") != calls.end());
-    REQUIRE(calls.back() == "c");
-}
-// ---------------------------------------------------------------------------
 // Description: analyze() and topological_sort() tolerate an empty node set.
 // Rationale:   Schedulers may be constructed with no nodes; the analysis must
 //              not crash and must produce an empty execution order.
@@ -279,15 +254,6 @@ TEST_CASE("SccGroup two-node cycle is a loop", "[graph_analysis]")
 // ---------------------------------------------------------------------------
 TEST_CASE("GraphAnalysis topological_sort throws on SCC DAG cycle", "[graph_analysis]")
 {
-    std::vector<std::string> calls;
-    CountingInvocable a("a", &calls), b("b", &calls);
-    a.add_child(&b);
-    b.add_child(&a); // {a, b} is one SCC -> DAG has a single node, no cycle
-
-    std::vector<Invocable *> nodes{&a, &b};
-    GraphAnalysis analysis(nodes);
-    analysis.analyze();
-
     // The SCC condensation is a DAG by construction, so a genuine cycle can
     // only be injected by mutating the graph after analysis. Simulate the
     // structural error by feeding a cyclic DAG directly to topological_sort.
@@ -295,5 +261,8 @@ TEST_CASE("GraphAnalysis topological_sort throws on SCC DAG cycle", "[graph_anal
         {0, {1}},
         {1, {0}},
     };
-    REQUIRE_THROWS_AS(analysis.topological_sort(cyclic_dag), std::runtime_error);
+    REQUIRE_THROWS_AS(
+        ssp4sim::graph::GraphAnalysis::topological_sort(cyclic_dag),
+        std::runtime_error);
 }
+

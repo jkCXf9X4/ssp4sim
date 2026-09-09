@@ -17,6 +17,7 @@
 
 #include "simulation/graph_executor/execution/invocable.hpp"
 #include "simulation/graph_executor/graph_executor.hpp"
+#include "simulation/graph_executor/graph_executor_realtime.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -44,9 +45,12 @@ namespace ssp4sim
 
         std::string session_uuid;
 
-        pre::SimulationPipelineResult setup_results;
+        pre::SimulationGraph sim_graph; // model graph
+        pre::SimulationData sim; // executors, access rules
+
         std::unique_ptr<signal::DataRecorder> recorder = nullptr;
-        std::unique_ptr<graph::GraphExecutor> sim_graph;
+
+        std::unique_ptr<Invocable> simulation_node;
     };
 
     Simulation::Simulation(ssp4cpp::Ssp *ssp, ssp4sim::SharedConfig *config) : p(std::make_unique<SimulationPrivate>())
@@ -81,24 +85,22 @@ namespace ssp4sim
      */
     void Simulation::init()
     {
-        if (p->sim_graph)
+        if (p->simulation_node)
         {
             throw std::logic_error("Simulation::init() called twice");
         }
 
         LOG_INFO(p->log, "[{func}] Initializing simulation", __func__);
 
-        p->setup_results = pre::build_simulation_graph(p->ssp, this->config);
-        graph::GraphBuilder::register_model_storages(p->setup_results.models, p->recorder.get());
+        p->sim_graph = pre::build_simulation_graph(p->ssp, this->config);
 
-        LOG_INFO(p->log, "[{func}] - Creating simulation graph executor", __func__);
+        // set up executors, data access rules, data recording mechanisms
+        p->sim = setup_simulation(p->sim_graph->get_models(),  p->recorder.get(), this->config);
+        p->simulation_node = p->sim->execution_nod;
 
-        p->sim_graph = std::make_unique<graph::GraphExecutor>(p->setup_results.get_models());
-
-        LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());
 
         LOG_INFO(p->log, "[{func}] - Init simulation graph", __func__);
-        p->sim_graph->init();
+        p->simulation_node->init();
 
         if (p->recorder)
         {
@@ -116,7 +118,7 @@ namespace ssp4sim
      */
     void Simulation::simulate()
     {
-        if (!p->sim_graph)
+        if (!p->simulation_node)
         {
             throw std::runtime_error("Simulation::simulate() called before init()");
         }
@@ -130,16 +132,11 @@ namespace ssp4sim
 
         auto sim_timer = utils::time::Timer();
 
-        if (config->realtime)
-        {
-            p->sim_graph->enable_realtime(utils::time::time_now_ns());
-        }
-
         std::exception_ptr simulation_error;
 
         try
         {
-            p->sim_graph->invoke(ssp4sim::graph::StepData(config->start_time, config->end_time, config->timestep));
+            p->simulation_node->invoke(ssp4sim::graph::StepData(config->start_time, config->end_time));
         }
         catch (const std::exception &e)
         {
@@ -171,7 +168,7 @@ namespace ssp4sim
         }
 
         uint64_t total_model_time = 0;
-        for (auto &node : p->sim_graph->nodes)
+        for (auto& [key, node] : p->sim_graph.models)
         {
             auto model_walltime = node->walltime_ns;
             LOG_INFO(p->log, "[{func}] Model {model} walltime: {walltime}", __func__, node->name, utils::time::ns_to_s(model_walltime));

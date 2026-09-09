@@ -17,7 +17,7 @@ recorder should be injected to the models earlier
 ---
 
 
-should lib/include/simulation/graph_executor/graph_executor.cpp be a macro step executor?
+lib/include/simulation/graph_executor/graph_executor.cpp be a pure macro step executor
 
 split into a macro and a realtime macro step executor
 
