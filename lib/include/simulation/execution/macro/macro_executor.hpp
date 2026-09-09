@@ -18,7 +18,7 @@ namespace ssp4sim::graph
     {
     public:
 
-        MacroExecutor(std::vector<Invocable *> nodes);
+        MacroExecutor(std::vector<std::unique_ptr<Invocable>> nodes);
 
         uint64_t invoke(StepData step_data) override;
 

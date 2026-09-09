@@ -13,14 +13,15 @@ namespace ssp4sim::graph
     class RealtimeMacroExecutor final : public ExecutionBase
     {
     public:
-
-        RealtimeMacroExecutor(std::map<std::string, Invocable *> node_map);
+        RealtimeMacroExecutor(std::vector<std::unique_ptr<Invocable>> nodes);
 
         uint64_t invoke(StepData step_data) override;
 
         uint64_t realtime_start_reference = 0;
         uint64_t macro_step = 0;
+
+    private:
+        void wait_for_realtime_sync(uint64_t simulation_time);
     };
 
 }
-

@@ -105,6 +105,7 @@ namespace ssp4sim::graph
             // Both dispatch to the same scheduler.
             LOG_INFO(log, "[{func}] Executor: La2Scheduler", __func__);
             specialized_executor = std::make_unique<La2Scheduler>(nodes);
+            specialized_executor.set_resolver(std::make_shared( **simple jacobi resolver**))
         }
         else if (executor_method == "parallel_seidel" || executor_method == "parallel-seidel")
         {

@@ -21,7 +21,7 @@ namespace ssp4sim::graph
 
         ExecutionBase() = default;
 
-        ExecutionBase(std::vector<std::unique_ptr<Invocable>> nodes);
+        ExecutionBase(std::vector<std::unique_ptr<Invocable>> nodes, std::string log_name="ssp4sim.execution.ExecutionBase");
 
         void set_resolver(std::shared_ptr<DataAccessResolver> &resolver);
 

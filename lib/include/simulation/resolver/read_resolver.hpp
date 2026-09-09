@@ -1,7 +1,10 @@
 #pragma once
 
+#include "invocable.hpp"
+
 #include <cstddef>
 #include <cstdint>
+#include <vector>
 
 namespace ssp4sim::scheduling
 {
@@ -40,6 +43,8 @@ namespace ssp4sim::scheduling
     {
     public:
         DataAccessResolver() = default;
+        DataAccessResolver(std::vector<Invocable *> nodes);
+
         ~DataAccessResolver() noexcept = default;
 
         /// Advance one producer's committed frontier. Called ONLY after the producer's

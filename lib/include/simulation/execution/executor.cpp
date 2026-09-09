@@ -8,8 +8,8 @@
 namespace ssp4sim::graph
 {
 
-    ExecutionBase::ExecutionBase(std::vector<std::unique_ptr<Invocable>> nodes)
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ExecutionBase")),
+    ExecutionBase::ExecutionBase(std::vector<std::unique_ptr<Invocable>> nodes, std::string log_name)
+        : log(ssp4cpp::utils::log::make_logger(log_name)),
           nodes(std::move(nodes))
     {
 
