@@ -5,6 +5,7 @@
 #include "utils/fmi/fmu_info.hpp"
 #include "model_connection.hpp"
 #include "model_connector.hpp"
+#include "scheduling/read_target_resolver.hpp"
 #include "utils/time/time.hpp"
 #include "utils/time/timer.hpp"
 
@@ -126,7 +127,10 @@ namespace ssp4sim::graph
             LOG_INFO(log, "[{func}] Propagating at start_time {start_time}, input_area {input_area} timestamp {timestamp}", __func__, start, target_area, input_area->ring->timestamps[target_area]);
         });
 
-        ConnectionInfo::retrieve_model_inputs(connections, target_area, start, start, start);
+        if (access_resolver)
+        {
+            access_resolver->copy_model_inputs(this, target_area, start, start);
+        }
 
         ConnectorInfo::write_data_to_model(inputs, input_area.get(), target_area);
 
@@ -137,6 +141,11 @@ namespace ssp4sim::graph
         });
 
         ConnectorInfo::read_values_from_model(outputs, output_area.get(), area);
+
+        if (access_resolver)
+        {
+            access_resolver->mark_committed(this, start, area);
+        }
         return start;
     }
 
@@ -148,7 +157,10 @@ namespace ssp4sim::graph
 
         auto target_area = input_area->push(input_time);
 
-        ConnectionInfo::retrieve_model_inputs(connections, target_area, input_time, step_start, step_end);
+        if (access_resolver)
+        {
+            access_resolver->copy_model_inputs(this, target_area, step_start, step_end);
+        }
 
         // record input data if record_inputs config is enabled
         if (record_inputs)
@@ -187,6 +199,14 @@ namespace ssp4sim::graph
             this->walltime_ns += model_timer.stop();
         }
         output_area->flag_new_data(area);
+
+        // Commit this model's frontier: value bytes are fully written and visible
+        // (D17 release-store). This is the deterministic anchor that lets the read
+        // resolver return committed (not live-head) data to downstream consumers.
+        if (access_resolver)
+        {
+            access_resolver->mark_committed(this, time, area);
+        }
 
         IF_LOG({
             LOG_TRACE_L1(log, "[{func}] Output area after post: {area}", __func__, output_area->export_area(area));

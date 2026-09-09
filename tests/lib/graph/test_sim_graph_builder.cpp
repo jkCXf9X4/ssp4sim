@@ -1,6 +1,9 @@
 #include "pre/3_simulation/elements/model_connection.hpp"
 #include "pre/3_simulation/elements/model_connector.hpp"
 #include "signal/storage.hpp"
+#include "scheduling/read_target_core.hpp"
+#include "scheduling/read_resolver_latest_executed.hpp"
+#include "scheduling/read_resolver_macro_step_start_time.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -12,6 +15,13 @@ using ssp4sim::graph::ConnectionInfo;
 using ssp4sim::graph::ConnectorInfo;
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
+
+using ssp4sim::scheduling::ResolvedRead;
+using ssp4sim::scheduling::detail::AccessMode;
+using ssp4sim::scheduling::detail::ModelStatus;
+using ssp4sim::scheduling::detail::latest_executed_resolver;
+using ssp4sim::scheduling::detail::macro_step_start_time_resolver;
+using ssp4sim::scheduling::detail::copy_connection;
 
 namespace {
     void init_storage(SignalStorage& storage, const std::string& signal_name,
@@ -55,207 +65,163 @@ constexpr double kInitialValue = 3.5;
 // helper methods used by SimGraphBuilder, not the SimGraphBuilder class itself.
 
 // ---------------------------------------------------------------------------
-// Description: Verifies retrieve_model_inputs copies data with zero delay,
-//              positive delay, and for integer types
-// Rationale:   Core data routing — inputs copied from source to target storage
+// Description: Verifies the resolver core's copy step (detail::copy_connection)
+//              under explicit graph-fact policy (StartTime/Latest/delay), covering
+//              zero-delay value copy, delayed lookup, and integer/string types.
+// Rationale:   Core data routing. The retired ConnectionInfo::retrieve_model_inputs
+//              was policy-laden; sampling policy now lives in the chosen resolver
+//              (see ssp4sim::scheduling::detail::ReadResolver). These tests exercise
+//              the copy semantics with explicit policy edges.
 // ---------------------------------------------------------------------------
-TEST_CASE("ConnectionInfo::retrieve_model_inputs copies data correctly",
-          "[sim_graph_builder]")
+TEST_CASE("resolver copy path copies values with explicit policy", "[sim_graph_builder]")
 {
-    SignalStorage src_storage(kStorageAreas, "source");
-    SignalStorage tgt_storage(kStorageAreas, "target");
+    using ssp4sim::scheduling::detail::AccessMode;
+    using ssp4sim::scheduling::detail::ModelStatus;
+    using ssp4sim::scheduling::detail::latest_executed_resolver;
+    using ssp4sim::scheduling::detail::macro_step_start_time_resolver;
+    using ssp4sim::scheduling::detail::copy_connection;
+    using ssp4sim::scheduling::ResolverConfig;
 
-    init_storage(src_storage, "source.signal");
-    init_storage(tgt_storage, "target.signal");
-
-    // Write a value into source at time 0
-    auto src_area = src_storage.push(0);
-    double input_val = kExpectedValue;
-    std::memcpy(src_storage.get_item(src_area, 0), &input_val, sizeof(double));
-    src_storage.flag_new_data(src_area);
-
-    auto con = make_connection(src_storage, tgt_storage);
-    std::vector<ConnectionInfo> connections = {con};
-
-    SECTION("Copies data with zero delay")
+    // A producer that has committed area `area` at `time` (mirrors mark_committed).
+    auto set_committed = [](ModelStatus &st, std::uint64_t time, std::size_t area)
     {
-        auto tgt_area = tgt_storage.push(0);
-        ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 0, 0, 0);
+        st.committed_count.store(1, std::memory_order::release);
+        st.committed_time.store(time, std::memory_order::release);
+        st.latest_area.store(area, std::memory_order::release);
+        st.generation.store(1, std::memory_order::release);
+    };
 
-        CHECK(read_storage_value<double>(tgt_storage, tgt_area, 0) == kExpectedValue);
-    }
-
-    SECTION("Copies data with delay")
+    auto wired_edge = [](const ConnectionInfo &con, AccessMode mode)
     {
-        // Write source data at time 0
-        auto src_area_0 = src_storage.push(0);
-        double val_0 = 10.0;
-        std::memcpy(src_storage.get_item(src_area_0, 0), &val_0, sizeof(double));
-        src_storage.flag_new_data(src_area_0);
+        ssp4sim::scheduling::detail::Edge e = ssp4sim::scheduling::detail::edge_from(con, nullptr);
+        e.unlinked = false; // a real wired edge, not an unlinked one
+        e.mode = mode;
+        return e;
+    };
 
-        // Write source data at time 5
-        auto src_area_5 = src_storage.push(5);
-        double val_5 = 20.0;
-        std::memcpy(src_storage.get_item(src_area_5, 0), &val_5, sizeof(double));
-        src_storage.flag_new_data(src_area_5);
-
-        // Read at time 10 with delay 5 — should get value from time 5
-        con.delay = 5;
-        connections[0] = con;
-
-        auto tgt_area = tgt_storage.push(10);
-        ConnectionInfo::retrieve_model_inputs(connections, tgt_area, 10, 10, 10);
-
-        CHECK(read_storage_value<double>(tgt_storage, tgt_area, 0) == 20.0);
-    }
-
-    SECTION("Copies integer data")
+    // The graph derives the read policy per edge; mirror that choice onto the matching
+    // resolver: Latest-pinned edges use the latest-executed resolver, time-sampled edges
+    // the macro-step-start-time resolver.
+    auto resolve_policy = [](const ssp4sim::scheduling::detail::Edge &e, const ModelStatus &st,
+                             const ResolverConfig &cfg, std::uint64_t step_start,
+                             std::uint64_t step_end)
     {
-        SignalStorage int_src(kStorageAreas, "int_source");
-        SignalStorage int_tgt(kStorageAreas, "int_target");
-        init_storage(int_src, "source.int", DataType::integer);
-        init_storage(int_tgt, "target.int", DataType::integer);
+        if (e.mode == AccessMode::Latest)
+        {
+            return latest_executed_resolver()->resolve(e, st, cfg, step_start, step_end);
+        }
+        return macro_step_start_time_resolver()->resolve(e, st, cfg, step_start, step_end);
+    };
 
-        auto src_area = int_src.push(0);
-        int val = kExpectedIntValue;
-        std::memcpy(int_src.get_item(src_area, 0), &val, sizeof(int));
-        int_src.flag_new_data(src_area);
-
-        auto int_con = make_connection(int_src, int_tgt, DataType::integer);
-        std::vector<ConnectionInfo> int_cons = {int_con};
-        auto tgt_area = int_tgt.push(0);
-        ConnectionInfo::retrieve_model_inputs(int_cons, tgt_area, 0, 0, 0);
-
-        CHECK(read_storage_value<int>(int_tgt, tgt_area, 0) == kExpectedIntValue);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Description: Verifies retrieve_model_inputs resolves source area according
-//              to the precomputed DataAccessMode and time_offset
-// Rationale:   Graph build precomputes how a connection samples its source
-// ---------------------------------------------------------------------------
-TEST_CASE("ConnectionInfo::retrieve_model_inputs honors mode and time_offset",
-          "[sim_graph_builder]")
-{
-    SignalStorage src(kStorageAreas, "src");
-    SignalStorage tgt(kStorageAreas, "tgt");
-    init_storage(src, "s");
-    init_storage(tgt, "t");
-
-    // Source writes at 100, 200
-    auto a100 = src.push(100);
-    double v100 = 1.0;
-    std::memcpy(src.get_item(a100, 0), &v100, sizeof(double));
-    auto a200 = src.push(200);
-    double v200 = 2.0;
-    std::memcpy(src.get_item(a200, 0), &v200, sizeof(double));
-
-    // Step span [100, 300]; input_time 300. Latest at 300 -> v at 200.
-    auto tgt_area = tgt.push(300);
-
-    SECTION("StartTime samples at step_start")
-    {
-        ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::StartTime;
-        std::vector<ConnectionInfo> cons = {con};
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v100);
-    }
-
-    SECTION("StartTime with negative offset shifts earlier")
-    {
-        // Currently at latest valid (200) which is not at step_start.
-        ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::StartTime;
-        con.time_offset = -100; // sample at step_start(100) - 100 = 0 -> nothing yet
-        std::vector<ConnectionInfo> cons = {con};
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
-    }
-
-    SECTION("EndTime samples at step_end")
-    {
-        ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::EndTime;
-        std::vector<ConnectionInfo> cons = {con};
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v200);
-    }
-
-    SECTION("EndTime with negative offset samples before step_end")
-    {
-        ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::EndTime;
-        con.time_offset = -150; // step_end - 150 = 150 -> latest valid <=150 is 100
-        std::vector<ConnectionInfo> cons = {con};
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v100);
-    }
-
-    SECTION("Latest applies offset to input_time")
-    {
-        ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::Latest;
-        con.time_offset = -50; // input_time - 50 = 250 -> latest valid <=250 is 200
-        std::vector<ConnectionInfo> cons = {con};
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 300, 300);
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v200);
-    }
-
-    SECTION("Index reads the fixed source area regardless of time")
-    {
-        // Source already has data at areas a100 (1.0) and a200 (2.0).
-        ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::Index;
-        con.fixed_index = static_cast<int64_t>(a100);
-        std::vector<ConnectionInfo> cons = {con};
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v100);
-    }
-
-    SECTION("Index into an unpopulated area leaves target unmodified")
-    {
-        ConnectionInfo con = make_connection(src, tgt);
-        con.mode = ssp4sim::graph::DataAccessMode::Index;
-        con.fixed_index = static_cast<int64_t>(kStorageAreas - 1); // never written
-        std::vector<ConnectionInfo> cons = {con};
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 300, 100, 300);
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Description: Verifies no-valid-source-data logs warning (no crash) and
-//              empty connections list is no-op
-// Rationale:   Robustness — missing data must not crash
-// ---------------------------------------------------------------------------
-TEST_CASE("ConnectionInfo::retrieve_model_inputs handles edge cases",
-          "[sim_graph_builder]")
-{
-    SECTION("No valid source data logs warning but does not crash")
+    // ---------- zero-delay, Latest policy -> copies newest committed area ----------
+    SECTION("Latest copies the committed area")
     {
         SignalStorage src(kStorageAreas, "src");
         SignalStorage tgt(kStorageAreas, "tgt");
         init_storage(src, "s");
         init_storage(tgt, "t");
 
-        auto con = make_connection(src, tgt);
-        std::vector<ConnectionInfo> cons = {con};
-        auto tgt_area = tgt.push(100); // No source data at time 100
-        // Should not crash — just log a warning
-        ConnectionInfo::retrieve_model_inputs(cons, tgt_area, 100, 100, 100);
-        // Target should remain unmodified (default 0.0)
-        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
+        auto a100 = src.push(100);
+        double v100 = 1.0;
+        std::memcpy(src.get_item(a100, 0), &v100, sizeof(double));
+        auto a200 = src.push(200);
+        double v200 = 2.0;
+        std::memcpy(src.get_item(a200, 0), &v200, sizeof(double));
+
+        ModelStatus committed;
+        set_committed(committed, 200, a200);
+
+        auto tgt_area = tgt.push(300);
+
+        ConnectionInfo con = make_connection(src, tgt);
+        ResolvedRead r = resolve_policy(wired_edge(con, AccessMode::Latest),
+                                        committed, ResolverConfig{}, 100, 300);
+        CHECK(r.valid);
+        CHECK(r.is_area);
+        CHECK(r.area == a200);
+        CHECK(copy_connection(con, tgt_area, r) == true);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v200);
     }
 
-    SECTION("Empty connections list is a no-op")
+    // ---------- StartTime + delay -> delayed lookup ----------
+    SECTION("StartTime with delay resolves earlier source data")
     {
-        std::vector<ConnectionInfo> empty;
-        // Should not crash (tgt_area = 0, no storage needed with empty list)
-        ConnectionInfo::retrieve_model_inputs(empty, 0, 0, 0, 0);
+        SignalStorage src(kStorageAreas, "src");
+        SignalStorage tgt(kStorageAreas, "tgt");
+        init_storage(src, "s");
+        init_storage(tgt, "t");
+
+        auto a100 = src.push(100);
+        double v100 = 1.0;
+        std::memcpy(src.get_item(a100, 0), &v100, sizeof(double));
+        auto a200 = src.push(200);
+        double v200 = 2.0;
+        std::memcpy(src.get_item(a200, 0), &v200, sizeof(double));
+
+        ModelStatus committed;
+        set_committed(committed, 200, a200);
+
+        auto tgt_area = tgt.push(300);
+
+        ConnectionInfo con = make_connection(src, tgt, DataType::real, 0, 0, /*delay=*/100);
+        ResolvedRead r = resolve_policy(wired_edge(con, AccessMode::StartTime),
+                                        committed, ResolverConfig{}, 300, 300);
+        CHECK(r.valid);
+        CHECK_FALSE(r.is_area);
+        CHECK(r.time == 200); // step_start(300) - delay(100)
+        CHECK(copy_connection(con, tgt_area, r) == true);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == v200);
+    }
+
+    // ---------- integer type copy ----------
+    SECTION("Copies integer data")
+    {
+        SignalStorage src(kStorageAreas, "src");
+        SignalStorage tgt(kStorageAreas, "tgt");
+        init_storage(src, "s", DataType::integer);
+        init_storage(tgt, "t", DataType::integer);
+
+        auto src_area = src.push(0);
+        int iv = kExpectedIntValue;
+        std::memcpy(src.get_item(src_area, 0), &iv, sizeof(int));
+
+        ModelStatus committed;
+        set_committed(committed, 0, src_area);
+
+        auto tgt_area = tgt.push(0);
+        ConnectionInfo con = make_connection(src, tgt, DataType::integer, 0, 0);
+        ResolvedRead r = resolve_policy(wired_edge(con, AccessMode::Latest),
+                                        committed, ResolverConfig{}, 0, 0);
+        CHECK(copy_connection(con, tgt_area, r) == true);
+        CHECK(read_storage_value<int>(tgt, tgt_area, 0) == kExpectedIntValue);
+    }
+
+    // ---------- not-yet-committed producer -> no copy ----------
+    SECTION("Not-yet-committed producer leaves target untouched")
+    {
+        SignalStorage src(kStorageAreas, "src");
+        SignalStorage tgt(kStorageAreas, "tgt");
+        init_storage(src, "s");
+        init_storage(tgt, "t");
+
+        auto src_area = src.push(100);
+        double v = 5.0;
+        std::memcpy(src.get_item(src_area, 0), &v, sizeof(double));
+
+        auto tgt_area = tgt.push(100);
+        ConnectionInfo con = make_connection(src, tgt);
+        ssp4sim::scheduling::detail::Edge e = ssp4sim::scheduling::detail::edge_from(con, nullptr);
+        e.unlinked = false;
+        e.mode = AccessMode::Latest;
+
+        ModelStatus never_committed; // committed_count == 0
+        ResolvedRead r = resolve_policy(e, never_committed, ResolverConfig{}, 100, 100);
+        CHECK_FALSE(r.valid);
+        CHECK(copy_connection(con, tgt_area, r) == false);
+        CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);
     }
 }
+
 
 // ---------------------------------------------------------------------------
 // Description: Verifies to_string includes storage names and feedthrough flag

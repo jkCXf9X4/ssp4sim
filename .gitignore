@@ -1,5 +1,7 @@
 
 .opencode/
+.dynamic-harness/
+harness.json
 
 build
 build_cont

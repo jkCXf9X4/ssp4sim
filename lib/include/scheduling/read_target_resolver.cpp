@@ -1,6 +1,8 @@
 #include "read_target_resolver.hpp"
 
 #include "read_target_core.hpp"
+#include "read_resolver_latest_executed.hpp"
+#include "read_resolver_macro_step_start_time.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -12,8 +14,8 @@ namespace ssp4sim::scheduling
 {
     // ------------------------------------------------------------------
     // ReadTargetResolver — all private tables behind the opaque State pointer.
-    // The pure resolution core (detail::edge_from / detail::resolve_edge) is
-    // implemented in read_target_core.cpp and shared with tests directly.
+    // The chosen resolution policy (detail::edge_from facts + a detail::ReadResolver
+    // strategy) is implemented in read_target_core.cpp and shared with tests directly.
     // ------------------------------------------------------------------
 
     // ------------------------------------------------------------------
@@ -33,14 +35,17 @@ namespace ssp4sim::scheduling
         std::unordered_map<ssp4sim::graph::Invocable *, std::vector<RegisteredEdge>> edges;
         std::unordered_map<ssp4sim::graph::Invocable *, std::unique_ptr<detail::ModelStatus>> status;
         std::unordered_map<ssp4sim::signal::SignalStorage *, ssp4sim::graph::Invocable *> owner;
+        detail::ReadResolver *resolver = nullptr;
         ResolverConfig cfg;
     };
 
     ReadTargetResolver::ReadTargetResolver(std::vector<ssp4sim::graph::Invocable *> models,
+                                           detail::ReadResolver *resolver,
                                            ResolverConfig cfg)
         : s_(new ReadTargetResolver::State)
     {
         s_->cfg = cfg;
+        s_->resolver = (resolver != nullptr) ? resolver : detail::macro_step_start_time_resolver();
 
         // Pass 1: register ownership + centralized status per FmuModel.
         for (const auto &m : models)
@@ -102,14 +107,9 @@ namespace ssp4sim::scheduling
             return; // unregistered producer — nothing to advance
         }
 
-        detail::ModelStatus &st = *it->second;
-
-        // D17: the caller has already made the value bytes fully visible;
-        // publish the new frontier with release-store ordering.
-        st.committed_count.fetch_add(1, std::memory_order::release);
-        st.committed_time.store(output_time, std::memory_order::release);
-        st.latest_area.store(area, std::memory_order::release);
-        st.generation.fetch_add(1, std::memory_order::release);
+        // Forwarded to the injected resolver (D17 release-store ordering guaranteed by the
+        // caller; the resolver publishes the new frontier).
+        s_->resolver->mark_committed(*it->second, output_time, area);
     }
 
     ResolvedRead ReadTargetResolver::resolve(ssp4sim::graph::Invocable *model,
@@ -136,10 +136,10 @@ namespace ssp4sim::scheduling
             status = status_it->second.get();
         }
 
-        r = detail::resolve_edge(re.access, *status, s_->cfg, step_start, step_end);
+        r = s_->resolver->resolve(re.access, *status, s_->cfg, step_start, step_end);
 
         // Index mode: apply the populated gate (the pure core cannot reach the storage).
-        if (r.valid && r.is_area && re.access.mode == ssp4sim::graph::DataAccessMode::Index)
+        if (r.valid && r.is_area && re.access.mode == detail::AccessMode::Index)
         {
             if (re.source == nullptr || re.source->ring == nullptr ||
                 !re.source->ring->is_populated(r.area))
@@ -149,5 +149,20 @@ namespace ssp4sim::scheduling
         }
 
         return r;
+    }
+
+    void ReadTargetResolver::copy_model_inputs(ssp4sim::graph::FmuModel *target,
+                                               std::size_t target_area,
+                                               std::uint64_t step_start,
+                                               std::uint64_t step_end)
+    {
+        const std::vector<ssp4sim::graph::ConnectionInfo> &connections = target->connections;
+        for (std::size_t i = 0; i < connections.size(); ++i)
+        {
+            // Intentionally cheap per connection; the resolver's own edges are
+            // index-aligned with target->connections.
+            const ResolvedRead r = resolve(target, i, step_start, step_end);
+            detail::copy_connection(connections[i], target_area, r);
+        }
     }
 }

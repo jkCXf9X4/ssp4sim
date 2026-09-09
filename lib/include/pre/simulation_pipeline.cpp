@@ -5,6 +5,9 @@
 #include "pre/2_analysis/tree_builder.hpp"
 #include "pre/2_analysis/graph_builder.hpp"
 #include "pre/3_simulation/sim_graph_builder.hpp"
+#include "pre/3_simulation/elements/model_fmu.hpp"
+
+#include "scheduling/read_target_resolver.hpp"
 
 #include "config.hpp"
 #include "execution/invocable.hpp"
@@ -14,6 +17,8 @@
 #include "ssp4cpp/utils/log.hpp"
 
 #include <cstdlib>
+#include <memory>
+#include <vector>
 
 namespace ssp4sim::pre
 {
@@ -49,6 +54,31 @@ namespace ssp4sim::pre
 
         SimulationPipelineResult result;
         result.models = sim_graph_builder.build(&analysis_graph_data);
+
+        // Build the read-path resolver from the wired models (the graph-builder stage
+        // owns access policy) and attach it to every FmuModel for the read path.
+        {
+            std::vector<graph::Invocable *> model_ptrs;
+            model_ptrs.reserve(result.models.size());
+            for (const auto &[_, model] : result.models)
+            {
+                if (auto *fmu = dynamic_cast<graph::FmuModel *>(model.get()))
+                {
+                    model_ptrs.push_back(fmu);
+                }
+            }
+
+            result.access_resolver =
+                std::make_unique<ssp4sim::scheduling::ReadTargetResolver>(model_ptrs);
+
+            for (const auto &[_, model] : result.models)
+            {
+                if (auto *fmu = dynamic_cast<graph::FmuModel *>(model.get()))
+                {
+                    fmu->access_resolver = result.access_resolver.get();
+                }
+            }
+        }
 
         {
             SimulationDebugWriter debug_writer(config);

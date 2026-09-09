@@ -2,7 +2,7 @@
 #include "config.hpp"
 #include "execution/executor_builder.hpp"
 
-#include "execution/custom_executors.hpp"
+#include "execution/custom/custom_executors.hpp"
 
 #include "execution/jacobi/jacobi_parallel_fut.hpp"
 #include "execution/jacobi/jacobi_parallel_spin.hpp"
@@ -11,7 +11,7 @@
 
 #include "execution/seidel/seidel_serial.hpp"
 #include "execution/seidel/seidel_parallel.hpp"
-#include "execution/loop_aware/loop_aware_executor.hpp"
+#include "execution/loop_aware/la2_scheduler.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -86,13 +86,27 @@ namespace ssp4sim::graph
             LOG_INFO(log, "[{func}] Executor: DelayExecutorPartial", __func__);
             return std::make_unique<DelayExecutorPartial>(nodes);
         }
-        else if (executor_method == "loop_aware")
+        else if (executor_method == "la2" || executor_method == "loop_aware")
         {
-            LOG_INFO(log, "[{func}] Executor: LoopAwareExecutor", __func__);
-            return std::make_unique<LoopAwareExecutor>(nodes);
+            // "loop_aware" is the legacy name (see docs/configuration.md and
+            // resources/loop_aware_nested*.json); "la2" is the refactored name.
+            // Both dispatch to the same scheduler.
+            LOG_INFO(log, "[{func}] Executor: La2Scheduler", __func__);
+            return std::make_unique<La2Scheduler>(nodes);
+        }
+        else if (executor_method == "parallel_seidel" || executor_method == "parallel-seidel")
+        {
+            // ParallelSeidel is NOT implemented: its invoke() throws
+            // "This is not implemented" at runtime. Fail at dispatch time with
+            // a clear, actionable message instead of silently mis-dispatching
+            // or falling through to the generic "Unknown executor method".
+            throw std::runtime_error(
+                "Executor method '" + executor_method +
+                "' requests ParallelSeidel, which is NOT implemented. "
+                "Use 'seidel' (serial) or 'jacobi' instead.");
         }
 
-        throw std::runtime_error("Unknown executor method");
+        throw std::runtime_error("Unknown executor method: '" + executor_method + "'");
     }
 
 }

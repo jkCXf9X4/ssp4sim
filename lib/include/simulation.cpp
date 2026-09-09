@@ -13,6 +13,8 @@
 
 #include "utils/config.hpp"
 
+#include "scheduling/read_target_resolver.hpp"
+
 #include "simulation/graph_executor/execution/invocable.hpp"
 #include "simulation/graph_executor/graph_executor.hpp"
 
@@ -79,6 +81,11 @@ namespace ssp4sim
      */
     void Simulation::init()
     {
+        if (p->sim_graph)
+        {
+            throw std::logic_error("Simulation::init() called twice");
+        }
+
         LOG_INFO(p->log, "[{func}] Initializing simulation", __func__);
 
         p->setup_results = pre::build_simulation_graph(p->ssp, this->config);
@@ -86,7 +93,7 @@ namespace ssp4sim
 
         LOG_INFO(p->log, "[{func}] - Creating simulation graph executor", __func__);
 
-        p->sim_graph = std::make_unique<graph::GraphExecutor>(p->setup_results.get_models(), p->recorder.get());
+        p->sim_graph = std::make_unique<graph::GraphExecutor>(p->setup_results.get_models());
 
         LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());
 
@@ -109,6 +116,11 @@ namespace ssp4sim
      */
     void Simulation::simulate()
     {
+        if (!p->sim_graph)
+        {
+            throw std::runtime_error("Simulation::simulate() called before init()");
+        }
+
         if (p->recorder)
         {
             p->recorder->start_recording();

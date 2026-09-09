@@ -24,7 +24,7 @@ Provides executor strategies that advance simulation time and coordinate FMU ste
 ## Seidel Variants
 
 - `seidel_serial`: Sequential Seidel.
-- `seidel_parallel`: Parallel Seidel variant.
+- `seidel_parallel`: Parallel Seidel variant — **not implemented**; selecting it throws at config selection.
 
 ## Include Boundary
 

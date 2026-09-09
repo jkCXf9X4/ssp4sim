@@ -11,8 +11,10 @@ The simulation graph creates the executable runtime from the analysis graph:
 
 ## Data Access Modes
 
-`wire_connections` precomputes, per connection, how the target samples its
-source (`ConnectionInfo::mode`):
+The scheduling layer precomputes, per connection edge, how the target samples
+its source (`ssp4sim::scheduling::detail::AccessMode` on the resolved `Edge`;
+the per-connection `ConnectionInfo::mode` field was removed in the scheduling
+refactor — see `docs/configuration.md` / the scheduling design docs):
 
 - `StartTime` — sample the source at the start of the target model's step span
   (chosen for feedthrough / `delay == 0` edges)
@@ -21,7 +23,7 @@ source (`ConnectionInfo::mode`):
 - `Latest` — zero-order hold on the newest data at/ before the requested input
   time (default)
 
-A mutable `ConnectionInfo::time_offset` (int64, can be negative) shifts the
+A mutable edge-level `time_offset` (int64, can be negative) shifts the
 reference time for every mode, so an executor/scheduler algorithm can tune when
 a connection samples its source. Derivative forwarding is orthogonal and uses
 whichever source area is selected.

@@ -5,7 +5,6 @@
 #include "pre/3_simulation/sim_graph_builder.hpp"
 #include "utils/primitives/map.hpp"
 #include "utils/time/time.hpp"
-#include "signal/recorder.hpp"
 
 #include "utils/graph/tarjan.hpp"
 
@@ -16,10 +15,9 @@
 namespace ssp4sim::graph
 {
 
-    GraphExecutor::GraphExecutor(std::map<std::string, Invocable *> node_map, ssp4sim::signal::DataRecorder *recorder)
+    GraphExecutor::GraphExecutor(std::map<std::string, Invocable *> node_map)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphExecutor"))
     {
-        this->recorder = recorder;
         this->node_map = node_map;
         nodes = ssp4sim::utils::map_ns::map_to_value_vector_copy(this->node_map);
     }
@@ -41,13 +39,11 @@ namespace ssp4sim::graph
         return oss.str();
     }
 
-    // TODO: inject recorder here instead to enable removing it from the object
     void GraphExecutor::init()
     {
         LOG_DEBUG(log, "[{func}] Initializing GraphExecutor", __func__);
 
         executor = ExecutorBuilder().build(nodes);
-        executor->set_recorder(recorder);
 
         LOG_DEBUG(log, "[{func}] - Initializing executor ", __func__);
         executor->init();

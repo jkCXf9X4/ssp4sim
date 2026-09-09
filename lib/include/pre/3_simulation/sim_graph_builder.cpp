@@ -7,12 +7,19 @@
 #include "utils/fmi/fmu_info.hpp"
 #include "utils/primitives/map.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <set>
 #include <utility>
 #include <fstream>
 #include <vector>
+
+
+// simplify and refactor
+// break out functional parts to separate 
+// avoid lambdas
+// keep function signatures as simple and clean as possible
 
 namespace ssp4sim::graph
 {
@@ -322,9 +329,9 @@ namespace ssp4sim::graph
                 con_info.delay = resolved->delay;
                 con_info.is_feedthrough = (resolved->delay == 0);
 
-
-                con_info.mode = DataAccessMode::StartTime;
-                con_info.time_offset = 0;
+                // Sampling policy is NOT set here: ConnectionInfo carries wire facts only;
+                // the read-target resolver derives access mode/offset from these facts
+                // (see scheduling/read_target_core.hpp — detail::edge_from).
 
                 // Forward derivatives: enable when source provides derivatives and
                 // target can interpolate them on real-typed signals.
@@ -348,7 +355,34 @@ namespace ssp4sim::graph
                              actual_target->name, target_conn->name,
                              con_info.delay);
 
-                actual_target->connections.push_back(std::move(con_info));
+                // Dedup guard (FINDING H): the same wire is legitimately reached
+                // from BOTH endpoints — the source model traverses its output
+                // connector (conn_children) and the target model traverses its
+                // input connector (conn_parents). Each visit constructs an
+                // equivalent ConnectionInfo and previously pushed it
+                // unconditionally, producing duplicate edges (double execution /
+                // double writes at runtime). Model-to-model edges are already
+                // deduplicated via Node::add_child's contains_child guard; here
+                // the adjacency list is a plain vector, so dedup explicitly.
+                //
+                // Logical wire identity: source storage+index and target
+                // storage+index. These fully determine the wire; type/size/delay/
+                // feedthrough/derivatives are derived properties of the same wire
+                // and must not distinguish duplicates.
+                auto already_wired = std::find_if(
+                    actual_target->connections.begin(),
+                    actual_target->connections.end(),
+                    [&con_info](const ConnectionInfo &existing) {
+                        return existing.source_storage == con_info.source_storage &&
+                               existing.source_index == con_info.source_index &&
+                               existing.target_storage == con_info.target_storage &&
+                               existing.target_index == con_info.target_index;
+                    });
+
+                if (already_wired == actual_target->connections.end())
+                {
+                    actual_target->connections.push_back(std::move(con_info));
+                }
             }
         };
 

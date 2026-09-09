@@ -23,6 +23,15 @@
 // (ResolvedRead / ResolverConfig) and is linked into the resolver's .cpp only.
 namespace ssp4sim::scheduling
 {
+    namespace detail
+    {
+        /// The pluggable read-target resolution policy. Fully defined in
+        /// read_target_core.hpp; this header only forward-declares it because the shell
+        /// needs nothing but the pointer (it stores and forwards the chosen resolver's
+        /// mark_committed / resolve without dereferencing it).
+        class ReadResolver;
+    }
+
     /// What one connection may read this frame. Exactly one of `area` / `time` is
     /// meaningful, selected by `is_area`:
     ///   is_area == true  -> `area`   is the storage slot to read (no search at all)
@@ -48,7 +57,8 @@ namespace ssp4sim::scheduling
     /// Resolves, per connection, "what to read" for a model at schedule runtime, returning
     /// either a pinned area index (Index mode / unlinked stale read) or a viable,
     /// frontier-clamped time. Construct once against the graph models; the executor calls
-    /// mark_committed(); the read path calls resolve().
+    /// mark_committed(); the read path calls resolve(). Both are forwarded to the injected
+    /// `detail::ReadResolver` (see below), so the access policy is pluggable.
     class ReadTargetResolver
     {
     public:
@@ -56,7 +66,13 @@ namespace ssp4sim::scheduling
         /// output_area storage to its owning model, and snapshots each model's connections
         /// as edges (index-aligned with model->connections). Non-FmuModel invocables are
         /// skipped.
+        ///
+        /// `resolver` selects the resolution policy. nullptr selects the default
+        /// (detail::macro_step_start_time_resolver()); it is borrowed, not owned — the
+        /// shared stateless resolver instances from read_target_core.hpp are the canonical
+        /// choices.
         ReadTargetResolver(std::vector<ssp4sim::graph::Invocable *> models,
+                           detail::ReadResolver *resolver = nullptr,
                            ResolverConfig cfg = {});
 
         ~ReadTargetResolver();
@@ -76,6 +92,17 @@ namespace ssp4sim::scheduling
                              std::size_t connection_idx,
                              std::uint64_t step_start,
                              std::uint64_t step_end);
+
+        /// Drives the whole read path for one target model: for each of its incoming
+        /// connections, resolves the read target and copies the value (and forwarded
+        /// derivatives) from the producer storage into the model's input storage area.
+        /// Replaces the retired ConnectionInfo::retrieve_model_inputs; the resolution
+        /// policy comes from this resolver's per-model edges (index-aligned with
+        /// `connections`).
+        void copy_model_inputs(ssp4sim::graph::FmuModel *target,
+                               std::size_t target_area,
+                               std::uint64_t step_start,
+                               std::uint64_t step_end);
 
     private:
         // Opaque implementation state; all resolver-private tables live in the .cpp.

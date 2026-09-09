@@ -37,6 +37,8 @@ namespace ssp4sim::utils::graph
          */
         Node(const Node &other);
 
+        virtual ~Node() = default;
+
         virtual std::string to_string() const override;
 
         std::string get_tree(const std::string &indent = "") const;

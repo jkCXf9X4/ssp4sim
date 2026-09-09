@@ -61,6 +61,8 @@ namespace ssp4sim::graph
         bool realtime =false;
         uint64_t realtime_start_reference;
 
+        virtual ~Invocable() = default;
+
         void enable_realtime(uint64_t realtime_start_reference);
 
         virtual void enter_init();

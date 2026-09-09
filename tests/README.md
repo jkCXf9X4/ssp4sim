@@ -13,7 +13,7 @@ need to run the C++ binary or the Python suite.
 
 ## Test Architecture
 
-See product-breakdown/04-verification/test-strategy.md for the strategic rationale and test coverage targets.
+See breakdown/04-verification/test-strategy.md for the strategic rationale and test coverage targets.
 
 The suite is split by layer so each test has a clear responsibility:
 
@@ -47,6 +47,12 @@ Prefer small, focused C++ cases named `test_*.cpp` under `tests/lib/core/` or
 path. Put reference sweeps and detailed result comparisons in pytest under
 `tests/python/`.
 
+`tests/lib/graph/test_graph_analysis.cpp` covers the reusable
+`ssp4sim::graph::GraphAnalysis` scheduler utility (SCC detection, component
+topological sort, `SccGroup` condensed-graph construction and parent/child
+placement verification) extracted from `LoopAwareExecutor`, which now builds on
+it.
+
 ## High-Level SSP Tests
 
 The high-level reference sweep lives in `tests/python/high_level/` so it can use
@@ -67,15 +73,17 @@ A separate smoke test exercises the packaged CLI through `venv/bin/pyssp4sim`
 against the local `resources/embrace/embrace.json` fixture with temporary
 output paths.
 
-The `loop_aware` executor is regression-tested against the algebraic-loop
+The `la2` executor (legacy alias `loop_aware`) is regression-tested against the algebraic-loop
 reference fixtures in `test_loop_aware_nested.py`: `signal_nested_algebraic_loop`
 (loop within loop) and `signal_algebraic_loop` (single loop). Each fixture is run
-with both loop sub-step scheduling modes (`fixed`, `geometric`) and the
-steady-state result is compared to the analytic fixed point. Nested loop SCCs
-need more internal sub-iterations than the default SCC node count to converge;
-the test pins that with `simulation.executor.loop_aware.iterations`.
+with both loop sub-step scheduling modes (`linear`, `factor`; legacy aliases
+`fixed`, `geometric`) and the steady-state result is compared to the analytic
+fixed point. Nested loop SCCs need more internal sub-iterations than the default
+SCC node count to converge; the test pins that with
+`simulation.executor.la2.iterations` (legacy `simulation.executor.loop_aware.iterations`
+is still honored as a fallback).
 
-See product-breakdown/03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
+See breakdown/03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
 
 The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
@@ -89,7 +97,7 @@ the internal parameter-set fixture in `signal_sine_gain_add`, external `.ssv`
 bindings, `.ssv + .ssm` mappings, and representative mapped fixtures with
 multiple value types, including the hierarchical `dcmotor` fixture.
 
-All known regression fixtures have been resolved. See product-breakdown/04-verification/regressions.md for history.
+All known regression fixtures have been resolved. See breakdown/04-verification/regressions.md for history.
 
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the

@@ -17,6 +17,11 @@ namespace ssp4sim::graph
     class Invocable;
 }
 
+namespace ssp4sim::scheduling
+{
+    class ReadTargetResolver;
+}
+
 namespace ssp4sim
 {
     struct SharedConfig;
@@ -29,6 +34,11 @@ namespace ssp4sim::pre
     struct SimulationPipelineResult
     {
         std::map<std::string, std::unique_ptr<graph::Invocable>> models;
+
+        /// Read-path resolver, owned here so it outlives the models (they borrow it
+        /// via FmuModel::access_resolver). Built from the wired models in
+        /// build_simulation_graph — the graph-builder stage owns access policy.
+        std::unique_ptr<ssp4sim::scheduling::ReadTargetResolver> access_resolver;
 
         std::map<std::string, graph::Invocable*> get_models()
         {

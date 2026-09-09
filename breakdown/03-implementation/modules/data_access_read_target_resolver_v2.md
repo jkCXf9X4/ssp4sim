@@ -37,29 +37,70 @@ is simplified; the logic that was spread across the caller is now inside the res
 
 ## Implementation notes (initial version)
 
-- **File split** — the pure, storage-free resolution core lives in its own file pair so it
-  is independently unit-testable and the public resolver header stays a thin opaque class.
-  Dependency direction: the core **depends on** the public resolver header for its value
-  types; the resolver header **never drags in the core** — the core is linked only into the
-  resolver's `.cpp` and the tests:
+- **File split** — the pure, storage-free resolution facts live in their own file pair so
+  they are independently unit-testable and the public resolver header stays a thin opaque
+  class. Each read policy is split into its own file pair for readability. Dependency
+  direction: the policy/interface **depends on** the public resolver header and the facts
+  core for their value types; the resolver header **never drags any of them in** — it only
+  forward-declares `detail::ReadResolver` (the shell stores and forwards the pointer without
+  dereferencing). All files are linked only into the resolver's `.cpp` and the tests:
   | File | Contains | Depends on |
   |---|---|---|
-  | `lib/include/scheduling/read_target_resolver.hpp` | `ResolvedRead`, `ResolverConfig`, `ReadTargetResolver` class | only `Invocable` / `FmuModel` / `SignalStorage` — NOT the core |
-  | `lib/include/scheduling/read_target_core.{hpp,cpp}` | `detail::{Edge, ModelStatus, edge_from, resolve_edge}` | `read_target_resolver.hpp` (public types), `ConnectionInfo`, `Invocable` |
-  | `lib/include/scheduling/read_target_resolver.cpp` | constructor, `mark_committed`, `resolve` (opaque `State`) | links `read_target_core.hpp` in |
+  | `lib/include/scheduling/read_target_resolver.hpp` | `ResolvedRead`, `ResolverConfig`, `ReadTargetResolver` class, forward-declared `detail::ReadResolver` | only `Invocable` / `FmuModel` / `SignalStorage` — NOT the policy/core |
+  | `lib/include/scheduling/read_target_core.{hpp,cpp}` | `detail::{AccessMode, Edge, ModelStatus, edge_from, copy_connection}` | `read_target_resolver.hpp` (public types), `ConnectionInfo`, `Invocable` |
+  | `lib/include/scheduling/read_resolver.hpp` + `.cpp` | `detail::ReadResolver` (abstract interface) + shared `detail::commit_frontier` | `read_target_resolver.hpp`, `read_target_core.hpp` |
+  | `lib/include/scheduling/read_resolver_latest_executed.{hpp,cpp}` | `detail::LatestExecutedResolver` + `detail::latest_executed_resolver()` | `read_resolver.hpp` (transitively the facts) |
+  | `lib/include/scheduling/read_resolver_macro_step_start_time.{hpp,cpp}` | `detail::MacroStepStartTimeResolver` + `detail::macro_step_start_time_resolver()` | `read_resolver.hpp` (transitively the facts) |
+  | `lib/include/scheduling/read_target_resolver.cpp` | constructor, `mark_committed`, `resolve`, `copy_model_inputs` (opaque `State`) | links the facts core + both concrete resolver headers |
+- **Pluggable read policy.** The old mode switch lived in the free function
+  `detail::resolve_edge`; it is now `detail::ReadResolver`, an abstract interface with two
+  methods — `mark_committed(ModelStatus&, output_time, area)` and
+  `resolve(Edge, ModelStatus, ResolverConfig, step_start, step_end)`. The `ReadTargetResolver`
+  shell is constructed with `detail::ReadResolver *resolver` (borrowed, not owned; `nullptr`
+  selects the default `detail::macro_step_start_time_resolver()`) and forwards **both** the
+  write side (`mark_committed`) and the read side (`resolve`) to it. New policies are added
+  by implementing the interface in a new file pair, not by touching the shell or the
+  edge-fact model.
+- **The two initial resolvers.**
+  - `detail::LatestExecutedResolver` (read_resolver_latest_executed.{hpp,cpp}) — every
+    connection reads the producer's newest committed area (zero-order hold), never the live
+    head. This is the choice to enable when a consumer must always see "the latest executed
+    value".
+  - `detail::MacroStepStartTimeResolver` (read_resolver_macro_step_start_time.{hpp,cpp}) —
+    the graph default. Wired edges sample at the macro step start handle (shifted by
+    `delay`/`time_offset`, clamped to the committed frontier), unlinked / Latest edges read
+    the newest committed area, Index edges keep the fixed slot. It reproduces the
+    pre-refactor `resolve_edge` behaviour exactly.
+  Both are stateless singletons shared via `detail::macro_step_start_time_resolver()` and
+  `detail::latest_executed_resolver()`; their `mark_committed` both delegate to the shared
+  `detail::commit_frontier`; all per-producer frontier lives in `ModelStatus`.
 - `detail::ModelStatus` uses `std::atomic<std::uint64_t>` fields; it is held in the
   resolver behind `std::unique_ptr` (atomics are non-movable, so it cannot be a map *value*).
 - `mark_committed` is a no-op for unregistered producers (graceful; returns, matching the
   "unknown model ⇒ invalid read" behaviour of `resolve`).
 - Index-mode resolution returns the fixed slot as an area; the *populated* gate is applied
-  by the resolver shell (the pure `detail::resolve_edge` core cannot reach the storage).
+  by the resolver shell (the pure resolvers cannot reach the storage).
 - Unlinked reads (UC-14) are auto-detected at construction: a connection whose
   `source_storage` is not owned by any registered model's `output_area` is marked
   `unlinked` and resolves stale-only to the committed area.
 - All resolver-private *tables* (`State::edges/status/owner/cfg`) are behind the opaque
   `State*` completed only in the `.cpp` — the header exposes zero private layout.
-- The `copy_model_inputs` loop (below) is not yet wired into `FmuModel::pre`; that
-  integration (threading the resolver through the executor) is a follow-up.
+- **`ConnectionInfo` no longer carries sampling policy.** `DataAccessMode`, `mode`,
+  `time_offset`, and `fixed_index` were removed from `ConnectionInfo`; the retired
+  `retrieve_model_inputs` is gone. Sampling policy now lives entirely in the chosen
+  `detail::ReadResolver` acting on the resolver's `detail::Edge` facts (default
+  `StartTime` for every wired edge, the behaviour the builder previously pinned). The graph
+  builder no longer sets any mode/offset; it wires only facts (`delay`, `is_feedthrough`,
+  type/size/indices).
+- **Copy ownership.** `copy_model_inputs(FmuModel*, …)` replaces `retrieve_model_inputs`.
+  `FmuModel::pre()` and `direct_feedthrough()` call it when a resolver is attached, and
+  `FmuModel::post()` calls `mark_committed` (D17 release-store) so downstream reads resolve
+  against committed output. The resolver is built in `build_simulation_graph` right after
+  model wiring and owned by `SimulationPipelineResult`; every `FmuModel` borrows it via
+  `access_resolver`.
+- **In GraphExecutor/Simulation tests** the read path is exercised via the resolvers'
+  `resolve` + `detail::copy_connection` (FMU-free); full FMU integration runs through the
+  Python suite.
 
 ---
 
@@ -84,22 +125,27 @@ struct ResolvedRead
 class ReadTargetResolver
 {
 public:
-    // Constructor (the ONLY entry) — takes the graph MODELS. Walks each model once:
+    // Constructor — takes the graph MODELS and, optionally, the read policy:
     //   - for each FmuModel, registers its connections as edges (edges_)
     //   - creates one ModelStatus per producer (status_)
     //   - builds storage → producer ownership (owner_)
     //   - optional: registers "unlinked" reads (UC-14) supplied here, no runtime API.
+    // `resolver` is the injected detail::ReadResolver (borrowed; nullptr → the default
+    // detail::macro_step_start_time_resolver()). Both mark_committed and resolve are
+    // forwarded to it.
     ReadTargetResolver(std::vector<ssp4sim::graph::Invocable *> models,
+                       detail::ReadResolver *resolver = nullptr,
                        ResolverConfig cfg = {});
 
     // The ONLY write-side entry — advances a producer's committed frontier (D17:
-    // release-store AFTER value bytes are visible; never called from push()).
+    // release-store AFTER value bytes are visible; never called from push()). Forwarded
+    // to the injected resolver.
     void mark_committed(ssp4sim::graph::Invocable *producer,
                         uint64_t output_time, size_t area);
 
     // THE one read function. For target `model`, incoming connection `connection_idx`,
-    // return the index to read OR the viable time to search, concealed by `mode`.
-    // No `input_time`: the Latest mode resolves to the latest committed index directly.
+    // return the index to read OR the viable time to search, per the injected resolver.
+    // No `input_time`: the Latest/area policies resolve to the latest committed index.
     ResolvedRead resolve(ssp4sim::graph::Invocable *model, size_t connection_idx,
                          uint64_t step_start, uint64_t step_end);
 
@@ -107,8 +153,8 @@ public:
 };
 ```
 
-That is the entire interface: **one constructor (models), one write method, one read
-method.** No `BuildPlan`, no `AccessPlan`, no `graph()` accessor, no per-read
+That is the entire interface: **one constructor (models + policy), one write method, one
+read method.** No `BuildPlan`, no `AccessPlan`, no `graph()` accessor, no per-read
 interpretation left to the caller.
 
 ---
@@ -128,7 +174,7 @@ struct Edge   // private
 {
     ssp4sim::signal::SignalStorage *source;   // producer output storage
     uint32_t  source_index;
-    DataAccessMode mode;      // StartTime / EndTime / Latest / Index
+    ssp4sim::scheduling::detail::AccessMode mode;   // StartTime / EndTime / Latest / Index
     uint64_t  delay;
     int64_t   time_offset;
     int64_t   fixed_index;    // Index mode
@@ -164,7 +210,7 @@ ResolvedRead resolve(Invocable *model, size_t i,
     // Latest (default) / UC-14 unlinked: newest committed area, direct index, no scan,
     // never the live head (determinism). No input_time — delay/time_offset are
     // time-domain knobs and do not apply to the latest index.
-    if (e.unlinked || e.mode == DataAccessMode::Latest)
+    if (e.unlinked || e.mode == ssp4sim::scheduling::detail::AccessMode::Latest)
     {
         r.valid   = st.committed_count > 0;
         r.is_area = true;
@@ -174,7 +220,7 @@ ResolvedRead resolve(Invocable *model, size_t i,
     }
 
     // Index mode: absolute fixed slot, no time involved.
-    if (e.mode == DataAccessMode::Index)
+    if (e.mode == ssp4sim::scheduling::detail::AccessMode::Index)
     {
         r.valid   = e.source->ring->is_populated(e.fixed_index);
         r.is_area = true;
@@ -184,7 +230,7 @@ ResolvedRead resolve(Invocable *model, size_t i,
     }
 
     // Time modes (StartTime / EndTime): pick the base step handle the connection samples at.
-    uint64_t base = (e.mode == DataAccessMode::StartTime) ? step_start : step_end;
+    uint64_t base = (e.mode == ssp4sim::scheduling::detail::AccessMode::StartTime) ? step_start : step_end;
 
     // Not-yet-committed producer → no valid data (D2/D13) → skip copy this frame.
     if (st.committed_count == 0)
@@ -326,8 +372,19 @@ Status of the initial implementation (lib/include/scheduling/read_target_resolve
 
 - [x] Constructor against `std::vector<Invocable*>` (FmuModel cast; non-Fmu nodes skipped)
 - [x] `mark_committed` (release-store) + `resolve` (index-or-time) public surface
-- [x] Pure `detail::resolve_edge` core, unit-tested (modes, delay/offset, clamp, first-commit
-      gate, Index, unlinked)
-- [ ] Wire `copy_model_inputs` into `FmuModel::pre` (thread resolver through executor) — follow-up
+- [x] Pluggable `detail::ReadResolver` interface; both `mark_committed` and `resolve`
+      forwarded to the injected resolver
+- [x] `detail::LatestExecutedResolver` + `detail::MacroStepStartTimeResolver` concrete
+      strategies, split into their own file pairs; unit-tested (modes, delay/offset, clamp,
+      first-commit gate, Index, unlinked) via the shared instances
+- [x] **`ConnectionInfo` is policy-free** — `DataAccessMode`/`mode`/`time_offset`/`fixed_index`
+      removed; `retrieve_model_inputs` retired
+- [x] **Graph builder integration** — resolver built in `build_simulation_graph`, owned by
+      `SimulationPipelineResult`, borrowed by every `FmuModel`; `pre()`/`direct_feedthrough()`
+      drive `copy_model_inputs`; `post()` calls `mark_committed`
+- [x] `detail::copy_connection` (FMU-free copy step: value + derivatives, D15 string-aware)
 - [ ] Build-time `validate()` (D8 lookback / capacity checks) — follow-up
 - [ ] Plan caching / edge roles / scopes (M2), joint-frame (D16) — deferred per design
+- [ ] Feedthrough ⇒ StartTime / delayed ⇒ EndTime policy derivation — currently all wired
+      edges resolve StartTime (matches the prior builder behaviour); richer derivation is a
+      resolver decision layered on the same graph facts

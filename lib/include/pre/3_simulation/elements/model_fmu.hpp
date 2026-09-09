@@ -20,6 +20,11 @@
 #include <unordered_map>
 #include <memory>
 
+namespace ssp4sim::scheduling
+{
+    class ReadTargetResolver;
+}
+
 namespace ssp4sim::graph
 {
 
@@ -38,6 +43,11 @@ namespace ssp4sim::graph
         std::unordered_map<std::string, ConnectorInfo> outputs;
         std::unordered_map<std::string, ConnectorInfo> parameters;
         std::vector<ConnectionInfo> connections;
+
+        // Read-path resolver, shared across models and set once at graph build.
+        // Owned by the pipeline result; FmuModel only borrows it. Drives the copy in
+        // pre()/direct_feedthrough(). Null ⇒ read path disabled (no copying).
+        ssp4sim::scheduling::ReadTargetResolver *access_resolver = nullptr;
 
         bool forward_derivatives = false;
         bool canInterpolateInputs = false;

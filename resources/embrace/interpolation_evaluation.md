@@ -24,7 +24,7 @@
 │          → all nodes in parallel:                        │
 │            FmuModel::step(StepData)                      │
 │              → pre(input_time)                           │
-│                  → retrieve_model_inputs()               │
+│                  → copy_model_inputs()               │
 │                    → find_latest_valid_area(time)        │
 │                    → memcpy (nearest-neighbor)           │
 │                    → memcpy derivatives                  │
@@ -41,7 +41,7 @@
 |---|---|---|
 | `SignalStorage` | Ring-buffer of time-stamped signal data | Stores `max_interpolation_orders` derivatives per signal |
 | `RingBuffer::find_latest_valid_index(time)` | Finds newest data ≤ requested time | Returns **exact match or older** — no interpolation |
-| `ConnectionInfo::retrieve_model_inputs()` | Copies source data → target input area | `memcpy` of value + derivatives, **no interpolation** |
+| `ReadTargetResolver::copy_model_inputs()` | Copies source data → target input area | `memcpy` of value + derivatives, **no interpolation** |
 | `FmuModel::pre()` | Prepares FMU inputs before step | Calls `apply_input_derivatives()` to set derivative orders on FMU |
 | `FmuModel::post()` | Reads FMU outputs after step | Calls `fetch_output_derivatives()` to store output derivatives |
 | `StepData` | Carries `input_time` and `output_time` | Already supports decoupled read/write times |
@@ -51,7 +51,7 @@
 The infrastructure already supports interpolation **in principle**:
 
 - **Derivatives are stored** — each signal in `SignalStorage` has space for `max_interpolation_orders` derivative values (typically order 1)
-- **Derivatives are forwarded** — `retrieve_model_inputs()` copies derivatives from source to target storage
+- **Derivatives are forwarded** — `copy_model_inputs()` copies derivatives from source to target storage
 - **Derivatives are applied to FMUs** — `apply_input_derivatives()` calls `set_real_input_derivative()` on the FMU
 - **FMUs declare capability** — `canInterpolateInputs` is parsed from the model description XML
 
@@ -63,7 +63,7 @@ The infrastructure already supports interpolation **in principle**:
 
 **Problem:** When `input_time` falls between two stored timestamps, the current code uses the older value (zero-order hold). This introduces a discretization error that is particularly harmful in algebraic loops where the same time point is iterated multiple times.
 
-**Solution:** Modify `retrieve_model_inputs()` to detect when the requested time falls between two stored data points and perform interpolation.
+**Solution:** Modify `copy_model_inputs()` to detect when the requested time falls between two stored data points and perform interpolation.
 
 ```
 Current behavior:
@@ -84,7 +84,7 @@ With interpolation:
 **Implementation sketch:**
 
 ```cpp
-// In ConnectionInfo::retrieve_model_inputs() or a new helper:
+// In ReadTargetResolver::copy_model_inputs() or a new helper:
 
 bool find_bracketing_areas(uint64_t time,
                            size_t &lower_area, uint64_t &lower_time,
@@ -225,14 +225,14 @@ With extrapolation:
 ### Phase 1: Linear Time Interpolation (Low Risk, High Value)
 
 **Files to modify:**
-- `model_connection.cpp` / `.hpp` — `retrieve_model_inputs()`
+- `model_connection.cpp` / `.hpp` — `copy_model_inputs()`
 - `storage.cpp` / `.hpp` — add `find_next_newer_area()` helper
 - `ring_buffer.cpp` / `.hpp` — add `find_next_valid_index()` helper
 
 **Changes:**
 1. Add `RingBuffer::find_next_valid_index(time, index)` — finds the first stored timestamp > time
 2. Add `SignalStorage::find_bracketing_areas(time, lower, upper)` — returns both the ≤time and >time areas
-3. Modify `retrieve_model_inputs()` to detect bracketing and call linear interpolation for `real`-typed signals
+3. Modify `copy_model_inputs()` to detect bracketing and call linear interpolation for `real`-typed signals
 4. Add a config flag `simulation.executor.interpolate_inputs` (default: `false`) to gate the new behavior
 
 **Estimated effort:** 2–3 days
@@ -255,7 +255,7 @@ With extrapolation:
 ### Phase 3: Sub-Step Extrapolation (Higher Risk, Architectural)
 
 **Files to modify:**
-- `loop_aware_executor.cpp` — change sub-step iteration strategy
+- `la2_scheduler.cpp` — change sub-step iteration strategy
 - `StepData` — may need additional fields for extrapolation horizon
 
 **Changes:**
@@ -269,7 +269,7 @@ With extrapolation:
 ### Phase 4: Iteration History Extrapolation (Experimental)
 
 **Files to modify:**
-- `loop_aware_executor.cpp` — add iteration history ring buffer
+- `la2_scheduler.cpp` — add iteration history ring buffer
 - `jacobi_parallel_tbb.cpp` — may need to expose iteration count
 
 **Changes:**
@@ -320,7 +320,7 @@ The loop-aware executor currently uses `n_iters = scc_size` (4 iterations for a 
 
 ## 6. Recommendation
 
-**Implement Phase 1 (Linear Time Interpolation) as the immediate next step.** It is low-risk, leverages existing derivative infrastructure, and directly addresses the discretization error in `retrieve_model_inputs()`. The embrace test suite provides a good validation baseline.
+**Implement Phase 1 (Linear Time Interpolation) as the immediate next step.** It is low-risk, leverages existing derivative infrastructure, and directly addresses the discretization error in `copy_model_inputs()`. The embrace test suite provides a good validation baseline.
 
 **Phase 2 (Hermite) should follow** once the linear interpolation path is proven, since the derivative storage and forwarding infrastructure is already in place — only the interpolation math is missing.
 

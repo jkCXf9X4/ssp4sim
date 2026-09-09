@@ -8,10 +8,17 @@
 #include <cstddef>
 #include <cstdint>
 
-// Pure, storage-free access-resolution core of the read-target resolver.
-// Lives in its own file pair so it is independently unit-testable.
+// Pure, storage-free access-facts core of the read-target resolver: the per-connection
+// edge facts (`AccessMode`, `Edge`), the centralized committed frontier (`ModelStatus`),
+// and the storage-free helpers (`edge_from`, `copy_connection`). Lives in its own file
+// pair so it is independently unit-testable.
 //
-// Dependency direction: the core depends ON the public resolver header for its
+// The pluggable read policy lives in its own file pair: `read_resolver.hpp` defines the
+// `detail::ReadResolver` interface and `read_resolver_{latest_executed,macro_step_start_time}.{hpp,cpp}`
+// the concrete strategies. The ReadTargetResolver shell (read_target_resolver.hpp/.cpp)
+// injects one and forwards its `mark_committed` / `resolve`.
+//
+// Dependency direction: this core depends ON the public resolver header for its
 // value types (`ResolvedRead`, `ResolverConfig`) and `ConnectionInfo`/`Invocable`;
 // the resolver header never drags the core in. The resolver's .cpp links both.
 //
@@ -23,11 +30,23 @@ namespace ssp4sim::scheduling
 {
     namespace detail
     {
-        /// Pure per-connection access facts; a snapshot of the relevant ConnectionInfo
-        /// fields, taken from a connection at construction time.
+        /// Sampling policy for one edge — owned entirely by the resolver. ConnectionInfo
+        /// carries only wire facts; the resolver derives policy from those plus schedule.
+        enum class AccessMode : int
+        {
+            StartTime,   // sample at step_start
+            EndTime,     // sample at step_end
+            Latest,      // newest committed index (zero-order hold), no time lookup
+            Index        // fixed physical slot (fixed_index)
+        };
+
+        /// Pure per-connection access facts; derived from a ConnectionInfo + graph context.
         struct Edge
         {
-            ssp4sim::graph::DataAccessMode mode = ssp4sim::graph::DataAccessMode::Latest;
+            // Neutral default (newest committed index). edge_from() derives the actual
+            // policy from graph facts (currently StartTime for every wired edge, matching
+            // the sampling the graph builder previously pinned).
+            AccessMode mode = AccessMode::Latest;
             std::int64_t delay = 0;
             std::int64_t time_offset = 0;
             std::int64_t fixed_index = 0;
@@ -49,18 +68,14 @@ namespace ssp4sim::scheduling
         Edge edge_from(const ssp4sim::graph::ConnectionInfo &c,
                        ssp4sim::graph::Invocable *producer);
 
-        /// Pure resolution core: "what is the latest / appropriate / valid read target" for
-        /// one edge under one producer frontier. No storage, no I/O, no mutation.
-        ///   - Latest / unlinked: the latest committed area index (no time involved).
-        ///   - StartTime/EndTime:  step_start / step_end, shifted by delay/offset and
-        ///                         clamped to the committed frontier.
-        ///   - Index:              the fixed physical slot (caller applies the populated gate).
-        ///   - invalid:            producer has not committed yet (D2/D13 gate).
-        /// No `input_time` is needed: Latest reads the newest committed index directly.
-        ResolvedRead resolve_edge(const Edge &e,
-                                  const ModelStatus &status,
-                                  const ResolverConfig &cfg,
-                                  std::uint64_t step_start,
-                                  std::uint64_t step_end);
+        /// Execute one already-resolved read: copy the source value (and forwarded
+        /// derivatives) into the connection's target storage area. Type-aware (D15):
+        /// strings are copy-assigned, everything else is memcpy'd. The resolved read's
+        /// `valid`/`is_area`/`area`/`time` are interpreted per payload.
+        /// Returns false if the resolved read was invalid or no committed source area
+        /// matched (target untouched).
+        bool copy_connection(const ssp4sim::graph::ConnectionInfo &c,
+                             std::size_t target_area,
+                             const ResolvedRead &r);
     }
 }

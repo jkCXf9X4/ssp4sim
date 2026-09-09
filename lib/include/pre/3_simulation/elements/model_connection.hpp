@@ -13,20 +13,11 @@
 
 namespace ssp4sim::graph
 {
-    /// How a connection reads its source data:
-    ///  - Latest:    newest committed data (zero-order hold on the latest index)
-    ///  - StartTime: sample the source at the start of the target model's step span
-    ///  - EndTime:   sample the source at the end of the target model's step span
-    ///  - Index:     read the source area at a fixed index (see `fixed_index`),
-    ///               ignoring time-based lookup.
-    enum class DataAccessMode : int
-    {
-        StartTime,
-        EndTime,
-        Latest,
-        Index
-    };
-
+    /// A typed connection between two signal storages. This is the *wire fact*:
+    /// WHAT the edge is (source/target/type/indices/delay/derivatives). Sampling
+    /// policy (mode/offset) is NOT a field here — it is owned by the read-target
+    /// resolver (ssp4sim::scheduling::detail::Edge), which derives it from graph
+    /// facts and schedule context.
     struct ConnectionInfo : public types::IWritable
     {
         ConnectionInfo()
@@ -48,21 +39,11 @@ namespace ssp4sim::graph
 
         uint64_t delay = 0;
 
-        DataAccessMode mode = DataAccessMode::Latest;
-        int64_t time_offset = 0;
-        int64_t fixed_index = 0;
-
         bool is_feedthrough = false;
 
         bool forward_derivatives = false;
         int forward_derivatives_order = 0;
 
         std::string to_string() const override;
-
-        static void retrieve_model_inputs(std::vector<ConnectionInfo> &connections,
-                                          int target_area,
-                                          uint64_t input_time,
-                                          uint64_t step_start,
-                                          uint64_t step_end);
     };
 }

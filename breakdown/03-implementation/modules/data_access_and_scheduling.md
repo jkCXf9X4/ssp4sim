@@ -38,8 +38,14 @@ proposal — a related, pre-existing design that already partitions SCC vs. non-
 
 ## Current data-access model *(corrected)*
 
-`FmuModel::pre()` calls `retrieve_model_inputs(connections, target_area, input_time, step_start, step_end)`.
-Each connection resolves its **source area by time** via `ConnectionInfo::mode`:
+> **Status update:** `ConnectionInfo::mode` no longer exists. Sampling policy was removed
+> from `ConnectionInfo` and moved into the read-target resolver (initial implementation in
+> `lib/include/scheduling/`); `retrieve_model_inputs` was retired and replaced by
+> `ReadTargetResolver::copy_model_inputs`. The table below describes the *resolver's*
+> `detail::Edge` policy (owned by `ssp4sim::scheduling`), not `ConnectionInfo`.
+
+`FmuModel::pre()` calls `access_resolver->copy_model_inputs(target, target_area, step_start, step_end)`.
+Each connection's source area is resolved by the resolver's `detail::Edge` policy:
 
 | Mode | Samples at |
 |---|---|
@@ -50,15 +56,16 @@ Each connection resolves its **source area by time** via `ConnectionInfo::mode`:
 
 **Two corrections from review 3 — what the code *actually* does today differs from intent:**
 
-1. **The builder pins every connection to `StartTime`** (`sim_graph_builder.cpp:326`, `time_offset = 0` at `:327`).
-   No edge in the current build samples `input_time`. Therefore the `SerialSeidel` `input_time = end`
-   (`seidel_serial.cpp:32-36`) currently cannot produce the "later-in-sweep node sees a freshly
-   written value" behavior — every feedthrough edge reads `step_start` (i.e. the previous macro
-   output). **"Seidel in-sweep feedback" is a design target, not a current fact.**
-2. **`ConnectionInfo::time_offset` is a live, half-plumbed scheduler knob** — it is honored in the
-   read path (`model_connection.cpp:72`: `reference += connection.time_offset`) and `graph.md:24-26`
-   documents it as "an executor/scheduler algorithm can tune when a connection samples". It is
-   **only ever set to 0**. It is the intended "who decides" mechanism — the D6 analysis below shows
+1. **The resolver's graph-derived policy pins every connection to `StartTime`** (`detail::edge_from` in
+   `read_target_core.cpp`). No edge in the current build samples `input_time`/`EndTime`. Therefore the
+   `SerialSeidel` `input_time = end` (`seidel_serial.cpp:32-36`) currently cannot produce the
+   "later-in-sweep node sees a freshly written value" behavior — every feedthrough edge reads
+   `step_start` (i.e. the previous macro output). **"Seidel in-sweep feedback" is a design target, not
+   a current fact.**
+2. **`time_offset` is a resolver-internal knob, no longer a `ConnectionInfo` field.** It was honored in
+   the retired read path (`model_connection.cpp:72`) and `graph.md:24-26` documents it as "an
+   executor/scheduler algorithm can tune when a connection samples". It is **only ever 0** in the
+   initial resolver. It is the intended "who decides" mechanism — the D6 analysis below shows
    why it alone is insufficient, but it must not be ignored.
 3. `StepData::use_input_time` / `use_output_time` are **dead flags** (declared, never read).
 
@@ -132,7 +139,7 @@ deterministically.
 | UC-7 | Delay / transport edges | `delay` expressed as steps back | lookback = delay; compose with `ConnectionInfo::delay` (already a time-domain subtraction, `model_connection.cpp:74`) |
 | UC-8 | Derivatives / close-by points | Value at area k and area k−1, k−2 for interpolation | `derivative_locations` adjacent; **only if one-commit-one-push holds** (see review corrections) |
 | UC-9 | Deterministic golden tests | Reproducible output | Any index scheme must give schedule-independent results — *determinism contract is the gating question (Q1)* |
-| UC-10 | Failed-step roll-back / restart / restore | Re-run a macro step from a checkpoint | **An irrevocable commit frontier conflicts with "models cannot be reset"** (`loop_aware_executor.cpp:264`) — added from review 3 |
+| UC-10 | Failed-step roll-back / restart / restore | Re-run a macro step from a checkpoint | **An irrevocable commit frontier conflicts with "models cannot be reset"** (`la2_scheduler.cpp`) — added from review 3 |
 | UC-11 | Initialization / t=0 | First-step reads with no prior commits | Need an init-commit rule before the first batch (added from reviews 1 & 3) |
 | UC-12 | Recorder / export accuracy | Exported timeline matches what consumers read | Commit-vs-append must not desync the recorded stream (added from reviews 2 & 3) |
 | UC-13 | Multi-rate / non-dividing sub-steps | Mixed-rate FMIs share a step | Sub-steps break the area↔step identity every "lookback = k" assumes (added from review 3) |
@@ -254,7 +261,7 @@ Needs an explicit init-commit rule (see D2 first-commit underflow).
 ### D14 — Rollback / checkpoint vs irrevocable commit *(review 3, NEW)*
 A frozen, irrevocable commit frontier conflicts with failed-step re-rolls and FMI co-sim
 re-negotiation; the repo already constrains "sub-steps must advance time; models cannot be reset"
-(`loop_aware_executor.cpp:264`). A commit design must either be re-loadable or exclude rollback
+(`la2_scheduler.cpp`). A commit design must either be re-loadable or exclude rollback
 (UC-10).
 
 ### D15 — String lifetime hazards under index re-use *(review 2, NEW)*
@@ -288,7 +295,7 @@ above the counter load. No fence/atomic rules are stated anywhere in the current
 - `ConnectionInfo` lives in `FmuModel::connections` (incoming edges), filled by
   `GraphBuilder::wire_connections` (`sim_graph_builder.cpp:351`) — each model owns its consumer side.
   Reached from an executor today **only** via dynamic_cast at build time (`sim_graph_builder.cpp:28`),
-  plus a pre-existing C-cast hack in `custom_executors.hpp:107` (`(FmuModel*)node`) — a wart to
+  plus a pre-existing C-cast hack in `execution/custom/custom_executors.hpp` (`(FmuModel*)node`) — a wart to
   remove regardless of chosen design.
 - `time_offset` is honored but pinned to 0 (= A.4 in review terms); `use_input_time/output_time` are dead.
 - The only runtime dial today is `StepData.input_time`.
@@ -321,7 +328,7 @@ concurrency safety. R4 is the observability complement, not a stand-alone.
   forbids). It solves **D6** ("who can set sampling policy") but **NOT** D5 — the commit/watermark
   *write* still needs a writer with the same shape: **`Invocable::commit_outputs()`** (no-op
   default; implicit = serial auto-commit in `post()`; explicit at parallel barriers;
-  `loop_aware_executor.cpp:324-330`). Keep `time_offset` as the time-domain dial phase rules
+  `la2_scheduler.cpp`). Keep `time_offset` as the time-domain dial phase rules
   produce; remove dead `use_input_time/output_time`.
 - **Recommended separation (the key defense):** *The executor should never interpret per-connection
   policy — it only drives a phase; connections interpret it via static, graph-built rules.*
@@ -422,7 +429,7 @@ the original framing, now with the correctness invariants it was missing.
 
 - **Backward**: `execution.md` (strategies), `signal.md` (RingBuffer/SignalStorage),
   `data-flow.md` (Flow 3), `loop_aware_scheduler.tldr` (SCC/index sketch), `IMP-025`
-  (Seidel–Jacobi hybrid backlog), `graph.md` (`ConnectionInfo::time_offset` knob), quality
+  (Seidel–Jacobi hybrid backlog), `graph.md` (edge-level `time_offset` knob), quality
   attributes (parallelism, determinism).
 - **Sources**: `lib/include/pre/3_simulation/elements/model_connection.{hpp,cpp}`,
   `lib/include/simulation/signal/storage.{hpp,cpp}`,
