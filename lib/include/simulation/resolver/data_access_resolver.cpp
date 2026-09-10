@@ -180,45 +180,33 @@ namespace ssp4sim::scheduling
     // Protected helpers backing the abstract resolve() hook.
     // ------------------------------------------------------------------
 
-    // Transparent per-connection contract; neutral Latest stub on unknown input.
-    const EdgeAccessRules &DataAccessResolver::edge_rules(std::size_t model_id,
-                                                          std::size_t connection_id)
+    // Single-lookup edge view: the transparent per-edge contract + the source
+    // producer's committed frontier in one bundle. Unknown (model, connection)
+    // yields neutral defaults; unlinked edges resolve against never_committed.
+    DataAccessResolver::EdgeAccess DataAccessResolver::edge(std::size_t model_id,
+                                                            std::size_t connection_id)
     {
+        EdgeAccess e{&k_unknown_edge_rules, &k_unknown_producer};
         if (s_ == nullptr || model_id >= s_->edges.size())
         {
-            return k_unknown_edge_rules;
+            return e; // unknown model
         }
         const auto &model_edges = s_->edges[model_id];
         if (connection_id >= model_edges.size())
         {
-            return k_unknown_edge_rules;
-        }
-        return model_edges[connection_id].access;
-    }
-
-    // Committed frontier of the edge's source producer. Unlinked edges / unknown
-    // producers resolve against a never-committed frontier (D2/D13 gate).
-    const detail::ModelStatus &DataAccessResolver::producer_status(std::size_t model_id,
-                                                                   std::size_t connection_id)
-    {
-        if (s_ == nullptr || model_id >= s_->edges.size())
-        {
-            return k_unknown_producer;
-        }
-        const auto &model_edges = s_->edges[model_id];
-        if (connection_id >= model_edges.size())
-        {
-            return k_unknown_producer;
+            return e; // unknown connection
         }
 
-        const DataAccessResolver::State::RegisteredEdge &e = model_edges[connection_id];
-        if (e.source_producer != DataAccessResolver::State::npos &&
-            e.source_producer < s_->status.size() &&
-            s_->status[e.source_producer] != nullptr)
+        const DataAccessResolver::State::RegisteredEdge &re = model_edges[connection_id];
+        e.rules = &re.access;
+        e.status = &s_->never_committed; // unlinked (uc-14) unless a producer is registered
+        if (re.source_producer != DataAccessResolver::State::npos &&
+            re.source_producer < s_->status.size() &&
+            s_->status[re.source_producer] != nullptr)
         {
-            return *s_->status[e.source_producer];
+            e.status = s_->status[re.source_producer].get();
         }
-        return s_->never_committed; // unlinked (uc-14)
+        return e;
     }
 
     // ------------------------------------------------------------------

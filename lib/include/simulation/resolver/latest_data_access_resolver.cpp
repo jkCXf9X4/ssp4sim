@@ -21,6 +21,7 @@ namespace ssp4sim::scheduling
                                                    std::uint64_t,
                                                    std::uint64_t)
     {
-        return detail::resolve_latest(producer_status(model_id, connection_id));
+        const auto e = edge(model_id, connection_id);
+        return detail::resolve_latest(*e.status);
     }
 }

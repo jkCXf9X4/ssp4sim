@@ -22,10 +22,10 @@ namespace ssp4sim::scheduling
     ///   - per-edge AccessMode stamping, mark_committed (D17) and the
     ///     copy_model_inputs read path.
     /// Resolution is per (model, connection): the abstract `resolve()` hook is the
-    /// single specialization point, and the protected helpers expose that edge's
-    /// transparent contract (edge_rules) and its producer frontier
-    /// (producer_status) so a concrete policy can implement its decision directly.
-    /// The shared per-mode recipes live in resolver_common.{hpp,cpp}.
+    /// single specialization point, and the protected `edge()` accessor resolves
+    /// that edge's transparent contract (rules) together with its producer frontier
+    /// (status) in one lookup. The shared per-mode recipes live in
+    /// resolver_common.{hpp,cpp}.
     class DataAccessResolver
     {
     public:
@@ -59,25 +59,28 @@ namespace ssp4sim::scheduling
     protected:
         /// The specialization point: "what to read" for one incoming edge of one
         /// model. The `(model, connection)` pair identifies the edge; its
-        /// transparent contract and producer frontier are reachable through
-        /// edge_rules() / producer_status(). Implementations must consult the
-        /// producer frontier and return valid == false while nothing is committed
-        /// (D2/D13). No storage, no I/O, no mutation.
+        /// transparent contract and producer frontier are reachable in one lookup
+        /// via edge(). Implementations must consult the producer frontier and
+        /// return valid == false while nothing is committed (D2/D13). No storage,
+        /// no I/O, no mutation.
         virtual ResolvedRead resolve(std::size_t model_id,
                                      std::size_t connection_id,
                                      std::uint64_t step_start,
                                      std::uint64_t step_end) = 0;
 
-        /// Transparent per-connection contract for the edge (model_id,
-        /// connection_id): wire delay/time_offset + sampling intent. Unknown
-        /// model/connection returns a neutral Latest stub.
-        const EdgeAccessRules &edge_rules(std::size_t model_id,
-                                          std::size_t connection_id);
+        /// One registered edge's resolution view: the transparent per-edge
+        /// contract (wire delay/time_offset + sampling intent) together with the
+        /// source producer's committed frontier, in a single bundle.
+        struct EdgeAccess
+        {
+            const EdgeAccessRules *rules = nullptr;      // the edge's transparent contract
+            const detail::ModelStatus *status = nullptr; // the producer's committed frontier
+        };
 
-        /// Committed frontier of the edge's source producer. Unlinked edges /
-        /// unknown producers resolve against a never-committed frontier (D2/D13).
-        const detail::ModelStatus &producer_status(std::size_t model_id,
-                                                   std::size_t connection_id);
+        /// Single-lookup accessor backing resolve(): returns the resolution view
+        /// for one (model, connection). Unknown inputs yield neutral Latest rules
+        /// against a never-committed frontier (D2/D13).
+        EdgeAccess edge(std::size_t model_id, std::size_t connection_id);
 
         /// Override one registered edge's sampling mode (graph-structure resolvers
         /// use this after the uniform default). No-op for unknown model/connection.

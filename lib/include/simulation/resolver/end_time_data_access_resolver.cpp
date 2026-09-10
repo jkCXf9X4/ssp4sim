@@ -21,8 +21,7 @@ namespace ssp4sim::scheduling
                                                      std::uint64_t,
                                                      std::uint64_t step_end)
     {
-        return detail::resolve_time(static_cast<std::int64_t>(step_end),
-                                    edge_rules(model_id, connection_id),
-                                    producer_status(model_id, connection_id));
+        const auto e = edge(model_id, connection_id);
+        return detail::resolve_time(static_cast<std::int64_t>(step_end), *e.rules, *e.status);
     }
 }

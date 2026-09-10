@@ -82,8 +82,7 @@ namespace ssp4sim::scheduling
                                                 std::uint64_t step_start,
                                                 std::uint64_t step_end)
     {
-        return detail::resolve_edge(edge_rules(model_id, connection_id),
-                                    producer_status(model_id, connection_id),
-                                    step_start, step_end);
+        const auto e = edge(model_id, connection_id);
+        return detail::resolve_edge(*e.rules, *e.status, step_start, step_end);
     }
 }
