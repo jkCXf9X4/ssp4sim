@@ -23,6 +23,19 @@ For detailed architecture information, see the [architecture layer](../product-b
 Use [Build From Source](build_from_source.md) for exact build commands and
 [tests/README.md](../tests/README.md) for test selection.
 
+## C++ Test Build Isolation
+
+Kernel, parser, and analysis/graph tests under `tests/lib/` are standalone
+per-test executables (`test_<name>`) whose sources are computed at configure
+time as the transitive include cone of the test file. The cone rule relies on
+the invariant that implementation `.cpp` files sit adjacent to their `.hpp`
+under `lib/include/**` in normalized layout; keep that invariant when adding
+implementation files. Do not hand-maintain cone lists — new test files are
+picked up automatically. Integration tests (full-pipeline dependencies) are
+listed explicitly in `SSP4SIM_INTEGRATION_TESTS` in `tests/lib/CMakeLists.txt`
+and remain in the retained `ssp4sim_tests` binary. A bug in one `lib/` file
+therefore blocks only the tests whose cones reach it.
+
 ## Coding Style
 
 - C++ formatting follows a 4-space indent with braces on the next line.
