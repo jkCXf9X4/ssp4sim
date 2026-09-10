@@ -7,6 +7,7 @@
 #include "task_thread_pool2.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -14,11 +15,9 @@ namespace ssp4sim::graph
     class JacobiParallelSpin final : public ExecutionBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
         utils::ThreadPool2 pool;
 
-        JacobiParallelSpin(std::vector<Invocable *> nodes, int threads);
+        JacobiParallelSpin(std::vector<std::shared_ptr<Invocable>> nodes, int threads);
 
         uint64_t invoke(StepData step_data) override final;
     };

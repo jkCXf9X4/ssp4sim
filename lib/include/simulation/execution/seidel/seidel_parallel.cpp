@@ -1,4 +1,3 @@
-
 #include "execution/seidel/seidel_parallel.hpp"
 
 #include "config.hpp"
@@ -7,9 +6,8 @@
 
 namespace ssp4sim::graph
 {
-    ParallelSeidel::ParallelSeidel(std::vector<Invocable *> nodes)
-        : SeidelBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ParallelSeidel"))
+    ParallelSeidel::ParallelSeidel(std::vector<std::shared_ptr<Invocable>> nodes)
+        : SeidelBase(nodes)
     {
         LOG_INFO(log, "[{func}]", __func__);
     }
@@ -23,8 +21,6 @@ namespace ssp4sim::graph
         IF_LOG({
             LOG_TRACE_L1(log, "[{func}] step data: {}", __func__, step_data.to_string());
         });
-
-        step_data.input_time = step_data.end_time;
 
         throw std::runtime_error("This is not implemented");
 

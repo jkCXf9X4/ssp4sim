@@ -3,8 +3,7 @@
 
 #include "utils/time/timer.hpp"
 
-#include "pre/simulation_pipeline.hpp"
-#include "pre/3_simulation/sim_graph_builder.hpp"
+#include "pre/pre_pipeline.hpp"
 
 #include "simulation/signal/sinks/csv_recorder_sink.hpp"
 
@@ -12,12 +11,6 @@
 #include "simulation/signal/recorder.hpp"
 
 #include "utils/config.hpp"
-
-#include "scheduling/read_target_resolver.hpp"
-
-#include "simulation/graph_executor/execution/invocable.hpp"
-#include "simulation/graph_executor/graph_executor.hpp"
-#include "simulation/graph_executor/graph_executor_realtime.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -50,7 +43,7 @@ namespace ssp4sim
 
         std::unique_ptr<signal::DataRecorder> recorder = nullptr;
 
-        std::unique_ptr<Invocable> simulation_node;
+        std::shared_ptr<Invocable> simulation_node;
     };
 
     Simulation::Simulation(ssp4cpp::Ssp *ssp, ssp4sim::SharedConfig *config) : p(std::make_unique<SimulationPrivate>())
@@ -95,7 +88,7 @@ namespace ssp4sim
         p->sim_graph = pre::build_simulation_graph(p->ssp, this->config);
 
         // set up executors, data access rules, data recording mechanisms
-        p->sim = setup_simulation(p->sim_graph->get_models(),  p->recorder.get(), this->config);
+        p->sim = sim_setup::setup_simulation(p->sim_graph->get_models(),  p->recorder.get(), this->config);
         p->simulation_node = p->sim->execution_nod;
 
 

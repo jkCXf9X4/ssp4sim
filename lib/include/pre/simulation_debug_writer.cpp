@@ -81,7 +81,7 @@ namespace ssp4sim::pre
     }
 
     void SimulationDebugWriter::write_model_graph(
-        const std::map<std::string, std::unique_ptr<graph::Invocable>> &models)
+        const std::map<std::string, std::shared_ptr<graph::Invocable>> &models)
     {
         std::vector<utils::graph::Node *> model_nodes;
         for (auto &[name, model] : models)

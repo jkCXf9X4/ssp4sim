@@ -8,6 +8,7 @@
 
 #include "ssp4cpp/utils/log.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -15,11 +16,8 @@ namespace ssp4sim::graph
 class JacobiBase : public ExecutionBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
-        JacobiBase(std::vector<Invocable *> nodes)
-            : ExecutionBase(nodes),
-              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiBase"))
+        JacobiBase(std::vector<std::shared_ptr<Invocable>> nodes)
+            : ExecutionBase(nodes, "ssp4sim.execution.JacobiBase")
         {
             LOG_INFO(log, "[{func}] ", __func__);
         }

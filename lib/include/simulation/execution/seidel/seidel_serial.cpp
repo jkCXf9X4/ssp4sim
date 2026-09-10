@@ -1,13 +1,11 @@
-
 #include "execution/seidel/seidel_serial.hpp"
 
 #include "config.hpp"
 
 namespace ssp4sim::graph
 {
-    SerialSeidel::SerialSeidel(std::vector<Invocable *> nodes)
-        : SeidelBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.SerialSeidel"))
+    SerialSeidel::SerialSeidel(std::vector<std::shared_ptr<Invocable>> nodes)
+        : SeidelBase(nodes)
     {
         LOG_INFO(log, "[{func}] ", __func__);
     }
@@ -29,11 +27,7 @@ namespace ssp4sim::graph
             LOG_TRACE_L1(log, "[{func}] Invoking nodes", __func__);
         });
 
-        auto s = StepData(step_data.start_time, // start
-                          step_data.end_time,   // end
-                          sub_step,             // step_size
-                          step_data.end_time,   // it should be able to use results from the current iteration
-                          step_data.end_time);  // output_time
+        auto s = StepData(step_data.start_time, step_data.end_time);
 
         while (nr_of_nodes != completed)
         {

@@ -5,6 +5,7 @@
 #include "execution/jacobi/jacobi_base.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -13,9 +14,7 @@ namespace ssp4sim::graph
     class JacobiParallelTBB final : public ExecutionBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
-        JacobiParallelTBB(std::vector<Invocable *> nodes);
+        JacobiParallelTBB(std::vector<std::shared_ptr<Invocable>> nodes);
 
         uint64_t invoke(StepData step_data) override final;
     };

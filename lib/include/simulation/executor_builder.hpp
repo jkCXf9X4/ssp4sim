@@ -25,7 +25,7 @@ namespace ssp4sim::graph
 
         std::string to_string() const override;
 
-        std::unique_ptr<ExecutionBase> build(std::vector<Invocable *> nodes);
+        std::shared_ptr<ExecutionBase> build(std::vector<std::shared_ptr<Invocable>> nodes);
     };
 
 }

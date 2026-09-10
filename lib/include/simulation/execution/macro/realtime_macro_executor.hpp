@@ -13,7 +13,7 @@ namespace ssp4sim::graph
     class RealtimeMacroExecutor final : public ExecutionBase
     {
     public:
-        RealtimeMacroExecutor(std::vector<std::unique_ptr<Invocable>> nodes);
+        RealtimeMacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes);
 
         uint64_t invoke(StepData step_data) override;
 

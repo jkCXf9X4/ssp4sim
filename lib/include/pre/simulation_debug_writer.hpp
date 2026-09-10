@@ -32,7 +32,7 @@ public:
 
     /// Block 3: write model graph DOT (model_graph.dot)
     void write_model_graph(
-        const std::map<std::string, std::unique_ptr<graph::Invocable>> &models);
+        const std::map<std::string, std::shared_ptr<graph::Invocable>> &models);
 
 private:
     SharedConfig *config_;

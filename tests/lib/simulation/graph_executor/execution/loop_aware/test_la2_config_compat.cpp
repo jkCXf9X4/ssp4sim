@@ -15,11 +15,15 @@
 // NOTE: utils::Config is an all-static class with no per-key set()/reset()
 // API; tests replace the whole document via Config::loadFromString(...) per
 // SECTION (same pattern as tests/lib/utils/test_config.cpp).
+//
+// Executors share ownership of their nodes (std::shared_ptr), so the test
+// builds shared graphs and hands a shared copy to each executor; a raw-pointer
+// snapshot is kept for invocation counting.
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "config.hpp"
-#include "execution/executor_builder.hpp"
+#include "executor_builder.hpp"
 #include "execution/loop_aware/la2_scheduler.hpp"
 
 #include <cstdint>
@@ -51,43 +55,65 @@ namespace
         std::size_t invoke_count = 0;
     };
 
+    // Raw-pointer snapshot of the shared storage, kept for counting after the
+    // storage is handed to an executor.
+    std::vector<ssp4sim::graph::Invocable *> snapshot(
+        const std::vector<std::shared_ptr<MockNode>> &storage)
+    {
+        std::vector<ssp4sim::graph::Invocable *> out;
+        out.reserve(storage.size());
+        for (const auto &n : storage)
+        {
+            out.push_back(n.get());
+        }
+        return out;
+    }
+
+    // Copy the shared storage into a shared Invocable vector for an executor.
+    std::vector<std::shared_ptr<ssp4sim::graph::Invocable>> to_owned(
+        const std::vector<std::shared_ptr<MockNode>> &storage)
+    {
+        return std::vector<std::shared_ptr<ssp4sim::graph::Invocable>>(
+            storage.begin(), storage.end());
+    }
+
     // A -> B -> A: one 2-node loop SCC (the only SCC).
     std::vector<ssp4sim::graph::Invocable *> make_loop_graph(
-        std::vector<std::unique_ptr<MockNode>> &storage)
+        std::vector<std::shared_ptr<MockNode>> &storage)
     {
         storage.clear();
-        storage.push_back(std::make_unique<MockNode>("A"));
-        storage.push_back(std::make_unique<MockNode>("B"));
+        storage.push_back(std::make_shared<MockNode>("A"));
+        storage.push_back(std::make_shared<MockNode>("B"));
         auto *a = storage[0].get();
         auto *b = storage[1].get();
         a->add_child(b);
         b->add_child(a);
-        return {a, b};
+        return snapshot(storage);
     }
 
     // A -> B -> C: three single-node SCCs (no loops).
     std::vector<ssp4sim::graph::Invocable *> make_chain_graph(
-        std::vector<std::unique_ptr<MockNode>> &storage)
+        std::vector<std::shared_ptr<MockNode>> &storage)
     {
         storage.clear();
-        storage.push_back(std::make_unique<MockNode>("A"));
-        storage.push_back(std::make_unique<MockNode>("B"));
-        storage.push_back(std::make_unique<MockNode>("C"));
+        storage.push_back(std::make_shared<MockNode>("A"));
+        storage.push_back(std::make_shared<MockNode>("B"));
+        storage.push_back(std::make_shared<MockNode>("C"));
         auto *a = storage[0].get();
         auto *b = storage[1].get();
         auto *c = storage[2].get();
         a->add_child(b);
         b->add_child(c);
-        return {a, b, c};
+        return snapshot(storage);
     }
 
-    // Total invocations across all mock nodes.
-    std::size_t total_invocations(const std::vector<std::unique_ptr<MockNode>> &storage)
+    // Total invocations across all nodes (raw snapshot of the owned graph).
+    std::size_t total_invocations(const std::vector<ssp4sim::graph::Invocable *> &nodes)
     {
         std::size_t total = 0;
-        for (const auto &n : storage)
+        for (auto *n : nodes)
         {
-            total += n->invoke_count;
+            total += static_cast<MockNode *>(n)->invoke_count;
         }
         return total;
     }
@@ -112,11 +138,11 @@ TEST_CASE("executor_builder accepts legacy 'loop_aware' method name", "[la2][con
         }
     })json");
 
-    std::vector<std::unique_ptr<MockNode>> storage;
+    std::vector<std::shared_ptr<MockNode>> storage;
     auto nodes = make_chain_graph(storage);
 
     ssp4sim::graph::ExecutorBuilder builder;
-    auto executor = builder.build(nodes);
+    auto executor = builder.build(to_owned(storage));
 
     REQUIRE(executor != nullptr);
     // The legacy name must dispatch to the La2Scheduler, not to a fallback.
@@ -140,16 +166,16 @@ TEST_CASE("legacy loop_aware config keys are honored when la2.* keys are absent"
         }
     })json");
 
-    std::vector<std::unique_ptr<MockNode>> storage;
+    std::vector<std::shared_ptr<MockNode>> storage;
     auto nodes = make_loop_graph(storage);
 
-    ssp4sim::graph::La2Scheduler scheduler(nodes);
-    scheduler.invoke(ssp4sim::graph::StepData(T0, T1, T1 - T0));
+    ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
+    scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
 
     // "fixed" == equal sub-steps, count = iterations = 4. The 2-node loop is
     // relaxed over 4 sub-steps, each node invoked once per sub-step:
     // 2 nodes * 4 sub-steps = 8 invocations.
-    REQUIRE(total_invocations(storage) == 8);
+    REQUIRE(total_invocations(nodes) == 8);
 }
 
 TEST_CASE("la2.* config keys take precedence over legacy loop_aware.* keys",
@@ -174,14 +200,14 @@ TEST_CASE("la2.* config keys take precedence over legacy loop_aware.* keys",
         }
     })json");
 
-    std::vector<std::unique_ptr<MockNode>> storage;
+    std::vector<std::shared_ptr<MockNode>> storage;
     auto nodes = make_loop_graph(storage);
 
-    ssp4sim::graph::La2Scheduler scheduler(nodes);
-    scheduler.invoke(ssp4sim::graph::StepData(T0, T1, T1 - T0));
+    ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
+    scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
 
     // 2 nodes * 2 sub-steps = 4 invocations (not 12).
-    REQUIRE(total_invocations(storage) == 4);
+    REQUIRE(total_invocations(nodes) == 4);
 }
 
 TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][compat]")
@@ -201,14 +227,14 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
             }
         })json");
 
-        std::vector<std::unique_ptr<MockNode>> storage;
+        std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::La2Scheduler scheduler(nodes);
-        scheduler.invoke(ssp4sim::graph::StepData(T0, T1, T1 - T0));
+        ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
+        scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
 
         // 2 nodes * 3 equal sub-steps = 6 invocations.
-        REQUIRE(total_invocations(storage) == 6);
+        REQUIRE(total_invocations(nodes) == 6);
     }
 
     SECTION("'geometric' behaves like 'factor' (shrinking sub-steps, count = iterations)")
@@ -227,15 +253,15 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
             }
         })json");
 
-        std::vector<std::unique_ptr<MockNode>> storage;
+        std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::La2Scheduler scheduler(nodes);
-        scheduler.invoke(ssp4sim::graph::StepData(T0, T1, T1 - T0));
+        ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
+        scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
 
         // "geometric" honors BOTH iterations (sub-step count) and factor:
         // 2 nodes * 4 shrinking sub-steps = 8 invocations.
-        REQUIRE(total_invocations(storage) == 8);
+        REQUIRE(total_invocations(nodes) == 8);
     }
 
     SECTION("'geometric' with factor outside (0,1) falls back to equal sub-steps")
@@ -254,15 +280,15 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
             }
         })json");
 
-        std::vector<std::unique_ptr<MockNode>> storage;
+        std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::La2Scheduler scheduler(nodes);
-        scheduler.invoke(ssp4sim::graph::StepData(T0, T1, T1 - T0));
+        ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
+        scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
 
         // build_substep_schedule treats an out-of-range factor as Linear:
         // 2 nodes * 3 equal sub-steps = 6 invocations.
-        REQUIRE(total_invocations(storage) == 6);
+        REQUIRE(total_invocations(nodes) == 6);
     }
 }
 
@@ -278,16 +304,18 @@ TEST_CASE("executor_builder throws a clear error for parallel_seidel",
         }
     })json");
 
-    std::vector<std::unique_ptr<MockNode>> storage;
-    auto nodes = make_chain_graph(storage);
+    std::vector<std::shared_ptr<MockNode>> storage;
+    make_chain_graph(storage);
 
     ssp4sim::graph::ExecutorBuilder builder;
-    REQUIRE_THROWS_AS(builder.build(nodes), std::runtime_error);
+    REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
 
     // Also verify the message is clear and actionable.
     try
     {
-        builder.build(nodes);
+        std::vector<std::shared_ptr<MockNode>> single;
+        single.push_back(std::make_shared<MockNode>("A"));
+        builder.build(to_owned(single));
         FAIL("expected std::runtime_error");
     }
     catch (const std::runtime_error &e)
@@ -309,16 +337,18 @@ TEST_CASE("unknown executor method still throws with the method name",
         }
     })json");
 
-    std::vector<std::unique_ptr<MockNode>> storage;
-    auto nodes = make_chain_graph(storage);
+    std::vector<std::shared_ptr<MockNode>> storage;
+    make_chain_graph(storage);
 
     ssp4sim::graph::ExecutorBuilder builder;
-    REQUIRE_THROWS_AS(builder.build(nodes), std::runtime_error);
+    REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
 
     // The message must include the received method name.
     try
     {
-        builder.build(nodes);
+        std::vector<std::shared_ptr<MockNode>> single;
+        single.push_back(std::make_shared<MockNode>("A"));
+        builder.build(to_owned(single));
         FAIL("expected std::runtime_error");
     }
     catch (const std::runtime_error &e)

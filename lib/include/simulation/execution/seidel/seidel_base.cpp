@@ -1,16 +1,14 @@
-
 #include "execution/seidel/seidel_base.hpp"
 
 #include "config.hpp"
 
-#include <utility>
+#include <cstddef>
 
 namespace ssp4sim::graph
 {
 
-    SeidelBase::SeidelBase(std::vector<Invocable *> _nodes_)
-        : ExecutionBase(std::move(_nodes_)),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.SeidelBase")),
+    SeidelBase::SeidelBase(std::vector<std::shared_ptr<Invocable>> _nodes_)
+        : ExecutionBase(_nodes_, "ssp4sim.execution.SeidelBase"),
           nr_of_nodes(nodes.size()),
           seidel_nodes(nr_of_nodes)
     {
@@ -23,7 +21,7 @@ namespace ssp4sim::graph
 
             auto &n = seidel_nodes[id];
             n.id = id;
-            n.node = node;
+            n.node = node.get();
             n.nr_parents = node->parents.size();
             n.nr_parents_counter = n.nr_parents;
 

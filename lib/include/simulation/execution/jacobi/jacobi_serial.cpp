@@ -1,20 +1,17 @@
 #include "execution/jacobi/jacobi_serial.hpp"
 
-#include "executor_utils.hpp"
-
 namespace ssp4sim::graph
 {
 
-    JacobiSerial::JacobiSerial(std::vector<Invocable *> nodes)
-        : JacobiBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiSerial"))
+    JacobiSerial::JacobiSerial(std::vector<std::shared_ptr<Invocable>> nodes)
+        : JacobiBase(nodes)
     {
         LOG_INFO(log, "[{func}] ", __func__);
     }
 
     uint64_t JacobiSerial::invoke(StepData step_data)
     {
-        auto step = StepData(step_data.start_time, step_data.end_time, sub_step, step_data.start_time, step_data.end_time);
+        auto step = StepData(step_data.start_time, step_data.end_time);
 
         IF_LOG({
             LOG_DEBUG(log, "[{func}] stepdata: {stepdata}", __func__, step_data.to_string());

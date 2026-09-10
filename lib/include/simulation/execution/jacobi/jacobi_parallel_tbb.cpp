@@ -1,7 +1,5 @@
 #include "execution/jacobi/jacobi_parallel_tbb.hpp"
 
-#include "executor_utils.hpp"
-
 #include <algorithm>
 #include <execution>
 #include <exception>
@@ -9,9 +7,8 @@
 
 namespace ssp4sim::graph
 {
-    JacobiParallelTBB::JacobiParallelTBB(std::vector<Invocable *> nodes)
-        : ExecutionBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelTBB"))
+    JacobiParallelTBB::JacobiParallelTBB(std::vector<std::shared_ptr<Invocable>> nodes)
+        : ExecutionBase(nodes, "ssp4sim.execution.JacobiParallelTBB")
     {
         LOG_INFO(log, "[{func}] JacobiParallelTBB", __func__);
     }
@@ -22,8 +19,7 @@ namespace ssp4sim::graph
             LOG_DEBUG(log, "[{func}] stepdata: {stepdata}", __func__, step_data.to_string());
         });
 
-        auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
-        step.timestep = sub_step;
+        auto step = StepData(step_data.start_time, step_data.end_time);
 
         std::exception_ptr captured_exception;
         std::mutex exception_mutex;

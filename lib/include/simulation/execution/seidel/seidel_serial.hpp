@@ -3,6 +3,7 @@
 #include "execution/seidel/seidel_base.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -11,9 +12,7 @@ namespace ssp4sim::graph
     class SerialSeidel final : public SeidelBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
-        SerialSeidel(std::vector<Invocable *> nodes);
+        SerialSeidel(std::vector<std::shared_ptr<Invocable>> nodes);
 
         std::string to_string() const override
         {

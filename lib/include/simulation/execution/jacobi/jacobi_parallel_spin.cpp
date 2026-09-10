@@ -1,13 +1,10 @@
 #include "execution/jacobi/jacobi_parallel_spin.hpp"
 
-#include "executor_utils.hpp"
-
 namespace ssp4sim::graph
 {
 
-    JacobiParallelSpin::JacobiParallelSpin(std::vector<Invocable *> nodes, int threads)
-        : ExecutionBase(nodes),
-          log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.JacobiParallelSpin")),
+    JacobiParallelSpin::JacobiParallelSpin(std::vector<std::shared_ptr<Invocable>> nodes, int threads)
+        : ExecutionBase(nodes, "ssp4sim.execution.JacobiParallelSpin"),
           pool(threads)
     {
         LOG_INFO(log, "[{func}] JacobiParallelSpin", __func__);
@@ -19,13 +16,13 @@ namespace ssp4sim::graph
             LOG_DEBUG(log, "[{func}] stepdata: {stepdata}", __func__, step_data.to_string());
         });
 
-        auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
+        auto step = StepData(step_data.start_time, step_data.end_time);
 
         pool.ready(static_cast<int>(nodes.size()));
 
         for (auto &node : nodes)
         {
-            auto ti = utils::task_info{node, step};
+            auto ti = utils::task_info{node.get(), step};
             pool.enqueue(ti);
         }
 

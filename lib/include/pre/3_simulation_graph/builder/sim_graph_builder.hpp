@@ -25,13 +25,13 @@ namespace ssp4sim::graph
 
         explicit GraphBuilder(bool record_inputs);
 
-        std::map<std::string, std::unique_ptr<Invocable>> build(analysis::AnalysisGraphData *graph_data);
+        std::map<std::string, std::shared_ptr<Invocable>> build(analysis::AnalysisGraphData *graph_data);
 
 
     private:
         ssp4cpp::utils::log::Logger *log = nullptr;
 
-        std::map<std::string, std::unique_ptr<Invocable>> models;
+        std::map<std::string, std::shared_ptr<Invocable>> models;
 
         void create_fmu_models(analysis::AnalysisGraphData &graph_data);
         void create_data_storage_areas(analysis::AnalysisGraphData &graph_data);

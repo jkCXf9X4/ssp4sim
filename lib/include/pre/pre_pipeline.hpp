@@ -23,7 +23,22 @@ namespace ssp4sim::pre
     /// Result of the pre-simulation pipeline.
     struct SimulationGraph
     {
-        std::map<std::string, std::unique_ptr<graph::Invocable>> models;
+        std::map<std::string, std::shared_ptr<graph::Invocable>> models;
+
+        // The graph keeps shared ownership of the models so the executor
+        // layer can wrap/copy them without move gymnastics.
+
+        inline std::vector<std::shared_ptr<graph::Invocable>> get_models()
+        {
+            std::vector<std::shared_ptr<graph::Invocable>> out;
+            out.reserve(models.size());
+            for (const auto &[name, model] : models)
+            {
+                (void)name;
+                out.push_back(model);
+            }
+            return out;
+        }
     };
 
     /// Build the simulation models from an SSP.

@@ -4,10 +4,13 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::scheduling
 {
+    using ssp4sim::graph::Invocable;
+
     struct ResolvedRead
     {
         bool valid = false;
@@ -43,9 +46,16 @@ namespace ssp4sim::scheduling
     {
     public:
         DataAccessResolver() = default;
-        DataAccessResolver(std::vector<Invocable *> nodes);
 
-        ~DataAccessResolver() noexcept = default;
+        /// Build per-model edge rule tables from the graph nodes. Only
+        /// FmuModel nodes are registered (keyed by their Invocable id).
+        /// `default_mode` is the sampling policy for wired edges; unlinked
+        /// edges (source storage without a registered owner) fall back to
+        /// AccessMode::Latest (stale-only).
+        DataAccessResolver(std::vector<Invocable *> nodes,
+                           AccessMode default_mode = AccessMode::StartTime);
+
+        ~DataAccessResolver() noexcept;
 
         /// Advance one producer's committed frontier. Called ONLY after the producer's
         /// output bytes are fully visible (D17 release-store).
@@ -55,9 +65,34 @@ namespace ssp4sim::scheduling
 
         /// Pure resolution: "what to read" for one edge under one producer frontier.
         /// No storage, no I/O, no mutation.
+        // TODO : make private
         ResolvedRead resolve(std::size_t model_id,
                              std::size_t connection_id,
                              std::uint64_t step_start,
                              std::uint64_t step_end);
+
+        // TODO: Move to cpp
+        void copy_model_inputs(ssp4sim::graph::FmuModel *target,
+                               std::size_t target_area,
+                               std::uint64_t step_start,
+                               std::uint64_t step_end)
+        {
+
+            const std::vector<ssp4sim::graph::ConnectionInfo> &connections = target->connections;
+
+            for (std::size_t i = 0; i < connections.size(); ++i)
+            {
+                // Intentionally cheap per connection; the resolver's own edges are
+                // index-aligned with target->connections.
+                const ResolvedRead r = resolve(target, i, step_start, step_end);
+                detail::copy_connection(connections[i], target_area, r);
+            }
+        }
+
+    private:
+        // Opaque implementation state (defined in read_resolver.cpp). Raw
+        // pointer (not unique_ptr) so the header stays complete-type-free.
+        struct State;
+        State *s_ = nullptr;
     };
 }

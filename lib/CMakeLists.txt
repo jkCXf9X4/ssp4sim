@@ -13,10 +13,10 @@ target_include_directories(
           ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser
           ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser/elements
           ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser/schema_extensions
-          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis
-          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis/elements
-          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation
-          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation/elements
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis_graph
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis_graph/elements
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation_graph
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation_graph/elements
           ${CMAKE_CURRENT_LIST_DIR}/include/utils
           ${CMAKE_CURRENT_LIST_DIR}/include/utils/fmi
           ${CMAKE_CURRENT_LIST_DIR}/include/utils/graph
@@ -26,8 +26,8 @@ target_include_directories(
           ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
           ${CMAKE_CURRENT_LIST_DIR}/include/utils/time
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation
-          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/graph_executor
-          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/graph_executor/execution
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/execution
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/resolver
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal/sinks
           )

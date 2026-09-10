@@ -27,7 +27,7 @@ namespace ssp4sim::graph
             // Create FmuInfo from the SspModel's FMU pointer and transfer ownership to FmuModel
             auto fmu_info = std::make_unique<handler::FmuInfo>(analysis_model->name, analysis_model->fmu.get());
 
-            auto m = std::make_unique<FmuModel>(analysis_model->name, std::move(fmu_info), analysis_model->maxOutputDerivativeOrder);
+            auto m = std::make_shared<FmuModel>(analysis_model->name, std::move(fmu_info), analysis_model->maxOutputDerivativeOrder);
             LOG_TRACE_L1(log, "[{func}] -- New Model: {model}", __func__, m->name);
 
             m->delay = analysis_model->delay;
@@ -35,7 +35,7 @@ namespace ssp4sim::graph
             m->canInterpolateInputs = analysis_model->canInterpolateInputs;
             LOG_DEBUG(log, "[{func}] Model: {model}, delay {delay}", __func__, m->name, m->delay);
 
-            models[analysis_model->name] = std::move(m);
+            models[analysis_model->name] = m;
         }
     }
 

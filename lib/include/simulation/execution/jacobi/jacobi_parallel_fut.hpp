@@ -9,6 +9,7 @@
 
 #include <cstdint>
 #include <future>
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -16,12 +17,10 @@ namespace ssp4sim::graph
     class JacobiParallelFutures final : public ExecutionBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
         utils::ThreadPool pool;
         std::vector<std::future<void>> futures;
 
-        JacobiParallelFutures(std::vector<Invocable *> nodes, int threads);
+        JacobiParallelFutures(std::vector<std::shared_ptr<Invocable>> nodes, int threads);
 
         uint64_t invoke(StepData step_data) override final;
     };

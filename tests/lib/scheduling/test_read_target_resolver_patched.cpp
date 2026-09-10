@@ -1,7 +1,8 @@
-#include "scheduling/read_target_resolver.hpp"
+#include "resolver/read_resolver.hpp"
+#include "resolver/read_target_core.hpp"
 
-#include "pre/3_simulation/elements/model_fmu.hpp"
-#include "pre/3_simulation/elements/model_connection.hpp"
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
+#include "pre/3_simulation_graph/elements/model_connection.hpp"
 
 #include "utils/config.hpp"
 
@@ -15,8 +16,8 @@
 #include <string>
 #include <vector>
 
-using ssp4sim::scheduling::ReadTargetResolver;
-using ssp4sim::scheduling::ResolverConfig;
+using ssp4sim::scheduling::DataAccessResolver;
+using ssp4sim::scheduling::AccessMode;
 using ssp4sim::graph::FmuModel;
 using ssp4sim::graph::ConnectionInfo;
 using ssp4sim::graph::Invocable;
@@ -24,21 +25,17 @@ using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
 // ---------------------------------------------------------------------------
-// Description: copy_model_inputs (the access_resolver wiring) copies a string
-//              (D15) field from a committed producer's output area into the
-//              consumer's input area, through the real FmuModel::pre() path.
-// Rationale:   Zero unit tests covered the access_resolver -> copy_model_inputs
-//              wiring, and the D15 string-aware copy path was untested despite a
-//              test description claiming string coverage. This drives the real
-//              production path: FmuModel::pre() calls
-//              access_resolver->copy_model_inputs(this, target_area, step_start,
-//              step_end), which resolves each connection and runs the type-aware
-//              copy (read_target_core.cpp: copy_connection, string branch).
+// Description: the resolver -> FmuModel::pre() wiring copies a string (D15)
+//              field from a committed producer's output area into the consumer's
+//              input area, through the real FmuModel::pre() path.
+// Rationale:   Drives the real production path: FmuModel::pre() resolves each
+//              connection through the shared DataAccessResolver and runs the
+//              type-aware copy (detail::copy_connection, string branch).
 //              No FMU is required: FmuModel's constructor only moves the (null)
 //              FmuInfo, pre() never dereferences fmu->model, and the destructor
 //              null-checks before terminate().
 // ---------------------------------------------------------------------------
-TEST_CASE("copy_model_inputs copies a string field through FmuModel::pre", "[ReadTargetResolver][D15]")
+TEST_CASE("resolver copies a string field through FmuModel::pre", "[ReadResolver][D15]")
 {
     // FmuModel's constructor reads Config::getOr(...) which throws when no
     // config is loaded; load a minimal config first (mirrors test_config.cpp).
@@ -51,7 +48,7 @@ TEST_CASE("copy_model_inputs copies a string field through FmuModel::pre", "[Rea
 
     // Producer: owns the source output storage that the consumer reads from.
     FmuModel producer("producer", nullptr, 0);
-    // Consumer: owns the target input storage that copy_model_inputs writes to.
+    // Consumer: owns the target input storage that pre() writes to.
     FmuModel consumer("consumer", nullptr, 0);
 
     // One string variable in each storage (D15: string-object copy, not memcpy).
@@ -71,20 +68,22 @@ TEST_CASE("copy_model_inputs copies a string field through FmuModel::pre", "[Rea
     con.delay = 0;
     consumer.connections.push_back(con);
 
-    // Build the resolver over the graph (producer + consumer). The consumer's
-    // connection is index-aligned with the resolver's internal edge table.
+    // Build the resolver over the graph (producer + consumer), keyed by the
+    // models' Invocable ids. The consumer's connection is index-aligned with
+    // the resolver's internal edge table.
     std::vector<Invocable *> models{&producer, &consumer};
-    ReadTargetResolver resolver(models, nullptr, ResolverConfig{});
-    consumer.access_resolver = &resolver;
+    std::shared_ptr<DataAccessResolver> resolver =
+        std::make_shared<DataAccessResolver>(models);
+    consumer.access_resolver = resolver;
 
     // Producer commits a string value at t=100 (D17: mark_committed publishes
     // the frontier after the value bytes are visible).
     const auto src_area = producer.output_area->push(100);
     *(std::string *)producer.output_area->get_item(src_area, src_index) = "hello-d15";
-    resolver.mark_committed(&producer, 100, src_area);
+    resolver->mark_committed(producer.id, 100, src_area);
 
     // Consumer's pre() copies the committed string into its input area.
-    consumer.pre(/*input_time=*/100, /*step_start=*/100, /*step_end=*/200);
+    consumer.pre(/*step_start=*/100, /*step_end=*/200);
 
     // The copy must be a real string copy (D15), not a byte copy.
     std::size_t tgt_area = 0;

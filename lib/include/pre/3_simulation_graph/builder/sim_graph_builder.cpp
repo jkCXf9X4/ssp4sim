@@ -4,7 +4,8 @@
 #include "signal/recorder.hpp"
 
 #include <memory>
-#include <utility>
+#include <string>
+#include <vector>
 
 namespace ssp4sim::graph
 {
@@ -19,7 +20,7 @@ namespace ssp4sim::graph
         return dynamic_cast<FmuModel*>(invocable);
     }
 
-    std::map<std::string, std::unique_ptr<Invocable>> GraphBuilder::build(analysis::AnalysisGraphData *graph_data)
+    std::map<std::string, std::shared_ptr<Invocable>> GraphBuilder::build(analysis::AnalysisGraphData *graph_data)
     {
         LOG_DEBUG(log, "[{func}] init with pre-resolved graph data", __func__);
 
@@ -42,7 +43,7 @@ namespace ssp4sim::graph
         }
 
         LOG_DEBUG(log, "[{func}] exit", __func__);
-        return std::move(models);
+        return models;
     }
 
 

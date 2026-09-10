@@ -4,7 +4,7 @@
 namespace ssp4sim::graph
 {
 
-    MacroExecutor::MacroExecutor(std::vector<std::unique_ptr<Invocable>> nodes) : ExecutionBase(std::move(nodes), "ssp4sim.graph.MacroExecutor")
+    MacroExecutor::MacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes) : ExecutionBase(nodes, "ssp4sim.graph.MacroExecutor")
     {
         macro_step = utils::time::s_to_ns(utils::Config::getDouble("simulation.timestep"));
     }

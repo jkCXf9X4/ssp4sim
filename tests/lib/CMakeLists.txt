@@ -9,13 +9,13 @@ target_include_directories(
           ${CMAKE_SOURCE_DIR}/lib/include/pre/1_ssp_parser
           ${CMAKE_SOURCE_DIR}/lib/include/pre/1_ssp_parser/elements
           ${CMAKE_SOURCE_DIR}/lib/include/pre/1_ssp_parser/schema_extensions
-          ${CMAKE_SOURCE_DIR}/lib/include/pre/2_analysis
-          ${CMAKE_SOURCE_DIR}/lib/include/pre/2_analysis/elements
-          ${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation
-          ${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation/elements
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/2_analysis_graph
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/2_analysis_graph/elements
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation_graph
+          ${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation_graph/elements
           ${CMAKE_SOURCE_DIR}/lib/include/simulation
-          ${CMAKE_SOURCE_DIR}/lib/include/simulation/graph_executor
-          ${CMAKE_SOURCE_DIR}/lib/include/simulation/graph_executor/execution
+          ${CMAKE_SOURCE_DIR}/lib/include/simulation/execution
+          ${CMAKE_SOURCE_DIR}/lib/include/simulation/resolver
           ${CMAKE_SOURCE_DIR}/lib/include/simulation/signal
           ${CMAKE_SOURCE_DIR}/lib/include/simulation/signal/sinks
           ${CMAKE_SOURCE_DIR}/lib/include/utils

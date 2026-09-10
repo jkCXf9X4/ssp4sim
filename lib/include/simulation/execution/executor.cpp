@@ -2,24 +2,25 @@
 
 #include "config.hpp"
 
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
+
 #include <cstddef>
-#include <utility>
 
 namespace ssp4sim::graph
 {
 
-    ExecutionBase::ExecutionBase(std::vector<std::unique_ptr<Invocable>> nodes, std::string log_name)
+ExecutionBase::ExecutionBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name)
         : log(ssp4cpp::utils::log::make_logger(log_name)),
-          nodes(std::move(nodes))
+          nodes(nodes)
     {
 
     }
 
-    void ExecutionBase::set_resolver(std::shared_ptr<DataAccessResolver> &resolver)
+    void ExecutionBase::set_resolver(std::shared_ptr<DataAccessResolver> resolver)
     {
         for (const auto &node : nodes)
         {
-            if (auto fmu = dynamic_cast<std::unique_ptr<graph::FmuModel>>(node))
+            if (auto fmu = dynamic_cast<FmuModel *>(node.get()))
             {
                 fmu->access_resolver = resolver;
             }

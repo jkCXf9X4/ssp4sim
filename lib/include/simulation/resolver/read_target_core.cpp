@@ -8,23 +8,6 @@
 namespace ssp4sim::scheduling
 {
 
-    void ReadTargetResolver::copy_model_inputs(ssp4sim::graph::FmuModel *target,
-                                               std::size_t target_area,
-                                               std::uint64_t step_start,
-                                               std::uint64_t step_end)
-    {
-
-        const std::vector<ssp4sim::graph::ConnectionInfo> &connections = target->connections;
-
-        for (std::size_t i = 0; i < connections.size(); ++i)
-        {
-            // Intentionally cheap per connection; the resolver's own edges are
-            // index-aligned with target->connections.
-            const ResolvedRead r = resolve(target, i, step_start, step_end);
-            detail::copy_connection(connections[i], target_area, r);
-        }
-    }
-
     // The concrete `detail::ReadResolver` strategies formerly implemented here now live in
     // their own file pairs (read_resolver_*.{hpp,cpp}); this file keeps the storage-free
     // facts and the copy step only.

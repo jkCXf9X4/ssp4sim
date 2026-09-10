@@ -5,6 +5,7 @@
 #include "ssp4cpp/utils/log.hpp"
 
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -12,9 +13,7 @@ namespace ssp4sim::graph
     class JacobiSerial final : public JacobiBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
-        JacobiSerial(std::vector<Invocable *> nodes);
+        JacobiSerial(std::vector<std::shared_ptr<Invocable>> nodes);
 
         std::string to_string() const override
         {

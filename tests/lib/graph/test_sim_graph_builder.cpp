@@ -1,9 +1,8 @@
-#include "pre/3_simulation/elements/model_connection.hpp"
-#include "pre/3_simulation/elements/model_connector.hpp"
+#include "pre/3_simulation_graph/elements/model_connection.hpp"
+#include "pre/3_simulation_graph/elements/model_connector.hpp"
 #include "signal/storage.hpp"
-#include "scheduling/read_target_core.hpp"
-#include "scheduling/read_resolver_latest_executed.hpp"
-#include "scheduling/read_resolver_macro_step_start_time.hpp"
+#include "resolver/read_target_core.hpp"
+#include "resolver/read_resolver.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -17,10 +16,10 @@ using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
 using ssp4sim::scheduling::ResolvedRead;
-using ssp4sim::scheduling::detail::AccessMode;
+using ssp4sim::scheduling::AccessMode;
+using ssp4sim::scheduling::EdgeAccessRules;
 using ssp4sim::scheduling::detail::ModelStatus;
-using ssp4sim::scheduling::detail::latest_executed_resolver;
-using ssp4sim::scheduling::detail::macro_step_start_time_resolver;
+using ssp4sim::scheduling::detail::resolve_edge;
 using ssp4sim::scheduling::detail::copy_connection;
 
 namespace {
@@ -75,12 +74,7 @@ constexpr double kInitialValue = 3.5;
 // ---------------------------------------------------------------------------
 TEST_CASE("resolver copy path copies values with explicit policy", "[sim_graph_builder]")
 {
-    using ssp4sim::scheduling::detail::AccessMode;
-    using ssp4sim::scheduling::detail::ModelStatus;
-    using ssp4sim::scheduling::detail::latest_executed_resolver;
-    using ssp4sim::scheduling::detail::macro_step_start_time_resolver;
     using ssp4sim::scheduling::detail::copy_connection;
-    using ssp4sim::scheduling::ResolverConfig;
 
     // A producer that has committed area `area` at `time` (mirrors mark_committed).
     auto set_committed = [](ModelStatus &st, std::uint64_t time, std::size_t area)
@@ -91,26 +85,13 @@ TEST_CASE("resolver copy path copies values with explicit policy", "[sim_graph_b
         st.generation.store(1, std::memory_order::release);
     };
 
-    auto wired_edge = [](const ConnectionInfo &con, AccessMode mode)
+    auto wired_edge = [](const ConnectionInfo &con, AccessMode mode,
+                         std::int64_t delay = 0)
     {
-        ssp4sim::scheduling::detail::Edge e = ssp4sim::scheduling::detail::edge_from(con, nullptr);
-        e.unlinked = false; // a real wired edge, not an unlinked one
+        EdgeAccessRules e;
         e.mode = mode;
+        e.delay = delay;
         return e;
-    };
-
-    // The graph derives the read policy per edge; mirror that choice onto the matching
-    // resolver: Latest-pinned edges use the latest-executed resolver, time-sampled edges
-    // the macro-step-start-time resolver.
-    auto resolve_policy = [](const ssp4sim::scheduling::detail::Edge &e, const ModelStatus &st,
-                             const ResolverConfig &cfg, std::uint64_t step_start,
-                             std::uint64_t step_end)
-    {
-        if (e.mode == AccessMode::Latest)
-        {
-            return latest_executed_resolver()->resolve(e, st, cfg, step_start, step_end);
-        }
-        return macro_step_start_time_resolver()->resolve(e, st, cfg, step_start, step_end);
     };
 
     // ---------- zero-delay, Latest policy -> copies newest committed area ----------
@@ -134,8 +115,8 @@ TEST_CASE("resolver copy path copies values with explicit policy", "[sim_graph_b
         auto tgt_area = tgt.push(300);
 
         ConnectionInfo con = make_connection(src, tgt);
-        ResolvedRead r = resolve_policy(wired_edge(con, AccessMode::Latest),
-                                        committed, ResolverConfig{}, 100, 300);
+        ResolvedRead r = resolve_edge(wired_edge(con, AccessMode::Latest),
+                                committed, 100, 300);
         CHECK(r.valid);
         CHECK(r.is_area);
         CHECK(r.area == a200);
@@ -164,8 +145,8 @@ TEST_CASE("resolver copy path copies values with explicit policy", "[sim_graph_b
         auto tgt_area = tgt.push(300);
 
         ConnectionInfo con = make_connection(src, tgt, DataType::real, 0, 0, /*delay=*/100);
-        ResolvedRead r = resolve_policy(wired_edge(con, AccessMode::StartTime),
-                                        committed, ResolverConfig{}, 300, 300);
+        ResolvedRead r = resolve_edge(wired_edge(con, AccessMode::StartTime),
+                                committed, 300, 300);
         CHECK(r.valid);
         CHECK_FALSE(r.is_area);
         CHECK(r.time == 200); // step_start(300) - delay(100)
@@ -190,8 +171,8 @@ TEST_CASE("resolver copy path copies values with explicit policy", "[sim_graph_b
 
         auto tgt_area = tgt.push(0);
         ConnectionInfo con = make_connection(src, tgt, DataType::integer, 0, 0);
-        ResolvedRead r = resolve_policy(wired_edge(con, AccessMode::Latest),
-                                        committed, ResolverConfig{}, 0, 0);
+        ResolvedRead r = resolve_edge(wired_edge(con, AccessMode::Latest),
+                                committed, 0, 0);
         CHECK(copy_connection(con, tgt_area, r) == true);
         CHECK(read_storage_value<int>(tgt, tgt_area, 0) == kExpectedIntValue);
     }
@@ -210,12 +191,10 @@ TEST_CASE("resolver copy path copies values with explicit policy", "[sim_graph_b
 
         auto tgt_area = tgt.push(100);
         ConnectionInfo con = make_connection(src, tgt);
-        ssp4sim::scheduling::detail::Edge e = ssp4sim::scheduling::detail::edge_from(con, nullptr);
-        e.unlinked = false;
-        e.mode = AccessMode::Latest;
+        EdgeAccessRules e; e.mode = AccessMode::Latest;
 
         ModelStatus never_committed; // committed_count == 0
-        ResolvedRead r = resolve_policy(e, never_committed, ResolverConfig{}, 100, 100);
+        ResolvedRead r = resolve_edge(e, never_committed, 100, 100);
         CHECK_FALSE(r.valid);
         CHECK(copy_connection(con, tgt_area, r) == false);
         CHECK(read_storage_value<double>(tgt, tgt_area, 0) == 0.0);

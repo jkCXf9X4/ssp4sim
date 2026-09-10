@@ -14,6 +14,7 @@ namespace ssp4sim::signal
 namespace ssp4sim::graph
 {
     class Invocable;
+    class ExecutionBase;
 }
 
 namespace ssp4sim::scheduling
@@ -32,7 +33,7 @@ namespace ssp4sim::pre
     /// Result of the pre-simulation pipeline.
     struct SimulationData
     {
-        std::unique_ptr<ExecutionBase> execution_node;
+        std::shared_ptr<ExecutionBase> execution_node;
     };
 
     /// Build the simulation models from an SSP.
@@ -46,7 +47,7 @@ namespace ssp4sim::pre
     /// Returns the simulation models. The caller constructs the GraphExecutor
     /// from these models.
     SimulationData setup_sim_behaviour(
-        std::map<std::string, std::unique_ptr<graph::Invocable>> models, signal::DataRecorder *recorder, ssp4sim::SharedConfig *config)
+        std::map<std::string, std::shared_ptr<graph::Invocable>> models, signal::DataRecorder *recorder, ssp4sim::SharedConfig *config)
     {
         register_model_storages(models, recorder);
 
@@ -58,7 +59,7 @@ namespace ssp4sim::pre
     }
 
     static void register_model_storages(
-        const std::map<std::string, std::unique_ptr<graph::Invocable>> &models,
+        const std::map<std::string, std::shared_ptr<graph::Invocable>> &models,
         ssp4sim::signal::DataRecorder *recorder)
     {
         if (!recorder)

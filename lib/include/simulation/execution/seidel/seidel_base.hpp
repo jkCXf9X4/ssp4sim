@@ -9,6 +9,7 @@
 #include "ssp4cpp/utils/log.hpp"
 
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -26,13 +27,11 @@ namespace ssp4sim::graph
     class SeidelBase : public ExecutionBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
         const int nr_of_nodes = 0;
         std::vector<SeidelNode> seidel_nodes;
         std::vector<SeidelNode *> start_nodes;
 
-        SeidelBase(std::vector<Invocable *> _nodes_);
+        SeidelBase(std::vector<std::shared_ptr<Invocable>> _nodes_);
 
         void reset_counters();
     };

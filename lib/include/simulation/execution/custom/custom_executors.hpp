@@ -9,7 +9,7 @@
 
 #include "config.hpp"
 
-#include "pre/3_simulation/elements/model_fmu.hpp"
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
 
 #include "utils/time/time.hpp"
 
@@ -19,7 +19,6 @@
 #include <execution>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace ssp4sim::graph
@@ -28,16 +27,13 @@ namespace ssp4sim::graph
     class DelayExecutorBase : public ExecutionBase
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
-
         std::vector<std::vector<Invocable *>> groups;
 
-        DelayExecutorBase(std::vector<Invocable *> nodes)
-            : ExecutionBase(nodes),
-              log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.DelayExecutor"))
+        DelayExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes)
+            : ExecutionBase(nodes, "ssp4sim.execution.DelayExecutor")
         {
             this->name = "DelayExecutor";
-            LOG_INFO(log, "[{func}] substep: {substep}", __func__, sub_step);
+            LOG_INFO(log, "[{func}] ", __func__);
         }
 
         Invocable *node_from_name(ExecutionBase *executor, std::string name)
@@ -46,7 +42,7 @@ namespace ssp4sim::graph
             {
                 if (node->name == name)
                 {
-                    return node;
+                    return node.get();
                 }
             }
             LOG_ERROR(executor->log, "[{func}] In {node} node: {name} not found", __func__, executor->name, name);
@@ -54,38 +50,14 @@ namespace ssp4sim::graph
         }
 
         // continuous input will allow the substep to sample new data during the substep
-        void invoke_sub_step(FmuModel *models, const StepData &step_data)
+        void invoke_sub_step(FmuModel *models, const StepData &step_data, uint64_t substep_size)
         {
             while (models->current_time < step_data.end_time)
             {
                 auto substep_start = models->current_time;
-                auto substep_end = models->current_time + step_data.timestep;
+                auto substep_end = std::min(models->current_time + substep_size, step_data.end_time);
 
-                // NOTE: This probably does not work atm 
-                auto output_time = substep_end;
-                if (models->delay == 0)
-                {
-                    // No delay specified, just set it at the end
-                    output_time = substep_end;
-                }
-                else if (substep_start + models->delay <= substep_end)
-                {
-                    // if the step is shorter than the model delay, do the best of it and set it to sub_step_end
-                    // evaluate if this is true, it could be set to the correct time but there is the potential
-                    // that the data could be used non-deterministic if a time before substep_end is set...
-                    output_time = substep_end;
-                }
-                else if (substep_start + models->delay > substep_end)
-                {
-                    // if the step is longer than the model delay, set the correct time
-                    output_time = substep_start + models->delay;
-                }
-
-                auto s = StepData(substep_start,      // start
-                                  substep_end,        // end
-                                  step_data.timestep, // step_size
-                                  substep_start,      // input
-                                  output_time);       // output_time
+                auto s = StepData(substep_start, substep_end);
 
                 IF_LOG({
                     LOG_TRACE_L1(log, "models {}, Time {}, step: {}",
@@ -96,25 +68,15 @@ namespace ssp4sim::graph
             }
         }
 
-        void gauss_seidel(std::vector<Invocable *> &_nodes_, StepData &step_data, uint64_t sub_step, int delay = 0)
+        void gauss_seidel(std::vector<Invocable *> &_nodes_, StepData &step_data, uint64_t substep_size)
         {
             IF_LOG({
                 LOG_TRACE_L1(log, "New group");
             });
-            int accumulated_delay = delay;
             for (auto &node : _nodes_)
             {
                 auto model = (FmuModel *)node;
-                auto macro_start = step_data.start_time + accumulated_delay;
-                auto macro_end = macro_start + step_data.timestep;
-
-                auto s = StepData(macro_start, macro_end, sub_step, macro_end, macro_end);
-                IF_LOG({
-                    LOG_TRACE_L1(log, "accumulated_delay {}", accumulated_delay);
-                    LOG_TRACE_L1(log, "Invoking node {}, {}", model->name, s.to_string());
-                });
-
-                invoke_sub_step(model, s);
+                invoke_sub_step(model, step_data, substep_size);
             }
         }
     };
@@ -127,10 +89,9 @@ namespace ssp4sim::graph
         std::vector<Invocable *> g3;
         std::vector<Invocable *> g4;
 
-        DelayExecutor(std::vector<Invocable *> nodes) : DelayExecutorBase(nodes)
+        DelayExecutor(std::vector<std::shared_ptr<Invocable>> nodes) : DelayExecutorBase(nodes)
         {
             this->name = "DelayExecutor";
-            LOG_INFO(log, "[{func}] substep: {substep}", __func__, sub_step);
 
             auto source = node_from_name(this, "Sources");
             auto let1 = node_from_name(this, "LET1");
@@ -167,7 +128,7 @@ namespace ssp4sim::graph
         // hot path
         uint64_t invoke(StepData step_data) override final
         {
-            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
+            auto step = StepData(step_data.start_time, step_data.end_time);
 
             IF_LOG({
                 LOG_DEBUG(log, "[{func}] {name} stepdata: {stepdata}", __func__, name, step_data.to_string());
@@ -176,7 +137,7 @@ namespace ssp4sim::graph
             std::for_each(std::execution::par, groups.begin(), groups.end(),
                           [&](auto &group)
                           {
-                              gauss_seidel(group, step, sub_step);
+                              gauss_seidel(group, step, step.timestep);
                           });
 
             return step_data.end_time;
@@ -192,10 +153,9 @@ namespace ssp4sim::graph
         std::vector<Invocable *> g4;
         std::vector<Invocable *> g12;
 
-        DelayExecutorPartial(std::vector<Invocable *> nodes) : DelayExecutorBase(nodes)
+        DelayExecutorPartial(std::vector<std::shared_ptr<Invocable>> nodes) : DelayExecutorBase(nodes)
         {
             name = "DelayExecutorPartial";
-            LOG_INFO(log, "[{func}] substep: {substep}", __func__, sub_step);
 
             auto source = node_from_name(this, "Sources");
             auto let1 = node_from_name(this, "LET1");
@@ -227,30 +187,30 @@ namespace ssp4sim::graph
         // hot path
         uint64_t invoke(StepData step_data) override final
         {
-            auto step = StepData(step_data.start_time, step_data.end_time, step_data.timestep);
+            auto step = StepData(step_data.start_time, step_data.end_time);
 
             IF_LOG({
                 LOG_DEBUG(log, "[{func}] {name} stepdata: {stepdata}", __func__, name, step_data.to_string());
             });
 
             auto one_ms = utils::time::nanoseconds_per_millisecond;
+            auto substep_size = step_data.timestep;
 
-            auto s1 = StepData(step_data.start_time, step_data.start_time + 2 * one_ms, step_data.timestep);
+            auto s1 = StepData(step_data.start_time, step_data.start_time + 2 * one_ms);
             
-            gauss_seidel(g1, s1, sub_step);
-            gauss_seidel(g2, s1, sub_step, 2*one_ms);
-            gauss_seidel(g3, s1, sub_step, 4*one_ms);
+            gauss_seidel(g1, s1, substep_size);
+            gauss_seidel(g2, s1, substep_size);
+            gauss_seidel(g3, s1, substep_size);
             
             
-            auto s2 = StepData(step_data.start_time + 2 * one_ms, step_data.start_time + 4 * one_ms, step_data.timestep);
-            gauss_seidel(g1, s2, sub_step);
-            gauss_seidel(g2, s2, sub_step, 2*one_ms);
-            gauss_seidel(g3, s2, sub_step, 4*one_ms);
+            auto s2 = StepData(step_data.start_time + 2 * one_ms, step_data.start_time + 4 * one_ms);
+            gauss_seidel(g1, s2, substep_size);
+            gauss_seidel(g2, s2, substep_size);
+            gauss_seidel(g3, s2, substep_size);
 
-            auto s3 = StepData(step_data.start_time, step_data.start_time + 4 * one_ms, step_data.timestep);
-            gauss_seidel(g4, s3, sub_step, 8*one_ms);
+            auto s3 = StepData(step_data.start_time, step_data.start_time + 4 * one_ms);
+            gauss_seidel(g4, s3, substep_size);
 
-            // throw std::runtime_error("Hello");
             return step_data.end_time;
         }
     };
