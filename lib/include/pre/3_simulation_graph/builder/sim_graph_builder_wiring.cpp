@@ -1,7 +1,7 @@
 #include "sim_graph_builder.hpp"
 
-#include "pre/3_simulation/elements/model_fmu.hpp"
-#include "pre/3_simulation/elements/model_connector.hpp"
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
+#include "pre/3_simulation_graph/elements/model_connector.hpp"
 
 #include <vector>
 

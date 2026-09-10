@@ -1,6 +1,6 @@
 #include "sim_graph_builder.hpp"
 
-#include "pre/3_simulation/elements/model_fmu.hpp"
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
 #include "signal/recorder.hpp"
 
 #include <memory>
@@ -18,6 +18,30 @@ namespace ssp4sim::graph
 
     FmuModel* GraphBuilder::as_fmu(Invocable* invocable) {
         return dynamic_cast<FmuModel*>(invocable);
+    }
+
+    void GraphBuilder::register_model_storages(
+        const std::map<std::string, std::shared_ptr<Invocable>> &models,
+        ssp4sim::signal::DataRecorder *recorder)
+    {
+        if (!recorder)
+        {
+            return;
+        }
+        for (auto &[name, model] : models)
+        {
+            (void)name;
+            auto m = dynamic_cast<FmuModel *>(model.get());
+            if (!m)
+            {
+                continue;
+            }
+            if (m->record_inputs)
+            {
+                recorder->add_storage(m->input_area.get());
+            }
+            recorder->add_storage(m->output_area.get());
+        }
     }
 
     std::map<std::string, std::shared_ptr<Invocable>> GraphBuilder::build(analysis::AnalysisGraphData *graph_data)

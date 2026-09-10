@@ -1,6 +1,6 @@
 #pragma once
 
-#include "pre/2_analysis/elements/ssp_node.hpp"
+#include "pre/2_analysis_graph/elements/ssp_node.hpp"
 
 #include <memory>
 #include <string>

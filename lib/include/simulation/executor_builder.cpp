@@ -129,7 +129,12 @@ namespace ssp4sim::graph
                 "Use 'seidel' (serial) or 'jacobi' instead.");
         }
 
-        if (config->realtime)
+        if (!specialized_executor)
+        {
+            throw std::runtime_error("Unknown executor method: '" + executor_method + "'");
+        }
+
+        if (utils::Config::getOr("simulation.realtime", false))
         {
             return std::make_shared<graph::RealtimeMacroExecutor>(
                 std::vector<std::shared_ptr<Invocable>>{specialized_executor});
@@ -139,8 +144,6 @@ namespace ssp4sim::graph
             return std::make_shared<graph::MacroExecutor>(
                 std::vector<std::shared_ptr<Invocable>>{specialized_executor});
         }
-
-        throw std::runtime_error("Unknown executor method: '" + executor_method + "'");
     }
 
 }

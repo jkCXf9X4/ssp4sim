@@ -1,14 +1,14 @@
-#include "simulation_pipeline.hpp"
+#include "pre_pipeline.hpp"
 
 #include "pre/1_ssp_parser/ssp_parser.hpp"
 #include "pre/1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
-#include "pre/2_analysis/tree_builder.hpp"
-#include "pre/2_analysis/graph_builder.hpp"
-#include "pre/3_simulation/sim_graph_builder.hpp"
-#include "pre/3_simulation/elements/model_fmu.hpp"
+#include "pre/2_analysis_graph/tree_builder.hpp"
+#include "pre/2_analysis_graph/graph_builder.hpp"
+#include "pre/3_simulation_graph/builder/sim_graph_builder.hpp"
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
 
 #include "config.hpp"
-#include "execution/invocable.hpp"
+#include "pre/3_simulation_graph/elements/invocable.hpp"
 #include "shared_config.hpp"
 #include "simulation_debug_writer.hpp"
 

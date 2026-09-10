@@ -1,6 +1,6 @@
 #include "pre/1_ssp_parser/ssp_parser.hpp"
-#include "pre/2_analysis/tree_builder.hpp"
-#include "pre/2_analysis/elements/ssp_node.hpp"
+#include "pre/2_analysis_graph/tree_builder.hpp"
+#include "pre/2_analysis_graph/elements/ssp_node.hpp"
 
 #include "ssp4cpp/ssp.hpp"
 

@@ -18,10 +18,10 @@
 // exact shared-connector topology, then run GraphBuilder::build and assert the
 // dedup invariant on the produced FmuModel adjacency lists.
 // ---------------------------------------------------------------------------
-#include "pre/2_analysis/elements/ssp_node.hpp"
-#include "pre/3_simulation/sim_graph_builder.hpp"
-#include "pre/3_simulation/elements/model_fmu.hpp"
-#include "pre/ssp_graph_data.hpp"
+#include "pre/2_analysis_graph/elements/ssp_node.hpp"
+#include "pre/3_simulation_graph/builder/sim_graph_builder.hpp"
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
+#include "pre/2_analysis_graph/ssp_graph_data.hpp"
 #include "utils/config.hpp"
 
 #include <catch2/catch_test_macros.hpp>

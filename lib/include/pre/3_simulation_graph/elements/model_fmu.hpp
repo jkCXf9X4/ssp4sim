@@ -22,7 +22,7 @@
 
 namespace ssp4sim::scheduling
 {
-    class ReadTargetResolver;
+    class DataAccessResolver;
 }
 
 namespace ssp4sim::graph
@@ -70,7 +70,7 @@ namespace ssp4sim::graph
 
         uint64_t direct_feedthrough(uint64_t start);
 
-        void pre(uint64_t input_time, uint64_t step_start, uint64_t step_end);
+        void pre(uint64_t step_start, uint64_t step_end);
 
         void post(uint64_t time);
 

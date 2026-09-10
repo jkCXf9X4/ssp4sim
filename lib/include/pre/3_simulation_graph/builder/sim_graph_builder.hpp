@@ -1,8 +1,8 @@
 #pragma once
 
-#include "pre/ssp_graph_data.hpp"
+#include "pre/2_analysis_graph/ssp_graph_data.hpp"
 #include "utils/fmi/fmu_info.hpp"
-#include "execution/invocable.hpp"
+#include "pre/3_simulation_graph/elements/invocable.hpp"
 
 #include <map>
 #include <memory>
@@ -27,6 +27,12 @@ namespace ssp4sim::graph
 
         std::map<std::string, std::shared_ptr<Invocable>> build(analysis::AnalysisGraphData *graph_data);
 
+        /// Register every model's value storages with the recorder (input area when
+        /// record_inputs is set, output area always). No-op for a null recorder and for
+        /// non-FmuModel entries.
+        static void register_model_storages(
+            const std::map<std::string, std::shared_ptr<Invocable>> &models,
+            ssp4sim::signal::DataRecorder *recorder);
 
     private:
         ssp4cpp::utils::log::Logger *log = nullptr;

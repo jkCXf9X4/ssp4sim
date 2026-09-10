@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "pre/2_analysis/elements/ssp_node.hpp"
+#include "pre/2_analysis_graph/elements/ssp_node.hpp"
 #include "shared_config.hpp"
 #include "utils/primitives/node.hpp"
 

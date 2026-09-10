@@ -1,4 +1,4 @@
-#include "pre/2_analysis/elements/ssp_node.hpp"
+#include "pre/2_analysis_graph/elements/ssp_node.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 

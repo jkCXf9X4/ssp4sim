@@ -5,7 +5,7 @@
 #include "utils/fmi/fmu_info.hpp"
 #include "model_connection.hpp"
 #include "model_connector.hpp"
-#include "scheduling/read_target_resolver.hpp"
+#include "resolver/read_resolver.hpp"
 #include "utils/time/time.hpp"
 #include "utils/time/timer.hpp"
 
@@ -145,18 +145,18 @@ namespace ssp4sim::graph
 
         if (access_resolver)
         {
-            access_resolver->mark_committed(this, start, area);
+            access_resolver->mark_committed(this->id, start, area);
         }
         return start;
     }
 
-    void FmuModel::pre(uint64_t input_time, uint64_t step_start, uint64_t step_end)
+    void FmuModel::pre(uint64_t step_start, uint64_t step_end)
     {
         IF_LOG({
-            LOG_TRACE_L1(log, "[{func}] Init. current_time {current_time}, input_time {input_time}", __func__, current_time, input_time);
+            LOG_TRACE_L1(log, "[{func}] Init. current_time {current_time}, step_start {step_start}", __func__, current_time, step_start);
         });
 
-        auto target_area = input_area->push(input_time);
+        auto target_area = input_area->push(step_start);
 
         if (access_resolver)
         {
@@ -206,7 +206,7 @@ namespace ssp4sim::graph
         // resolver return committed (not live-head) data to downstream consumers.
         if (access_resolver)
         {
-            access_resolver->mark_committed(this, time, area);
+            access_resolver->mark_committed(this->id, time, area);
         }
 
         IF_LOG({
@@ -220,7 +220,7 @@ namespace ssp4sim::graph
             LOG_DEBUG(log, "[{func}] Init {name}, current_time {current_time}, stepdata: {stepdata}", __func__, name, current_time, step_data.to_string());
         });
 
-        pre(step_data.input_time, step_data.start_time, step_data.end_time);
+        pre(step_data.start_time, step_data.end_time);
 
         IF_LOG({
             LOG_DEBUG(log, "[{func}] Step until {end_time}", __func__, step_data.end_time);
@@ -230,7 +230,7 @@ namespace ssp4sim::graph
         current_time = fmu->model->step_until(step_data.end_time);
         this->walltime_ns += model_timer.stop();
 
-        post(step_data.output_time);
+        post(step_data.end_time);
 
         IF_LOG({
             LOG_TRACE_L1(log, "[{func}] Completed, current_time:", __func__, current_time);

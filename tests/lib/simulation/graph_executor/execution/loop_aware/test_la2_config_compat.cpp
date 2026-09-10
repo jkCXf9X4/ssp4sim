@@ -3,7 +3,8 @@
 //
 // Verifies that legacy `loop_aware` configurations keep working without
 // modification:
-//   (a) executor_builder builds a La2Scheduler for method "loop_aware";
+// (a) executor_builder builds a MacroExecutor wrapping a La2Scheduler (or a
+    //     La2Scheduler directly for method "loop_aware" when unwrapped);
 //   (b) legacy `simulation.executor.loop_aware.*` keys are picked up when the
 //       `simulation.executor.la2.*` keys are absent;
 //   (c) `la2.*` keys take precedence over `loop_aware.*` keys;
@@ -25,6 +26,7 @@
 #include "config.hpp"
 #include "executor_builder.hpp"
 #include "execution/loop_aware/la2_scheduler.hpp"
+#include "execution/macro/macro_executor.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -145,8 +147,12 @@ TEST_CASE("executor_builder accepts legacy 'loop_aware' method name", "[la2][con
     auto executor = builder.build(to_owned(storage));
 
     REQUIRE(executor != nullptr);
-    // The legacy name must dispatch to the La2Scheduler, not to a fallback.
-    REQUIRE(dynamic_cast<ssp4sim::graph::La2Scheduler *>(executor.get()) != nullptr);
+    // build() wraps the specialized executor in a MacroExecutor; the legacy name
+    // must dispatch to the La2Scheduler inside, not to a fallback.
+    auto *macro = dynamic_cast<ssp4sim::graph::MacroExecutor *>(executor.get());
+    REQUIRE(macro != nullptr);
+    REQUIRE(macro->nodes.size() == 1);
+    REQUIRE(dynamic_cast<ssp4sim::graph::La2Scheduler *>(macro->nodes[0].get()) != nullptr);
 }
 
 TEST_CASE("legacy loop_aware config keys are honored when la2.* keys are absent",

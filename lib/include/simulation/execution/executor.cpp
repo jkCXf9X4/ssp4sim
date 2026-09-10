@@ -29,16 +29,12 @@ ExecutionBase::ExecutionBase(std::vector<std::shared_ptr<Invocable>> nodes, std:
 
     void ExecutionBase::init()
     {
+        // Recursive init: this executor's children may themselves be executors
+        // (e.g. MacroExecutor -> Jacobi/TBB -> FmuModel), so dispatch through the
+        // virtual Invocable::init() to reach the leaf models (enter/exit init).
         for (auto &model : this->nodes)
         {
-            model->enter_init();
-        }
-
-        // Do NOT implement direct feedthrough for CO-SImulation, see https://github.com/modelica/fmi-standard/discussions/2066
-
-        for (auto &model : this->nodes)
-        {
-            model->exit_init();
+            model->init();
         }
     }
 }

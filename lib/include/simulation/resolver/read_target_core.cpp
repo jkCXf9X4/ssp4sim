@@ -8,9 +8,11 @@
 namespace ssp4sim::scheduling
 {
 
-    // The concrete `detail::ReadResolver` strategies formerly implemented here now live in
-    // their own file pairs (read_resolver_*.{hpp,cpp}); this file keeps the storage-free
-    // facts and the copy step only.
+
+    // Storage-aware copy step of the read path. The pure resolution facts
+    // (AccessMode / EdgeAccessRules / ModelStatus / resolve_edge) live in
+    // read_resolver.{hpp,cpp} beside the DataAccessResolver; this file keeps only
+    // the copy of an already-resolved read (value + derivatives, D15 type-aware).
     bool detail::copy_connection(const ssp4sim::graph::ConnectionInfo &c,
                                  std::size_t target_area,
                                  const ResolvedRead &r)
@@ -60,4 +62,8 @@ namespace ssp4sim::scheduling
 
             return true;
         }
+
+        return true; // value copy above succeeded; no derivatives to forward
     }
+
+}

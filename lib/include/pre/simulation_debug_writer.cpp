@@ -1,10 +1,10 @@
 #include "simulation_debug_writer.hpp"
 
 #include "pre/1_ssp_parser/schema_extensions/FMI2_Enums_Ext.hpp"
-#include "pre/ssp_graph_data.hpp"
+#include "pre/2_analysis_graph/ssp_graph_data.hpp"
 #include "shared_config.hpp"
 
-#include "execution/invocable.hpp"
+#include "pre/3_simulation_graph/elements/invocable.hpp"
 #include "utils/primitives/node.hpp"
 
 #include <filesystem>

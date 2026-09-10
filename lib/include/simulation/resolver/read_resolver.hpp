@@ -2,10 +2,18 @@
 
 #include "invocable.hpp"
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <vector>
+
+// TODO: rename file to reflect class name
+
+namespace ssp4sim::graph
+{
+    class FmuModel;
+}
 
 namespace ssp4sim::scheduling
 {
@@ -33,14 +41,16 @@ namespace ssp4sim::scheduling
     /// Pure per-connection access facts; derived from a ConnectionInfo + graph context.
     struct EdgeAccessRules
     {
-        // Neutral default (newest committed index). edge_from() derives the actual
-        // policy from graph facts (currently StartTime for every wired edge, matching
-        // the sampling the graph builder previously pinned).
+        // Neutral default (newest committed index). The resolver's constructor derives
+        // the actual policy from graph facts: `default_mode` for wired edges (currently
+        // StartTime, matching the sampling the graph builder previously pinned) and
+        // Latest for unlinked edges (source storage without a registered owner).
         AccessMode mode = AccessMode::Latest;
         std::int64_t delay = 0;
         std::int64_t time_offset = 0;
         std::int64_t fixed_index = 0;
     };
+
 
     class DataAccessResolver
     {
@@ -58,36 +68,30 @@ namespace ssp4sim::scheduling
         ~DataAccessResolver() noexcept;
 
         /// Advance one producer's committed frontier. Called ONLY after the producer's
-        /// output bytes are fully visible (D17 release-store).
+        /// output bytes are fully visible (D17 release-store). No-op for producers the
+        /// resolver has not registered.
         void mark_committed(std::size_t model_id,
                             std::uint64_t output_time,
                             std::size_t area);
 
         /// Pure resolution: "what to read" for one edge under one producer frontier.
-        /// No storage, no I/O, no mutation.
-        // TODO : make private
+        /// No storage, no I/O, no mutation. Invalid for unknown model/connection or a
+        /// producer that has not committed yet (D2/D13).
+
+        // TODO : make private in cpp
         ResolvedRead resolve(std::size_t model_id,
                              std::size_t connection_id,
                              std::uint64_t step_start,
                              std::uint64_t step_end);
 
-        // TODO: Move to cpp
+        /// The entire read path for one model: for each incoming connection, resolve the
+        /// read target and copy the source value (and forwarded derivatives) into the
+        /// target's input area. Intentionally cheap per connection; the resolver's own
+        /// edges are index-aligned with target->connections.
         void copy_model_inputs(ssp4sim::graph::FmuModel *target,
                                std::size_t target_area,
                                std::uint64_t step_start,
-                               std::uint64_t step_end)
-        {
-
-            const std::vector<ssp4sim::graph::ConnectionInfo> &connections = target->connections;
-
-            for (std::size_t i = 0; i < connections.size(); ++i)
-            {
-                // Intentionally cheap per connection; the resolver's own edges are
-                // index-aligned with target->connections.
-                const ResolvedRead r = resolve(target, i, step_start, step_end);
-                detail::copy_connection(connections[i], target_area, r);
-            }
-        }
+                               std::uint64_t step_end);
 
     private:
         // Opaque implementation state (defined in read_resolver.cpp). Raw
