@@ -5,7 +5,7 @@
 #include "utils/fmi/fmu_info.hpp"
 #include "model_connection.hpp"
 #include "model_connector.hpp"
-#include "resolver/read_resolver.hpp"
+#include "resolver/data_access_resolver.hpp"
 #include "utils/time/time.hpp"
 #include "utils/time/timer.hpp"
 

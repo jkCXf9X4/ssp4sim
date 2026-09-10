@@ -14,7 +14,8 @@
 #include "execution/macro/macro_executor.hpp"
 #include "execution/macro/realtime_macro_executor.hpp"
 
-#include "resolver/read_resolver.hpp"
+#include "resolver/start_time_data_access_resolver.hpp"
+#include "resolver/end_time_data_access_resolver.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -79,7 +80,7 @@ namespace ssp4sim::graph
                 LOG_INFO(log, "[{func}] Executor: JacobiSerial", __func__);
                 specialized_executor = std::make_shared<JacobiSerial>(nodes);
             }
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes));
+            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "seidel")
         {
@@ -93,20 +94,19 @@ namespace ssp4sim::graph
                 LOG_INFO(log, "[{func}] Executor: SerialSeidel", __func__);
                 specialized_executor = std::make_shared<SerialSeidel>(nodes);
             }
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(
-                raw_nodes, ssp4sim::scheduling::AccessMode::EndTime));
+            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::EndTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "custom_delay")
         {
             LOG_INFO(log, "[{func}] Executor: DelayExecutor", __func__);
             specialized_executor = std::make_shared<DelayExecutor>(nodes);
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes));
+            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "custom_delay_partial")
         {
             LOG_INFO(log, "[{func}] Executor: DelayExecutorPartial", __func__);
             specialized_executor = std::make_shared<DelayExecutorPartial>(nodes);
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes));
+            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "la2" || executor_method == "loop_aware")
         {
@@ -115,7 +115,7 @@ namespace ssp4sim::graph
             // Both dispatch to the same scheduler.
             LOG_INFO(log, "[{func}] Executor: La2Scheduler", __func__);
             specialized_executor = std::make_shared<La2Scheduler>(nodes);
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes));
+            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "parallel_seidel" || executor_method == "parallel-seidel")
         {

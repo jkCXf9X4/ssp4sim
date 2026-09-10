@@ -2,9 +2,6 @@
 #include "pre/3_simulation_graph/elements/model_connector.hpp"
 #include "signal/storage.hpp"
 
-#include "resolver/read_resolver.hpp"
-#include "resolver/read_target_core.hpp"
-
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstring>
@@ -15,13 +12,6 @@ using ssp4sim::graph::ConnectionInfo;
 using ssp4sim::graph::ConnectorInfo;
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
-
-using ssp4sim::scheduling::ResolvedRead;
-using ssp4sim::scheduling::AccessMode;
-using ssp4sim::scheduling::EdgeAccessRules;
-using ssp4sim::scheduling::detail::ModelStatus;
-using ssp4sim::scheduling::detail::resolve_edge;
-using ssp4sim::scheduling::detail::copy_connection;
 
 namespace {
     void init_storage(SignalStorage& storage, const std::string& signal_name,

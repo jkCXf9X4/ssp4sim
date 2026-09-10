@@ -4,7 +4,7 @@
 
 #include "invocable.hpp"
 
-#include "resolver/read_resolver.hpp"
+#include "resolver/data_access_resolver.hpp"
 
 #include <cstdint>
 #include <memory>

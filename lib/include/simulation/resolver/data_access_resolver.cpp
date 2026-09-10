@@ -1,6 +1,4 @@
-#include "read_resolver.hpp"
-
-#include "read_target_core.hpp"
+#include "resolver/data_access_resolver.hpp"
 
 #include "pre/3_simulation_graph/elements/model_fmu.hpp"
 #include "signal/storage.hpp"
@@ -17,87 +15,9 @@
 namespace ssp4sim::scheduling
 {
     // ------------------------------------------------------------------
-    // detail::resolve_edge — the pure resolution core, shared with the
-    // resolver and directly with tests. Reduces (EdgeAccessRules, one producer
-    // frontier) to "an area index" (Latest / Index) or "a viable, frontier-clamped
-    // reference time" (StartTime / EndTime). No storage, no I/O, no mutation.
-    // ------------------------------------------------------------------
-    ResolvedRead detail::resolve_edge(const EdgeAccessRules &access,
-                                      const detail::ModelStatus &status,
-                                      std::uint64_t step_start,
-                                      std::uint64_t step_end)
-    {
-        ResolvedRead r{};
-
-        const std::uint64_t committed_count = status.committed_count.load(std::memory_order::acquire);
-
-        // Latest: newest committed area index, zero-order hold, no time involved.
-        // Unlinked sources arrive here too; with no registered producer committing
-        // to them they resolve against the never-committed fallback status and are
-        // invalid (D2/D13-safe, keep init).
-        if (access.mode == AccessMode::Latest)
-        {
-            if (committed_count == 0)
-            {
-                return r;
-            }
-            r.valid = true;
-            r.is_area = true;
-            r.area = status.latest_area.load(std::memory_order::acquire);
-            r.write_counter = committed_count;
-            return r;
-        }
-
-        // Index: absolute fixed physical slot, no time involved. The caller applies
-        // the populated gate, which needs the storage (unreachable from here).
-        if (access.mode == AccessMode::Index)
-        {
-            r.valid = true;
-            r.is_area = true;
-            r.area = static_cast<std::size_t>(access.fixed_index);
-            r.write_counter = committed_count;
-            return r;
-        }
-
-        // StartTime / EndTime: the step handle the connection samples at, shifted by
-        // time_offset and delay.
-        std::uint64_t base;
-        switch (access.mode)
-        {
-            case AccessMode::StartTime:
-                base = step_start;
-                break;
-            case AccessMode::EndTime:
-            default:
-                base = step_end;
-                break;
-        }
-
-        // Producer has never committed (first-commit / t=0) — no valid data (D2/D13).
-        if (committed_count == 0)
-        {
-            return r;
-        }
-
-        std::int64_t ref = static_cast<std::int64_t>(base) + access.time_offset - access.delay;
-        // Never read past the committed frontier (M1a); floor at 0 (D8).
-        ref = std::min(ref, static_cast<std::int64_t>(status.committed_time.load(std::memory_order::acquire)));
-        if (ref < 0)
-        {
-            ref = 0;
-        }
-
-        r.valid = true;
-        r.is_area = false;
-        r.time = static_cast<std::uint64_t>(ref);
-        r.write_counter = committed_count;
-        return r;
-    }
-
-    // ------------------------------------------------------------------
     // Opaque implementation state of the resolver. All tables are vectors
     // indexed by the unique, 0..N-ish Invocable::id; connections are static
-    // after graph build, so per-(model, connection) edge rules are a plain
+    // after graph build, so per-(model, connection) edge facts are a plain
     // vector-of-vectors lookup — no maps in the read path.
     // ------------------------------------------------------------------
     struct DataAccessResolver::State
@@ -109,28 +29,29 @@ namespace ssp4sim::scheduling
         // model->connections so copy_model_inputs can resolve(model, i) directly.
         struct RegisteredEdge
         {
+            // Transparent per-edge contract (wire facts + sampling intent); the
+            // class policy in resolve_edge() is the authority on sampling.
             EdgeAccessRules access;
-            ssp4sim::signal::SignalStorage *source = nullptr; // for the Index populated gate
-            std::size_t source_producer = npos;               // status row; npos = unlinked
+            std::size_t source_producer = npos; // status row; npos = unlinked
         };
 
         std::vector<std::vector<RegisteredEdge>> edges;                 // [model_id][connection_id]
         std::vector<std::unique_ptr<detail::ModelStatus>> status;       // [producer id], nullptr = unregistered
 
         // Fallback for source storages with no registered owner (unlinked, uc-14):
-        // never committed, so every read against it resolves to invalid.
+        // never committed, so every policy resolves them to invalid (D2/D13 gate).
         detail::ModelStatus never_committed{};
     };
 
     // ------------------------------------------------------------------
     // Build per-model edge rule tables from the graph nodes. Only FmuModel
     // nodes are registered: pass 1 records output-storage ownership and the
-    // per-producer frontier, pass 2 snapshots each model's incoming connections
-    // as edges in connections order. `default_mode` is the sampling policy for
-    // wired edges; unlinked edges (no registered owner) fall back to Latest.
+    // per-producer frontier rows, pass 2 snapshots each model's incoming
+    // connections as edges in connections order. Only wire facts (delay) and
+    // producer ownership are snapshotted here; the sampling policy per edge is
+    // decided by the concrete subclass's resolve_edge().
     // ------------------------------------------------------------------
-    DataAccessResolver::DataAccessResolver(std::vector<Invocable *> nodes,
-                                           AccessMode default_mode)
+    DataAccessResolver::DataAccessResolver(std::vector<Invocable *> nodes)
         : s_(new DataAccessResolver::State)
     {
         std::unordered_map<ssp4sim::signal::SignalStorage *, std::size_t> owner;
@@ -168,22 +89,19 @@ namespace ssp4sim::scheduling
             {
                 DataAccessResolver::State::RegisteredEdge e;
                 e.access.delay = static_cast<std::int64_t>(c.delay);
-                e.source = c.source_storage;
 
                 auto owner_it = owner.find(c.source_storage);
                 if (owner_it != owner.end())
                 {
                     // Wired edge: the graph guarantees the source is one of the
-                    // registered producers; sample with the executor's default mode
-                    // (StartTime for Jacobi, EndTime for Seidel).
-                    e.access.mode = default_mode;
+                    // registered producers; the subclass supplies the sampling policy.
                     e.source_producer = owner_it->second;
                 }
                 else
                 {
                     // Unlinked (uc-14): no registered owner, hence no schedule
-                    // happens-before. Stale-only by construction (Latest), which
-                    // resolves to invalid while nothing commits to the storage.
+                    // happens-before. Stamped Latest so every policy sees the stale-only
+                    // intent; it also resolves against never_committed and is invalid.
                     e.access.mode = AccessMode::Latest;
                 }
 
@@ -231,8 +149,9 @@ namespace ssp4sim::scheduling
 
     // ------------------------------------------------------------------
     // Pure resolution: "what to read" for one edge under one producer frontier.
-    // No storage, no I/O, no mutation. Invalid for unknown model/connection or a
-    // producer that has not committed yet (D2/D13).
+    // No storage, no I/O, no mutation. Dispatches to the concrete subclass's
+    // resolve_edge(), which is the specialized access policy. Invalid for unknown
+    // model/connection or a producer that has not committed yet (D2/D13).
     // ------------------------------------------------------------------
     ResolvedRead DataAccessResolver::resolve(std::size_t model_id,
                                              std::size_t connection_id,
@@ -255,7 +174,7 @@ namespace ssp4sim::scheduling
         const DataAccessResolver::State::RegisteredEdge &e = model_edges[connection_id];
 
         // Frontier of the source producer; a producer without a registered status
-        // behaves as never committed (D2/D13 gate).
+        // (unlinked, uc-14) behaves as never committed (D2/D13 gate).
         const detail::ModelStatus *frontier = &s_->never_committed;
         if (e.source_producer != DataAccessResolver::State::npos &&
             e.source_producer < s_->status.size() &&
@@ -264,19 +183,7 @@ namespace ssp4sim::scheduling
             frontier = s_->status[e.source_producer].get();
         }
 
-        r = detail::resolve_edge(e.access, *frontier, step_start, step_end);
-
-        // Index mode: the pure core cannot reach the storage; apply the populated
-        // gate here (D1).
-        if (r.valid && r.is_area && e.access.mode == AccessMode::Index)
-        {
-            if (e.source == nullptr || e.source->ring == nullptr || !e.source->ring->is_populated(r.area))
-            {
-                r.valid = false;
-            }
-        }
-
-        return r;
+        return resolve_edge(e.access, *frontier, step_start, step_end);
     }
 
     void DataAccessResolver::copy_model_inputs(ssp4sim::graph::FmuModel *target,
