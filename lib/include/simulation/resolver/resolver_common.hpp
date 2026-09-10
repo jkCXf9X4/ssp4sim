@@ -63,17 +63,29 @@ namespace ssp4sim::scheduling
             std::atomic<std::uint64_t> latest_area = 0;
         };
 
-        /// Shared time-domain resolution for every step-sampled policy. `base` is
-        /// the reference handle the policy samples at (step_start or step_end),
-        /// shifted by the edge's delay/time_offset, clamped to the producer's
-        /// committed frontier (M1a), floored at 0 (D8) and gated on the producer
-        /// having committed (D2/D13). No storage, no I/O, no mutation.
+        /// Pure per-mode core shared by every resolver.
+        ///   - resolve_latest:  the newest committed area (zero-order hold);
+        ///   - resolve_time:    the step-sampled recipes (base = step_start / step_end),
+        ///                      shifted by the edge's delay/time_offset, clamped to the
+        ///                      committed frontier (M1a), floored at 0 (D8), gated on the
+        ///                      producer having committed (D2/D13);
+        ///   - resolve_edge:    full dispatch on the edge's AccessMode (StartTime /
+        ///                      EndTime route through resolve_time).
+        /// No storage, no I/O, no mutation. `valid == false` means no committed data
+        /// is available yet — the consumer keeps its initialization (D2/D13).
+        ResolvedRead resolve_latest(const detail::ModelStatus &status) noexcept;
+
         ResolvedRead resolve_time(std::int64_t base,
                                   const EdgeAccessRules &access,
                                   const detail::ModelStatus &status) noexcept;
 
+        ResolvedRead resolve_edge(const EdgeAccessRules &access,
+                                  const detail::ModelStatus &status,
+                                  std::uint64_t step_start,
+                                  std::uint64_t step_end);
+
         /// Storage-aware copy step of the read path. The pure resolution facts
-        /// (ModelStatus / resolve_time / concrete resolver policies) live beside
+        /// (ModelStatus / resolve_edge / concrete resolver policies) live beside
         /// the DataAccessResolver; this keeps only the copy of an already-resolved
         /// read (value + derivatives, D15 type-aware).
         bool copy_connection(const ssp4sim::graph::ConnectionInfo &c,

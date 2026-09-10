@@ -16,6 +16,7 @@
 
 #include "resolver/start_time_data_access_resolver.hpp"
 #include "resolver/end_time_data_access_resolver.hpp"
+#include "resolver/la2_data_access_resolver.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -114,8 +115,14 @@ namespace ssp4sim::graph
             // resources/loop_aware_nested*.json); "la2" is the refactored name.
             // Both dispatch to the same scheduler.
             LOG_INFO(log, "[{func}] Executor: La2Scheduler", __func__);
-            specialized_executor = std::make_shared<La2Scheduler>(nodes);
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
+
+            // The scheduler's SCC analysis is ready right after its constructor;
+            // hand the partition to the resolver so it can stamp intra-SCC edges
+            // StartTime (sub-step sampling) and cross-SCC edges Latest (sequential
+            // DAG, Gauss-Seidel semantics).
+            auto la2 = std::make_shared<graph::La2Scheduler>(nodes);
+            specialized_executor = la2;
+            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::La2DataAccessResolver>(raw_nodes, la2->sccs));
         }
         else if (executor_method == "parallel_seidel" || executor_method == "parallel-seidel")
         {

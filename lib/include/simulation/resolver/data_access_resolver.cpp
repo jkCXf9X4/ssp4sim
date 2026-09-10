@@ -14,6 +14,11 @@
 
 namespace ssp4sim::scheduling
 {
+    // Defensive neutral fallbacks for the protected helpers when asked about an
+    // unknown model or connection. Never written, so sharing them is safe.
+    const EdgeAccessRules k_unknown_edge_rules{};
+    const detail::ModelStatus k_unknown_producer{};
+
     // ------------------------------------------------------------------
     // Opaque implementation state of the resolver. All tables are vectors
     // indexed by the unique, 0..N-ish Invocable::id; connections are static
@@ -47,11 +52,13 @@ namespace ssp4sim::scheduling
     // Build per-model edge rule tables from the graph nodes. Only FmuModel
     // nodes are registered: pass 1 records output-storage ownership and the
     // per-producer frontier rows, pass 2 snapshots each model's incoming
-    // connections as edges in connections order. Only wire facts (delay) and
-    // producer ownership are snapshotted here; the sampling policy per edge is
-    // decided by the concrete subclass's resolve_edge().
+    // connections as edges in connections order. Wired edges carry `default_mode`
+    // as their sampling policy; unlinked edges (no registered owner) are forced
+    // to Latest (stale-only intent, uc-14) and also resolve against a
+    // never-committed frontier.
     // ------------------------------------------------------------------
-    DataAccessResolver::DataAccessResolver(std::vector<Invocable *> nodes)
+    DataAccessResolver::DataAccessResolver(std::vector<Invocable *> nodes,
+                                           AccessMode default_mode)
         : s_(new DataAccessResolver::State)
     {
         std::unordered_map<ssp4sim::signal::SignalStorage *, std::size_t> owner;
@@ -94,14 +101,15 @@ namespace ssp4sim::scheduling
                 if (owner_it != owner.end())
                 {
                     // Wired edge: the graph guarantees the source is one of the
-                    // registered producers; the subclass supplies the sampling policy.
+                    // registered producers; sample with the configured default mode.
+                    e.access.mode = default_mode;
                     e.source_producer = owner_it->second;
                 }
                 else
                 {
                     // Unlinked (uc-14): no registered owner, hence no schedule
-                    // happens-before. Stamped Latest so every policy sees the stale-only
-                    // intent; it also resolves against never_committed and is invalid.
+                    // happens-before. Forced to Latest (stale-only intent) and also
+                    // resolves against never_committed, i.e. invalid (D2/D13).
                     e.access.mode = AccessMode::Latest;
                 }
 
@@ -111,6 +119,27 @@ namespace ssp4sim::scheduling
             s_->edges[fmu->id] = std::move(model_edges);
             s_->status[fmu->id] = std::make_unique<detail::ModelStatus>();
         }
+    }
+
+    // ------------------------------------------------------------------
+    // Override one registered edge's sampling mode. No-op for unknown
+    // model/connection. Graph-structure resolvers stamp edges they built from
+    // the uniform default.
+    // ------------------------------------------------------------------
+    void DataAccessResolver::stamp_edge_mode(std::size_t model_id,
+                                             std::size_t connection_id,
+                                             AccessMode mode)
+    {
+        if (s_ == nullptr || model_id >= s_->edges.size())
+        {
+            return;
+        }
+        auto &model_edges = s_->edges[model_id];
+        if (connection_id >= model_edges.size())
+        {
+            return;
+        }
+        model_edges[connection_id].access.mode = mode;
     }
 
     DataAccessResolver::~DataAccessResolver() noexcept
@@ -148,44 +177,55 @@ namespace ssp4sim::scheduling
     }
 
     // ------------------------------------------------------------------
-    // Pure resolution: "what to read" for one edge under one producer frontier.
-    // No storage, no I/O, no mutation. Dispatches to the concrete subclass's
-    // resolve_edge(), which is the specialized access policy. Invalid for unknown
-    // model/connection or a producer that has not committed yet (D2/D13).
+    // Protected helpers backing the abstract resolve() hook.
     // ------------------------------------------------------------------
-    ResolvedRead DataAccessResolver::resolve(std::size_t model_id,
-                                             std::size_t connection_id,
-                                             std::uint64_t step_start,
-                                             std::uint64_t step_end)
-    {
-        ResolvedRead r{};
 
+    // Transparent per-connection contract; neutral Latest stub on unknown input.
+    const EdgeAccessRules &DataAccessResolver::edge_rules(std::size_t model_id,
+                                                          std::size_t connection_id)
+    {
         if (s_ == nullptr || model_id >= s_->edges.size())
         {
-            return r; // unknown model
+            return k_unknown_edge_rules;
         }
-
-        const std::vector<DataAccessResolver::State::RegisteredEdge> &model_edges = s_->edges[model_id];
+        const auto &model_edges = s_->edges[model_id];
         if (connection_id >= model_edges.size())
         {
-            return r; // unknown connection
+            return k_unknown_edge_rules;
+        }
+        return model_edges[connection_id].access;
+    }
+
+    // Committed frontier of the edge's source producer. Unlinked edges / unknown
+    // producers resolve against a never-committed frontier (D2/D13 gate).
+    const detail::ModelStatus &DataAccessResolver::producer_status(std::size_t model_id,
+                                                                   std::size_t connection_id)
+    {
+        if (s_ == nullptr || model_id >= s_->edges.size())
+        {
+            return k_unknown_producer;
+        }
+        const auto &model_edges = s_->edges[model_id];
+        if (connection_id >= model_edges.size())
+        {
+            return k_unknown_producer;
         }
 
         const DataAccessResolver::State::RegisteredEdge &e = model_edges[connection_id];
-
-        // Frontier of the source producer; a producer without a registered status
-        // (unlinked, uc-14) behaves as never committed (D2/D13 gate).
-        const detail::ModelStatus *frontier = &s_->never_committed;
         if (e.source_producer != DataAccessResolver::State::npos &&
             e.source_producer < s_->status.size() &&
             s_->status[e.source_producer] != nullptr)
         {
-            frontier = s_->status[e.source_producer].get();
+            return *s_->status[e.source_producer];
         }
-
-        return resolve_edge(e.access, *frontier, step_start, step_end);
+        return s_->never_committed; // unlinked (uc-14)
     }
 
+    // ------------------------------------------------------------------
+    // The entire read path: one resolve() hook call + one copy per connection.
+    // The hook is the abstract specialization point, so both the policy and the
+    // (model, connection) that it acts on are explicit here.
+    // ------------------------------------------------------------------
     void DataAccessResolver::copy_model_inputs(ssp4sim::graph::FmuModel *target,
                                                std::size_t target_area,
                                                std::uint64_t step_start,

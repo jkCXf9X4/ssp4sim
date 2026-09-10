@@ -12,9 +12,32 @@ namespace ssp4sim::scheduling
     namespace detail
     {
         // ------------------------------------------------------------------
-        // Shared time-domain resolution: see header. `base` is the reference
-        // handle of the step-sampled policy; the edge's delay/time_offset shift it.
-        // Unlinked / never-committed producers resolve invalid (D2/D13).
+        // Newest committed area (zero-order hold). The basis of AccessMode::Latest
+        // and of every unlinked read. Unlinked / never-committed producers resolve
+        // invalid (D2/D13).
+        // ------------------------------------------------------------------
+        ResolvedRead resolve_latest(const detail::ModelStatus &status) noexcept
+        {
+            ResolvedRead r{};
+
+            const std::uint64_t committed_count = status.committed_count.load(std::memory_order::acquire);
+            if (committed_count == 0)
+            {
+                return r;
+            }
+
+            r.valid = true;
+            r.is_area = true;
+            r.area = status.latest_area.load(std::memory_order::acquire);
+            r.write_counter = committed_count;
+            return r;
+        }
+
+        // ------------------------------------------------------------------
+        // Step-sampled recipe: `base` is the reference handle (step_start or
+        // step_end), shifted by the edge's delay/time_offset, clamped to the
+        // producer's committed frontier (M1a), floored at 0 (D8) and gated on the
+        // producer having committed (D2/D13).
         // ------------------------------------------------------------------
         ResolvedRead resolve_time(std::int64_t base,
                                   const EdgeAccessRules &access,
@@ -41,6 +64,39 @@ namespace ssp4sim::scheduling
             r.time = static_cast<std::uint64_t>(ref);
             r.write_counter = committed_count;
             return r;
+        }
+
+        // ------------------------------------------------------------------
+        // Per-mode dispatch on the edge's AccessMode. Latest / Index select a
+        // physical area; StartTime / EndTime sample step_start / step_end.
+        // ------------------------------------------------------------------
+        ResolvedRead resolve_edge(const EdgeAccessRules &access,
+                                  const detail::ModelStatus &status,
+                                  std::uint64_t step_start,
+                                  std::uint64_t step_end)
+        {
+            // Latest / unlinked: newest committed area index, zero-order hold.
+            if (access.mode == AccessMode::Latest)
+            {
+                return resolve_latest(status);
+            }
+
+            // Index: absolute fixed physical slot, no time involved. The populated
+            // gate needs the storage, so it stays the caller's concern (no current
+            // resolver stamps Index).
+            if (access.mode == AccessMode::Index)
+            {
+                ResolvedRead r{};
+                r.valid = true;
+                r.is_area = true;
+                r.area = static_cast<std::size_t>(access.fixed_index);
+                r.write_counter = status.committed_count.load(std::memory_order::acquire);
+                return r;
+            }
+
+            // StartTime / EndTime: the step handle the edge samples at.
+            std::uint64_t base = (access.mode == AccessMode::StartTime) ? step_start : step_end;
+            return resolve_time(static_cast<std::int64_t>(base), access, status);
         }
 
         // ------------------------------------------------------------------
