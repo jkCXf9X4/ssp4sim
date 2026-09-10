@@ -48,6 +48,7 @@ Use the canonical docs above for details. Common commands:
 ```bash
 cmake --preset=vcpkg
 cmake --build build
-./build/tests/lib/ssp4sim_tests
+ctest --test-dir build --output-on-failure -j   # canonical C++ test runner
+tests/run_unit.sh --tier T1                     # focused unit tier (T1/T2/T3)
 pytest -q tests/python
 ```

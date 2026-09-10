@@ -35,17 +35,83 @@ the suite can use Python-side fixture discovery and comparison tools.
 
 ## C++ Library Tests
 
-The C++ test binary covers lower-level library behavior and focused integration
-checks under `tests/lib/`. Run the binary produced by the build workflow
-described in [Build From Source](../docs/build_from_source.md).
+The C++ tests under `tests/lib/` are split into two build shapes:
 
-`ctest --test-dir build/tests` is currently unreliable. Run the test binary
-directly.
+- **Per-test unit binaries** (`test_<name>`): kernel, parser, and analysis/graph
+  tests are compiled into their own executables, built only from their own
+  transitive include cone under `lib/include/**` (implementation files sit
+  adjacent to their headers, so the cone is resolved mechanically). A broken
+  implementation file anywhere else in `lib/` no longer blocks these tests from
+  building; one unit binary = one test = one clear result.
+- **Retained integration binary** (`ssp4sim_tests`): tests that legitimately
+  depend on the full pipeline (`tests/lib/high_level/`, sim/graph model
+  construction, recorders, resolver) stay linked against the aggregate
+  `ssp4sim_lib` and are listed explicitly in `tests/lib/CMakeLists.txt`
+  (`SSP4SIM_INTEGRATION_TESTS`).
 
-Prefer small, focused C++ cases named `test_*.cpp` under `tests/lib/core/` or
-`tests/lib/utils/`. Keep `tests/lib/high_level/` to one top-level C++ smoke
-path. Put reference sweeps and detailed result comparisons in pytest under
-`tests/python/`.
+CTest is the canonical runner:
+
+```bash
+ctest --test-dir build --output-on-failure -j
+ctest --test-dir build -R <test-case-name>   # targeted run
+```
+
+For direct per-binary builds and runs:
+
+```bash
+ninja -C build test_ring_buffer && ./build/tests/lib/test_ring_buffer
+tests/run_unit.sh --tier T1                  # kernel/units
+tests/run_unit.sh --filter test_ssp_node    # one binary
+tests/run_unit.sh                           # every unit binary in the build tree
+```
+
+`tests/run_unit.sh` derives its default run set from the build tree, so a new
+`test_<name>.cpp` is run as soon as it is built. The tier buckets (T1–T3) are a
+curated Phase 0 grouping; a built binary that is not in any tier triggers a
+warning rather than being silently dropped.
+
+### Cone mechanics and configure-time semantics
+
+Unit sources are computed at **configure** time as the transitive include
+closure of each test file. Consequences:
+
+- Adding a new `test_*.cpp` is picked up by `GLOB CONFIGURE_DEPENDS`; no
+  cone list to maintain.
+- Editing an `#include` inside an existing header does **not** retrigger a
+  configure. After include edits to a cone source, re-run
+  `cmake --preset=vcpkg` (or the build's incremental reconfigure) so cones
+  reflect the new closure.
+- A configure-time **cone audit** validates the machinery: it prints
+  `[cone audit] OK: N unit cones, M lib sources ...` on success and a warning
+  for any local include a cone cannot resolve (a missing directory in the
+  include set, or a misspelled include). Watch configure output for it.
+
+Prefer small, focused C++ cases named `test_*.cpp` under `tests/lib/core/`,
+`tests/lib/utils/`, or `tests/lib/analysis/`. New files are picked up by the
+build automatically (`GLOB CONFIGURE_DEPENDS`); they become standalone per-test
+binaries unless listed in `SSP4SIM_INTEGRATION_TESTS`. Keep
+`tests/lib/high_level/` to one top-level C++ smoke path and add the file to the
+integration list. Put reference sweeps and detailed result comparisons in pytest
+under `tests/python/`.
+
+### Isolation tiers
+
+The include cones of all unit tests were computed and bucketed (Phase 0).
+Membership decides only the `tests/run_unit.sh` grouping; every tier builds the
+same way.
+
+| Tier | Directory | Test files |
+|------|-----------|------------|
+| T1 kernel/units | `tests/lib/core/`, `tests/lib/utils/` | `test_mpsc_event_queue`, `test_node`, `test_node_iterator`, `test_ring_buffer`, `test_config`, `test_thread_pool` |
+| T2 parser | `tests/lib/core/` | `test_parameter_binding`, `test_schema_extensions`, `test_signal_storage`, `test_ssp_elements`, `test_start_value` |
+| T3 analysis/graph | `tests/lib/analysis/`, `tests/lib/core/` | `test_graph_builder`, `test_ssp_node`, `test_tree_builder`, `test_parameter_binding_integration` |
+| T4 integration | `tests/lib/high_level/`, `tests/lib/core/`, `tests/lib/graph/`, `tests/lib/model/`, `tests/lib/scheduling/`, `tests/lib/simulation/` | retained in `ssp4sim_tests` |
+
+Note: `test_sim_graph_builder.cpp` exists in both `tests/lib/graph/` and
+`tests/lib/simulation/`; both are integration tests (no target-name clash). The
+Cone resolution is **soft**: an include that does not resolve within the include
+set is treated as external/system. A wrong guess surfaces as a per-binary
+link-time undefined reference, which is loud, not silent.
 
 ## High-Level SSP Tests
 

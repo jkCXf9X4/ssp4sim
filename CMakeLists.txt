@@ -77,6 +77,9 @@ endif()
 # Tests
 if(SSP4SIM_BUILD_TEST)
   message("Building tests\n")
+  # CTest is enabled here so `ctest --test-dir build` is the canonical driver
+  # for the whole suite (including the per-test unit binaries under tests/lib).
+  enable_testing()
   add_subdirectory(tests/lib)
 endif()
 

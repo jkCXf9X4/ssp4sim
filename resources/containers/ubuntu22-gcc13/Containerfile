@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     autoconf \
     automake \
     autoconf-archive \
+    ccache \
     cmake \
     gcc-13 \
     g++-13 \
