@@ -51,6 +51,31 @@ namespace ssp4sim::scheduling
         std::int64_t fixed_index = 0;
     };
 
+    namespace detail
+    {
+        /// Committed frontier of one producer — the single mutable truth (M1b).
+        /// Written only by mark_committed with release-store ordering (D17); read
+        /// with acquire ordering in resolve_edge. `committed_count` is the gate:
+        /// it is incremented LAST so a reader that acquires on it sees the whole
+        /// frontier.
+        struct ModelStatus
+        {
+            std::atomic<std::uint64_t> committed_count = 0;
+            std::atomic<std::uint64_t> committed_time = 0;
+            std::atomic<std::uint64_t> latest_area = 0;
+        };
+
+        /// Pure per-edge resolution: "what to read" for one edge under one producer
+        /// frontier. No storage, no I/O, no mutation. `Latest`/`Index` select a
+        /// physical area; `StartTime`/`EndTime` a viable, frontier-clamped reference
+        /// time. Invalid while the producer has not committed anything (D2/D13) and
+        /// while the source is unlinked (uc-14: no registered owner commits to it).
+        ResolvedRead resolve_edge(const EdgeAccessRules &access,
+                                  const detail::ModelStatus &status,
+                                  std::uint64_t step_start,
+                                  std::uint64_t step_end);
+    }
+
 
     class DataAccessResolver
     {
@@ -78,7 +103,6 @@ namespace ssp4sim::scheduling
         /// No storage, no I/O, no mutation. Invalid for unknown model/connection or a
         /// producer that has not committed yet (D2/D13).
 
-        // TODO : make private in cpp
         ResolvedRead resolve(std::size_t model_id,
                              std::size_t connection_id,
                              std::uint64_t step_start,

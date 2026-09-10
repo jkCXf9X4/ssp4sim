@@ -2,6 +2,9 @@
 #include "pre/3_simulation_graph/elements/model_connector.hpp"
 #include "signal/storage.hpp"
 
+#include "resolver/read_resolver.hpp"
+#include "resolver/read_target_core.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <cstring>
