@@ -2,6 +2,8 @@
 
 #include "execution/substep/substep_schedule.hpp"
 
+#include "resolver/la2_data_access_resolver.hpp"
+
 #include "config.hpp"
 
 #include <algorithm>
@@ -70,6 +72,11 @@ namespace ssp4sim::graph
         sccs = graph.sccs;
         execution_order = graph.execution_order;
         loop_iterations.resize(sccs.size(), 1);
+
+        // The scheduler owns its read policy: hand the SCC partition to the
+        // resolver so it can stamp intra-SCC edges StartTime (sub-step sampling)
+        // and cross-SCC edges Latest (sequential DAG, Gauss-Seidel semantics).
+        set_resolver(std::make_shared<ssp4sim::scheduling::La2DataAccessResolver>(raw_nodes(), sccs));
 
         // Backward-compatible: prefer `simulation.executor.la2.iterations`,
         // fall back to the legacy `simulation.executor.loop_aware.iterations`.

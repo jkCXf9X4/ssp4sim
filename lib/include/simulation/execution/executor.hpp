@@ -34,6 +34,11 @@ namespace ssp4sim::graph
 
         void init() override;
 
+    protected:
+        /// Raw-pointer view of this executor's owned nodes. Used by derived
+        /// constructors to build the resolver over the same nodes they wrap.
+        std::vector<Invocable *> raw_nodes() const;
+
         std::string to_string() const
         {
             return "ExecutionBase: " + this->name + ":\n{}\n";

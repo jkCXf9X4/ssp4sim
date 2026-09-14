@@ -6,6 +6,8 @@
 #include "executor.hpp"
 #include "invocable.hpp"
 
+#include "resolver/end_time_data_access_resolver.hpp"
+
 #include "ssp4cpp/utils/log.hpp"
 
 #include <cstddef>

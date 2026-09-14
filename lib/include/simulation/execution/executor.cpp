@@ -27,6 +27,17 @@ ExecutionBase::ExecutionBase(std::vector<std::shared_ptr<Invocable>> nodes, std:
         }
     }
 
+    std::vector<Invocable *> ExecutionBase::raw_nodes() const
+    {
+        std::vector<Invocable *> raw;
+        raw.reserve(nodes.size());
+        for (const auto &node : nodes)
+        {
+            raw.push_back(node.get());
+        }
+        return raw;
+    }
+
     void ExecutionBase::init()
     {
         // Recursive init: this executor's children may themselves be executors

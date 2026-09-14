@@ -14,10 +14,6 @@
 #include "execution/macro/macro_executor.hpp"
 #include "execution/macro/realtime_macro_executor.hpp"
 
-#include "resolver/start_time_data_access_resolver.hpp"
-#include "resolver/end_time_data_access_resolver.hpp"
-#include "resolver/la2_data_access_resolver.hpp"
-
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -35,15 +31,9 @@ namespace ssp4sim::graph
     {
         // wrap in Macro executor
 
-        // The resolver borrows the graph through raw pointers; the shared_ptr
-        // nodes are never moved, so this stays valid for the executor's whole
-        // lifetime.
-        std::vector<Invocable *> raw_nodes;
-        raw_nodes.reserve(nodes.size());
-        for (const auto &node : nodes)
-        {
-            raw_nodes.push_back(node.get());
-        }
+        // Each concrete executor constructs and wires its own read-path
+        // resolver in its constructor (see ExecutionBase::set_resolver). The
+        // builder only selects the executor family from config.
 
         std::shared_ptr<ExecutionBase> specialized_executor;
 
@@ -81,7 +71,6 @@ namespace ssp4sim::graph
                 LOG_INFO(log, "[{func}] Executor: JacobiSerial", __func__);
                 specialized_executor = std::make_shared<JacobiSerial>(nodes);
             }
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "seidel")
         {
@@ -95,19 +84,16 @@ namespace ssp4sim::graph
                 LOG_INFO(log, "[{func}] Executor: SerialSeidel", __func__);
                 specialized_executor = std::make_shared<SerialSeidel>(nodes);
             }
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::EndTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "custom_delay")
         {
             LOG_INFO(log, "[{func}] Executor: DelayExecutor", __func__);
             specialized_executor = std::make_shared<DelayExecutor>(nodes);
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "custom_delay_partial")
         {
             LOG_INFO(log, "[{func}] Executor: DelayExecutorPartial", __func__);
             specialized_executor = std::make_shared<DelayExecutorPartial>(nodes);
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes));
         }
         else if (executor_method == "la2" || executor_method == "loop_aware")
         {
@@ -115,14 +101,7 @@ namespace ssp4sim::graph
             // resources/loop_aware_nested*.json); "la2" is the refactored name.
             // Both dispatch to the same scheduler.
             LOG_INFO(log, "[{func}] Executor: La2Scheduler", __func__);
-
-            // The scheduler's SCC analysis is ready right after its constructor;
-            // hand the partition to the resolver so it can stamp intra-SCC edges
-            // StartTime (sub-step sampling) and cross-SCC edges Latest (sequential
-            // DAG, Gauss-Seidel semantics).
-            auto la2 = std::make_shared<graph::La2Scheduler>(nodes);
-            specialized_executor = la2;
-            specialized_executor->set_resolver(std::make_shared<ssp4sim::scheduling::La2DataAccessResolver>(raw_nodes, la2->sccs));
+            specialized_executor = std::make_shared<graph::La2Scheduler>(nodes);
         }
         else if (executor_method == "parallel_seidel" || executor_method == "parallel-seidel")
         {

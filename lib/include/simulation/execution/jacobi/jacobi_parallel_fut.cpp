@@ -1,11 +1,14 @@
 #include "execution/jacobi/jacobi_parallel_fut.hpp"
 
+#include "resolver/start_time_data_access_resolver.hpp"
+
 namespace ssp4sim::graph
 {
     JacobiParallelFutures::JacobiParallelFutures(std::vector<std::shared_ptr<Invocable>> nodes, int threads)
         : ExecutionBase(nodes, "ssp4sim.execution.JacobiParallelFutures"),
           pool(threads)
     {
+        set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes()));
         LOG_INFO(log, "[{func}] JacobiParallelFutures", __func__);
     }
 

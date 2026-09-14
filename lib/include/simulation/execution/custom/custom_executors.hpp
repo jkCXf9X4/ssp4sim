@@ -7,6 +7,8 @@
 #include "executor.hpp"
 #include "invocable.hpp"
 
+#include "resolver/start_time_data_access_resolver.hpp"
+
 #include "config.hpp"
 
 #include "pre/3_simulation_graph/elements/model_fmu.hpp"
@@ -33,6 +35,7 @@ namespace ssp4sim::graph
             : ExecutionBase(nodes, "ssp4sim.execution.DelayExecutor")
         {
             this->name = "DelayExecutor";
+            set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes()));
             LOG_INFO(log, "[{func}] ", __func__);
         }
 

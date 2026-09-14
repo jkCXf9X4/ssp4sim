@@ -1,5 +1,7 @@
 #include "execution/jacobi/jacobi_parallel_tbb.hpp"
 
+#include "resolver/start_time_data_access_resolver.hpp"
+
 #include <algorithm>
 #include <execution>
 #include <exception>
@@ -10,6 +12,7 @@ namespace ssp4sim::graph
     JacobiParallelTBB::JacobiParallelTBB(std::vector<std::shared_ptr<Invocable>> nodes)
         : ExecutionBase(nodes, "ssp4sim.execution.JacobiParallelTBB")
     {
+        set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes()));
         LOG_INFO(log, "[{func}] JacobiParallelTBB", __func__);
     }
 
