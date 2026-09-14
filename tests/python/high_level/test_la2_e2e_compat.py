@@ -17,21 +17,16 @@ from ._helpers import (
 )
 
 # ============================================================================
-# P7 — end-to-end config-compatibility coverage for the la2/loop-aware refactor.
+# P7 — end-to-end config coverage for the la2 executor.
 #
-# These tests target the PATCHED (post-refactor) behavior, which arrives via a
-# set of concurrent patches:
-#   (1) ExecutorBuilder accepts BOTH executor methods: "la2" (new primary name)
-#       and "loop_aware" (legacy alias) — see executor_builder.cpp dispatch.
-#   (2) Config keys: `simulation.executor.la2.*` is primary;
-#       `simulation.executor.loop_aware.*` is honored as a legacy fallback —
-#       see la2_scheduler.cpp `getConfigOrLegacy()`.
+# These tests target the PATCHED (post-refactor) behavior:
+#   (1) ExecutorBuilder accepts both "la2" (primary name) and "loop_aware"
+#       (legacy alias) — see executor_builder.cpp dispatch.
+#   (2) Config keys: only `simulation.executor.la2.*` is read; the legacy
+#       `simulation.executor.loop_aware.*` namespace is ignored.
 #   (3) Mode values: "linear" | "fixed"  -> fixed/equal sub-steps;
 #                         "factor" | "geometric" -> shrinking (free-shrink
 #                         factor) sub-steps.
-# The pre-existing test_loop_aware_nested.py already covers the legacy names
-# end-to-end; it is left untouched (it will pass once the patches land). This
-# file adds the *explicit* legacy-vs-primary precedence and alias assertions.
 #
 # The fixture math below is copied from test_loop_aware_nested.py (same
 # analytic fixed points for the algebraic-loop reference fixtures).
@@ -64,22 +59,20 @@ def write_la2_compat_config(
     ssp_root: Path,
     workdir: Path,
     *,
-    method: str = "loop_aware",
-    mode: str = "fixed",
+    method: str = "la2",
+    mode: str = "linear",
     iterations: int = 32,
     factor: float = 0.8,
-    use_legacy_keys: bool = True,
     extra_executor: dict[str, Any] | None = None,
 ) -> Path:
-    """Build a loop-aware configuration.
+    """Build an la2 configuration.
 
-    `use_legacy_keys=True` writes the keys under
-    `simulation.executor.loop_aware.*` (legacy namespace); `False` writes them
-    under `simulation.executor.la2.*` (primary namespace). `method` selects the
-    executor method string ("loop_aware" legacy alias or "la2" primary name).
+    Keys are written under `simulation.executor.la2.*` (primary namespace).
+    `method` selects the executor method string ("loop_aware" legacy alias or
+    "la2" primary name).
 
     `extra_executor` is merged into the executor section afterwards, which lets
-    a test set BOTH namespaces simultaneously (precedence probe).
+    a test set BOTH namespaces simultaneously (legacy-ignored probe).
     """
     config: dict[str, Any] = json.loads(GENERIC_CONFIG_PATH.read_text())
     simulation = config["simulation"]
@@ -97,18 +90,11 @@ def write_la2_compat_config(
     executor["method"] = method
     executor["thread_pool_workers"] = 5
     executor["forward_derivatives"] = True
-    if use_legacy_keys:
-        executor["loop_aware"] = {
-            "mode": mode,
-            "iterations": iterations,
-            "factor": factor,
-        }
-    else:
-        executor["la2"] = {
-            "mode": mode,
-            "iterations": iterations,
-            "factor": factor,
-        }
+    executor["la2"] = {
+        "mode": mode,
+        "iterations": iterations,
+        "factor": factor,
+    }
     if extra_executor:
         executor.update(extra_executor)
     executor["jacobi"] = {"parallel": True, "method": 1}
@@ -211,10 +197,7 @@ def _run_and_check(config_path: Path, result_file: Path, signals: dict[str, floa
 
 
 # ---------------------------------------------------------------------------
-# (i) + (ii) — fully LEGACY configuration end-to-end.
-# method="loop_aware" (legacy alias) + simulation.executor.loop_aware.* keys.
-# Passes only after the concurrent patches: executor_builder must accept the
-# alias and la2_scheduler must fall back to the legacy key namespace.
+# (i) — la2 method + la2.* keys end to end (primary path).
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("mode", ["fixed", "geometric"])
 @pytest.mark.parametrize(
@@ -224,21 +207,19 @@ def _run_and_check(config_path: Path, result_file: Path, signals: dict[str, floa
         ("signal_algebraic_loop", SINGLE_SIGNALS),
     ],
 )
-def test_legacy_names_end_to_end_converges(
+def test_la2_names_end_to_end_converges(
     fixture: str,
     signals: dict[str, float],
     mode: str,
     tmp_path: Path,
 ) -> None:
-    """P7: a loop-aware simulation configured ENTIRELY with legacy names
-    ("loop_aware" method + `simulation.executor.loop_aware.iterations/mode/
-    factor`) must run and reach the steady-state fixed point.
+    """P7: a simulation configured with la2 method + `simulation.executor.la2.*`
+    keys must run and reach the steady-state fixed point.
 
     Mirrors test_loop_aware_nested.py (same fixtures, same 32-sub-step
-    relaxation, same tolerance) but is an explicit compat anchor for the
-    patched alias + legacy-key fallback. Both legacy mode spellings are
-    exercised: "fixed" (legacy alias of "linear" -> equal sub-steps) and
-    "geometric" (legacy alias of "factor" -> shrinking sub-steps).
+    relaxation, same tolerance). Both mode spellings are exercised: "fixed"
+    (alias of "linear" -> equal sub-steps) and "geometric" (alias of "factor"
+    -> shrinking sub-steps).
     """
     prepared = _prepare_fixture(tmp_path, fixture)
     if prepared is None:
@@ -248,21 +229,20 @@ def test_legacy_names_end_to_end_converges(
     config_path = write_la2_compat_config(
         runtime_ssp_root,
         workdir,
-        method="loop_aware",
+        method="la2",
         mode=mode,
         iterations=32,
-        factor=0.8,  # legacy default shrink factor
-        use_legacy_keys=True,
+        factor=0.8,  # la2 default shrink factor
     )
     max_err = _run_and_check(config_path, workdir / "result.csv", signals)
     assert max_err <= STEADY_STATE_TOLERANCE, (
-        f"legacy-name loop-aware ({fixture}, {mode}) fixed-point error "
+        f"la2 ({fixture}, {mode}) fixed-point error "
         f"{max_err:.5f} exceeds {STEADY_STATE_TOLERANCE}"
     )
 
 
 # ---------------------------------------------------------------------------
-# (iv) — method alias: executor_builder must accept BOTH method strings.
+# (ii) — method alias: executor_builder must accept BOTH method strings.
 # ---------------------------------------------------------------------------
 @pytest.mark.parametrize("method", ["loop_aware", "la2"])
 def test_executor_method_alias_accepted(method: str, tmp_path: Path) -> None:
@@ -270,8 +250,7 @@ def test_executor_method_alias_accepted(method: str, tmp_path: Path) -> None:
     (legacy alias) AND for the primary "la2" name — i.e. ExecutorBuilder does
     not throw "Unknown executor method" for either spelling.
 
-    Uses la2.* keys (primary namespace) so the alias is isolated from the
-    legacy key-fallback path.
+    Uses la2.* keys (primary namespace).
     """
     prepared = _prepare_fixture(tmp_path, "signal_algebraic_loop")
     if prepared is None:
@@ -282,10 +261,9 @@ def test_executor_method_alias_accepted(method: str, tmp_path: Path) -> None:
         runtime_ssp_root,
         workdir,
         method=method,
-        mode="fixed",
+        mode="linear",
         iterations=16,
         factor=0.5,
-        use_legacy_keys=False,
     )
 
     simulator = pyssp4sim.Simulator(str(config_path))
@@ -301,76 +279,49 @@ def test_executor_method_alias_accepted(method: str, tmp_path: Path) -> None:
 
 
 # ---------------------------------------------------------------------------
-# (iii) — config precedence: with BOTH namespaces set, la2.* must win.
+# (iii) — legacy `loop_aware.*` keys are ignored: la2 defaults apply.
 # ---------------------------------------------------------------------------
-def test_la2_keys_take_precedence_over_legacy(tmp_path: Path) -> None:
-    """P7: when `simulation.executor.la2.*` AND the legacy
-    `simulation.executor.loop_aware.*` keys are both present, the la2.* values
-    must win (la2_scheduler reads la2.* first, falls back to loop_aware.* only
-    when the la2 key is absent).
+def test_legacy_loop_aware_keys_are_ignored(tmp_path: Path) -> None:
+    """P7: the legacy `simulation.executor.loop_aware.*` key namespace is no
+    longer read. With ONLY legacy keys present (la2.* absent), the scheduler
+    falls back to its built-in defaults (iteration count = SCC node count), so
+    the nested loop under-relaxes and does NOT reach the fixed point.
 
-    Observable: with la2.iterations=32 the loop converges to the analytic fixed
-    point (<= 0.05); with only iterations=1 the loop under-relaxes and the
-    error is ~0.36 (see FIXTURE.md / test_loop_aware_nested.py rationale). The
-    legacy namespace here is deliberately set to iterations=1, so a correct
-    implementation (la2 wins) converges and a buggy one (legacy wins, or a
-    merge that prefers legacy) fails loudly.
+    Observable: with shown iterations=1 the loop under-relaxes and the error is
+    ~0.36 (see FIXTURE.md / test_loop_aware_nested.py rationale). The la2.*
+    namespace here is deliberately absent, so a correct implementation (legacy
+    ignored -> defaults) fails loudly, while a buggy one that still honored the
+    legacy namespace would have converged.
     """
     prepared = _prepare_fixture(tmp_path, "signal_nested_algebraic_loop")
     if prepared is None:
         pytest.skip("Missing fixture: signal_nested_algebraic_loop/baseline")
     runtime_ssp_root, workdir = prepared
 
-    # Legacy namespace: a deliberately under-converged configuration.
-    legacy = {"mode": "geometric", "iterations": 1, "factor": 0.8}
-    # Primary namespace: the converging configuration.
-    primary = {"mode": "fixed", "iterations": 32, "factor": 0.5}
-    # base config written with la2.* keys (use_legacy_keys=False), then the
-    # legacy namespace is merged in so BOTH are present.
+    # Legacy namespace only: a deliberately under-converged configuration.
+    legacy_only = {
+        "mode": "geometric",
+        "iterations": 1,
+        "factor": 0.8,
+    }
+    # base config written with la2.* keys, then the la2 namespace is removed and
+    # the legacy namespace is merged in so ONLY legacy keys are present.
     config_path = write_la2_compat_config(
         runtime_ssp_root,
         workdir,
         method="la2",
-        mode=primary["mode"],
-        iterations=primary["iterations"],
-        factor=primary["factor"],
-        use_legacy_keys=False,
-        extra_executor={"loop_aware": legacy},
-    )
-
-    max_err = _run_and_check(config_path, workdir / "result.csv", NESTED_SIGNALS)
-    assert max_err <= STEADY_STATE_TOLERANCE, (
-        f"la2.* precedence: fixed-point error {max_err:.5f} exceeds "
-        f"{STEADY_STATE_TOLERANCE} (legacy iterations=1 would give ~0.36 — "
-        f"the la2.iterations=32 value must have won)"
-    )
-
-
-# ---------------------------------------------------------------------------
-# Companion — primary names end to end (la2 method + la2.* keys).
-# ---------------------------------------------------------------------------
-@pytest.mark.parametrize("mode", ["fixed", "geometric"])
-def test_la2_primary_names_end_to_end_converges(mode: str, tmp_path: Path) -> None:
-    """P7: the primary config path (method "la2" + `simulation.executor.la2.*`
-    keys, factor default 0.8) also reaches the fixed point. Guards against the
-    refactor regressing the primary namespace while the legacy fallback works.
-    """
-    prepared = _prepare_fixture(tmp_path, "signal_nested_algebraic_loop")
-    if prepared is None:
-        pytest.skip("Missing fixture: signal_nested_algebraic_loop/baseline")
-    runtime_ssp_root, workdir = prepared
-
-    config_path = write_la2_compat_config(
-        runtime_ssp_root,
-        workdir,
-        method="la2",
-        mode=mode,
+        mode="fixed",
         iterations=32,
-        factor=0.8,  # primary default shrink factor (aligned with legacy 0.8)
-        use_legacy_keys=False,
+        factor=0.5,
+        extra_executor={"loop_aware": legacy_only},
     )
+    config = json.loads(config_path.read_text())
+    del config["simulation"]["executor"]["la2"]
+    config_path.write_text(json.dumps(config, indent=2))
+
     max_err = _run_and_check(config_path, workdir / "result.csv", NESTED_SIGNALS)
-    assert max_err <= STEADY_STATE_TOLERANCE, (
-        f"la2 primary ({mode}) fixed-point error {max_err:.5f} exceeds "
-        f"{STEADY_STATE_TOLERANCE}"
+    assert max_err > STEADY_STATE_TOLERANCE, (
+        f"legacy loop_aware.* keys must be ignored: fixed-point error {max_err:.5f} "
+        f"is unexpectedly below/at {STEADY_STATE_TOLERANCE} (legacy iterations=1 "
+        f"should give ~0.36 — the empty la2.* namespace must have used defaults)"
     )

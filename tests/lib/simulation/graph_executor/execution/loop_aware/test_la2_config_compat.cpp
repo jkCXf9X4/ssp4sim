@@ -1,16 +1,14 @@
-// Config-boundary compatibility tests for the la2 scheduler / executor
-// builder (patch task P1: findings A, B-keys, C, E).
+// Config-boundary tests for the la2 scheduler / executor builder (patch task
+// P1: findings A, B-keys, C, E).
 //
-// Verifies that legacy `loop_aware` configurations keep working without
-// modification:
+// Verifies the la2 configuration contract:
 // (a) executor_builder builds a MacroExecutor wrapping a La2Scheduler (or a
-    //     La2Scheduler directly for method "loop_aware" when unwrapped);
-//   (b) legacy `simulation.executor.loop_aware.*` keys are picked up when the
-//       `simulation.executor.la2.*` keys are absent;
-//   (c) `la2.*` keys take precedence over `loop_aware.*` keys;
-//   (d) legacy mode values "fixed" / "geometric" map to the same behavior as
+//     La2Scheduler directly for method "loop_aware" when unwrapped);
+//   (b) only `simulation.executor.la2.*` keys are read; the legacy
+//       `simulation.executor.loop_aware.*` keys are ignored;
+//   (c) legacy mode values "fixed" / "geometric" map to the same behavior as
 //       "linear" / "factor";
-//   (e) requesting "parallel_seidel" throws a clear std::runtime_error at
+//   (d) requesting "parallel_seidel" throws a clear std::runtime_error at
 //       dispatch time.
 //
 // NOTE: utils::Config is an all-static class with no per-key set()/reset()
@@ -155,10 +153,13 @@ TEST_CASE("executor_builder accepts legacy 'loop_aware' method name", "[la2][con
     REQUIRE(dynamic_cast<ssp4sim::graph::La2Scheduler *>(macro->nodes[0].get()) != nullptr);
 }
 
-TEST_CASE("legacy loop_aware config keys are honored when la2.* keys are absent",
+TEST_CASE("legacy loop_aware config keys are ignored when la2.* keys are absent",
           "[la2][config][compat]")
 {
-    // Only the legacy namespace is present.
+    // Only the legacy namespace is present; the la2 scheduler must fall back to
+    // its built-in defaults (mode "linear", iteration count = SCC node count).
+    // The 2-node loop therefore relaxes over 2 sub-steps: 2 * 2 = 4
+    // invocations, proving the legacy keys have no effect.
     Config::loadFromString(R"json({
         "simulation": {
             "timestep": 1e-6,
@@ -178,17 +179,13 @@ TEST_CASE("legacy loop_aware config keys are honored when la2.* keys are absent"
     ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
     scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
 
-    // "fixed" == equal sub-steps, count = iterations = 4. The 2-node loop is
-    // relaxed over 4 sub-steps, each node invoked once per sub-step:
-    // 2 nodes * 4 sub-steps = 8 invocations.
-    REQUIRE(total_invocations(nodes) == 8);
+    REQUIRE(total_invocations(nodes) == 4);
 }
 
-TEST_CASE("la2.* config keys take precedence over legacy loop_aware.* keys",
+TEST_CASE("la2.* config keys are honored alongside ignored legacy loop_aware.* keys",
           "[la2][config][compat]")
 {
-    // Both namespaces present: la2.iterations=2 must win over
-    // loop_aware.iterations=6.
+    // Legacy keys present but ignored: only la2.iterations=2 is read.
     Config::loadFromString(R"json({
         "simulation": {
             "timestep": 1e-6,
@@ -225,7 +222,7 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
                 "timestep": 1e-6,
                 "executor": {
                     "method": "la2",
-                    "loop_aware": {
+                    "la2": {
                         "iterations": 3,
                         "mode": "fixed"
                     }
@@ -250,7 +247,7 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
                 "timestep": 1e-6,
                 "executor": {
                     "method": "la2",
-                    "loop_aware": {
+                    "la2": {
                         "iterations": 4,
                         "mode": "geometric",
                         "factor": 0.5
@@ -277,7 +274,7 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
                 "timestep": 1e-6,
                 "executor": {
                     "method": "la2",
-                    "loop_aware": {
+                    "la2": {
                         "iterations": 3,
                         "mode": "geometric",
                         "factor": 1.5

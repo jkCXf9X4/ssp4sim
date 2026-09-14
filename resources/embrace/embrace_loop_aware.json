@@ -9,10 +9,10 @@
         "realtime": false,
         "working_dir": "./wd/embrace_loop_aware",
         "executor": {
-            "method": "loop_aware",
+            "method": "la2",
             "thread_pool_workers": 5,
             "forward_derivatives": true,
-            "loop_aware": {
+            "la2": {
                 "sub_step": 0.001
             },
             "jacobi": {

@@ -6,7 +6,7 @@
 #include "executor_base.hpp"
 #include "invocable.hpp"
 
-#include "resolver/start_time_data_access_resolver.hpp"
+#include "resolver/data_access_resolver.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -22,7 +22,8 @@ class JacobiBase : public ExecutorBase
             : ExecutorBase(nodes, "ssp4sim.execution.JacobiBase")
         {
             // Jacobi samples every producer at the sub-step start.
-            set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes()));
+            set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes(),
+                                                                                   ssp4sim::scheduling::AccessMode::StartTime));
             LOG_INFO(log, "[{func}] ", __func__);
         }
 

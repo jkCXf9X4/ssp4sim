@@ -1,6 +1,6 @@
 #include "executor/jacobi/jacobi_parallel_spin.hpp"
 
-#include "resolver/start_time_data_access_resolver.hpp"
+#include "resolver/data_access_resolver.hpp"
 
 namespace ssp4sim::graph
 {
@@ -9,7 +9,8 @@ namespace ssp4sim::graph
         : ExecutorBase(nodes, "ssp4sim.execution.JacobiParallelSpin"),
           pool(threads)
     {
-        set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes()));
+        set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes(),
+                                                                               ssp4sim::scheduling::AccessMode::StartTime));
         LOG_INFO(log, "[{func}] JacobiParallelSpin", __func__);
     }
 

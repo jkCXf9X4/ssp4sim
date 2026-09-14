@@ -9,11 +9,11 @@
         "realtime": false,
         "working_dir": "./wd/loop_aware_nested_geometric",
         "executor": {
-            "method": "loop_aware",
+            "method": "la2",
             "thread_pool_workers": 5,
             "forward_derivatives": true,
-            "loop_aware": {
-                "mode": "geometric",
+            "la2": {
+                "mode": "factor",
                 "iterations": 32,
                 "factor": 0.8
             },

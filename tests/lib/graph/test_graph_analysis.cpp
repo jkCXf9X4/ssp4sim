@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -54,6 +56,12 @@ TEST_CASE("GraphAnalysis finds single-node SCCs for a plain DAG", "[graph_analys
     REQUIRE(analysis.execution_order.size() == 3);
     REQUIRE(analysis.verify_placement());
 
+    // Single-node SCCs in a plain DAG are not loops.
+    REQUIRE(analysis.is_loop.size() == 3);
+    REQUIRE_FALSE(analysis.is_loop[analysis.scc_index_of(&a)]);
+    REQUIRE_FALSE(analysis.is_loop[analysis.scc_index_of(&b)]);
+    REQUIRE_FALSE(analysis.is_loop[analysis.scc_index_of(&c)]);
+
     // a before b before c in execution order.
     auto ra = analysis.scc_index_of(&a);
     auto rb = analysis.scc_index_of(&b);
@@ -89,61 +97,11 @@ TEST_CASE("GraphAnalysis groups a feedback loop into one SCC", "[graph_analysis]
     REQUIRE(loop_idx == analysis.scc_index_of(&b));
     REQUIRE(loop_idx != analysis.scc_index_of(&c));
     REQUIRE(analysis.sccs[loop_idx].size() == 2);
-    REQUIRE(analysis.groups[loop_idx]->is_loop());
+    REQUIRE(analysis.is_loop[loop_idx]);
 
     // The loop must come before its downstream node in the topo order.
     REQUIRE(analysis.execution_order[0] == loop_idx);
     REQUIRE(analysis.execution_order[1] == analysis.scc_index_of(&c));
-}
-
-// ---------------------------------------------------------------------------
-// Description: The condensed graph rewires SCCs into SccGroup nodes whose
-//              edges mirror the component DAG.
-// Rationale:   Reusable "equivalent graph" the schedulers operate on.
-// ---------------------------------------------------------------------------
-TEST_CASE("GraphAnalysis builds a condensed graph of SccGroups", "[graph_analysis]")
-{
-    std::vector<std::string> calls;
-    CountingInvocable a("a", &calls), b("b", &calls), c("c", &calls), d("d", &calls);
-    a.add_child(&b);
-    b.add_child(&a);   // loop {a, b}
-    b.add_child(&c);
-    c.add_child(&d);
-
-    std::vector<Invocable *> nodes{&a, &b, &c, &d};
-    GraphAnalysis analysis(nodes);
-    analysis.analyze();
-
-    REQUIRE(analysis.groups.size() == analysis.sccs.size());
-
-    // a and b share a group; c and d are standalone groups.
-    auto *loop_group = analysis.group_of(&a);
-    REQUIRE(loop_group == analysis.group_of(&b));
-    REQUIRE(loop_group->sub_nodes.size() == 2);
-
-    auto *c_group = analysis.group_of(&c);
-    auto *d_group = analysis.group_of(&d);
-    REQUIRE(c_group != d_group);
-
-    // Loop group feeds c_group which feeds d_group.
-    auto children_of = [](auto *g) {
-        std::vector<std::string> names;
-        for (auto *child : g->children)
-        {
-            names.push_back(child->name);
-        }
-        return names;
-    };
-    REQUIRE(children_of(loop_group) == std::vector<std::string>{"SccGroup"});
-    REQUIRE(children_of(c_group) == std::vector<std::string>{"SccGroup"});
-    REQUIRE(d_group->children.empty());
-
-    // Group names are the SCC group default; verify parent wiring back.
-    REQUIRE(loop_group->parents.empty());
-    REQUIRE(c_group->parents.size() == 1);
-    REQUIRE(c_group->parents[0] == loop_group);
-    REQUIRE(d_group->parents.size() == 1);
-    REQUIRE(d_group->parents[0] == c_group);
 }
 
 // ---------------------------------------------------------------------------
@@ -182,16 +140,16 @@ TEST_CASE("GraphAnalysis handles an empty graph", "[graph_analysis]")
 
     REQUIRE(analysis.sccs.empty());
     REQUIRE(analysis.execution_order.empty());
-    REQUIRE(analysis.groups.empty());
+    REQUIRE(analysis.is_loop.empty());
     REQUIRE(analysis.verify_placement());
 }
 
 // ---------------------------------------------------------------------------
 // Description: a single acyclic node is not a loop.
-// Rationale:   is_loop() must return false for a genuinely acyclic node so
+// Rationale:   is_loop must return false for a genuinely acyclic node so
 //              schedulers do not relax it as a feedback loop.
 // ---------------------------------------------------------------------------
-TEST_CASE("SccGroup single acyclic node is not a loop", "[graph_analysis]")
+TEST_CASE("GraphAnalysis single acyclic node is not a loop", "[graph_analysis]")
 {
     std::vector<std::string> calls;
     CountingInvocable a("a", &calls);
@@ -202,7 +160,7 @@ TEST_CASE("SccGroup single acyclic node is not a loop", "[graph_analysis]")
 
     REQUIRE(analysis.sccs.size() == 1);
     REQUIRE(analysis.sccs[0].size() == 1);
-    REQUIRE_FALSE(analysis.groups[0]->is_loop());
+    REQUIRE_FALSE(analysis.is_loop[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -210,7 +168,7 @@ TEST_CASE("SccGroup single acyclic node is not a loop", "[graph_analysis]")
 // Rationale:   FINDING F: a size-1 SCC with a feedback self-reference must be
 //              treated as a loop, not as a plain acyclic node.
 // ---------------------------------------------------------------------------
-TEST_CASE("SccGroup single-node self-loop is a loop", "[graph_analysis]")
+TEST_CASE("GraphAnalysis single-node self-loop is a loop", "[graph_analysis]")
 {
     std::vector<std::string> calls;
     CountingInvocable a("a", &calls);
@@ -222,7 +180,7 @@ TEST_CASE("SccGroup single-node self-loop is a loop", "[graph_analysis]")
 
     REQUIRE(analysis.sccs.size() == 1);
     REQUIRE(analysis.sccs[0].size() == 1);
-    REQUIRE(analysis.groups[0]->is_loop());
+    REQUIRE(analysis.is_loop[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -230,7 +188,7 @@ TEST_CASE("SccGroup single-node self-loop is a loop", "[graph_analysis]")
 // Rationale:   Multi-node SCCs must remain loops regardless of the
 //              single-node self-loop fix.
 // ---------------------------------------------------------------------------
-TEST_CASE("SccGroup two-node cycle is a loop", "[graph_analysis]")
+TEST_CASE("GraphAnalysis two-node cycle is a loop", "[graph_analysis]")
 {
     std::vector<std::string> calls;
     CountingInvocable a("a", &calls), b("b", &calls);
@@ -243,7 +201,7 @@ TEST_CASE("SccGroup two-node cycle is a loop", "[graph_analysis]")
 
     REQUIRE(analysis.sccs.size() == 1);
     REQUIRE(analysis.sccs[0].size() == 2);
-    REQUIRE(analysis.groups[0]->is_loop());
+    REQUIRE(analysis.is_loop[0]);
 }
 
 // ---------------------------------------------------------------------------
@@ -265,4 +223,3 @@ TEST_CASE("GraphAnalysis topological_sort throws on SCC DAG cycle", "[graph_anal
         ssp4sim::graph::GraphAnalysis::topological_sort(cyclic_dag),
         std::runtime_error);
 }
-

@@ -58,10 +58,10 @@ def write_loop_aware_config(
     simulation["working_dir"] = str(workdir)
 
     executor = simulation["executor"]
-    executor["method"] = "loop_aware"
+    executor["method"] = "la2"
     executor["thread_pool_workers"] = 5
     executor["forward_derivatives"] = True
-    executor["loop_aware"] = {"mode": mode, "iterations": iterations, "factor": factor}
+    executor["la2"] = {"mode": mode, "iterations": iterations, "factor": factor}
     executor["jacobi"] = {"parallel": True, "method": 1}
     executor["seidel"] = {"parallel": False}
 

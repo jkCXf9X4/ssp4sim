@@ -114,10 +114,9 @@ set is treated as external/system. A wrong guess surfaces as a per-binary
 link-time undefined reference, which is loud, not silent.
 
 `tests/lib/graph/test_graph_analysis.cpp` covers the reusable
-`ssp4sim::graph::GraphAnalysis` scheduler utility (SCC detection, component
-topological sort, `SccGroup` condensed-graph construction and parent/child
-placement verification) extracted from `LoopAwareExecutor`, which now builds on
-it.
+`ssp4sim::graph::GraphAnalysis` scheduler utility (SCC detection, per-SCC loop
+classification and component topological sort) extracted from the la2 scheduler,
+which builds on it.
 
 ## High-Level SSP Tests
 
@@ -139,15 +138,15 @@ A separate smoke test exercises the packaged CLI through `venv/bin/pyssp4sim`
 against the local `resources/embrace/embrace.json` fixture with temporary
 output paths.
 
-The `la2` executor (legacy alias `loop_aware`) is regression-tested against the algebraic-loop
+The `la2` executor is regression-tested against the algebraic-loop
 reference fixtures in `test_loop_aware_nested.py`: `signal_nested_algebraic_loop`
 (loop within loop) and `signal_algebraic_loop` (single loop). Each fixture is run
-with both loop sub-step scheduling modes (`linear`, `factor`; legacy aliases
-`fixed`, `geometric`) and the steady-state result is compared to the analytic
+with both loop sub-step scheduling modes (`linear`, `factor`) and the
+steady-state result is compared to the analytic
 fixed point. Nested loop SCCs need more internal sub-iterations than the default
 SCC node count to converge; the test pins that with
-`simulation.executor.la2.iterations` (legacy `simulation.executor.loop_aware.iterations`
-is still honored as a fallback).
+`simulation.executor.la2.iterations`. The legacy `loop_aware.*` config key
+namespace is no longer honored.
 
 See breakdown/03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
 

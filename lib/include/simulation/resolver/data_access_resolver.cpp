@@ -177,7 +177,7 @@ namespace ssp4sim::scheduling
     }
 
     // ------------------------------------------------------------------
-    // Protected helpers backing the abstract resolve() hook.
+    // Protected helpers backing copy_model_inputs and graph-aware stamping.
     // ------------------------------------------------------------------
 
     // Single-lookup edge view: the transparent per-edge contract + the source
@@ -207,6 +207,36 @@ namespace ssp4sim::scheduling
             e.status = s_->status[re.source_producer].get();
         }
         return e;
+    }
+
+    // The (model, connection) edge's source producer (an Invocable id); npos when
+    // unlinked (/ unknown). Backs graph-aware stamping (e.g. la2 intra-SCC edges).
+    std::size_t DataAccessResolver::edge_source_producer(std::size_t model_id,
+                                                         std::size_t connection_id)
+    {
+        if (s_ == nullptr || model_id >= s_->edges.size())
+        {
+            return no_producer;
+        }
+        const auto &model_edges = s_->edges[model_id];
+        if (connection_id >= model_edges.size())
+        {
+            return no_producer;
+        }
+        const std::size_t src = model_edges[connection_id].source_producer;
+        return (src == DataAccessResolver::State::npos) ? no_producer : src;
+    }
+
+    // The shared, per-mode dispatch: the edge's stamped AccessMode decides the
+    // resolution recipe. This is the only resolve implementation needed now that
+    // policy differences are pure construction-time data (default mode + stamps).
+    ResolvedRead DataAccessResolver::resolve(std::size_t model_id,
+                                             std::size_t connection_id,
+                                             std::uint64_t step_start,
+                                             std::uint64_t step_end)
+    {
+        const auto e = edge(model_id, connection_id);
+        return detail::resolve_edge(*e.rules, *e.status, step_start, step_end);
     }
 
     // ------------------------------------------------------------------

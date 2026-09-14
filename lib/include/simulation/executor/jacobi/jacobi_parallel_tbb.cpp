@@ -1,18 +1,15 @@
 #include "executor/jacobi/jacobi_parallel_tbb.hpp"
 
-#include "resolver/start_time_data_access_resolver.hpp"
-
-#include <algorithm>
-#include <execution>
-#include <exception>
-#include <mutex>
+#include "executor_utils.hpp"
+#include "resolver/data_access_resolver.hpp"
 
 namespace ssp4sim::graph
 {
     JacobiParallelTBB::JacobiParallelTBB(std::vector<std::shared_ptr<Invocable>> nodes)
         : ExecutorBase(nodes, "ssp4sim.execution.JacobiParallelTBB")
     {
-        set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes()));
+        set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes(),
+                                                                               ssp4sim::scheduling::AccessMode::StartTime));
         LOG_INFO(log, "[{func}] JacobiParallelTBB", __func__);
     }
 
@@ -24,30 +21,7 @@ namespace ssp4sim::graph
 
         auto step = StepData(step_data.start_time, step_data.end_time);
 
-        std::exception_ptr captured_exception;
-        std::mutex exception_mutex;
-
-        std::for_each(std::execution::par, nodes.begin(), nodes.end(),
-                      [&](auto &node)
-                      {
-                        try
-                        {
-                            node->invoke(step);
-                        }
-                        catch (...)
-                        {
-                            std::scoped_lock lock(exception_mutex);
-                            if (!captured_exception)
-                            {
-                                captured_exception = std::current_exception();
-                            }
-                        }
-                      });
-
-        if (captured_exception)
-        {
-            std::rethrow_exception(captured_exception);
-        }
+        invoke_group_parallel(nodes, step);
 
         return step_data.end_time;
     }

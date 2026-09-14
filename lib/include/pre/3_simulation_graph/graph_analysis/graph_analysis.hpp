@@ -1,6 +1,6 @@
 #pragma once
 
-#include "graph_analysis/scc_group.hpp"
+#include "invocable.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -21,24 +21,20 @@ namespace ssp4sim::graph
 {
 
     /**
-     * @brief Graph analysis: SCC detection, component DAG, topological sort,
-     *        and condensed SccGroup graph construction.
+     * @brief Graph analysis: SCC detection, component DAG, and topological sort.
      *
      * This is a pure analysis utility, not an Invocable. It owns no node
-     * memory (input nodes are treated as read-only) and destroys the SccGroup
-     * wrappers when this object is destroyed.
+     * memory (input nodes are treated as read-only).
      *
      * Usage:
      *   GraphAnalysis analysis(nodes);
      *   analysis.analyze();
-     *   // Use sccs, groups, execution_order...
+     *   // Use sccs, execution_order, is_loop...
      *
      * Algorithm pipeline (analyze):
      *   1. Tarjan's SCC on the full node set.
      *   2. Build a DAG of SCCs (component -> component edges).
      *   3. Topologically sort the component DAG.
-     *   4. Build the equivalent condensed graph: every SCC is wrapped in an
-     *      SccGroup whose children/parents form the SCC DAG.
      */
     class GraphAnalysis final
     {
@@ -50,27 +46,25 @@ namespace ssp4sim::graph
         // SCCs computed from the graph, each is a vector of nodes.
         std::vector<std::vector<Invocable *>> sccs;
 
-        // One SccGroup wrapper per SCC; index i matches sccs[i].
-        std::vector<std::unique_ptr<SccGroup>> groups;
+        // For each SCC index, whether it is a loop: more than one node, or a
+        // single node with a self-edge (feedback self-reference).
+        std::vector<bool> is_loop;
 
-        // Topologically ordered indices into sccs/groups.
+        // Topologically ordered indices into sccs.
         std::vector<std::size_t> execution_order;
 
         // ---- Construction & Analysis ----------------------------------------
 
         explicit GraphAnalysis(std::vector<Invocable *> nodes);
 
-        // Run the full analysis pipeline: SCC detection, DAG build,
-        // topological sort and condensed graph construction.
+        // Run the full analysis pipeline: SCC detection, DAG build and
+        // topological sort.
         void analyze();
 
         // ---- Result accessors -----------------------------------------------
 
         // SCC index of a node (requires analyze() to have run).
         std::size_t scc_index_of(Invocable *node) const;
-
-        // The SccGroup wrapper containing a node (requires analyze()).
-        SccGroup *group_of(Invocable *node) const;
 
         // Verify parent/child placement in the graph in relation to a node.
         // A placement is valid when every edge always points forward in the
@@ -95,13 +89,8 @@ namespace ssp4sim::graph
         // Build the map from source SCC index to target SCC indices.
         std::map<std::size_t, std::set<std::size_t>> build_scc_dag() const;
 
-        // Wrap each SCC in an SccGroup and rewire the children/parents so
-        // the groups form the equivalent condensed DAG.
-        void build_condensed_graph();
-
         // Internal logger.
         ssp4cpp::utils::log::Logger *log;
     };
 
 }
-

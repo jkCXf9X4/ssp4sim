@@ -7,7 +7,7 @@
 #include "executor_base.hpp"
 #include "invocable.hpp"
 
-#include "resolver/start_time_data_access_resolver.hpp"
+#include "resolver/data_access_resolver.hpp"
 
 #include "config.hpp"
 
@@ -35,7 +35,8 @@ namespace ssp4sim::graph
             : ExecutorBase(nodes, "ssp4sim.execution.DelayExecutor")
         {
             this->name = "DelayExecutor";
-            set_resolver(std::make_shared<ssp4sim::scheduling::StartTimeDataAccessResolver>(raw_nodes()));
+            set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes(),
+                                                                               ssp4sim::scheduling::AccessMode::StartTime));
             LOG_INFO(log, "[{func}] ", __func__);
         }
 

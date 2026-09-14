@@ -2,51 +2,44 @@
 
 #include "invocable.hpp"
 
+#include <algorithm>
+#include <exception>
+#include <execution>
+#include <mutex>
+
 namespace ssp4sim::graph
 {
 
-    // continuous input will allow the substep to sample new data during the substep
-    inline void invoke_sub_step(Invocable *node, const StepData &step_data, bool continuous_input = false)
+    // Run every node in `nodes` once over `step` in parallel, completing the
+    // sweep before returning. The first exception thrown by any node is captured
+    // and rethrown after the sweep, so a failing member can't trash the group's
+    // remaining work with an unwinding mid-parallel loop.
+    template <typename NodeList>
+    void invoke_group_parallel(const NodeList &nodes, const StepData &step)
     {
-        while (node->current_time < step_data.end_time)
+        std::exception_ptr captured_exception;
+        std::mutex exception_mutex;
+
+        std::for_each(std::execution::par, nodes.begin(), nodes.end(),
+                      [&](auto &node)
+                      {
+                          try
+                          {
+                              node->invoke(step);
+                          }
+                          catch (...)
+                          {
+                              std::scoped_lock lock(exception_mutex);
+                              if (!captured_exception)
+                              {
+                                  captured_exception = std::current_exception();
+                              }
+                          }
+                      });
+
+        if (captured_exception)
         {
-            auto substep_start = node->current_time;
-            auto substep_end = node->current_time + step_data.timestep;
-
-            auto output_time = substep_end;
-            if (node->delay == 0)
-            {
-                // No delay specified, just set it at the end
-                output_time = substep_end;
-            }
-            else if (substep_start + node->delay <= substep_end)
-            {
-                // if the step is shorter than the model delay, do the best of it and set it to sub_step_end
-                // evaluate if this is true, it could be set to the correct time but there is the potential
-                // that the data could be used non-deterministic if a time before substep_end is set...
-                output_time = substep_end;
-            }
-            else if (substep_start + node->delay > substep_end)
-            {
-                // if the step is longer than the model delay, set the correct time
-                output_time = substep_start + node->delay;
-            }
-
-            // the valid input time does not work for seidel or anything that is not limited to the start time for valid inputs
-            auto valid_input_time = continuous_input ? substep_start : step_data.input_time;
-            auto s = StepData(substep_start,      // start
-                              substep_end,        // end
-                              step_data.timestep, // step_size
-                              valid_input_time,   // input
-                              output_time);       // output_time
-
-            IF_LOG({
-                LOG_TRACE_L3(node->log, "Node {node}, Time {time}, step: {step}",
-                          node->name, node->current_time, s.to_string());
-            });
-
-            node->invoke(s);
+            std::rethrow_exception(captured_exception);
         }
     }
-
 }

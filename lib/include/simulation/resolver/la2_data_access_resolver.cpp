@@ -1,42 +1,24 @@
 #include "resolver/la2_data_access_resolver.hpp"
 
 #include "pre/3_simulation_graph/elements/model_fmu.hpp"
-#include "signal/storage.hpp"
 
-#include <memory>
-#include <unordered_map>
+#include <cstddef>
+#include <string>
 #include <utility>
 #include <vector>
 
 namespace ssp4sim::scheduling
 {
     La2DataAccessResolver::La2DataAccessResolver(std::vector<Invocable *> nodes,
-                                                 std::vector<std::vector<Invocable *>> sccs)
-        : DataAccessResolver(nodes, AccessMode::Latest) // pass by value; `nodes` stays usable below
+                                                 std::vector<std::size_t> scc_of)
+        : DataAccessResolver(nodes, AccessMode::Latest) // cross-SCC default; `nodes` stays usable below
     {
-        // node id -> SCC index, so we can tell whether an edge stays inside the
-        // same parallel group.
-        std::unordered_map<std::size_t, std::size_t> scc_of;
-        for (std::size_t si = 0; si < sccs.size(); ++si)
-        {
-            for (auto *node : sccs[si])
-            {
-                scc_of.emplace(static_cast<std::size_t>(node->id), si);
-            }
-        }
-
-        // output storage -> owning node (mirrors the base's ownership pass).
-        std::unordered_map<ssp4sim::signal::SignalStorage *, Invocable *> owner;
-        for (auto *node : nodes)
-        {
-            auto *fmu = dynamic_cast<ssp4sim::graph::FmuModel *>(node);
-            if (fmu == nullptr)
-            {
-                continue;
-            }
-            owner.emplace(fmu->output_area.get(), node);
-        }
-
+        // Stamp every wired edge explicitly: intra-SCC edges StartTime, cross-SCC
+        // edges Latest. Do not rely on the base constructor's default mode staying
+        // Latest if this policy set ever changes. The base already knows each
+        // edge's source producer, so scc_of (node id -> SCC index) and the
+        // protected edge_source_producer() accessor are enough — no need to
+        // re-derive storage ownership here.
         for (auto *node : nodes)
         {
             auto *fmu = dynamic_cast<ssp4sim::graph::FmuModel *>(node);
@@ -45,22 +27,23 @@ namespace ssp4sim::scheduling
                 continue;
             }
 
-            auto target_it = scc_of.find(static_cast<std::size_t>(fmu->id));
-            if (target_it == scc_of.end())
+            const std::size_t target_scc = (static_cast<std::size_t>(fmu->id) < scc_of.size())
+                ? scc_of[static_cast<std::size_t>(fmu->id)] : no_producer;
+            if (target_scc == no_producer)
             {
                 continue;
             }
 
             for (std::size_t i = 0; i < fmu->connections.size(); ++i)
             {
-                auto src_it = owner.find(fmu->connections[i].source_storage);
-                if (src_it == owner.end())
+                const std::size_t src = edge_source_producer(static_cast<std::size_t>(fmu->id), i);
+                if (src == no_producer)
                 {
                     continue; // unlinked (uc-14): stays Latest, never valid
                 }
 
-                auto src_scc_it = scc_of.find(static_cast<std::size_t>(src_it->second->id));
-                if (src_scc_it != scc_of.end() && src_scc_it->second == target_it->second)
+                const std::size_t src_scc = (src < scc_of.size()) ? scc_of[src] : no_producer;
+                if (src_scc == target_scc)
                 {
                     // Same SCC -> the producer relaxes in parallel with this model;
                     // sample at the sub-step start for determinism.
@@ -75,20 +58,5 @@ namespace ssp4sim::scheduling
                 }
             }
         }
-    }
-
-    // ------------------------------------------------------------------
-    // La2 resolve — per (model, connection): the stamped per-edge mode decides,
-    // so intra-SCC edges sample the current sub-step (StartTime) and cross-SCC
-    // edges zero-order-hold the producer's latest commit (Latest / Gauss-Seidel).
-    // The shared dispatcher does the rest.
-    // ------------------------------------------------------------------
-    ResolvedRead La2DataAccessResolver::resolve(std::size_t model_id,
-                                                std::size_t connection_id,
-                                                std::uint64_t step_start,
-                                                std::uint64_t step_end)
-    {
-        const auto e = edge(model_id, connection_id);
-        return detail::resolve_edge(*e.rules, *e.status, step_start, step_end);
     }
 }

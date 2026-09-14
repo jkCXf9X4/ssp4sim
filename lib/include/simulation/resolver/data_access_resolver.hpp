@@ -16,19 +16,25 @@ namespace ssp4sim::scheduling
 {
     using ssp4sim::graph::Invocable;
 
-    /// Base resolver. Owns the shared machinery:
+    /// Resolver. Owns the shared machinery:
     ///   - per-model vectors of incoming edges, index-aligned with model->connections;
     ///   - per-producer committed frontiers (detail::ModelStatus);
     ///   - per-edge AccessMode stamping, mark_committed (D17) and the
     ///     copy_model_inputs read path.
-    /// Resolution is per (model, connection): the abstract `resolve()` hook is the
-    /// single specialization point, and the protected `edge()` accessor resolves
-    /// that edge's transparent contract (rules) together with its producer frontier
-    /// (status) in one lookup. The shared per-mode recipes live in
-    /// resolver_common.{hpp,cpp}.
+    /// Resolution is per (model, connection): every edge is resolved by the shared
+    /// detail::resolve_edge dispatch, which consults the edge's transparent
+    /// contract (rules) together with its producer frontier (status) in one lookup
+    /// via the protected `edge()` accessor. The sampling policy for an executor
+    /// family is decided at construction: the constructor stamps every wired edge
+    /// with `default_mode`, and graph-aware schedulers override individual edges
+    /// via `stamp_edge_mode()`.
     class DataAccessResolver
     {
     public:
+        /// Sentinel for an unlinked edge / unknown (model, connection): no
+        /// registered producer (uc-14).
+        static constexpr std::size_t no_producer = std::size_t(-1);
+
         /// Build per-model edge rule tables from the graph nodes. Only FmuModel
         /// nodes are registered (keyed by their Invocable id). Wired edges are
         /// stamped with `default_mode`; unlinked edges (source storage without a
@@ -57,16 +63,22 @@ namespace ssp4sim::scheduling
                                std::uint64_t step_end);
 
     protected:
-        /// The specialization point: "what to read" for one incoming edge of one
-        /// model. The `(model, connection)` pair identifies the edge; its
-        /// transparent contract and producer frontier are reachable in one lookup
-        /// via edge(). Implementations must consult the producer frontier and
-        /// return valid == false while nothing is committed (D2/D13). No storage,
-        /// no I/O, no mutation.
-        virtual ResolvedRead resolve(std::size_t model_id,
-                                     std::size_t connection_id,
-                                     std::uint64_t step_start,
-                                     std::uint64_t step_end) = 0;
+        /// "What to read" for one incoming edge of one model. The `(model,
+        /// connection)` pair identifies the edge; its transparent contract and
+        /// producer frontier are reached via `edge()` and resolved by the shared
+        /// per-mode recipe `detail::resolve_edge`. The only policy knob is the
+        /// per-edge AccessMode, fixed at construction (default stamping + graph-aware
+        /// overrides). No storage, no I/O, no mutation.
+        ResolvedRead resolve(std::size_t model_id,
+                             std::size_t connection_id,
+                             std::uint64_t step_start,
+                             std::uint64_t step_end);
+
+        /// The producer (an Invocable id) feeding one registered edge;
+        /// `no_producer` when the edge is unlinked or the (model, connection)
+        /// is unknown. Backs graph-aware edge stamping.
+        std::size_t edge_source_producer(std::size_t model_id,
+                                         std::size_t connection_id);
 
         /// One registered edge's resolution view: the transparent per-edge
         /// contract (wire delay/time_offset + sampling intent) together with the

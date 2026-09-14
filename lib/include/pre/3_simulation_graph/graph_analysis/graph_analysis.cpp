@@ -31,12 +31,21 @@ namespace ssp4sim::graph
             }
         }
 
-        // 3. SCC DAG + topological sort.
+        // 3. Per-SCC loop classification: a multi-node SCC, or a single node
+        //    with a self-edge, is a feedback loop. Parse loop semantics.
+        is_loop.clear();
+        is_loop.reserve(sccs.size());
+        for (const auto &comp : sccs)
+        {
+            const bool loop = comp.size() > 1
+                || (comp.size() == 1
+                    && comp[0]->contains_child(comp[0]));
+            is_loop.push_back(loop);
+        }
+
+        // 4. SCC DAG + topological sort.
         auto dag = build_scc_dag();
         execution_order = topological_sort(dag);
-
-        // 4. Condensed graph.
-        build_condensed_graph();
     }
 
     // -----------------------------------------------------------------------
@@ -46,11 +55,6 @@ namespace ssp4sim::graph
     std::size_t GraphAnalysis::scc_index_of(Invocable *node) const
     {
         return node_to_scc.at(node);
-    }
-
-    SccGroup *GraphAnalysis::group_of(Invocable *node) const
-    {
-        return groups[node_to_scc.at(node)].get();
     }
 
     bool GraphAnalysis::verify_placement() const
@@ -196,50 +200,4 @@ namespace ssp4sim::graph
         return dag;
     }
 
-    void GraphAnalysis::build_condensed_graph()
-    {
-        groups.clear();
-        groups.reserve(sccs.size());
-        for (auto &comp : sccs)
-        {
-            groups.push_back(std::make_unique<SccGroup>(comp));
-        }
-
-        // Wire each group's children/parents from cross-component edges,
-        // deduplicating so the condensed graph has no parallel edges.
-        for (std::size_t i = 0; i < sccs.size(); ++i)
-        {
-            std::set<std::size_t> child_groups;
-            std::set<std::size_t> parent_groups;
-            for (auto *node : sccs[i])
-            {
-                for (auto *child : node->children)
-                {
-                    auto child_scc = node_to_scc.at(static_cast<Invocable *>(child));
-                    if (child_scc != i)
-                    {
-                        child_groups.insert(child_scc);
-                    }
-                }
-                for (auto *parent : node->parents)
-                {
-                    auto parent_scc = node_to_scc.at(static_cast<Invocable *>(parent));
-                    if (parent_scc != i)
-                    {
-                        parent_groups.insert(parent_scc);
-                    }
-                }
-            }
-            for (auto child_scc : child_groups)
-            {
-                groups[i]->children.push_back(groups[child_scc].get());
-            }
-            for (auto parent_scc : parent_groups)
-            {
-                groups[i]->parents.push_back(groups[parent_scc].get());
-            }
-        }
-    }
-
 }
-
