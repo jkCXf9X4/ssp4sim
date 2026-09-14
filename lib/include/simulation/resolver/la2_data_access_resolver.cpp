@@ -37,8 +37,6 @@ namespace ssp4sim::scheduling
             owner.emplace(fmu->output_area.get(), node);
         }
 
-        // Stamp intra-SCC edges StartTime; everything else keeps the Latest default.
-        // TODO: make the latest default explicit, do not trust the default to stay
         for (auto *node : nodes)
         {
             auto *fmu = dynamic_cast<ssp4sim::graph::FmuModel *>(node);
@@ -67,6 +65,13 @@ namespace ssp4sim::scheduling
                     // Same SCC -> the producer relaxes in parallel with this model;
                     // sample at the sub-step start for determinism.
                     stamp_edge_mode(static_cast<std::size_t>(fmu->id), i, AccessMode::StartTime);
+                }
+                else
+                {
+                    // Cross-SCC edge -> Gauss-Seidel: zero-order-hold the producer's
+                    // latest committed value. Explicit so the mode doesn't silently
+                    // ride on the base constructor's default.
+                    stamp_edge_mode(static_cast<std::size_t>(fmu->id), i, AccessMode::Latest);
                 }
             }
         }
