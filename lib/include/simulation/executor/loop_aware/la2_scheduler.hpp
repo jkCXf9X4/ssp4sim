@@ -1,6 +1,6 @@
 #pragma once
 
-#include "executor.hpp"
+#include "executor_base.hpp"
 #include "invocable.hpp"
 
 #include "graph_analysis/graph_analysis.hpp"
@@ -50,7 +50,7 @@ namespace ssp4sim::graph
      * Loop sub-steps advance time (models cannot be reset), so each sub-step
      * moves the loop group forward toward the macro-step end.
      */
-    class La2Scheduler final : public ExecutionBase
+    class La2Scheduler final : public ExecutorBase
     {
     public:
         // Reusable graph analysis (SCC detection, component DAG, topological
@@ -88,7 +88,7 @@ namespace ssp4sim::graph
 
         // Execute a multi-node SCC (loop): run its nodes in parallel for each
         // sub-step of the configured schedule (linear or factor mode). Loop
-        // group nodes are owned by this scheduler (ExecutionBase::nodes); the
+        // group nodes are owned by this scheduler (ExecutorBase::nodes); the
         // per-sub-step parallel invocation reuses the JacobiParallelTBB pattern
         // inline.
         void run_loop(std::size_t scc_idx, const StepData &step);

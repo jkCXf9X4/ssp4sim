@@ -1,4 +1,4 @@
-#include "execution/seidel/seidel_serial.hpp"
+#include "executor/seidel/seidel_serial.hpp"
 
 #include "config.hpp"
 

@@ -1,4 +1,4 @@
-#include "execution/seidel/seidel_parallel.hpp"
+#include "executor/seidel/seidel_parallel.hpp"
 
 #include "config.hpp"
 

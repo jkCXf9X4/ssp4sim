@@ -1,4 +1,4 @@
-#include "execution/seidel/seidel_base.hpp"
+#include "executor/seidel/seidel_base.hpp"
 
 #include "config.hpp"
 
@@ -8,7 +8,7 @@ namespace ssp4sim::graph
 {
 
     SeidelBase::SeidelBase(std::vector<std::shared_ptr<Invocable>> _nodes_)
-        : ExecutionBase(_nodes_, "ssp4sim.execution.SeidelBase"),
+        : ExecutorBase(_nodes_, "ssp4sim.execution.SeidelBase"),
           nr_of_nodes(nodes.size()),
           seidel_nodes(nr_of_nodes)
     {

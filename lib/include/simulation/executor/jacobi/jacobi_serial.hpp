@@ -1,6 +1,6 @@
 #pragma once
 
-#include "execution/jacobi/jacobi_base.hpp"
+#include "executor/jacobi/jacobi_base.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 

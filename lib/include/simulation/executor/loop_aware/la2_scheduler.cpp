@@ -1,6 +1,6 @@
-#include "execution/loop_aware/la2_scheduler.hpp"
+#include "executor/loop_aware/la2_scheduler.hpp"
 
-#include "execution/substep/substep_schedule.hpp"
+#include "executor/substep/substep_schedule.hpp"
 
 #include "resolver/la2_data_access_resolver.hpp"
 
@@ -41,7 +41,7 @@ namespace ssp4sim::graph
         }
 
         // The analysis operates on raw pointers borrowed from the owned nodes.
-        // Called from the member-init list after ExecutionBase has populated
+        // Called from the member-init list after ExecutorBase has populated
         // `nodes`.
         std::vector<Invocable *> raw_pointers(const std::vector<std::shared_ptr<Invocable>> &nodes)
         {
@@ -60,7 +60,7 @@ namespace ssp4sim::graph
     // =========================================================================
 
     La2Scheduler::La2Scheduler(std::vector<std::shared_ptr<Invocable>> nodes)
-        : ExecutionBase(nodes, "ssp4sim.execution.La2Scheduler"),
+        : ExecutorBase(nodes, "ssp4sim.execution.La2Scheduler"),
           graph(raw_pointers(this->nodes))
     {
         this->name = "La2Scheduler";

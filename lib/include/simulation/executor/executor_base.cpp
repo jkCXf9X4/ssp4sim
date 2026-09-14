@@ -1,4 +1,4 @@
-#include "execution/executor.hpp"
+#include "executor/executor_base.hpp"
 
 #include "config.hpp"
 
@@ -9,14 +9,14 @@
 namespace ssp4sim::graph
 {
 
-ExecutionBase::ExecutionBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name)
+ExecutorBase::ExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name)
         : log(ssp4cpp::utils::log::make_logger(log_name)),
           nodes(nodes)
     {
 
     }
 
-    void ExecutionBase::set_resolver(std::shared_ptr<DataAccessResolver> resolver)
+    void ExecutorBase::set_resolver(std::shared_ptr<DataAccessResolver> resolver)
     {
         for (const auto &node : nodes)
         {
@@ -27,7 +27,7 @@ ExecutionBase::ExecutionBase(std::vector<std::shared_ptr<Invocable>> nodes, std:
         }
     }
 
-    std::vector<Invocable *> ExecutionBase::raw_nodes() const
+    std::vector<Invocable *> ExecutorBase::raw_nodes() const
     {
         std::vector<Invocable *> raw;
         raw.reserve(nodes.size());
@@ -38,7 +38,7 @@ ExecutionBase::ExecutionBase(std::vector<std::shared_ptr<Invocable>> nodes, std:
         return raw;
     }
 
-    void ExecutionBase::init()
+    void ExecutorBase::init()
     {
         // Recursive init: this executor's children may themselves be executors
         // (e.g. MacroExecutor -> Jacobi/TBB -> FmuModel), so dispatch through the

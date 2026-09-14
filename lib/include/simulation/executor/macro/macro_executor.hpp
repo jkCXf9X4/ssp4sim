@@ -2,7 +2,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "executor.hpp"
+#include "executor_base.hpp"
 
 #include <cstdint>
 #include <map>
@@ -14,7 +14,7 @@
 namespace ssp4sim::graph
 {
 
-    class MacroExecutor final : public ExecutionBase
+    class MacroExecutor final : public ExecutorBase
     {
     public:
 

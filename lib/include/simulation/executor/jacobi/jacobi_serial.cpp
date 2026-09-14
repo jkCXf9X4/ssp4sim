@@ -1,4 +1,4 @@
-#include "execution/jacobi/jacobi_serial.hpp"
+#include "executor/jacobi/jacobi_serial.hpp"
 
 namespace ssp4sim::graph
 {

@@ -14,7 +14,7 @@ namespace ssp4sim::signal
 namespace ssp4sim::graph
 {
     class Invocable;
-    class ExecutionBase;
+    class ExecutorBase;
 }
 
 namespace ssp4sim
@@ -29,7 +29,7 @@ namespace ssp4sim::pre
     /// executor wrapping the models, with the read-path resolver wired in).
     struct SimulationData
     {
-        std::shared_ptr<graph::ExecutionBase> execution_node;
+        std::shared_ptr<graph::ExecutorBase> execution_node;
     };
 
     /// Build the executable simulation graph from the pre-built models.

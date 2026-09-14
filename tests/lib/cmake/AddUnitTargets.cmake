@@ -26,7 +26,7 @@ set(SSP4SIM_TEST_INCLUDE_DIRS
   "${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation_graph"
   "${CMAKE_SOURCE_DIR}/lib/include/pre/3_simulation_graph/elements"
   "${CMAKE_SOURCE_DIR}/lib/include/simulation"
-  "${CMAKE_SOURCE_DIR}/lib/include/simulation/execution"
+  "${CMAKE_SOURCE_DIR}/lib/include/simulation/executor"
   "${CMAKE_SOURCE_DIR}/lib/include/simulation/resolver"
   "${CMAKE_SOURCE_DIR}/lib/include/simulation/signal"
   "${CMAKE_SOURCE_DIR}/lib/include/simulation/signal/sinks"

@@ -25,8 +25,8 @@
 
 #include "config.hpp"
 #include "executor_builder.hpp"
-#include "execution/loop_aware/la2_scheduler.hpp"
-#include "execution/macro/macro_executor.hpp"
+#include "executor/loop_aware/la2_scheduler.hpp"
+#include "executor/macro/macro_executor.hpp"
 
 #include <cstdint>
 #include <memory>

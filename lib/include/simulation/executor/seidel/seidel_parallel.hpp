@@ -1,6 +1,6 @@
 #pragma once
 
-#include "execution/seidel/seidel_base.hpp"
+#include "executor/seidel/seidel_base.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -8,20 +8,15 @@
 
 namespace ssp4sim::graph
 {
-
-    class SerialSeidel final : public SeidelBase
+    class ParallelSeidel final : public SeidelBase
     {
     public:
-        SerialSeidel(std::vector<std::shared_ptr<Invocable>> nodes);
+        ParallelSeidel(std::vector<std::shared_ptr<Invocable>> nodes);
 
         std::string to_string() const override
         {
-            return "SerialSeidel:\n{}\n";
+            return "ParallelSeidel:\n{}\n";
         }
-
-        // some idea that this might be more effective than looping over all items
-        // Not used at the moment
-        void invoke_node(SeidelNode &node, StepData step_data);
 
         /**
          * Traverse the connection graph and invoke nodes when all parents have been invoked for this timestep.

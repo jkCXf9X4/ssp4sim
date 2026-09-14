@@ -38,6 +38,7 @@ namespace ssp4sim::scheduling
         }
 
         // Stamp intra-SCC edges StartTime; everything else keeps the Latest default.
+        // TODO: make the latest default explicit, do not trust the default to stay
         for (auto *node : nodes)
         {
             auto *fmu = dynamic_cast<ssp4sim::graph::FmuModel *>(node);

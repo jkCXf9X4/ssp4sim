@@ -2,7 +2,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "execution/executor.hpp"
+#include "executor/executor_base.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
@@ -25,7 +25,7 @@ namespace ssp4sim::graph
 
         std::string to_string() const override;
 
-        std::shared_ptr<ExecutionBase> build(std::vector<std::shared_ptr<Invocable>> nodes);
+        std::shared_ptr<ExecutorBase> build(std::vector<std::shared_ptr<Invocable>> nodes);
     };
 
 }

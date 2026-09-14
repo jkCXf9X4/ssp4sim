@@ -5,7 +5,7 @@
 
 #include "pre/pre_pipeline.hpp"
 #include "simulation/sim_setup.hpp"
-#include "execution/executor.hpp"
+#include "executor/executor_base.hpp"
 
 #include "simulation/signal/sinks/csv_recorder_sink.hpp"
 

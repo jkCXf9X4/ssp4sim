@@ -1,18 +1,18 @@
 #include "config.hpp"
 #include "executor_builder.hpp"
 
-#include "execution/custom/custom_executors.hpp"
+#include "executor/custom/custom_executors.hpp"
 
-#include "execution/jacobi/jacobi_parallel_fut.hpp"
-#include "execution/jacobi/jacobi_parallel_spin.hpp"
-#include "execution/jacobi/jacobi_parallel_tbb.hpp"
-#include "execution/jacobi/jacobi_serial.hpp"
+#include "executor/jacobi/jacobi_parallel_fut.hpp"
+#include "executor/jacobi/jacobi_parallel_spin.hpp"
+#include "executor/jacobi/jacobi_parallel_tbb.hpp"
+#include "executor/jacobi/jacobi_serial.hpp"
 
-#include "execution/seidel/seidel_serial.hpp"
-#include "execution/seidel/seidel_parallel.hpp"
-#include "execution/loop_aware/la2_scheduler.hpp"
-#include "execution/macro/macro_executor.hpp"
-#include "execution/macro/realtime_macro_executor.hpp"
+#include "executor/seidel/seidel_serial.hpp"
+#include "executor/seidel/seidel_parallel.hpp"
+#include "executor/loop_aware/la2_scheduler.hpp"
+#include "executor/macro/macro_executor.hpp"
+#include "executor/macro/realtime_macro_executor.hpp"
 
 #include <memory>
 #include <stdexcept>
@@ -27,15 +27,15 @@ namespace ssp4sim::graph
         return "ExecutorBuilder:\n{}\n";
     }
 
-    std::shared_ptr<ExecutionBase> ExecutorBuilder::build(std::vector<std::shared_ptr<Invocable>> nodes)
+    std::shared_ptr<ExecutorBase> ExecutorBuilder::build(std::vector<std::shared_ptr<Invocable>> nodes)
     {
         // wrap in Macro executor
 
         // Each concrete executor constructs and wires its own read-path
-        // resolver in its constructor (see ExecutionBase::set_resolver). The
+        // resolver in its constructor (see ExecutorBase::set_resolver). The
         // builder only selects the executor family from config.
 
-        std::shared_ptr<ExecutionBase> specialized_executor;
+        std::shared_ptr<ExecutorBase> specialized_executor;
 
         auto executor_method = utils::Config::getOr("simulation.executor.method", std::string("jacobi"));
         int workers = utils::Config::getOr("simulation.executor.thread_pool_workers", 5);

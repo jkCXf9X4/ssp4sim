@@ -15,7 +15,7 @@ namespace ssp4sim::graph
 {
     using DataAccessResolver = ssp4sim::scheduling::DataAccessResolver;
 
-    class ExecutionBase : public Invocable
+    class ExecutorBase : public Invocable
     {
     public:
         ssp4cpp::utils::log::Logger* log = nullptr;
@@ -26,9 +26,9 @@ namespace ssp4sim::graph
 
         // data_access_resolver to be added here
 
-        ExecutionBase() = default;
+        ExecutorBase() = default;
 
-        ExecutionBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name="ssp4sim.execution.ExecutionBase");
+        ExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name="ssp4sim.execution.ExecutorBase");
 
         void set_resolver(std::shared_ptr<DataAccessResolver> resolver);
 
@@ -41,7 +41,7 @@ namespace ssp4sim::graph
 
         std::string to_string() const
         {
-            return "ExecutionBase: " + this->name + ":\n{}\n";
+            return "ExecutorBase: " + this->name + ":\n{}\n";
         }
     };
 }

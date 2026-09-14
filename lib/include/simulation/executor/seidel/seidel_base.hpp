@@ -3,7 +3,7 @@
 
 #include "ssp4sim_definitions.hpp"
 
-#include "executor.hpp"
+#include "executor_base.hpp"
 #include "invocable.hpp"
 
 #include "resolver/end_time_data_access_resolver.hpp"
@@ -26,7 +26,7 @@ namespace ssp4sim::graph
         SeidelNode() {}
     };
 
-    class SeidelBase : public ExecutionBase
+    class SeidelBase : public ExecutorBase
     {
     public:
         const int nr_of_nodes = 0;

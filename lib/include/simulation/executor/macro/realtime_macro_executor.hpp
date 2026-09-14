@@ -1,6 +1,6 @@
 #pragma once
 
-#include "executor.hpp"
+#include "executor_base.hpp"
 
 #include <cstdint>
 #include <map>
@@ -10,7 +10,7 @@ namespace ssp4sim::graph
 {
 
     /// Realtime-aware macro-step executor.
-    class RealtimeMacroExecutor final : public ExecutionBase
+    class RealtimeMacroExecutor final : public ExecutorBase
     {
     public:
         RealtimeMacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes);

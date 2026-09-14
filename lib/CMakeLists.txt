@@ -26,7 +26,7 @@ target_include_directories(
           ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
           ${CMAKE_CURRENT_LIST_DIR}/include/utils/time
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation
-          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/execution
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/executor
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/resolver
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal
           ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal/sinks

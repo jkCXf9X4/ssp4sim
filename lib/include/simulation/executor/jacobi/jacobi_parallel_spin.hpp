@@ -2,7 +2,7 @@
 
 #include "ssp4cpp/utils/log.hpp"
 
-#include "execution/jacobi/jacobi_base.hpp"
+#include "executor/jacobi/jacobi_base.hpp"
 
 #include "task_thread_pool2.hpp"
 
@@ -12,7 +12,7 @@
 
 namespace ssp4sim::graph
 {
-    class JacobiParallelSpin final : public ExecutionBase
+    class JacobiParallelSpin final : public ExecutorBase
     {
     public:
         utils::ThreadPool2 pool;

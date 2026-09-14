@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "execution/jacobi/jacobi_base.hpp"
+#include "executor/jacobi/jacobi_base.hpp"
 
 #include "task_thread_pool.hpp"
 
@@ -14,7 +14,7 @@
 
 namespace ssp4sim::graph
 {
-    class JacobiParallelFutures final : public ExecutionBase
+    class JacobiParallelFutures final : public ExecutorBase
     {
     public:
         utils::ThreadPool pool;

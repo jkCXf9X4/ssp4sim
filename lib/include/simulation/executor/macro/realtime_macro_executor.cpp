@@ -10,7 +10,7 @@
 namespace ssp4sim::graph
 {
 
-    RealtimeMacroExecutor::RealtimeMacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes) : ExecutionBase(nodes, "ssp4sim.graph.RealtimeMacroExecutor")
+    RealtimeMacroExecutor::RealtimeMacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes) : ExecutorBase(nodes, "ssp4sim.graph.RealtimeMacroExecutor")
     {
         macro_step = utils::time::s_to_ns(utils::Config::getDouble("simulation.timestep"));
         realtime_start_reference = utils::time::time_now_ns();

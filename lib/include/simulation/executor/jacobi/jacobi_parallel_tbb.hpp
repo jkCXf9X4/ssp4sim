@@ -2,7 +2,7 @@
 
 #include "ssp4cpp/utils/log.hpp"
 
-#include "execution/jacobi/jacobi_base.hpp"
+#include "executor/jacobi/jacobi_base.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -11,7 +11,7 @@
 namespace ssp4sim::graph
 {
 
-    class JacobiParallelTBB final : public ExecutionBase
+    class JacobiParallelTBB final : public ExecutorBase
     {
     public:
         JacobiParallelTBB(std::vector<std::shared_ptr<Invocable>> nodes);
