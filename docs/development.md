@@ -85,16 +85,21 @@ LinearSubstepExecutor -> FmuModel`). When composing a stack:
   `SharedConfig::fmu` *is* the `ssp4sim::FmuModelConfig` handed to the model
   layer. Executors and models are constructed from these typed values and
   never read the global config.
-- **Dispatch is a strategy map over typed options.** `ExecutorBuilder` is
-  constructed with `ssp4sim::ExecutorOptions` plus the outer macro step
+- **Dispatch is a variant registry over the typed options.** `ExecutorBuilder`
+  is constructed with `ssp4sim::ExecutorOptions` plus the outer macro step
   (`SharedConfig::fmu.timestep`, the single source of truth for the configured
-  timestep) and holds a `method name -> Factory` map
-  (`ExecutorBuilder::builders_`). Every factory is a uniform `(nodes) ->
-  executor` function reading only the builder's typed options;
-  `ExecutorBuilder::build` is a plain map lookup on `options.method` followed
-  by the macro wrap, so the map's shapes are uniform across families. Unknown
-  methods fail the lookup; `parallel_seidel` / `parallel-seidel` register a
-  throwing factory.
+  timestep) and holds a flat list of registered leaf variants
+  (`ExecutorBuilder::variants_`). Each `Variant` is one concrete executor:
+  a `selects` predicate over the options plus a uniform `(nodes) -> executor`
+  factory reading only the builder's typed options. Every family registers its
+  leaf forms as separate variants (jacobi: serial + TBB / spin / futures;
+  seidel: serial / parallel stub; custom delay x2; la2 with both `la2` and
+  `loop_aware` accepted by one selector; `parallel_seidel` /
+  `parallel-seidel` as a first-class throwing variant). `ExecutorBuilder::build`
+  scans the registry and requires *exactly one* matching variant — no
+  per-family branching: none match is a precise no-match error naming the
+  method, more than one is an ambiguity error. The resolved factory builds the
+  specialized executor, then `build` applies the uniform macro wrap.
 - **la2 is a factory, not a class.** There is no `La2Scheduler` type;
   `make_la2_stack(nodes, La2Options)` (`executor/loop_aware/la2_builder.hpp`)
   is a config-free, pure construction function that SCC-partitions the graph,

@@ -110,8 +110,9 @@ Notes:
   `loop_aware`) method, and `SharedConfig::fmu` is forwarded unchanged to the
   model layer via `GraphBuilder`. Executors and models are constructed from
   these typed values (constructor injection) and never read the global
-  `utils::Config`; `ExecutorBuilder` dispatches uniformly on
-  `options.method`.
+  `utils::Config`; `ExecutorBuilder` resolves the single matching registered
+  variant from the whole config set (`options.method` plus the per-family
+  flags) — no per-family branching.
 - Unknown `simulation.executor.method` throws runtime error.
 - Unknown `simulation.executor.jacobi.method` throws runtime error.
 
