@@ -1,14 +1,19 @@
-// Scheduling-behavior tests for the La2Scheduler stack after the nested-executor
-// refactor:
+// Scheduling-behavior tests for the la2 stack assembled by ExecutorBuilder:
 //  - acyclic SCCs (bare models) run once per macro step; only loop SCCs are
 //    sub-stepped;
 //  - the outer Gauss-Seidel walk respects the condensed component order;
 //  - the ParallelSeidel seam fails loudly while the stub is in place.
+//
+// The stack (SCC analysis, sub-step executors, outer Gauss-Seidel executor,
+// resolver) is assembled by ExecutorBuilder from config, so these tests drive
+// the assembly through the builder and invoke the returned executor.
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "config.hpp"
 #include "executor/loop_aware/la2_scheduler.hpp"
+#include "executor/macro/macro_executor.hpp"
+#include "executor_builder.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -72,7 +77,7 @@ TEST_CASE("la2 sub-steps loop SCCs only, acyclic nodes run once per macro step",
 {
     Config::loadFromString(R"json({
         "simulation": {
-            "timestep": 1e-6,
+            "timestep": 1.2e-6,
             "executor": {
                 "method": "la2",
                 "la2": { "iterations": 2, "mode": "linear" }
@@ -82,8 +87,20 @@ TEST_CASE("la2 sub-steps loop SCCs only, acyclic nodes run once per macro step",
 
     std::vector<std::string> log;
     auto storage = make_loop_with_tails(&log);
-    ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
-    scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
+
+    // A single macro step over [T0, T1): the macro_step is 1200 ns == T1.
+    ssp4sim::graph::ExecutorBuilder builder;
+    auto executor = builder.build(to_owned(storage));
+
+    // Assembly pin: the builder wraps a La2Scheduler whose pre-assembled outer
+    // walks the 3 condensed components (A, loop{B,C}, D).
+    auto *macro = dynamic_cast<ssp4sim::graph::MacroExecutor *>(executor.get());
+    REQUIRE(macro != nullptr);
+    auto *la2 = dynamic_cast<ssp4sim::graph::La2Scheduler *>(macro->nodes[0].get());
+    REQUIRE(la2 != nullptr);
+    REQUIRE(la2->to_string().find("3 components") != std::string::npos);
+
+    executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
     auto count = [&](const std::string &name)
     {
@@ -130,9 +147,6 @@ TEST_CASE("la2.parallel fails loudly until ParallelSeidel is implemented",
     std::vector<std::string> log;
     auto storage = make_loop_with_tails(&log);
 
-    auto build = [&]()
-    {
-        ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
-    };
-    REQUIRE_THROWS_AS(build(), std::runtime_error);
+    ssp4sim::graph::ExecutorBuilder builder;
+    REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
 }

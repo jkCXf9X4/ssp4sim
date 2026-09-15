@@ -10,32 +10,33 @@
 
 namespace ssp4sim::graph
 {
-    /**
-     * @brief Loop-aware v2 scheduler: Gauss-Jacobi sub-step relaxation nested
-     *        inside a generic Gauss-Seidel (Seidel) outer executor.
-     *
-     * Assembler / orchestrator: this scheduler owns nothing timing-related
-     * itself. Construction:
-     *   1. utils::graph::Graph -> SCCs, per-SCC loop classification, component DAG.
-     *   2. One SubstepExecutor per loop SCC; acyclic single-node SCCs stay bare
-     *      models (they run once per macro step, no sub-stepping).
-     *   3. Condenses the graph: each loop SCC is replaced in the node adjacency
-     *      by its executor node (utils/graph/rewire.hpp), so the outer Seidel
-     *      traverses the component DAG unmodified.
-     *   4. Outer executor: SerialSeidel (default) over the condensed component
-     *      graph; `simulation.executor.la2.parallel` selects ParallelSeidel.
-     *   5. Installs THE read-path resolver for the whole stack (a single
-     *      La2DataAccessResolver over all models) as the last construction
-     *      step, overwriting any default resolver an inner executor installed.
-     *
-     * Loop sub-steps advance time (models cannot be reset), so each sub-step
-     * moves the loop group forward toward the macro-step end (`linear` equal
-     * sub-steps or `factor` shrinking sub-steps).
-     */
+    /// @brief Loop-aware v2 scheduler: a thin execution shell over the
+    ///        pre-assembled loop-aware stack.
+    ///
+    /// The stack itself (SCC detection, per-loop SubstepExecutors, the
+    /// condensed component DAG, the outer Gauss-Seidel executor and the
+    /// stack-wide read-path resolver) is assembled by ExecutorBuilder from
+    /// configuration, so this executor reads no global Config and owns no
+    /// assembly logic. Construction only:
+    ///   1. installs THE read-path resolver for the whole stack (a single
+    ///      La2DataAccessResolver over all models), overwriting any default
+    ///      resolver an inner executor installed;
+    ///   2. retains the pre-assembled `outer` executor, which dequeues the
+    ///      actual Gauss-Seidel walk.
+    ///
+    /// Loop sub-steps advance time (models cannot be reset), so each sub-step
+    /// moves the loop group forward toward the macro-step end (`linear` equal
+    /// sub-steps or `factor` shrinking sub-steps).
     class La2Scheduler final : public ExecutorBase
     {
     public:
-        La2Scheduler(std::vector<std::shared_ptr<Invocable>> nodes);
+        /// `nodes` are the raw models (the schedule runs over them), `outer`
+        /// is the pre-assembled executor stack the builder condensed the graph
+        /// into, and `resolver` is the stack-wide resolver the builder derived
+        /// from the SCC partition.
+        La2Scheduler(std::vector<std::shared_ptr<Invocable>> nodes,
+                     std::shared_ptr<ExecutorBase> outer,
+                     std::shared_ptr<DataAccessResolver> resolver);
 
         std::string to_string() const override;
 

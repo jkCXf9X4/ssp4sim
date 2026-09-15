@@ -1,7 +1,5 @@
 #include "realtime_macro_executor.hpp"
 
-#include "config.hpp"
-
 #include "utils/time/time.hpp"
 
 #include <chrono>
@@ -10,10 +8,12 @@
 namespace ssp4sim::graph
 {
 
-    RealtimeMacroExecutor::RealtimeMacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes) : ExecutorBase(nodes, "ssp4sim.graph.RealtimeMacroExecutor")
+    RealtimeMacroExecutor::RealtimeMacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes,
+                                                 uint64_t macro_step)
+        : ExecutorBase(nodes, "ssp4sim.graph.RealtimeMacroExecutor"),
+          realtime_start_reference(utils::time::time_now_ns()),
+          macro_step(macro_step)
     {
-        macro_step = utils::time::s_to_ns(utils::Config::getDouble("simulation.timestep"));
-        realtime_start_reference = utils::time::time_now_ns();
     }
 
     void RealtimeMacroExecutor::wait_for_realtime_sync(uint64_t simulation_time)

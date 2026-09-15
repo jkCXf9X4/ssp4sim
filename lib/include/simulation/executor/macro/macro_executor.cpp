@@ -1,12 +1,13 @@
 #include "macro/macro_executor.hpp"
-#include "config.hpp"
 
 namespace ssp4sim::graph
 {
 
-    MacroExecutor::MacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes) : ExecutorBase(nodes, "ssp4sim.graph.MacroExecutor")
+    MacroExecutor::MacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes,
+                                 uint64_t macro_step)
+        : ExecutorBase(nodes, "ssp4sim.graph.MacroExecutor"),
+          macro_step(macro_step)
     {
-        macro_step = utils::time::s_to_ns(utils::Config::getDouble("simulation.timestep"));
     }
 
     uint64_t MacroExecutor::invoke(StepData step_data)

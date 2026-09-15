@@ -26,6 +26,13 @@ namespace ssp4sim::graph
         std::string to_string() const override;
 
         std::shared_ptr<ExecutorBase> build(std::vector<std::shared_ptr<Invocable>> nodes);
+
+    private:
+        // Assembles the la2 stack (SCC detection, per-loop SubstepExecutors,
+        // condensed component DAG, outer Gauss-Seidel executor and the
+        // stack-wide read-path resolver) from config. All la2 parameter reads
+        // are confined here so the executors stay Config-free.
+        std::shared_ptr<ExecutorBase> build_la2(std::vector<std::shared_ptr<Invocable>> nodes);
     };
 
 }

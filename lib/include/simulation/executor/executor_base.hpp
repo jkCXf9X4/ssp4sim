@@ -18,17 +18,21 @@ namespace ssp4sim::graph
     class ExecutorBase : public Invocable
     {
     public:
-        ssp4cpp::utils::log::Logger* log = nullptr;
+        ssp4cpp::utils::log::Logger *log = nullptr;
 
         // shared ownership: executors may wrap each other and the graph may
         // outlive a single executor without move gymnastics
-        std::vector<std::shared_ptr<Invocable>> nodes;
+        std::vector<std::shared_ptr<Invocable>> nodes = {};
 
         // data_access_resolver to be added here
 
         ExecutorBase() = default;
 
-        ExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name="ssp4sim.execution.ExecutorBase");
+        ExecutorBase(std::shared_ptr<Invocable> node,
+                     std::string log_name = "ssp4sim.execution.ExecutorBase");
+
+        ExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes,
+                     std::string log_name = "ssp4sim.execution.ExecutorBase");
 
         void set_resolver(std::shared_ptr<DataAccessResolver> resolver);
 
@@ -38,6 +42,7 @@ namespace ssp4sim::graph
         /// Raw-pointer view of this executor's owned nodes. Used by derived
         /// constructors to build the resolver over the same nodes they wrap.
         std::vector<Invocable *> raw_nodes() const;
+        bool single_node = false;
 
         std::string to_string() const
         {

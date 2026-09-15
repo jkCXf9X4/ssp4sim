@@ -74,6 +74,12 @@ Executors nest: `ExecutorBase` is an `Invocable` whose children may themselves b
 executors (e.g. `MacroExecutor -> La2Scheduler -> SerialSeidel ->
 LinearSubstepExecutor -> FmuModel`). When composing a stack:
 
+- **Assembly lives in `ExecutorBuilder`.** `ExecutorBuilder::build` is the single
+  place that reads the global `utils::Config` for executor selection and tuning
+  (including every `simulation.executor.la2.*` key) and that assembles nested
+  stacks. Executors receive all their static parameters via constructor
+  injection (e.g. `MacroExecutor(nodes, macro_step)`) and never read
+  `utils::Config` themselves.
 - The stack owner (e.g. `La2Scheduler`) installs **THE** read-path resolver for
   the whole stack as the *last* construction step, overwriting any default
   resolver an inner executor installed on its direct `FmuModel` children.
@@ -82,10 +88,14 @@ LinearSubstepExecutor -> FmuModel`). When composing a stack:
 - Inner executors are resolver-neutral when they have no meaningful default
   (the `LinearSubstepExecutor` / `GeometricSubstepExecutor` classes) — they
   never call `set_resolver`.
-- `La2Scheduler` is an assembler, not a bespoke walker: it condenses the SCC
-  graph into component representatives and delegates the Gauss–Seidel traversal
-  to `SerialSeidel`. `simulation.executor.la2.parallel` swaps the outer for
-  `ParallelSeidel` once that stub is implemented.
+- `La2Scheduler` is a thin execution shell over the pre-assembled stack, not an
+  assembler: `ExecutorBuilder` condenses the SCC graph into component
+  representatives, chooses the sub-step mode (linear / factor) and outer
+  Gauss–Seidel executor, derives the `La2DataAccessResolver` from the SCC
+  partition, and hands the finished `outer` + resolver to `La2Scheduler`, which
+  only installs the resolver and delegates `invoke()` to `SerialSeidel`.
+  `simulation.executor.la2.parallel` swaps the outer for `ParallelSeidel` once
+  that stub is implemented (it currently throws during assembly).
 
 Reusable building blocks that serve la2 but live outside it:
 

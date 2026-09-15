@@ -2,8 +2,7 @@
 // P1: findings A, B-keys, C, E).
 //
 // Verifies the la2 configuration contract:
-// (a) executor_builder builds a MacroExecutor wrapping a La2Scheduler (or a
-//     La2Scheduler directly for method "loop_aware" when unwrapped);
+// (a) executor_builder builds a MacroExecutor wrapping a La2Scheduler;
 //   (b) only `simulation.executor.la2.*` keys are read; the legacy
 //       `simulation.executor.loop_aware.*` keys are ignored;
 //   (c) legacy mode values "fixed" / "geometric" map to the same behavior as
@@ -13,7 +12,9 @@
 //
 // NOTE: utils::Config is an all-static class with no per-key set()/reset()
 // API; tests replace the whole document via Config::loadFromString(...) per
-// SECTION (same pattern as tests/lib/utils/test_config.cpp).
+// SECTION (same pattern as tests/lib/utils/test_config.cpp). The la2 stack is
+// assembled by ExecutorBuilder from config (the executors themselves are
+// Config-free), so every behavioral section goes through builder.build().
 //
 // Executors share ownership of their nodes (std::shared_ptr), so the test
 // builds shared graphs and hands a shared copy to each executor; a raw-pointer
@@ -119,10 +120,13 @@ namespace
     }
 
     constexpr uint64_t T0 = 0;
-    // Macro step [0, 1200) ns. Chosen so that the Linear-mode sub-step split
-    // (sub_dt = macro / n, integer division) yields exactly n sub-steps for
-    // every iteration count used in these tests (2, 3, 4):
-    //   1200 / 2 = 600, 1200 / 3 = 400, 1200 / 4 = 300.
+    // Macro step [0, 1200) ns. The builder derives the macro step from
+    // `simulation.timestep` (timestep must be 1.2e-6 s == 1200 ns so build()
+    // returns an executor whose single macro step covers exactly [0, 1200)).
+    // 1200 is chosen so the Linear-mode sub-step split (sub_dt = macro / n,
+    // integer division) yields exactly n sub-steps for every iteration count
+    // used in these tests (2, 3, 4): 1200 / 2 = 600, 1200 / 3 = 400,
+    // 1200 / 4 = 300.
     constexpr uint64_t T1 = 1200;
 
 } // namespace
@@ -156,13 +160,13 @@ TEST_CASE("executor_builder accepts legacy 'loop_aware' method name", "[la2][con
 TEST_CASE("legacy loop_aware config keys are ignored when la2.* keys are absent",
           "[la2][config][compat]")
 {
-    // Only the legacy namespace is present; the la2 scheduler must fall back to
-    // its built-in defaults (mode "linear", iteration count = SCC node count).
-    // The 2-node loop therefore relaxes over 2 sub-steps: 2 * 2 = 4
+    // Only the legacy namespace is present; the la2 builder branch must fall
+    // back to its built-in defaults (mode "linear", iteration count = SCC node
+    // count). The 2-node loop therefore relaxes over 2 sub-steps: 2 * 2 = 4
     // invocations, proving the legacy keys have no effect.
     Config::loadFromString(R"json({
         "simulation": {
-            "timestep": 1e-6,
+            "timestep": 1.2e-6,
             "executor": {
                 "method": "la2",
                 "loop_aware": {
@@ -176,8 +180,9 @@ TEST_CASE("legacy loop_aware config keys are ignored when la2.* keys are absent"
     std::vector<std::shared_ptr<MockNode>> storage;
     auto nodes = make_loop_graph(storage);
 
-    ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
-    scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
+    ssp4sim::graph::ExecutorBuilder builder;
+    auto executor = builder.build(to_owned(storage));
+    executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
     REQUIRE(total_invocations(nodes) == 4);
 }
@@ -188,7 +193,7 @@ TEST_CASE("la2.* config keys are honored alongside ignored legacy loop_aware.* k
     // Legacy keys present but ignored: only la2.iterations=2 is read.
     Config::loadFromString(R"json({
         "simulation": {
-            "timestep": 1e-6,
+            "timestep": 1.2e-6,
             "executor": {
                 "method": "la2",
                 "la2": {
@@ -206,8 +211,9 @@ TEST_CASE("la2.* config keys are honored alongside ignored legacy loop_aware.* k
     std::vector<std::shared_ptr<MockNode>> storage;
     auto nodes = make_loop_graph(storage);
 
-    ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
-    scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
+    ssp4sim::graph::ExecutorBuilder builder;
+    auto executor = builder.build(to_owned(storage));
+    executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
     // 2 nodes * 2 sub-steps = 4 invocations (not 12).
     REQUIRE(total_invocations(nodes) == 4);
@@ -219,7 +225,7 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
     {
         Config::loadFromString(R"json({
             "simulation": {
-                "timestep": 1e-6,
+                "timestep": 1.2e-6,
                 "executor": {
                     "method": "la2",
                     "la2": {
@@ -233,8 +239,9 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
-        scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
+        ssp4sim::graph::ExecutorBuilder builder;
+        auto executor = builder.build(to_owned(storage));
+        executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
         // 2 nodes * 3 equal sub-steps = 6 invocations.
         REQUIRE(total_invocations(nodes) == 6);
@@ -244,7 +251,7 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
     {
         Config::loadFromString(R"json({
             "simulation": {
-                "timestep": 1e-6,
+                "timestep": 1.2e-6,
                 "executor": {
                     "method": "la2",
                     "la2": {
@@ -259,8 +266,9 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
-        scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
+        ssp4sim::graph::ExecutorBuilder builder;
+        auto executor = builder.build(to_owned(storage));
+        executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
         // "geometric" honors BOTH iterations (sub-step count) and factor:
         // 2 nodes * 4 shrinking sub-steps = 8 invocations.
@@ -271,7 +279,7 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
     {
         Config::loadFromString(R"json({
             "simulation": {
-                "timestep": 1e-6,
+                "timestep": 1.2e-6,
                 "executor": {
                     "method": "la2",
                     "la2": {
@@ -286,8 +294,9 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
-        scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
+        ssp4sim::graph::ExecutorBuilder builder;
+        auto executor = builder.build(to_owned(storage));
+        executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
         // GeometricSubstepExecutor::build_schedule treats an out-of-range
         // factor as equal sub-steps:

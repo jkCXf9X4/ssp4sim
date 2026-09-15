@@ -17,8 +17,11 @@ namespace ssp4sim::graph
     class MacroExecutor final : public ExecutorBase
     {
     public:
-
-        MacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes);
+        /// `macro_step` (ns) is injected by ExecutorBuilder from
+        /// `simulation.timestep`, so this executor stays free of the global
+        /// Config.
+        MacroExecutor(std::vector<std::shared_ptr<Invocable>> nodes,
+                      uint64_t macro_step);
 
         uint64_t invoke(StepData step_data) override;
 

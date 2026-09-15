@@ -29,8 +29,6 @@ namespace ssp4sim::graph
             LOG_TRACE_L1(log, "[{func}] Invoking nodes", __func__);
         });
 
-        auto s = StepData(step_data.start_time, step_data.end_time);
-
         while (nr_of_nodes != completed)
         {
             for (auto &node : seidel_nodes)
@@ -42,7 +40,7 @@ namespace ssp4sim::graph
                         LOG_TRACE_L2(log, "[{func}] Starting {}:{}", __func__, node.id, node.node->name);
                     });
 
-                    node.node->invoke(s);
+                    node.node->invoke(step_data);
 
                     node.invoked = true;
                     completed++;

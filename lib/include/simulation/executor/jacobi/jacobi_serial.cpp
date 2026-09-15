@@ -11,15 +11,13 @@ namespace ssp4sim::graph
 
     uint64_t JacobiSerial::invoke(StepData step_data)
     {
-        auto step = StepData(step_data.start_time, step_data.end_time);
-
         IF_LOG({
             LOG_DEBUG(log, "[{func}] stepdata: {stepdata}", __func__, step_data.to_string());
         });
 
         for (auto &node : this->nodes)
         {
-            node->invoke(step);
+            node->invoke(step_data);
         }
 
         return step_data.end_time;

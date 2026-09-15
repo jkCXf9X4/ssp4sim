@@ -9,11 +9,18 @@
 namespace ssp4sim::graph
 {
 
-ExecutorBase::ExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name)
+
+    ExecutorBase::ExecutorBase(std::shared_ptr<Invocable> node, std::string log_name) : log(ssp4cpp::utils::log::make_logger(log_name))
+    {
+        nodes.push_back(node);
+        single_node = nodes.size() == 1;
+    }
+
+    ExecutorBase::ExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes, std::string log_name)
         : log(ssp4cpp::utils::log::make_logger(log_name)),
           nodes(nodes)
     {
-
+        single_node = nodes.size() == 1;
     }
 
     void ExecutorBase::set_resolver(std::shared_ptr<DataAccessResolver> resolver)
