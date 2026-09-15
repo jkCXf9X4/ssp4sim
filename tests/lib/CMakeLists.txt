@@ -16,6 +16,8 @@ set(SSP4SIM_INTEGRATION_TESTS
   ${CMAKE_CURRENT_SOURCE_DIR}/model/test_model_connection.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simulation/test_sim_graph_builder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simulation/graph_executor/execution/loop_aware/test_la2_config_compat.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/simulation/graph_executor/execution/loop_aware/test_la2_scheduling.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/simulation/graph_executor/execution/substep/test_substep_executor.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simulation/test_graph_builder_dedup.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/simulation/test_simulation_lifecycle.cpp
 )

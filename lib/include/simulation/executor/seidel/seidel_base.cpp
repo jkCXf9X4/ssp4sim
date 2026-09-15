@@ -19,17 +19,23 @@ namespace ssp4sim::graph
         LOG_INFO(log, "[{func}] ", __func__);
         LOG_DEBUG(log, "[{func}] nr_of_nodes {nr_of_nodes}, seidel_nodes {seidel_nodes}", __func__, nr_of_nodes, seidel_nodes.size());
 
-        for (auto &node : this->nodes)
+        // Position-based node array: children are indexed 0..n-1, not by their
+        // global Node id (component executors carry ids far beyond the model
+        // ids). The id -> index vector (sized to Node::id_count()) backs the
+        // traversal's child cascade with O(1) lookup.
+        index_of_id.assign(ssp4sim::utils::graph::Node::id_count(), npos);
+        for (std::size_t i = 0; i < this->nodes.size(); ++i)
         {
-            auto id = node->id;
+            const auto &node = this->nodes[i];
 
-            auto &n = seidel_nodes[id];
-            n.id = id;
+            index_of_id[node->id] = i;
+            auto &n = seidel_nodes[i];
+            n.id = static_cast<int>(node->id);
             n.node = node.get();
             n.nr_parents = node->parents.size();
             n.nr_parents_counter = n.nr_parents;
 
-            LOG_TRACE_L1(log, "[{func}] Assigning SeidelNode {}", __func__, id);
+            LOG_TRACE_L1(log, "[{func}] Assigning SeidelNode {}", __func__, i);
         }
 
         LOG_INFO(log, "[{func}] Evaluating start nodes", __func__);

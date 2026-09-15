@@ -68,6 +68,52 @@ See [Dependency Policy — Generated Data Policy](../product-breakdown/03-implem
 Update the configuration reference when adding, removing, renaming, or changing
 defaults for keys read from `utils::Config`.
 
+## Executor Stacks And The Single-Resolver Rule
+
+Executors nest: `ExecutorBase` is an `Invocable` whose children may themselves be
+executors (e.g. `MacroExecutor -> La2Scheduler -> SerialSeidel ->
+LinearSubstepExecutor -> FmuModel`). When composing a stack:
+
+- The stack owner (e.g. `La2Scheduler`) installs **THE** read-path resolver for
+  the whole stack as the *last* construction step, overwriting any default
+  resolver an inner executor installed on its direct `FmuModel` children.
+  Because `set_resolver` walks only direct model children, the top-level owner
+  (which owns every model) always wins.
+- Inner executors are resolver-neutral when they have no meaningful default
+  (the `LinearSubstepExecutor` / `GeometricSubstepExecutor` classes) — they
+  never call `set_resolver`.
+- `La2Scheduler` is an assembler, not a bespoke walker: it condenses the SCC
+  graph into component representatives and delegates the Gauss–Seidel traversal
+  to `SerialSeidel`. `simulation.executor.la2.parallel` swaps the outer for
+  `ParallelSeidel` once that stub is implemented.
+
+Reusable building blocks that serve la2 but live outside it:
+
+- `utils/graph/graph.hpp` — `ssp4sim::utils::graph::Graph` is the common
+  graph-analysis interface (SCC detection, per-SCC loop classification,
+  component DAG, topological sort, `verify_placement()`), composed from the
+  building blocks below; `component_dag()` exposes the SCC DAG as
+  `scc index -> successor scc indices`. Results are a snapshot of the
+  adjacency at `analyze()` time — composition changes go through
+  `utils/graph/rewire.hpp`, then `analyze()` is run again.
+- `utils/graph/rewire.hpp` — connection-mutation building block:
+  `condense_component_dag()` rewires a component DAG onto representative nodes
+  (only representative adjacency is rebuilt; model data edges
+  (`model->connections`) are untouched for resolver lookups), plus the
+  `disconnect()` / `redirect()` primitives used to change graph composition.
+- `utils/graph/topological_sort.hpp` — `topological_sort()` Kahn-orders the
+  component DAG (shared `scc index -> successor scc indices` representation)
+  and throws on a cycle.
+- `LinearSubstepExecutor` / `GeometricSubstepExecutor` — self-contained executors
+  (`executor/substep/`) that relax any group of nodes over a linear or shrinking
+  sub-step schedule. Each owns its schedule construction (`build_schedule`
+  static) and sweeps the group in parallel per sub-step; use them outside la2 to
+  sub-step groups on equal or shrinking schedules.
+
+When reusing `SeidelBase` with executors as nodes, remember that its node array
+is positional (`index_of_id` maps the process-wide `Node` id -> array index), so executors can
+sit alongside models in one outer graph.
+
 ## Profiling And Logging
 
 - Build profiling notes: [docs/profiling.md](profiling.md)

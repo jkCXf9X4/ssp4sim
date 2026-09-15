@@ -21,7 +21,7 @@ namespace ssp4sim::scheduling
 
     // ------------------------------------------------------------------
     // Opaque implementation state of the resolver. All tables are vectors
-    // indexed by the unique, 0..N-ish Invocable::id; connections are static
+    // indexed by the unique, 0..Node::id_count() node id; connections are static
     // after graph build, so per-(model, connection) edge facts are a plain
     // vector-of-vectors lookup — no maps in the read path.
     // ------------------------------------------------------------------
@@ -62,7 +62,6 @@ namespace ssp4sim::scheduling
         : s_(new DataAccessResolver::State)
     {
         std::unordered_map<ssp4sim::signal::SignalStorage *, std::size_t> owner;
-        std::size_t max_id = 0;
 
         // Pass 1: register ownership + the status row for each producer.
         for (const auto &node : nodes)
@@ -73,11 +72,15 @@ namespace ssp4sim::scheduling
                 continue;
             }
             owner.emplace(fmu->output_area.get(), static_cast<std::size_t>(fmu->id));
-            max_id = std::max(max_id, static_cast<std::size_t>(fmu->id));
         }
 
-        s_->edges.resize(max_id + 1);
-        s_->status.resize(max_id + 1);
+        // Tables are indexed by the process-wide Node id; size them to the
+        // exclusive bound once — unused slots (non-model / executor ids) are
+        // allowed, and every model id stays in range.
+        const std::size_t bound =
+            ssp4sim::utils::graph::Node::id_count();
+        s_->edges.resize(bound);
+        s_->status.resize(bound);
 
         // Pass 2: snapshot each target model's incoming connections as edges,
         // index-aligned with model->connections.
@@ -209,7 +212,7 @@ namespace ssp4sim::scheduling
         return e;
     }
 
-    // The (model, connection) edge's source producer (an Invocable id); npos when
+    // The (model, connection) edge's source producer (a Node id); npos when
     // unlinked (/ unknown). Backs graph-aware stamping (e.g. la2 intra-SCC edges).
     std::size_t DataAccessResolver::edge_source_producer(std::size_t model_id,
                                                          std::size_t connection_id)

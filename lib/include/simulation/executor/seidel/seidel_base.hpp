@@ -11,6 +11,7 @@
 #include "ssp4cpp/utils/log.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -34,6 +35,14 @@ namespace ssp4sim::graph
         std::vector<SeidelNode *> start_nodes;
 
         SeidelBase(std::vector<std::shared_ptr<Invocable>> _nodes_);
+
+        // Node id -> index into seidel_nodes. A vector indexed by the node's
+        // process-wide id (dense 0..Node::id_count()), sized once at
+        // construction; ids outside this executor's node set map to npos (an
+        // edge pointing outside the component representatives). O(1) lookup on
+        // the hot path.
+        static constexpr std::size_t npos = std::size_t(-1);
+        std::vector<std::size_t> index_of_id;
 
         void reset_counters();
     };

@@ -1,19 +1,23 @@
 #include "executor/loop_aware/la2_scheduler.hpp"
 
-#include "executor_utils.hpp"
-
 #include "config.hpp"
 
-#include "graph_analysis/graph_analysis.hpp"
-
-#include "resolver/data_access_resolver.hpp"
 #include "resolver/la2_data_access_resolver.hpp"
 
-#include <algorithm>
-#include <cmath>
+#include "executor/seidel/seidel_parallel.hpp"
+#include "executor/seidel/seidel_serial.hpp"
+#include "executor/substep/geometric_substep_executor.hpp"
+#include "executor/substep/linear_substep_executor.hpp"
+
+#include "utils/graph/graph.hpp"
+#include "utils/graph/rewire.hpp"
+
+#include <cstddef>
 #include <cstdint>
+#include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -26,28 +30,111 @@ namespace ssp4sim::graph
     // =========================================================================
 
     La2Scheduler::La2Scheduler(std::vector<std::shared_ptr<Invocable>> nodes)
-        : ExecutorBase(nodes, "ssp4sim.execution.La2Scheduler")
+        : ExecutorBase(std::move(nodes), "ssp4sim.execution.La2Scheduler")
     {
         this->name = "La2Scheduler";
 
-        // SCC detection and topological order are needed only to build the
-        // schedule; the analysis owns no node memory and dies at the end of the
-        // constructor. The scheduler keeps its own copies (`sccs`,
-        // `execution_order`, `is_loop`, `loop_config`) so it stays movable
-        // without aliasing.
-        GraphAnalysis analysis(raw_nodes());
+        // 1. SCC detection and component DAG. The analysis owns no node memory
+        //    and dies at the end of the constructor; the scheduler keeps the
+        //    representatives + outer executor below.
+        auto raw = raw_nodes();
+        ssp4sim::utils::graph::Graph analysis(
+            ssp4sim::utils::graph::Node::cast_to_parent_ptrs(raw));
         analysis.analyze();
+        const auto &sccs = analysis.sccs();
+        const auto &is_loop = analysis.is_loop();
 
-        sccs = std::move(analysis.sccs);
-        execution_order = std::move(analysis.execution_order);
-        is_loop = std::move(analysis.is_loop);
-        loop_iterations.resize(sccs.size(), 1);
-        loop_config.resize(sccs.size());
+        // Raw-pointer -> owned-node lookup, so members can be handed to their
+        // component representative without changing ownership.
+        std::map<Invocable *, std::shared_ptr<Invocable>> owned;
+        for (auto &node : this->nodes)
+        {
+            owned[node.get()] = node;
+        }
 
-        // The scheduler owns its read policy: hand the node-id -> SCC table to
-        // the resolver so it can stamp intra-SCC edges StartTime (sub-step
-        // sampling) and cross-SCC edges Latest (sequential DAG, Gauss-Seidel
-        // semantics).
+        // 2. One representative per SCC: loop SCCs are wrapped in a
+        //    SubstepExecutor; acyclic single-node SCCs stay the model itself
+        //    (they must NOT be sub-stepped, only loops relax over sub-steps).
+        std::vector<ssp4sim::utils::graph::Node *> representatives;
+        representatives.reserve(sccs.size());
+        std::vector<std::shared_ptr<Invocable>> component_children;
+        component_children.reserve(sccs.size());
+
+        const auto mode = utils::Config::getOr(
+            "simulation.executor.la2.mode", std::string("linear"));
+        const auto configured_iters = utils::Config::getOr(
+            "simulation.executor.la2.iterations", -1);
+        const auto geometric = (mode == "factor" || mode == "geometric");
+
+        for (std::size_t i = 0; i < sccs.size(); ++i)
+        {
+            if (!is_loop[i])
+            {
+                representatives.push_back(sccs[i][0]);
+                component_children.push_back(
+                    owned[static_cast<Invocable *>(sccs[i][0])]);
+                continue;
+            }
+
+            std::vector<std::shared_ptr<Invocable>> members;
+            members.reserve(sccs[i].size());
+            for (auto *member : sccs[i])
+            {
+                members.push_back(owned[static_cast<Invocable *>(member)]);
+            }
+
+            // A loop group is any SCC that is_loop(): a multi-node SCC, or a
+            // single node with a self-edge (feedback self-reference). Iteration
+            // count defaults to the SCC size.
+            const auto iterations = configured_iters > 0
+                ? static_cast<std::size_t>(configured_iters)
+                : sccs[i].size();
+
+            std::shared_ptr<Invocable> repr;
+            if (geometric)
+            {
+                repr = std::make_shared<GeometricSubstepExecutor>(
+                    std::move(members),
+                    utils::Config::getOr("simulation.executor.la2.factor", 0.8),
+                    static_cast<std::size_t>(utils::Config::getOr(
+                        "simulation.executor.la2.max_steps", 64)),
+                    utils::Config::getOr("simulation.executor.la2.min_substep_fraction", 0.001),
+                    iterations);
+            }
+            else
+            {
+                repr = std::make_shared<LinearSubstepExecutor>(
+                    std::move(members), iterations);
+            }
+
+            representatives.push_back(repr.get());
+            component_children.push_back(std::move(repr));
+        }
+
+        // 3. Condense the graph: loop SCCs are replaced in the adjacency by
+        //    their executor node. SerialSeidel then runs the component DAG
+        //    exactly as it runs any flat graph.
+        ssp4sim::utils::graph::condense_component_dag(
+            analysis.component_dag(), representatives);
+
+        // 4. Outer Gauss-Seidel executor. ParallelSeidel is selected by
+        //    `simulation.executor.la2.parallel`; its invoke() is still stubbed,
+        //    so fail loudly here instead of at the first macro step. Remove this
+        //    guard when ParallelSeidel::invoke is implemented.
+        if (utils::Config::getOr("simulation.executor.la2.parallel", false))
+        {
+            throw std::runtime_error(
+                "simulation.executor.la2.parallel requests ParallelSeidel, "
+                "which is NOT implemented. Remove the guard in "
+                "la2_scheduler.cpp once ParallelSeidel::invoke lands.");
+        }
+        outer = std::make_shared<SerialSeidel>(std::move(component_children));
+
+        // 5. The scheduler owns the stack's read policy: one flat
+        //    La2DataAccessResolver over all models, installed last so it
+        //    overwrites any default resolver an inner executor set on direct
+        //    FmuModel children (intra-SCC edges sample at sub-step start,
+        //    cross-SCC edges read the latest committed value).
         std::vector<std::size_t> scc_of;
         for (std::size_t si = 0; si < sccs.size(); ++si)
         {
@@ -61,143 +148,28 @@ namespace ssp4sim::graph
                 scc_of[idx] = si;
             }
         }
-        set_resolver(std::make_shared<ssp4sim::scheduling::La2DataAccessResolver>(raw_nodes(), std::move(scc_of)));
+        set_resolver(std::make_shared<ssp4sim::scheduling::La2DataAccessResolver>(
+            raw, std::move(scc_of)));
 
-        // Config read once here; run_loop() only multiplies the cached fraction
-        // by the macro duration, never re-reads config.
-        min_substep_fraction = utils::Config::getOr(
-            "simulation.executor.la2.min_substep_fraction", 0.001);
-
-        auto configured_iters = utils::Config::getOr(
-            "simulation.executor.la2.iterations", -1);
-
-        // Per-loop sub-step schedule template, resolved once here so run_loop()
-        // does not re-read config on every macro step. The Factor recipe honors
-        // BOTH the iteration count (fixed count of shrinking sub-steps landing on
-        // the macro end) and the shrink factor; the min-substep fraction is kept
-        // as a macro-relative value and applied to each step in run_loop.
-        substep::Config schedule_template;
-        const auto mode = utils::Config::getOr(
-            "simulation.executor.la2.mode", std::string("linear"));
-        if (mode == "factor" || mode == "geometric")
-        {
-            // "geometric" is the legacy alias for the factor/shrinking mode.
-            schedule_template.mode = substep::Mode::Factor;
-            schedule_template.factor = utils::Config::getOr(
-                "simulation.executor.la2.factor", 0.8);
-            schedule_template.max_steps = static_cast<std::size_t>(utils::Config::getOr(
-                "simulation.executor.la2.max_steps", 64));
-        }
-        else
-        {
-            // "linear" is the new name; "fixed" is the legacy alias. Both mean
-            // equal pre-selected sub-steps, count = iteration count.
-            schedule_template.mode = substep::Mode::Linear;
-        }
-        for (std::size_t i = 0; i < sccs.size(); ++i)
-        {
-            loop_config[i] = schedule_template;
-            if (is_loop[i])
-            {
-                // A loop group is any SCC that is_loop(): a multi-node SCC, or
-                // a single node with a self-edge (feedback self-reference).
-                loop_iterations[i] = configured_iters > 0 ? configured_iters : sccs[i].size();
-                loop_config[i].steps = loop_iterations[i];
-            }
-        }
-
-        LOG_INFO(log, "[{func}] La2Scheduler: {n} SCCs, execution order has {m} steps",
-                  __func__, sccs.size(), execution_order.size());
+        LOG_INFO(log, "[{func}] La2Scheduler: {n} SCCs, outer {outer}",
+                 __func__, sccs.size(), outer->name);
     }
 
     std::string La2Scheduler::to_string() const
     {
         std::ostringstream oss;
-        oss << "La2Scheduler:\n";
-        oss << "  SCCs: " << sccs.size() << "\n";
-        oss << "  Execution steps: " << execution_order.size() << "\n";
-        for (std::size_t i = 0; i < execution_order.size(); ++i)
-        {
-            auto idx = execution_order[i];
-            auto &comp = sccs[idx];
-            oss << "  Step " << i << " (SCC #" << idx << ", " << comp.size()
-                << " nodes):\n";
-            for (auto *node : comp)
-            {
-                oss << "    - " << node->name << "\n";
-            }
-        }
+        oss << "La2Scheduler (outer " << outer->name << ", "
+            << outer->nodes.size() << " components):\n";
         return oss.str();
     }
 
     // =========================================================================
-    //  Execution - walk the condensed DAG
+    //  Execution - Gauss-Seidel walk over the condensed component graph
     // =========================================================================
 
     uint64_t La2Scheduler::invoke(StepData step_data)
     {
-        for (auto idx : execution_order)
-        {
-            // Dispatch on the cached loop flag — not raw size — so that a
-            // single-node SCC with a self-edge (a genuine feedback loop) also
-            // takes the relaxation path instead of being run once like an
-            // acyclic node.
-            if (is_loop[idx])
-            {
-                run_loop(idx, step_data);
-            }
-            else
-            {
-                run_sequential(idx, step_data);
-            }
-        }
-        return step_data.end_time;
-    }
-
-    void La2Scheduler::run_sequential(std::size_t scc_idx, const StepData &step)
-    {
-        auto s = StepData(step.start_time, step.end_time);
-        for (auto *node : sccs[scc_idx])
-        {
-            node->invoke(s);
-        }
-    }
-
-    // =========================================================================
-    //  Loop relaxation
-    // =========================================================================
-
-    void La2Scheduler::run_loop(std::size_t scc_idx, const StepData &step)
-    {
-        auto &comp = sccs[scc_idx];
-
-        auto cfg = loop_config[scc_idx];
-        if (cfg.mode == substep::Mode::Factor && cfg.steps == 0)
-        {
-            // Free-shrink only: the min-substep threshold is macro-relative, so
-            // it is resolved against this step's duration here. Fixed-count
-            // Factor keeps the precomputed template verbatim.
-            const auto macro_dt = step.end_time - step.start_time;
-            cfg.min_substep = static_cast<uint64_t>(std::llround(
-                static_cast<double>(macro_dt) * min_substep_fraction));
-        }
-
-        auto schedule = substep::build_substep_schedule(step.start_time, step.end_time, cfg);
-
-        IF_LOG({
-            LOG_DEBUG(log, "[{func}] Loop SCC #{idx} ({size} nodes, "
-                           "{iters} iters, mode={mode}, {steps} sub-steps)",
-                      __func__, scc_idx, comp.size(), loop_iterations[scc_idx], int(cfg.mode), schedule.size());
-        });
-
-        for (auto &[sub_start, sub_end] : schedule)
-        {
-            auto s = StepData(sub_start, sub_end);
-            // Intra-SCC edges are stamped StartTime, so each sub-step reads the
-            // previous sub-step's commitments (deterministic relaxation); the
-            // shared invoke_group_parallel kernel parallels the group members.
-            invoke_group_parallel(comp, s);
-        }
+        return outer->invoke(step_data);
     }
 
 }

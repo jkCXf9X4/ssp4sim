@@ -37,3 +37,21 @@ A few notes:
 - The stepdata responsibilities have been altered and some have been broken out to the executor/resolver
 
 Lets start small by patching all executors according to the macro time executors as references
+
+---
+
+lets add a atomic id counter and static max_id to node to ensure that we can use it as indexing 
+remove the current Invocable id, this should replace this
+
+that way we can use 
+
+vector<pointer> nodes_ptr
+nodes_ptr.reserve(max_id)
+for (node: nodes)
+{
+    nodes_ptr[node.node_id] = node.get()
+}
+
+and enable vector access to the nodes, its ok to have parts of the vector unused; it will still be faster lookup than a unordered map
+
+after adding this see if you can simplify node access thru the codebase, especially over the hot path

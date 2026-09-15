@@ -24,7 +24,7 @@ namespace ssp4sim::scheduling
     class La2DataAccessResolver final : public DataAccessResolver
     {
     public:
-        /// `scc_of` maps Invocable id -> SCC index, as computed by the scheduler
+        /// `scc_of` maps Node id -> SCC index, as computed by the scheduler
         /// from the GraphAnalysis partition. Edges whose producer and consumer
         /// share an SCC are intra-SCC (StartTime); everything else keeps the
         /// Latest default (cross-SCC / unlinked).

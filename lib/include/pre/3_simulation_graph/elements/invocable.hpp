@@ -39,17 +39,13 @@ namespace ssp4sim::graph
     {
     public:
         uint64_t walltime_ns = 0; // measurement of runtime
-        uint64_t id = 0;
 
         TemporalType temporal_type = TemporalType::Algebraic;
         uint64_t delay = 0;
 
         uint64_t current_time = 0;
 
-        Invocable()
-            : id(next_id++)
-        {
-        }
+        Invocable() = default;
 
         virtual ~Invocable() = default;
 
@@ -62,7 +58,5 @@ namespace ssp4sim::graph
         virtual uint64_t invoke(StepData data) = 0;
 
         std::string to_string() const override;
-
-        inline static uint64_t next_id = 0;
     };
 }

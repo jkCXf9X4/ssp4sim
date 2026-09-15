@@ -36,7 +36,7 @@ namespace ssp4sim::scheduling
         static constexpr std::size_t no_producer = std::size_t(-1);
 
         /// Build per-model edge rule tables from the graph nodes. Only FmuModel
-        /// nodes are registered (keyed by their Invocable id). Wired edges are
+        /// nodes are registered (keyed by their Node id). Wired edges are
         /// stamped with `default_mode`; unlinked edges (source storage without a
         /// registered owner) are forced to AccessMode::Latest so every policy sees
         /// the stale-only intent (they also resolve invalid: D2/D13).
@@ -74,7 +74,7 @@ namespace ssp4sim::scheduling
                              std::uint64_t step_start,
                              std::uint64_t step_end);
 
-        /// The producer (an Invocable id) feeding one registered edge;
+        /// The producer (a Node id) feeding one registered edge;
         /// `no_producer` when the edge is unlinked or the (model, connection)
         /// is unknown. Backs graph-aware edge stamping.
         std::size_t edge_source_producer(std::size_t model_id,

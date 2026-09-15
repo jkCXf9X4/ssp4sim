@@ -289,7 +289,8 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
         ssp4sim::graph::La2Scheduler scheduler(to_owned(storage));
         scheduler.invoke(ssp4sim::graph::StepData(T0, T1));
 
-        // build_substep_schedule treats an out-of-range factor as Linear:
+        // GeometricSubstepExecutor::build_schedule treats an out-of-range
+        // factor as equal sub-steps:
         // 2 nodes * 3 equal sub-steps = 6 invocations.
         REQUIRE(total_invocations(nodes) == 6);
     }

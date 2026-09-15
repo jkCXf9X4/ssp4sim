@@ -2,6 +2,8 @@
 
 #include "config.hpp"
 
+#include <stdexcept>
+
 namespace ssp4sim::graph
 {
     SerialSeidel::SerialSeidel(std::vector<std::shared_ptr<Invocable>> nodes)
@@ -46,7 +48,18 @@ namespace ssp4sim::graph
                     completed++;
                     for (auto c : node.node->children)
                     {
-                        auto &child = seidel_nodes[((Invocable *)c)->id];
+                        // O(1) id-indexed lookup into this executor's node set.
+                        const std::size_t child_idx = index_of_id[static_cast<Invocable *>(c)->id];
+                        if (child_idx == npos)
+                        {
+                            throw std::runtime_error(
+                                "SerialSeidel: child '"
+                                + static_cast<Invocable *>(c)->name
+                                + "' is not part of this executor's node set "
+                                  "(condensed graph edge points outside the "
+                                  "component representatives)");
+                        }
+                        auto &child = seidel_nodes[child_idx];
                         child.nr_parents_counter -= 1;
                     }
                 }

@@ -113,10 +113,20 @@ Cone resolution is **soft**: an include that does not resolve within the include
 set is treated as external/system. A wrong guess surfaces as a per-binary
 link-time undefined reference, which is loud, not silent.
 
-`tests/lib/graph/test_graph_analysis.cpp` covers the reusable
-`ssp4sim::graph::GraphAnalysis` scheduler utility (SCC detection, per-SCC loop
-classification and component topological sort) extracted from the la2 scheduler,
-which builds on it.
+`tests/lib/graph/test_graph.cpp` covers the reusable
+`ssp4sim::utils::graph::Graph` graph-analysis utility (SCC detection, per-SCC
+loop classification, component topological sort, `verify_placement()`, and the
+`component_dag()` accessor) built on the `utils/graph/` tarjan, rewire and
+topological_sort building blocks, plus the connection-mutation primitives
+`disconnect()` and `redirect()`.
+
+`tests/lib/simulation/graph_executor/execution/` holds executor scheduling
+tests: `test_la2_config_compat.cpp` (config contract), `test_la2_scheduling.cpp`
+(loop-only sub-stepping, outer-Gauss-Seidel ordering, the `la2.parallel` seam),
+and `test_substep_executor.cpp` (`LinearSubstepExecutor` /
+`GeometricSubstepExecutor` schedules). These depend on the full pipeline (the
+resolver chain pulls in FMI), so they are retained in the `ssp4sim_tests`
+integration binary via `SSP4SIM_INTEGRATION_TESTS`.
 
 ## High-Level SSP Tests
 

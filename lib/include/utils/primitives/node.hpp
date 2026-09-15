@@ -4,7 +4,9 @@
 
 #include "ssp4sim_definitions.hpp"
 
+#include <atomic>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <vector>
 #include <string>
@@ -20,10 +22,32 @@ namespace ssp4sim::utils::graph
     class Node : public virtual types::IWritable
     {
     public:
+        // Unique, process-wide, monotonically increasing id assigned at
+        // construction. Ids form a dense 0..next_id range, so `id` can be used
+        // to index a `std::vector<T>` sized to `next_id` for O(1) node lookup
+        // (unused slots are allowed).
+        std::uint64_t id = 0;
+
         ssp4cpp::utils::log::Logger *log = nullptr;
         std::string name;
         std::vector<Node *> children = {};
         std::vector<Node *> parents = {};
+
+        /* === Id allocation ================================================== */
+
+        // Process-wide id allocation state. Every constructed Node consumes one
+        // id from `next_id` and ids form a dense 0..next_id range, so vectors
+        // can be sized to id_count() (the exclusive bound) once and indexed by
+        // `id`.
+        inline static std::atomic<std::uint64_t> next_id{0};
+
+        // Number of ids handed out so far; the exclusive upper bound for
+        // id-indexed vectors (a vector of this size is indexable by every
+        // existing Node::id).
+        static std::uint64_t id_count()
+        {
+            return next_id.load(std::memory_order_relaxed);
+        }
 
         /* === Constructors =================================================== */
 
