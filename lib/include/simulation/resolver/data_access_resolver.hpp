@@ -107,3 +107,23 @@ namespace ssp4sim::scheduling
         State *s_ = nullptr;
     };
 }
+
+namespace ssp4sim::graph
+{
+    using ssp4sim::scheduling::DataAccessResolver;
+
+    /// Assembly-side resolver installation (shared by `make_la2_stack` and the
+    /// flat builder factories): install `resolver` on every FmuModel in
+    /// `nodes`. Executors are constructed without a resolver — the assembler
+    /// derives it and installs it here, so no executor constructor has
+    /// referential knowledge of the read policy. The models own the resolver
+    /// (FmuModel::access_resolver) for the pipeline's lifetime.
+    void install_resolver(const std::vector<std::shared_ptr<Invocable>> &nodes,
+                          std::shared_ptr<DataAccessResolver> resolver);
+
+    /// Derive a flat DataAccessResolver over `nodes` stamped with the family's
+    /// `mode` (Seidel: EndTime; Jacobi / custom delay: StartTime) and install
+    /// it via `install_resolver`.
+    void install_flat_resolver(const std::vector<std::shared_ptr<Invocable>> &nodes,
+                               ssp4sim::scheduling::AccessMode mode);
+}

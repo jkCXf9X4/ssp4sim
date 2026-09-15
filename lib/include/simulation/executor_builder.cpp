@@ -13,6 +13,8 @@
 #include "executor/macro/macro_executor.hpp"
 #include "executor/macro/realtime_macro_executor.hpp"
 
+#include "resolver/data_access_resolver.hpp"
+
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -35,6 +37,11 @@ namespace ssp4sim::graph
         builders_["jacobi"] = [this](std::vector<std::shared_ptr<Invocable>> nodes)
             -> std::shared_ptr<ExecutorBase>
         {
+            // Jacobi samples every producer at the sub-step start. The resolver
+            // is derived and installed here, on the assembly side — the
+            // executor constructors stay resolver-free (mirrors make_la2_stack).
+            install_flat_resolver(nodes, ssp4sim::scheduling::AccessMode::StartTime);
+
             if (options_.jacobi_parallel)
             {
                 if (options_.jacobi_method == 1)
@@ -67,6 +74,10 @@ namespace ssp4sim::graph
         builders_["seidel"] = [this](std::vector<std::shared_ptr<Invocable>> nodes)
             -> std::shared_ptr<ExecutorBase>
         {
+            // Seidel (Gauss-Seidel) runs upstream-to-downstream within a step;
+            // consumers read producers' current-step output (end time).
+            install_flat_resolver(nodes, ssp4sim::scheduling::AccessMode::EndTime);
+
             if (options_.seidel_parallel)
             {
                 LOG_INFO(log, "[builder] Executor: ParallelSeidel");
@@ -82,6 +93,7 @@ namespace ssp4sim::graph
         builders_["custom_delay"] = [this](std::vector<std::shared_ptr<Invocable>> nodes)
             -> std::shared_ptr<ExecutorBase>
         {
+            install_flat_resolver(nodes, ssp4sim::scheduling::AccessMode::StartTime);
             LOG_INFO(log, "[builder] Executor: DelayExecutor");
             return std::make_shared<DelayExecutor>(std::move(nodes));
         };
@@ -89,6 +101,7 @@ namespace ssp4sim::graph
         builders_["custom_delay_partial"] = [this](std::vector<std::shared_ptr<Invocable>> nodes)
             -> std::shared_ptr<ExecutorBase>
         {
+            install_flat_resolver(nodes, ssp4sim::scheduling::AccessMode::StartTime);
             LOG_INFO(log, "[builder] Executor: DelayExecutorPartial");
             return std::make_shared<DelayExecutorPartial>(std::move(nodes));
         };

@@ -12,6 +12,46 @@
 #include <utility>
 #include <vector>
 
+namespace ssp4sim::graph
+{
+    // The single install path: hand one shared resolver to every FmuModel in
+    // `nodes`. The write path (mark_committed) and the read path
+    // (copy_model_inputs) are driven by FmuModel through this instance. This
+    // overwrites any resolver an inner executor may have installed, which is
+    // the intent: the assembler's resolver is authoritative for the stack.
+    void install_resolver(const std::vector<std::shared_ptr<Invocable>> &nodes,
+                          std::shared_ptr<DataAccessResolver> resolver)
+    {
+        for (const auto &node : nodes)
+        {
+            if (auto *fmu = dynamic_cast<ssp4sim::graph::FmuModel *>(node.get()))
+            {
+                fmu->access_resolver = resolver;
+            }
+        }
+    }
+
+    // Assembly-side read policy (the flat counterpart of make_la2_stack's
+    // resolver step for the flat executor families): derive a flat
+    // DataAccessResolver over the nodes, stamped with the family's `mode`, and
+    // install it on every model. The models own it for the pipeline's lifetime.
+    void install_flat_resolver(const std::vector<std::shared_ptr<Invocable>> &nodes,
+                               ssp4sim::scheduling::AccessMode mode)
+    {
+        std::vector<Invocable *> raw;
+        raw.reserve(nodes.size());
+        for (const auto &node : nodes)
+        {
+            raw.push_back(node.get());
+        }
+
+        std::shared_ptr<ssp4sim::scheduling::DataAccessResolver> resolver =
+            std::make_shared<ssp4sim::scheduling::DataAccessResolver>(std::move(raw), mode);
+
+        install_resolver(nodes, std::move(resolver));
+    }
+}
+
 namespace ssp4sim::scheduling
 {
     // Defensive neutral fallbacks for the protected helpers when asked about an

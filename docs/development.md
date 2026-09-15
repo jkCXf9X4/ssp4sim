@@ -112,15 +112,22 @@ LinearSubstepExecutor -> FmuModel`). When composing a stack:
   `simulation.timestep` / `start_time` / `stop_time`), passed untouched
   through `GraphBuilder` by `pre::build_simulation_graph`, and forwarded to
   every model.
-- **The stack-wide resolver is broken out of the executors.** `make_la2_stack`
-  derives the single `La2DataAccessResolver` from the SCC partition and
-  installs it over every model itself (an explicit loop, the assembly-side
-  counterpart of `ExecutorBase::set_resolver`). No executor owns the read
-  policy. Inner executors are resolver-neutral when they have no meaningful
-  default (the `LinearSubstepExecutor` / `GeometricSubstepExecutor` classes) —
-  they never call `set_resolver`. Because the resolver is installed over all
-  models after each inner executor ran its own constructor, it overwrites any
-  default resolver an inner executor set on its direct `FmuModel` children.
+- **The read policy is broken out of every executor.** Resolver setup was
+  moved out of the executor constructors entirely — `SeidelBase`,
+  `JacobiBase`, the three `JacobiParallel*` variants and
+  `DelayExecutorBase` no longer derive or install a resolver (and
+  `ExecutorBase::set_resolver` / `raw_nodes` are gone). Assembly owns it:
+  `make_la2_stack` derives the single `La2DataAccessResolver` from the SCC
+  partition and installs it over every model; the `ExecutorBuilder` factories
+  (jacobi / custom delay -> StartTime, seidel -> EndTime) derive a flat
+  `DataAccessResolver` stamped with the family's default mode and install it.
+  Both funnel through one canonical install path, `install_resolver()` /
+  `install_flat_resolver()` (`resolver/data_access_resolver.hpp`), which hands
+  the shared resolver to every `FmuModel::access_resolver` — nested or not,
+  so the assembler's resolver is authoritative. No executor constructor has
+  referential knowledge of the read policy; inner executors are
+  resolver-neutral (the `LinearSubstepExecutor` /
+  `GeometricSubstepExecutor` classes never touched it).
 
 Reusable building blocks that serve la2 but live outside it:
 

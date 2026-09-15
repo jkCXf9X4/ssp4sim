@@ -4,8 +4,6 @@
 
 #include "invocable.hpp"
 
-#include "resolver/data_access_resolver.hpp"
-
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -13,8 +11,6 @@
 
 namespace ssp4sim::graph
 {
-    using DataAccessResolver = ssp4sim::scheduling::DataAccessResolver;
-
     class ExecutorBase : public Invocable
     {
     public:
@@ -24,7 +20,11 @@ namespace ssp4sim::graph
         // outlive a single executor without move gymnastics
         std::vector<std::shared_ptr<Invocable>> nodes = {};
 
-        // data_access_resolver to be added here
+        // Read policy intentionally lives OUTSIDE the executor: the assembler
+        // (ExecutorBuilder's factories / make_la2_stack) derives the resolver
+        // and installs it on the models via install_resolver() /
+        // install_flat_resolver() (resolver/data_access_resolver.hpp).
+        // Constructors are resolver-free.
 
         ExecutorBase() = default;
 
@@ -34,14 +34,9 @@ namespace ssp4sim::graph
         ExecutorBase(std::vector<std::shared_ptr<Invocable>> nodes,
                      std::string log_name = "ssp4sim.execution.ExecutorBase");
 
-        void set_resolver(std::shared_ptr<DataAccessResolver> resolver);
-
         void init() override;
 
     protected:
-        /// Raw-pointer view of this executor's owned nodes. Used by derived
-        /// constructors to build the resolver over the same nodes they wrap.
-        std::vector<Invocable *> raw_nodes() const;
         bool single_node = false;
 
         std::string to_string() const

@@ -12,10 +12,6 @@ namespace ssp4sim::graph
           nr_of_nodes(nodes.size()),
           seidel_nodes(nr_of_nodes)
     {
-        // Seidel (Gauss-Seidel) runs upstream-to-downstream within a step; a
-        // consumer reads its producers' current-step output (end time).
-        set_resolver(std::make_shared<ssp4sim::scheduling::DataAccessResolver>(raw_nodes(),
-                                                                               ssp4sim::scheduling::AccessMode::EndTime));
         LOG_INFO(log, "[{func}] ", __func__);
         LOG_DEBUG(log, "[{func}] nr_of_nodes {nr_of_nodes}, seidel_nodes {seidel_nodes}", __func__, nr_of_nodes, seidel_nodes.size());
 

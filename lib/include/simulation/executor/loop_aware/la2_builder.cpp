@@ -6,8 +6,6 @@
 
 #include "resolver/la2_data_access_resolver.hpp"
 
-#include "pre/3_simulation_graph/elements/model_fmu.hpp"
-
 #include "utils/graph/graph.hpp"
 #include "utils/graph/rewire.hpp"
 
@@ -127,8 +125,10 @@ namespace ssp4sim::graph
         //    models (intra-SCC edges sample at sub-step start, cross-SCC edges
         //    read the latest committed value). Derived from the SCC partition
         //    and installed here, on the assembly side, so no executor carries
-        //    resolver ownership. Installed explicitly over every model so it
-        //    overwrites the default resolver an inner executor set.
+        //    resolver ownership — the same single install path the flat
+        //    ExecutorBuilder factories use (install_resolver over every model,
+        //    nested or not, so the assembler's resolver is authoritative).
+        //    Other executors are constructed resolver-free.
         std::vector<std::size_t> scc_of;
         for (std::size_t si = 0; si < sccs.size(); ++si)
         {
@@ -144,13 +144,7 @@ namespace ssp4sim::graph
         }
         auto resolver = std::make_shared<ssp4sim::scheduling::La2DataAccessResolver>(
             raw, std::move(scc_of));
-        for (auto &node : nodes)
-        {
-            if (auto *fmu = dynamic_cast<FmuModel *>(node.get()))
-            {
-                fmu->access_resolver = resolver;
-            }
-        }
+        install_resolver(nodes, std::move(resolver));
 
         LOG_INFO(log, "[{func}] La2 stack: {n} SCCs, outer {outer}",
                  __func__, sccs.size(), outer->name);
