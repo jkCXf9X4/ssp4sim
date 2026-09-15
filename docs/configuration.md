@@ -97,10 +97,12 @@ For CLI and Python invocation examples, see [Usage](usage.md).
 
 Notes:
 - All `simulation.executor.*` keys (and `simulation.timestep`, used to size the
-  macro step) are read by `ExecutorBuilder`; executors are constructed with the
-  resolved values (constructor injection) and do not read the global config
-  themselves. The la2 stack (SCC analysis, sub-step executors, outer
-  Gauss-Seidel executor, resolver) is assembled entirely by `ExecutorBuilder`.
+  macro step) are read by `ExecutorBuilder`'s registered strategy factories;
+  executors are constructed with the resolved values (constructor injection)
+  and do not read the global config themselves. The la2 stack is assembled by
+  the config-free `make_la2_stack(nodes, La2Options)` factory
+  (`executor/loop_aware/la2_builder.hpp`), which `ExecutorBuilder` invokes for
+  the `la2` (and legacy `loop_aware`) method.
 - Unknown `simulation.executor.method` throws runtime error.
 - Unknown `simulation.executor.jacobi.method` throws runtime error.
 

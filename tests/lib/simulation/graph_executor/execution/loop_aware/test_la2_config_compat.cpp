@@ -2,7 +2,8 @@
 // P1: findings A, B-keys, C, E).
 //
 // Verifies the la2 configuration contract:
-// (a) executor_builder builds a MacroExecutor wrapping a La2Scheduler;
+// (a) executor_builder builds a MacroExecutor wrapping the la2 strategy's
+//     SerialSeidel stack;
 //   (b) only `simulation.executor.la2.*` keys are read; the legacy
 //       `simulation.executor.loop_aware.*` keys are ignored;
 //   (c) legacy mode values "fixed" / "geometric" map to the same behavior as
@@ -23,8 +24,8 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "config.hpp"
+#include "executor/seidel/seidel_serial.hpp"
 #include "executor_builder.hpp"
-#include "executor/loop_aware/la2_scheduler.hpp"
 #include "executor/macro/macro_executor.hpp"
 
 #include <cstdint>
@@ -149,12 +150,13 @@ TEST_CASE("executor_builder accepts legacy 'loop_aware' method name", "[la2][con
     auto executor = builder.build(to_owned(storage));
 
     REQUIRE(executor != nullptr);
-    // build() wraps the specialized executor in a MacroExecutor; the legacy name
-    // must dispatch to the La2Scheduler inside, not to a fallback.
+    // build() wraps the specialized executor in a MacroExecutor; the legacy
+    // name must dispatch to the la2 strategy's SerialSeidel inside, not to a
+    // fallback.
     auto *macro = dynamic_cast<ssp4sim::graph::MacroExecutor *>(executor.get());
     REQUIRE(macro != nullptr);
     REQUIRE(macro->nodes.size() == 1);
-    REQUIRE(dynamic_cast<ssp4sim::graph::La2Scheduler *>(macro->nodes[0].get()) != nullptr);
+    REQUIRE(dynamic_cast<ssp4sim::graph::SerialSeidel *>(macro->nodes[0].get()) != nullptr);
 }
 
 TEST_CASE("legacy loop_aware config keys are ignored when la2.* keys are absent",

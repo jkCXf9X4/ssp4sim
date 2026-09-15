@@ -71,31 +71,36 @@ defaults for keys read from `utils::Config`.
 ## Executor Stacks And The Single-Resolver Rule
 
 Executors nest: `ExecutorBase` is an `Invocable` whose children may themselves be
-executors (e.g. `MacroExecutor -> La2Scheduler -> SerialSeidel ->
+executors (e.g. `MacroExecutor -> SerialSeidel ->
 LinearSubstepExecutor -> FmuModel`). When composing a stack:
 
-- **Assembly lives in `ExecutorBuilder`.** `ExecutorBuilder::build` is the single
-  place that reads the global `utils::Config` for executor selection and tuning
-  (including every `simulation.executor.la2.*` key) and that assembles nested
-  stacks. Executors receive all their static parameters via constructor
-  injection (e.g. `MacroExecutor(nodes, macro_step)`) and never read
-  `utils::Config` themselves.
-- The stack owner (e.g. `La2Scheduler`) installs **THE** read-path resolver for
-  the whole stack as the *last* construction step, overwriting any default
-  resolver an inner executor installed on its direct `FmuModel` children.
-  Because `set_resolver` walks only direct model children, the top-level owner
-  (which owns every model) always wins.
-- Inner executors are resolver-neutral when they have no meaningful default
-  (the `LinearSubstepExecutor` / `GeometricSubstepExecutor` classes) — they
-  never call `set_resolver`.
-- `La2Scheduler` is a thin execution shell over the pre-assembled stack, not an
-  assembler: `ExecutorBuilder` condenses the SCC graph into component
-  representatives, chooses the sub-step mode (linear / factor) and outer
-  Gauss–Seidel executor, derives the `La2DataAccessResolver` from the SCC
-  partition, and hands the finished `outer` + resolver to `La2Scheduler`, which
-  only installs the resolver and delegates `invoke()` to `SerialSeidel`.
-  `simulation.executor.la2.parallel` swaps the outer for `ParallelSeidel` once
-  that stub is implemented (it currently throws during assembly).
+- **Dispatch is a strategy map.** `ExecutorBuilder` holds a
+  `method name -> Factory` map (`ExecutorBuilder::builders_`), where a `Factory`
+  builds the specialized executor for one `simulation.executor.method` value.
+  Each registered factory is the single place that reads its family's
+  `simulation.executor.*` tuning keys and hands the resolved values to the
+  executors' constructors (constructor injection); the executors themselves
+  never read the global `utils::Config`. Unknown methods fail the lookup;
+  `parallel_seidel` / `parallel-seidel` register a throwing factory.
+- **la2 is a factory, not a class.** There is no `La2Scheduler` type;
+  `make_la2_stack(nodes, La2Options)` (`executor/loop_aware/la2_builder.hpp`)
+  is a config-free, pure construction function that SCC-partitions the graph,
+  wraps each loop SCC in a `LinearSubstepExecutor` /
+  `GeometricSubstepExecutor`, condenses the component DAG
+  (`utils/graph/rewire.hpp`), and returns the outer `SerialSeidel` over the
+  condensed graph. `ExecutorBuilder`'s `la2` / `loop_aware` strategies fill a
+  `La2Options` from config and call it. `options.parallel` requests
+  `ParallelSeidel` as the outer executor; while that stub is unimplemented it
+  throws during assembly.
+- **The stack-wide resolver is broken out of the executors.** `make_la2_stack`
+  derives the single `La2DataAccessResolver` from the SCC partition and
+  installs it over every model itself (an explicit loop, the assembly-side
+  counterpart of `ExecutorBase::set_resolver`). No executor owns the read
+  policy. Inner executors are resolver-neutral when they have no meaningful
+  default (the `LinearSubstepExecutor` / `GeometricSubstepExecutor` classes) —
+  they never call `set_resolver`. Because the resolver is installed over all
+  models after each inner executor ran its own constructor, it overwrites any
+  default resolver an inner executor set on its direct `FmuModel` children.
 
 Reusable building blocks that serve la2 but live outside it:
 

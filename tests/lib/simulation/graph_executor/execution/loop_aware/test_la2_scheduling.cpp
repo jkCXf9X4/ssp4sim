@@ -5,14 +5,15 @@
 //  - the ParallelSeidel seam fails loudly while the stub is in place.
 //
 // The stack (SCC analysis, sub-step executors, outer Gauss-Seidel executor,
-// resolver) is assembled by ExecutorBuilder from config, so these tests drive
-// the assembly through the builder and invoke the returned executor.
+// resolver) is assembled by ExecutorBuilder's la2 strategy,
+// make_la2_stack(nodes, La2Options), so these tests drive the assembly through
+// the builder and invoke the returned executor.
 
 #include <catch2/catch_test_macros.hpp>
 
 #include "config.hpp"
-#include "executor/loop_aware/la2_scheduler.hpp"
 #include "executor/macro/macro_executor.hpp"
+#include "executor/seidel/seidel_serial.hpp"
 #include "executor_builder.hpp"
 
 #include <algorithm>
@@ -92,13 +93,13 @@ TEST_CASE("la2 sub-steps loop SCCs only, acyclic nodes run once per macro step",
     ssp4sim::graph::ExecutorBuilder builder;
     auto executor = builder.build(to_owned(storage));
 
-    // Assembly pin: the builder wraps a La2Scheduler whose pre-assembled outer
-    // walks the 3 condensed components (A, loop{B,C}, D).
+    // Assembly pin: the builder's la2 strategy returns the outer SerialSeidel
+    // over the 3 condensed components (A, loop{B,C}, D).
     auto *macro = dynamic_cast<ssp4sim::graph::MacroExecutor *>(executor.get());
     REQUIRE(macro != nullptr);
-    auto *la2 = dynamic_cast<ssp4sim::graph::La2Scheduler *>(macro->nodes[0].get());
-    REQUIRE(la2 != nullptr);
-    REQUIRE(la2->to_string().find("3 components") != std::string::npos);
+    auto *outer = dynamic_cast<ssp4sim::graph::SerialSeidel *>(macro->nodes[0].get());
+    REQUIRE(outer != nullptr);
+    REQUIRE(outer->nodes.size() == 3);
 
     executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
