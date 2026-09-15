@@ -9,6 +9,8 @@
 
 #include "signal/storage.hpp"
 
+#include "shared_config.hpp"
+
 #include "utils/fmi/fmu_info.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
@@ -55,7 +57,12 @@ namespace ssp4sim::graph
         bool fmu_logging = false;
         bool record_inputs = false;
 
-        FmuModel(std::string name, std::unique_ptr<ssp4sim::handler::FmuInfo> fmu, size_t maxOutputDerivativeOrder);
+        FmuModelConfig model_config;
+
+        FmuModel(std::string name,
+                 std::unique_ptr<ssp4sim::handler::FmuInfo> fmu,
+                 size_t maxOutputDerivativeOrder,
+                 ssp4sim::FmuModelConfig config);
 
         ~FmuModel();
 

@@ -97,6 +97,7 @@ TEST_CASE("Config tests", "[config]")
                 "start_time": 0.0,
                 "stop_time": 1.0,
                 "timestep": 0.1,
+                "tolerance": 1e-6,
                 "recording": {
                     "csv": {
                         "enable": true,
@@ -124,6 +125,7 @@ TEST_CASE("Config tests", "[config]")
                 "start_time": 0.0,
                 "stop_time": 1.0,
                 "timestep": 0.1,
+                "tolerance": 1e-6,
                 "recording": {
                     "csv": {
                         "enable": false

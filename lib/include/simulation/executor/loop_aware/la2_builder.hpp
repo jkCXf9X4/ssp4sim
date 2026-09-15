@@ -1,27 +1,13 @@
 #pragma once
 
 #include "executor_base.hpp"
+#include "shared_config.hpp"
 
-#include <cstddef>
 #include <memory>
-#include <string>
 #include <vector>
 
 namespace ssp4sim::graph
 {
-    /// Static parameters for the loop-aware (la2) executor stack. Filled by
-    /// ExecutorBuilder from `simulation.executor.la2.*` config; the assembly
-    /// itself reads no global Config.
-    struct La2Options
-    {
-        std::string mode = "linear";          // "linear" | "factor"
-        int iterations = -1;                  // < 0 -> SCC node count
-        double factor = 0.8;
-        std::size_t max_steps = 64;
-        double min_substep_fraction = 0.001;
-        bool parallel = false;
-    };
-
     /// @brief Assembles the loop-aware executor stack from raw models.
     ///
     /// Pure construction (no global Config): SCC detection, one
@@ -35,7 +21,11 @@ namespace ssp4sim::graph
     /// `options.parallel` requests ParallelSeidel as the outer executor; its
     /// invoke() is still stubbed, so this throws instead of failing at the
     /// first macro step. Remove the guard once ParallelSeidel::invoke lands.
+    ///
+    /// `options` is the `ssp4sim::La2Options` nested inside
+    /// `ssp4sim::ExecutorOptions` (parsed centrally by SharedConfig) — passed
+    /// straight through, never rebuilt by callers.
     std::shared_ptr<ExecutorBase> make_la2_stack(
         std::vector<std::shared_ptr<Invocable>> nodes,
-        const La2Options &options);
+        const ssp4sim::La2Options &options);
 }

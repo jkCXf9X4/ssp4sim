@@ -1,12 +1,10 @@
 #include "model_fmu.hpp"
 
-#include "utils/config.hpp"
 #include "signal/storage.hpp"
 #include "utils/fmi/fmu_info.hpp"
 #include "model_connection.hpp"
 #include "model_connector.hpp"
 #include "resolver/data_access_resolver.hpp"
-#include "utils/time/time.hpp"
 #include "utils/time/timer.hpp"
 
 #include <algorithm>
@@ -19,18 +17,21 @@
 namespace ssp4sim::graph
 {
 
-    FmuModel::FmuModel(std::string name, std::unique_ptr<ssp4sim::handler::FmuInfo> fmu, size_t maxOutputDerivativeOrder)
+    FmuModel::FmuModel(std::string name,
+                       std::unique_ptr<ssp4sim::handler::FmuInfo> fmu,
+                       size_t maxOutputDerivativeOrder,
+                       ssp4sim::FmuModelConfig config)
         : log(ssp4cpp::utils::log::make_logger(std::format("models.{}", name)))
     {
         this->fmu = std::move(fmu);
         this->name = std::move(name);
         this->maxOutputDerivativeOrder = maxOutputDerivativeOrder;
+        this->model_config = std::move(config);
+        forward_derivatives = model_config.forward_derivatives;
+        fmu_logging = model_config.fmu_logging;
 
         input_area = std::make_unique<ssp4sim::signal::SignalStorage>(10, this->name + ".input");
         output_area = std::make_unique<ssp4sim::signal::SignalStorage>(200, this->name + ".output");
-        
-        forward_derivatives = utils::Config::getOr("simulation.executor.forward_derivatives", true);
-        fmu_logging = utils::Config::getOr("simulation.log.fmu", false);
     }
 
     FmuModel::~FmuModel()
@@ -75,16 +76,11 @@ namespace ssp4sim::graph
         LOG_TRACE_L1(log, "[{func}] Input area: {}", __func__, input_area->to_string());
         LOG_TRACE_L1(log, "[{func}] Output area: {}", __func__, output_area->to_string());
 
-        double start_time = utils::Config::getDouble("simulation.start_time");
-        double timestep = utils::Config::getDouble("simulation.timestep");
-        double end_time = utils::Config::getDouble("simulation.stop_time");
-        double tolerance = utils::Config::getDouble("simulation.tolerance");
-
         LOG_DEBUG(log, "[{func}] setup_experiment: {model}", __func__, name);
 
         // The simulation may take one step beyond the stop_time. Some fmus may crash due to this
         // therfore tell the fmus that stop + one step should be ok
-        if (!fmu->model->setup_experiment(utils::time::s_to_ns(start_time), utils::time::s_to_ns(end_time + timestep * 10), tolerance))
+        if (!fmu->model->setup_experiment(model_config.start_time, model_config.end_time + model_config.timestep * 10, model_config.tolerance))
         {
             LOG_ERROR(log, "[{func}] setup_experiment failed for {model}, this may be due to a stop time that is larger than the DefaultExperiment specifed in the fmus. ", __func__, name);
             throw std::runtime_error(std::format("[{}] setup_experiment failed for {}", __func__, name));

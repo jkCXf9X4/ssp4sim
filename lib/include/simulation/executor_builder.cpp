@@ -1,4 +1,3 @@
-#include "config.hpp"
 #include "executor_builder.hpp"
 
 #include "executor/custom/custom_executors.hpp"
@@ -14,8 +13,6 @@
 #include "executor/macro/macro_executor.hpp"
 #include "executor/macro/realtime_macro_executor.hpp"
 
-#include "utils/time/time.hpp"
-
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -25,31 +22,35 @@
 namespace ssp4sim::graph
 {
 
-    ExecutorBuilder::ExecutorBuilder()
-        : log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ExecutorBuilder"))
+    ExecutorBuilder::ExecutorBuilder(const ssp4sim::ExecutorOptions &options,
+                                     uint64_t macro_step)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.execution.ExecutorBuilder")),
+          options_(options),
+          macro_step_(macro_step)
     {
+        // Each strategy is a uniform `(nodes) -> executor` factory over the
+        // builder's typed options; the dispatch in build() is a plain map
+        // lookup on options_.method.
+
         builders_["jacobi"] = [this](std::vector<std::shared_ptr<Invocable>> nodes)
             -> std::shared_ptr<ExecutorBase>
         {
-            if (utils::Config::getOr("simulation.executor.jacobi.parallel", false))
+            if (options_.jacobi_parallel)
             {
-                int workers = utils::Config::getOr("simulation.executor.thread_pool_workers", 5);
-                int parallel_method = utils::Config::getOr("simulation.executor.jacobi.method", 1);
-
-                if (parallel_method == 1)
+                if (options_.jacobi_method == 1)
                 {
                     LOG_INFO(log, "[builder] Executor: JacobiParallelTBB");
                     return std::make_shared<JacobiParallelTBB>(std::move(nodes));
                 }
-                else if (parallel_method == 2)
+                else if (options_.jacobi_method == 2)
                 {
                     LOG_INFO(log, "[builder] Executor: JacobiParallelSpin");
-                    return std::make_shared<JacobiParallelSpin>(std::move(nodes), workers);
+                    return std::make_shared<JacobiParallelSpin>(std::move(nodes), options_.workers);
                 }
-                else if (parallel_method == 3)
+                else if (options_.jacobi_method == 3)
                 {
                     LOG_INFO(log, "[builder] Executor: JacobiParallelFutures");
-                    return std::make_shared<JacobiParallelFutures>(std::move(nodes), workers);
+                    return std::make_shared<JacobiParallelFutures>(std::move(nodes), options_.workers);
                 }
                 else
                 {
@@ -66,7 +67,7 @@ namespace ssp4sim::graph
         builders_["seidel"] = [this](std::vector<std::shared_ptr<Invocable>> nodes)
             -> std::shared_ptr<ExecutorBase>
         {
-            if (utils::Config::getOr("simulation.executor.seidel.parallel", false))
+            if (options_.seidel_parallel)
             {
                 LOG_INFO(log, "[builder] Executor: ParallelSeidel");
                 return std::make_shared<ParallelSeidel>(std::move(nodes));
@@ -98,22 +99,8 @@ namespace ssp4sim::graph
         builders_["la2"] = [this](std::vector<std::shared_ptr<Invocable>> nodes)
             -> std::shared_ptr<ExecutorBase>
         {
-            La2Options options;
-            options.mode = utils::Config::getOr(
-                "simulation.executor.la2.mode", std::string("linear"));
-            options.iterations = utils::Config::getOr(
-                "simulation.executor.la2.iterations", -1);
-            options.factor = utils::Config::getOr(
-                "simulation.executor.la2.factor", 0.8);
-            options.max_steps = static_cast<std::size_t>(utils::Config::getOr(
-                "simulation.executor.la2.max_steps", 64));
-            options.min_substep_fraction = utils::Config::getOr(
-                "simulation.executor.la2.min_substep_fraction", 0.001);
-            options.parallel = utils::Config::getOr(
-                "simulation.executor.la2.parallel", false);
-
             LOG_INFO(log, "[builder] Executor: La2");
-            return make_la2_stack(std::move(nodes), options);
+            return make_la2_stack(std::move(nodes), options_.la2);
         };
         builders_["loop_aware"] = builders_["la2"];
 
@@ -139,34 +126,29 @@ namespace ssp4sim::graph
 
     std::shared_ptr<ExecutorBase> ExecutorBuilder::build(std::vector<std::shared_ptr<Invocable>> nodes)
     {
-        // Select the strategy from config and build the specialized executor;
-        // the same factory call resolves la2's nested stack. Everything is
-        // wrapped in a MacroExecutor sized from `simulation.timestep`.
+        // Uniform dispatch: lookup the method strategy, build the specialized
+        // executor (la2's factory assembles the whole nested stack), then wrap
+        // in a MacroExecutor sized from the configured timestep.
 
-        auto executor_method = utils::Config::getOr("simulation.executor.method", std::string("jacobi"));
-
-        auto factory = builders_.find(executor_method);
+        auto factory = builders_.find(options_.method);
         if (factory == builders_.end())
         {
-            throw std::runtime_error("Unknown executor method: '" + executor_method + "'");
+            throw std::runtime_error("Unknown executor method: '" + options_.method + "'");
         }
 
         auto specialized_executor = factory->second(std::move(nodes));
 
-        const auto macro_step =
-            utils::time::s_to_ns(utils::Config::getDouble("simulation.timestep"));
-
-        if (utils::Config::getOr("simulation.realtime", false))
+        if (options_.realtime)
         {
             return std::make_shared<graph::RealtimeMacroExecutor>(
                 std::vector<std::shared_ptr<Invocable>>{specialized_executor},
-                macro_step);
+                macro_step_);
         }
         else
         {
             return std::make_shared<graph::MacroExecutor>(
                 std::vector<std::shared_ptr<Invocable>>{specialized_executor},
-                macro_step);
+                macro_step_);
         }
     }
 

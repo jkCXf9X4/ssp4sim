@@ -3,6 +3,7 @@
 #include "pre/2_analysis_graph/ssp_graph_data.hpp"
 #include "utils/fmi/fmu_info.hpp"
 #include "pre/3_simulation_graph/elements/invocable.hpp"
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
 
 #include <map>
 #include <memory>
@@ -16,14 +17,15 @@ namespace ssp4sim::signal
 namespace ssp4sim::graph
 {
 
-    class FmuModel;
-
     class GraphBuilder
     {
     public:
         bool record_inputs;
 
-        explicit GraphBuilder(bool record_inputs);
+        /// `config` is the `ssp4sim::FmuModelConfig` nested in SharedConfig
+        /// (SharedConfig::fmu): the model-level parameters parsed centrally by
+        /// the SharedConfig constructor; every FmuModel built here receives it.
+        GraphBuilder(bool record_inputs, const ssp4sim::FmuModelConfig &config);
 
         std::map<std::string, std::shared_ptr<Invocable>> build(analysis::AnalysisGraphData *graph_data);
 
@@ -36,6 +38,8 @@ namespace ssp4sim::graph
 
     private:
         ssp4cpp::utils::log::Logger *log = nullptr;
+
+        ssp4sim::FmuModelConfig config;
 
         std::map<std::string, std::shared_ptr<Invocable>> models;
 

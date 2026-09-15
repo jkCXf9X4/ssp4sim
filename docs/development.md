@@ -74,24 +74,44 @@ Executors nest: `ExecutorBase` is an `Invocable` whose children may themselves b
 executors (e.g. `MacroExecutor -> SerialSeidel ->
 LinearSubstepExecutor -> FmuModel`). When composing a stack:
 
-- **Dispatch is a strategy map.** `ExecutorBuilder` holds a
-  `method name -> Factory` map (`ExecutorBuilder::builders_`), where a `Factory`
-  builds the specialized executor for one `simulation.executor.method` value.
-  Each registered factory is the single place that reads its family's
-  `simulation.executor.*` tuning keys and hands the resolved values to the
-  executors' constructors (constructor injection); the executors themselves
-  never read the global `utils::Config`. Unknown methods fail the lookup;
-  `parallel_seidel` / `parallel-seidel` register a throwing factory.
+- **Configuration is parsed once, centrally; options are nested.** The
+  `SharedConfig` constructor and `ssp4sim::ExecutorOptions::load()`
+  (`lib/public_include/shared_config.hpp`) are the only places that read the
+  global `utils::Config`. Option structs are *nested* so each layer passes its
+  slice straight through — no local re-aggregation:
+  `SharedConfig::executor` is the `ssp4sim::ExecutorOptions`
+  (`ExecutorBuilder` is constructed with it), `ExecutorOptions::la2` *is* the
+  `ssp4sim::La2Options` consumed by `make_la2_stack`, and
+  `SharedConfig::fmu` *is* the `ssp4sim::FmuModelConfig` handed to the model
+  layer. Executors and models are constructed from these typed values and
+  never read the global config.
+- **Dispatch is a strategy map over typed options.** `ExecutorBuilder` is
+  constructed with `ssp4sim::ExecutorOptions` plus the outer macro step
+  (`SharedConfig::fmu.timestep`, the single source of truth for the configured
+  timestep) and holds a `method name -> Factory` map
+  (`ExecutorBuilder::builders_`). Every factory is a uniform `(nodes) ->
+  executor` function reading only the builder's typed options;
+  `ExecutorBuilder::build` is a plain map lookup on `options.method` followed
+  by the macro wrap, so the map's shapes are uniform across families. Unknown
+  methods fail the lookup; `parallel_seidel` / `parallel-seidel` register a
+  throwing factory.
 - **la2 is a factory, not a class.** There is no `La2Scheduler` type;
   `make_la2_stack(nodes, La2Options)` (`executor/loop_aware/la2_builder.hpp`)
   is a config-free, pure construction function that SCC-partitions the graph,
   wraps each loop SCC in a `LinearSubstepExecutor` /
   `GeometricSubstepExecutor`, condenses the component DAG
   (`utils/graph/rewire.hpp`), and returns the outer `SerialSeidel` over the
-  condensed graph. `ExecutorBuilder`'s `la2` / `loop_aware` strategies fill a
-  `La2Options` from config and call it. `options.parallel` requests
-  `ParallelSeidel` as the outer executor; while that stub is unimplemented it
-  throws during assembly.
+  condensed graph. `ExecutorBuilder`'s `la2` / `loop_aware` strategies pass
+  `options.la2` (the nested `ssp4sim::La2Options`) straight through.
+  `options.parallel` requests `ParallelSeidel` as the outer executor; while
+  that stub is unimplemented it throws during assembly.
+- **Models receive the nested `SharedConfig::fmu`.** `FmuModel` is constructed
+  with the `ssp4sim::FmuModelConfig` (experiment times in ns, tolerance,
+  forward derivatives, FMU logging), which is *owned* by `SharedConfig`
+  (`SharedConfig::fmu` is the single source of truth for
+  `simulation.timestep` / `start_time` / `stop_time`), passed untouched
+  through `GraphBuilder` by `pre::build_simulation_graph`, and forwarded to
+  every model.
 - **The stack-wide resolver is broken out of the executors.** `make_la2_stack`
   derives the single `La2DataAccessResolver` from the SCC partition and
   installs it over every model itself (an explicit loop, the assembly-side

@@ -96,13 +96,22 @@ For CLI and Python invocation examples, see [Usage](usage.md).
 | `simulation.executor.la2.parallel` | `bool` | No | `false` | If `true`, the `la2` outer Gauss-Seidel executor is `ParallelSeidel` instead of `SerialSeidel`. `ParallelSeidel` is **not implemented** yet, so this throws during `ExecutorBuilder` assembly until the stub lands. |
 
 Notes:
-- All `simulation.executor.*` keys (and `simulation.timestep`, used to size the
-  macro step) are read by `ExecutorBuilder`'s registered strategy factories;
-  executors are constructed with the resolved values (constructor injection)
-  and do not read the global config themselves. The la2 stack is assembled by
-  the config-free `make_la2_stack(nodes, La2Options)` factory
-  (`executor/loop_aware/la2_builder.hpp`), which `ExecutorBuilder` invokes for
-  the `la2` (and legacy `loop_aware`) method.
+- All `simulation.executor.*` keys are parsed exactly once, centrally, by
+  `ssp4sim::ExecutorOptions::load()` (called from the `SharedConfig`
+  constructor in `lib/public_include/shared_config.hpp`); `simulation.realtime`
+  (outer macro wrapper), `simulation.tolerance`,
+  `simulation.executor.forward_derivatives`, `simulation.log.fmu` and the
+  experiment times (`simulation.start_time` / `simulation.timestep` /
+  `simulation.stop_time`, owned by `ssp4sim::FmuModelConfig`) are parsed in the
+  same `SharedConfig` constructor. Options are nested and passed through
+  directly: `SharedConfig::executor.la2` is forwarded unchanged to the
+  config-free `make_la2_stack(nodes, La2Options)` factory
+  (`executor/loop_aware/la2_builder.hpp`) for the `la2` (and legacy
+  `loop_aware`) method, and `SharedConfig::fmu` is forwarded unchanged to the
+  model layer via `GraphBuilder`. Executors and models are constructed from
+  these typed values (constructor injection) and never read the global
+  `utils::Config`; `ExecutorBuilder` dispatches uniformly on
+  `options.method`.
 - Unknown `simulation.executor.method` throws runtime error.
 - Unknown `simulation.executor.jacobi.method` throws runtime error.
 

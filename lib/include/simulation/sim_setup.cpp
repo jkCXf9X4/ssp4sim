@@ -35,7 +35,7 @@ namespace ssp4sim::pre
             nodes.push_back(std::move(model));
         }
 
-        graph::ExecutorBuilder builder;
+        graph::ExecutorBuilder builder(config->executor, config->fmu.timestep);
         SimulationData data;
         data.execution_node = builder.build(std::move(nodes));
         return data;

@@ -131,7 +131,7 @@ namespace ssp4sim
 
         try
         {
-            p->simulation_node->invoke(ssp4sim::graph::StepData(config->start_time, config->end_time));
+            p->simulation_node->invoke(ssp4sim::graph::StepData(config->fmu.start_time, config->fmu.end_time));
         }
         catch (const std::exception &e)
         {

@@ -50,7 +50,7 @@ namespace ssp4sim::pre
         }
 
         LOG_INFO(log, "[{func}] - Creating simulation models", __func__);
-        auto sim_graph_builder = graph::GraphBuilder(config->record_inputs);
+        auto sim_graph_builder = graph::GraphBuilder(config->record_inputs, config->fmu);
 
         SimulationGraph result;
         result.models = sim_graph_builder.build(&analysis_graph_data);

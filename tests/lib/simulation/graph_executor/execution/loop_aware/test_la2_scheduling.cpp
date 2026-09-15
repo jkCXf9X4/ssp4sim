@@ -6,15 +6,16 @@
 //
 // The stack (SCC analysis, sub-step executors, outer Gauss-Seidel executor,
 // resolver) is assembled by ExecutorBuilder's la2 strategy,
-// make_la2_stack(nodes, La2Options), so these tests drive the assembly through
-// the builder and invoke the returned executor.
+// make_la2_stack(nodes, La2Options), from typed ExecutorOptions — no global
+// Config is loaded, so the executor surface is fully decoupled from the
+// config parser.
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "config.hpp"
 #include "executor/macro/macro_executor.hpp"
 #include "executor/seidel/seidel_serial.hpp"
 #include "executor_builder.hpp"
+#include "shared_config.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -23,8 +24,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-using ssp4sim::utils::Config;
 
 namespace
 {
@@ -69,28 +68,29 @@ namespace
         return {std::move(a), std::move(b), std::move(c), std::move(d)};
     }
 
-    constexpr std::uint64_t T0 = 0;
-    constexpr std::uint64_t T1 = 1200;
+    // Options for a single macro step over [T0, T1): the macro step equals the
+    // configured timestep (1200 ns == T1), so the outer MacroExecutor performs
+    // exactly one macro step.
+    constexpr uint64_t T0 = 0;
+    constexpr uint64_t T1 = 1200;
+
+    ssp4sim::ExecutorOptions la2_options(const char *mode, int iterations)
+    {
+        ssp4sim::ExecutorOptions options;
+        options.method = "la2";
+        options.la2.mode = mode;
+        options.la2.iterations = iterations;
+        return options;
+    }
 } // namespace
 
 TEST_CASE("la2 sub-steps loop SCCs only, acyclic nodes run once per macro step",
           "[la2][scheduling]")
 {
-    Config::loadFromString(R"json({
-        "simulation": {
-            "timestep": 1.2e-6,
-            "executor": {
-                "method": "la2",
-                "la2": { "iterations": 2, "mode": "linear" }
-            }
-        }
-    })json");
-
     std::vector<std::string> log;
     auto storage = make_loop_with_tails(&log);
 
-    // A single macro step over [T0, T1): the macro_step is 1200 ns == T1.
-    ssp4sim::graph::ExecutorBuilder builder;
+    ssp4sim::graph::ExecutorBuilder builder(la2_options("linear", 2), T1);
     auto executor = builder.build(to_owned(storage));
 
     // Assembly pin: the builder's la2 strategy returns the outer SerialSeidel
@@ -135,19 +135,12 @@ TEST_CASE("la2 sub-steps loop SCCs only, acyclic nodes run once per macro step",
 TEST_CASE("la2.parallel fails loudly until ParallelSeidel is implemented",
           "[la2][config]")
 {
-    Config::loadFromString(R"json({
-        "simulation": {
-            "timestep": 1e-6,
-            "executor": {
-                "method": "la2",
-                "la2": { "parallel": true }
-            }
-        }
-    })json");
+    auto options = la2_options("linear", 2);
+    options.la2.parallel = true;
 
     std::vector<std::string> log;
     auto storage = make_loop_with_tails(&log);
 
-    ssp4sim::graph::ExecutorBuilder builder;
+    ssp4sim::graph::ExecutorBuilder builder(options, T1);
     REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
 }

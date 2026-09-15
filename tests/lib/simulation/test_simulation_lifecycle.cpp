@@ -146,10 +146,9 @@ TEST_CASE("init then simulate completes", "[simulation][lifecycle]")
     }
 
     auto config = make_minimal_config();
-    config.start_time = 0;
-    config.end_time = 1;
-    config.timestep = 1;
-    config.realtime = false;
+    config.fmu.start_time = 0;
+    config.fmu.end_time = 1;
+    config.fmu.timestep = 1;
 
     ssp4cpp::Ssp ssp(ssp_dir);
     ssp4sim::Simulation sim(&ssp, &config);

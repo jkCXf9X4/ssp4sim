@@ -17,13 +17,13 @@ TEST_CASE("GraphBuilder constructs with record_inputs flag", "[sim_graph_builder
 {
     SECTION("record_inputs = false")
     {
-        ssp4sim::graph::GraphBuilder builder(false);
+        ssp4sim::graph::GraphBuilder builder(false, ssp4sim::FmuModelConfig{});
         REQUIRE_FALSE(builder.record_inputs);
     }
 
     SECTION("record_inputs = true")
     {
-        ssp4sim::graph::GraphBuilder builder(true);
+        ssp4sim::graph::GraphBuilder builder(true, ssp4sim::FmuModelConfig{});
         REQUIRE(builder.record_inputs);
     }
 }

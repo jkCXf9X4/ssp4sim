@@ -10,9 +10,10 @@
 namespace ssp4sim::graph
 {
 
-    GraphBuilder::GraphBuilder(bool record_inputs)
+    GraphBuilder::GraphBuilder(bool record_inputs, const ssp4sim::FmuModelConfig &config)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder")),
-          record_inputs(record_inputs)
+          record_inputs(record_inputs),
+          config(config)
     {
     }
 

@@ -1,21 +1,21 @@
-// Config-boundary tests for the la2 scheduler / executor builder (patch task
-// P1: findings A, B-keys, C, E).
+// Config-boundary tests for the executor configuration parser + the la2
+// strategy (patch task P1: findings A, B-keys, C, E).
 //
-// Verifies the la2 configuration contract:
-// (a) executor_builder builds a MacroExecutor wrapping the la2 strategy's
-//     SerialSeidel stack;
-//   (b) only `simulation.executor.la2.*` keys are read; the legacy
-//       `simulation.executor.loop_aware.*` keys are ignored;
-//   (c) legacy mode values "fixed" / "geometric" map to the same behavior as
-//       "linear" / "factor";
-//   (d) requesting "parallel_seidel" throws a clear std::runtime_error at
-//       dispatch time.
+// Verifies:
+// (a) the centralized parser, `ssp4sim::ExecutorOptions::load()` (called from
+//     SharedConfig), reads `simulation.executor.*` and ignores the legacy
+//     `simulation.executor.loop_aware.*` namespace;
+// (b) `ExecutorBuilder` accepts both `la2` and the legacy `loop_aware` method
+//     names and dispatches both to the la2 strategy's SerialSeidel stack,
+//     wrapped in a MacroExecutor;
+// (c) legacy mode values "fixed" / "geometric" map to the same behavior as
+//     "linear" / "factor";
+// (d) requesting "parallel_seidel" throws a clear std::runtime_error at
+//     dispatch time.
 //
-// NOTE: utils::Config is an all-static class with no per-key set()/reset()
-// API; tests replace the whole document via Config::loadFromString(...) per
-// SECTION (same pattern as tests/lib/utils/test_config.cpp). The la2 stack is
-// assembled by ExecutorBuilder from config (the executors themselves are
-// Config-free), so every behavioral section goes through builder.build().
+// Behavior is verified through `ExecutorBuilder` over typed `ExecutorOptions`
+// (the parser is exercised independently in (a)); no executor reads the global
+// utils::Config.
 //
 // Executors share ownership of their nodes (std::shared_ptr), so the test
 // builds shared graphs and hands a shared copy to each executor; a raw-pointer
@@ -27,6 +27,7 @@
 #include "executor/seidel/seidel_serial.hpp"
 #include "executor_builder.hpp"
 #include "executor/macro/macro_executor.hpp"
+#include "shared_config.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -38,7 +39,6 @@ using ssp4sim::utils::Config;
 
 namespace
 {
-
     // Minimal Invocable that counts how many times it was invoked.
     class MockNode final : public ssp4sim::graph::Invocable
     {
@@ -121,8 +121,7 @@ namespace
     }
 
     constexpr uint64_t T0 = 0;
-    // Macro step [0, 1200) ns. The builder derives the macro step from
-    // `simulation.timestep` (timestep must be 1.2e-6 s == 1200 ns so build()
+    // The configured timestep (1200 ns, one macro step == T1) so build()
     // returns an executor whose single macro step covers exactly [0, 1200)).
     // 1200 is chosen so the Linear-mode sub-step split (sub_dt = macro / n,
     // integer division) yields exactly n sub-steps for every iteration count
@@ -130,23 +129,66 @@ namespace
     // 1200 / 4 = 300.
     constexpr uint64_t T1 = 1200;
 
+    ssp4sim::ExecutorOptions la2_options(const char *mode, int iterations)
+    {
+        ssp4sim::ExecutorOptions options;
+        options.method = "la2";
+        options.la2.mode = mode;
+        options.la2.iterations = iterations;
+        return options;
+    }
 } // namespace
+
+TEST_CASE("ExecutorOptions::load reads la2.* keys and ignores legacy loop_aware.*",
+          "[la2][config][compat]")
+{
+    SECTION("legacy loop_aware keys alone fall back to la2 defaults")
+    {
+        Config::loadFromString(R"json({
+            "simulation": {
+                "timestep": 1e-6,
+                "executor": {
+                    "method": "la2",
+                    "loop_aware": { "iterations": 4, "mode": "fixed" }
+                }
+            }
+        })json");
+
+        const auto options = ssp4sim::ExecutorOptions::load();
+        REQUIRE(options.method == "la2");
+        REQUIRE(options.la2.iterations == -1);   // default: SCC node count
+        REQUIRE(options.la2.mode == "linear");
+        REQUIRE(options.la2.parallel == false);
+    }
+
+    SECTION("la2.* keys are honored alongside ignored legacy loop_aware.* keys")
+    {
+        Config::loadFromString(R"json({
+            "simulation": {
+                "timestep": 1e-6,
+                "executor": {
+                    "method": "la2",
+                    "la2": { "iterations": 2, "mode": "linear" },
+                    "loop_aware": { "iterations": 6, "mode": "fixed" }
+                }
+            }
+        })json");
+
+        const auto options = ssp4sim::ExecutorOptions::load();
+        REQUIRE(options.la2.iterations == 2);
+        REQUIRE(options.la2.mode == "linear");
+    }
+}
 
 TEST_CASE("executor_builder accepts legacy 'loop_aware' method name", "[la2][config][compat]")
 {
-    Config::loadFromString(R"json({
-        "simulation": {
-            "timestep": 1e-6,
-            "executor": {
-                "method": "loop_aware"
-            }
-        }
-    })json");
+    auto options = la2_options("linear", 2);
+    options.method = "loop_aware";
 
     std::vector<std::shared_ptr<MockNode>> storage;
-    auto nodes = make_chain_graph(storage);
+    make_chain_graph(storage);
 
-    ssp4sim::graph::ExecutorBuilder builder;
+    ssp4sim::graph::ExecutorBuilder builder(options, T1);
     auto executor = builder.build(to_owned(storage));
 
     REQUIRE(executor != nullptr);
@@ -159,89 +201,14 @@ TEST_CASE("executor_builder accepts legacy 'loop_aware' method name", "[la2][con
     REQUIRE(dynamic_cast<ssp4sim::graph::SerialSeidel *>(macro->nodes[0].get()) != nullptr);
 }
 
-TEST_CASE("legacy loop_aware config keys are ignored when la2.* keys are absent",
-          "[la2][config][compat]")
-{
-    // Only the legacy namespace is present; the la2 builder branch must fall
-    // back to its built-in defaults (mode "linear", iteration count = SCC node
-    // count). The 2-node loop therefore relaxes over 2 sub-steps: 2 * 2 = 4
-    // invocations, proving the legacy keys have no effect.
-    Config::loadFromString(R"json({
-        "simulation": {
-            "timestep": 1.2e-6,
-            "executor": {
-                "method": "la2",
-                "loop_aware": {
-                    "iterations": 4,
-                    "mode": "fixed"
-                }
-            }
-        }
-    })json");
-
-    std::vector<std::shared_ptr<MockNode>> storage;
-    auto nodes = make_loop_graph(storage);
-
-    ssp4sim::graph::ExecutorBuilder builder;
-    auto executor = builder.build(to_owned(storage));
-    executor->invoke(ssp4sim::graph::StepData(T0, T1));
-
-    REQUIRE(total_invocations(nodes) == 4);
-}
-
-TEST_CASE("la2.* config keys are honored alongside ignored legacy loop_aware.* keys",
-          "[la2][config][compat]")
-{
-    // Legacy keys present but ignored: only la2.iterations=2 is read.
-    Config::loadFromString(R"json({
-        "simulation": {
-            "timestep": 1.2e-6,
-            "executor": {
-                "method": "la2",
-                "la2": {
-                    "iterations": 2,
-                    "mode": "linear"
-                },
-                "loop_aware": {
-                    "iterations": 6,
-                    "mode": "fixed"
-                }
-            }
-        }
-    })json");
-
-    std::vector<std::shared_ptr<MockNode>> storage;
-    auto nodes = make_loop_graph(storage);
-
-    ssp4sim::graph::ExecutorBuilder builder;
-    auto executor = builder.build(to_owned(storage));
-    executor->invoke(ssp4sim::graph::StepData(T0, T1));
-
-    // 2 nodes * 2 sub-steps = 4 invocations (not 12).
-    REQUIRE(total_invocations(nodes) == 4);
-}
-
 TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][compat]")
 {
     SECTION("'fixed' behaves like 'linear' (equal sub-steps, count = iterations)")
     {
-        Config::loadFromString(R"json({
-            "simulation": {
-                "timestep": 1.2e-6,
-                "executor": {
-                    "method": "la2",
-                    "la2": {
-                        "iterations": 3,
-                        "mode": "fixed"
-                    }
-                }
-            }
-        })json");
-
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::ExecutorBuilder builder;
+        ssp4sim::graph::ExecutorBuilder builder(la2_options("fixed", 3), T1);
         auto executor = builder.build(to_owned(storage));
         executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
@@ -251,24 +218,13 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
 
     SECTION("'geometric' behaves like 'factor' (shrinking sub-steps, count = iterations)")
     {
-        Config::loadFromString(R"json({
-            "simulation": {
-                "timestep": 1.2e-6,
-                "executor": {
-                    "method": "la2",
-                    "la2": {
-                        "iterations": 4,
-                        "mode": "geometric",
-                        "factor": 0.5
-                    }
-                }
-            }
-        })json");
-
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::ExecutorBuilder builder;
+        auto options = la2_options("geometric", 4);
+        options.la2.factor = 0.5;
+
+        ssp4sim::graph::ExecutorBuilder builder(options, T1);
         auto executor = builder.build(to_owned(storage));
         executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
@@ -279,24 +235,13 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
 
     SECTION("'geometric' with factor outside (0,1) falls back to equal sub-steps")
     {
-        Config::loadFromString(R"json({
-            "simulation": {
-                "timestep": 1.2e-6,
-                "executor": {
-                    "method": "la2",
-                    "la2": {
-                        "iterations": 3,
-                        "mode": "geometric",
-                        "factor": 1.5
-                    }
-                }
-            }
-        })json");
-
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
-        ssp4sim::graph::ExecutorBuilder builder;
+        auto options = la2_options("geometric", 3);
+        options.la2.factor = 1.5;
+
+        ssp4sim::graph::ExecutorBuilder builder(options, T1);
         auto executor = builder.build(to_owned(storage));
         executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
@@ -310,19 +255,13 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
 TEST_CASE("executor_builder throws a clear error for parallel_seidel",
           "[la2][config][compat]")
 {
-    Config::loadFromString(R"json({
-        "simulation": {
-            "timestep": 1e-6,
-            "executor": {
-                "method": "parallel_seidel"
-            }
-        }
-    })json");
+    ssp4sim::ExecutorOptions options;
+    options.method = "parallel_seidel";
 
     std::vector<std::shared_ptr<MockNode>> storage;
     make_chain_graph(storage);
 
-    ssp4sim::graph::ExecutorBuilder builder;
+    ssp4sim::graph::ExecutorBuilder builder(options, T1);
     REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
 
     // Also verify the message is clear and actionable.
@@ -343,19 +282,13 @@ TEST_CASE("executor_builder throws a clear error for parallel_seidel",
 TEST_CASE("unknown executor method still throws with the method name",
           "[la2][config][compat]")
 {
-    Config::loadFromString(R"json({
-        "simulation": {
-            "timestep": 1e-6,
-            "executor": {
-                "method": "definitely_not_a_method"
-            }
-        }
-    })json");
+    ssp4sim::ExecutorOptions options;
+    options.method = "definitely_not_a_method";
 
     std::vector<std::shared_ptr<MockNode>> storage;
     make_chain_graph(storage);
 
-    ssp4sim::graph::ExecutorBuilder builder;
+    ssp4sim::graph::ExecutorBuilder builder(options, T1);
     REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
 
     // The message must include the received method name.

@@ -22,7 +22,6 @@
 #include "pre/3_simulation_graph/builder/sim_graph_builder.hpp"
 #include "pre/3_simulation_graph/elements/model_fmu.hpp"
 #include "pre/2_analysis_graph/ssp_graph_data.hpp"
-#include "utils/config.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -51,25 +50,6 @@ namespace {
     {
         return project_root() / "resources" / "reference_ssp" / "artifacts" / "models" /
                "signal_sine_gain_add" / "baseline" / "resources" / model_name;
-    }
-
-    /// FmuModel/FmuInfo constructors read global utils::Config (simulation
-    /// start/stop/timestep, forward_derivatives, ...). Load the same minimal
-    /// JSON used by other simulation tests before building any model.
-    void load_minimal_config()
-    {
-        ssp4sim::utils::Config::loadFromString(R"json(
-        {
-            "simulation": {
-                "start_time": 0.0,
-                "stop_time": 1.0,
-                "timestep": 0.1,
-                "tolerance": 1e-6,
-                "executor": { "forward_derivatives": false },
-                "log": { "fmu": false }
-            }
-        }
-        )json");
     }
 
     /// Build an AnalysisGraphData with one wire src.out -> tgt.in, where the
@@ -189,10 +169,9 @@ namespace {
 // ---------------------------------------------------------------------------
 TEST_CASE("GraphBuilder wires a shared connector exactly once", "[sim_graph_builder][dedup]")
 {
-    load_minimal_config();
     auto g = build_shared_connector_graph();
 
-    ssp4sim::graph::GraphBuilder builder(false);
+    ssp4sim::graph::GraphBuilder builder(false, ssp4sim::FmuModelConfig{});
     auto models = builder.build(&g.data);
 
     REQUIRE(models.size() == 2);
@@ -217,10 +196,9 @@ TEST_CASE("GraphBuilder wires a shared connector exactly once", "[sim_graph_buil
 TEST_CASE("GraphBuilder dedups a connection seen from both endpoints",
           "[sim_graph_builder][dedup]")
 {
-    load_minimal_config();
     auto g = build_shared_connector_graph();
 
-    ssp4sim::graph::GraphBuilder builder(false);
+    ssp4sim::graph::GraphBuilder builder(false, ssp4sim::FmuModelConfig{});
     auto models = builder.build(&g.data);
 
     auto *src = dynamic_cast<ssp4sim::graph::FmuModel *>(models.at("Sine").get());
@@ -252,7 +230,6 @@ TEST_CASE("GraphBuilder dedups a connection seen from both endpoints",
 // ---------------------------------------------------------------------------
 TEST_CASE("GraphBuilder preserves distinct connections", "[sim_graph_builder][dedup]")
 {
-    load_minimal_config();
     // Two sources (Sine, Step) -> one target (Gain), each with its own resolved
     // leg shared by both endpoints. Both wires are distinct and must both be
     // present exactly once.
@@ -319,7 +296,7 @@ TEST_CASE("GraphBuilder preserves distinct connections", "[sim_graph_builder][de
     data.connection_nodes.push_back(std::move(resolved_a_node));
     data.connection_nodes.push_back(std::move(resolved_b_node));
 
-    ssp4sim::graph::GraphBuilder builder(false);
+    ssp4sim::graph::GraphBuilder builder(false, ssp4sim::FmuModelConfig{});
     auto models = builder.build(&data);
 
     auto *tgt_model = dynamic_cast<ssp4sim::graph::FmuModel *>(models.at("Gain").get());

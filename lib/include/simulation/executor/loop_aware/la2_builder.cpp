@@ -27,7 +27,7 @@ namespace ssp4sim::graph
 
     std::shared_ptr<ExecutorBase> make_la2_stack(
         std::vector<std::shared_ptr<Invocable>> nodes,
-        const La2Options &options)
+        const ssp4sim::La2Options &options)
     {
         auto log = ssp4cpp::utils::log::make_logger("ssp4sim.execution.La2Stack");
 
