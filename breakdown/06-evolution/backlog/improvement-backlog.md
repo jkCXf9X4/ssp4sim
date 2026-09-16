@@ -73,6 +73,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `done/IMP-042.md` | IMP-042 | Nested System Graph Support | Done | Medium | analysis_system.cpp, graph_builder.cpp, analysis_system_builder.cpp, SSP1_SystemStructureParameter_Ext.cpp; moderate blast radius, resolves boundary-crossing connection handling |
 | `candidates/IMP-043.md` | IMP-043 | Unit Test Coverage for Boundary Connection Resolution | Proposed | Medium | tests/lib/graph/test_graph_builder.cpp (new), graph_builder.hpp visibility change; test files only, no production behavior change |
 | `selected/IMP-044.md` | IMP-044 | Refactor test_sim_graph_builder.cpp — extract helpers, fix test gaps, clarify scope | Selected | Medium | tests/lib/graph/test_sim_graph_builder.cpp only; test-only refactoring, no production code changes |
+| `under_development/IMP-046.md` | IMP-046 | la2 hybrid — warm-started SCC sub-step iteration and sub-step input interpolation | In Development | Medium | la2_builder.cpp, linear_substep_executor.cpp, la2_data_access_resolver.cpp; perf + numerical-parity gate |
  
     
 ## Summary
