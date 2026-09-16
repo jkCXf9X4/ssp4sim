@@ -54,6 +54,12 @@ def assert_has_log_file(workdir: Path) -> None:
 
 
 def test_pyssp4sim_smoke_runs_local_embrace(tmp_path: Path) -> None:
+    """Description: Runs venv/bin/pyssp4sim CLI with embrace config; verifies
+    exit code 0, result.csv, and log file.
+    Rationale: CLI packaging smoke test — ensures installed entry point works.
+    Creep flag: Depends on venv/ directory existence (dev-environment-specific).
+    Will fail in CI without venv/ at repository root.
+    """
     root = repository_root(Path(__file__))
     smoke_config = build_embrace_config(root, tmp_path)
     command = [str(root / "venv" / "bin" / "pyssp4sim"), str(smoke_config)]

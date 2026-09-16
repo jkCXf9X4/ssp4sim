@@ -18,5 +18,6 @@ setup(
     packages=["pyssp4sim"],
     include_package_data=True,
     package_data={"pyssp4sim": ["*.so", "*.pyd", "*.dll", "*.dylib"]},
+    entry_points={"console_scripts": ["pyssp4sim=pyssp4sim.cli:main"]},
     cmdclass={"bdist_wheel": _BinaryWheel},
 )

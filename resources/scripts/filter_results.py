@@ -4,7 +4,7 @@ Clean result CSV files by interpolating missing data and smoothing noise.
 
 The script walks over the provided glob of CSV files (defaults to
 ``results/*.csv``), fills gaps via linear interpolation, applies a rolling
-median to dampen noise, and writes the cleaned data to a sibling folder
+median to dampen noise, and writes the cleaned data to a child folder
 (``results/cleaned`` by default).
 """
 

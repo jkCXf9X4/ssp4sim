@@ -115,32 +115,33 @@ def resolve_test_root(ssp_root: Path) -> Path:
             [
                 "0, SuT.edrive_mass.damper.d, 0.001000",
                 "0, SuT.edrive_mass.inertia.J, 0.002000",
-                "0, SuT.emachine_model.emf.k, 0.010000",
-                "0, SuT.emachine_model.resistor.R, 1.000000",
+                "0, SuT.emachine_model.emf.k, 0.100000",
+                "0, SuT.emachine_model.resistor.R, 0.500000",
                 "0, stimuli_model.Voltage_step.height, 12.000000",
                 "0, stimuli_model.MLoad.k, -0.500000",
             ],
             None,
-            marks=pytest.mark.xfail(
-                reason="Unsupported hierarchical or unresolved SSP connection: stimuli_model -> SuT"
-            ),
             id="dcmotor_nested/baseline",
         ),
         pytest.param(
             REFERENCE_SSP_ROOT / "signal_nested_parameter_bindings" / "baseline",
             None,
             Path("resources") / "signal_nested_parameter_bindings_final_values.ssv",
-            marks=pytest.mark.xfail(
-                reason="Nested system connections not supported: simulation crashes during init() "
-                       "with 'System level connections are not supported as of now'"
-            ),
-            id="signal_nested_parameter_bindings/baseline (xfail - nested systems)",
+            id="signal_nested_parameter_bindings/baseline",
         ),
     ],
 )
 def test_reference_ssp_applies_parameter_set_variants(
     ssp_root: Path, expected_lines: list[str] | None, ssv_rel_path: Path | None, tmp_path: Path
 ) -> None:
+    """Description: For each fixture variant, verify start_values.csv contains
+    expected parameter values.
+    Rationale: Parameter binding correctness across all binding patterns (inline,
+    external, SSV, SSM, nested).
+    Creep flag: dcmotor_nested uses SOURCE_SSP_ROOT vs REFERENCE_SSP_ROOT (two
+    fixture trees). signal_nested_parameter_bindings uses a different assertion
+    path (SSV file comparison) hidden inside the same parametrized test.
+    """
     tmp_path = resolve_test_root(ssp_root)
     workdir = run_reference_ssp(ssp_root, tmp_path)
 

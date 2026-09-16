@@ -1,0 +1,38 @@
+{
+  "simulation": {
+    "ssp": "/home/eriro/pwa/2_work/ssp4sim/build/python_high/signal_sine_gain_add/baseline/signal_sine_gain_add/baseline/ssp",
+    "ssd": "SystemStructure.ssd",
+    "start_time": 0.0,
+    "stop_time": 1.0,
+    "timestep": 0.001,
+    "tolerance": 0.0001,
+    "realtime": false,
+    "working_dir": "./wd/signal_sine_gain_add/baseline",
+    "executor": {
+      "method": "jacobi",
+      "thread_pool_workers": 5,
+      "forward_derivatives": true,
+      "jacobi": {
+        "parallel": true,
+        "method": 1
+      },
+      "seidel": {
+        "parallel": false
+      }
+    },
+    "recording": {
+      "csv": {
+        "enable": true,
+        "interval": 0.0
+      },
+      "wait_for": true
+    },
+    "log": {
+      "fmu": true,
+      "level_terminal": "info",
+      "level_file": "info",
+      "level_json": "info",
+      "level_cutelog": "tracel1"
+    }
+  }
+}

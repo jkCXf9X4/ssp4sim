@@ -84,14 +84,36 @@ For CLI and Python invocation examples, see [Usage](usage.md).
 | Key | Type | Required | Default | Supported values / behavior |
 |---|---|---|---|---|
 | `simulation.executor.forward_derivatives` | `bool` | No | `true` | Enables derivative forwarding on model connections. |
-| `simulation.executor.method` | `string` | No | `jacobi` | `jacobi`, `seidel`, `custom_delay`, `custom_delay_partial`. |
+| `simulation.executor.method` | `string` | No | `jacobi` | `jacobi`, `seidel`, `custom_delay`, `custom_delay_partial`, `la2` (legacy alias `loop_aware`). `parallel_seidel` is **not** implemented and throws at config selection. |
 | `simulation.executor.thread_pool_workers` | `int` | No | `5` | Used by some parallel Jacobi modes. |
 | `simulation.executor.sub_step` | `double` | No | `simulation.timestep` | Seconds; used by executors that sub-step. |
 | `simulation.executor.jacobi.parallel` | `bool` | No | `false` | If `true`, uses a parallel Jacobi implementation. |
 | `simulation.executor.jacobi.method` | `int` | No | `1` | `1` = TBB, `2` = spin pool, `3` = futures. |
-| `simulation.executor.seidel.parallel` | `bool` | No | `false` | If `true`, uses `ParallelSeidel`; else `SerialSeidel`. |
+| `simulation.executor.seidel.parallel` | `bool` | No | `false` | If `true`, selects `ParallelSeidel`; **not implemented** — throws at config selection. Else `SerialSeidel`. |
+| `simulation.executor.la2.iterations` | `int` | No | SCC node count | Number of equal sub-steps the `la2` executor takes per macro step inside each loop SCC when `mode` is `linear`. Defaults to the SCC size (`1` = no sub-step relaxation). Nested (loop-within-loop) SCCs need a higher count because their feedback path passes through the inner loop nodes as well; the relaxation rate (Jacobi spectral radius) tightens with more iterations. Ignored in `factor` mode. |
+| `simulation.executor.la2.mode` | `string` | No | `linear` | How the macro step is subdivided for a loop SCC: `linear` = `iterations` equal sub-steps; `factor` = sub-steps shrink by `simulation.executor.la2.factor` until the remaining time is at or below `simulation.executor.la2.threshold`, then the remaining step is taken whole. Both modes only advance time (models cannot be reset), so the loop relaxes as a moving wavefront toward the macro-step boundary. The scheduling guarantees the macro interval `[0, end]` is fully covered (the last sub-step covers the tail). Legacy mode aliases: `fixed` → `linear`, `geometric` → `factor`. |
+| `simulation.executor.la2.factor` | `double` | No | `0.8` | Sub-step decay factor in `(0, 1)` used when `mode` is `factor`: each sub-step covers `factor` of the remaining time. Smaller values concentrate relaxation closer to the macro-step end; zero-length sub-steps are dropped. |
+| `simulation.executor.la2.threshold` | `double` | No | `0.0` | Seconds; used when `mode` is `factor`. Shrinking sub-steps stop once the remaining time is at or below this cutoff, and the rest of the macro step is simulated as one final sub-step. `0` (default) shrinks until the rounded sub-step ends stop advancing. |
+| `simulation.executor.la2.parallel` | `bool` | No | `false` | If `true`, the `la2` outer Gauss-Seidel executor is `ParallelSeidel` instead of `SerialSeidel`. `ParallelSeidel` is **not implemented** yet, so this throws during `ExecutorBuilder` assembly until the stub lands. |
 
 Notes:
+- All `simulation.executor.*` keys are parsed exactly once, centrally, by
+  `ssp4sim::ExecutorOptions::load()` (called from the `SharedConfig`
+  constructor in `lib/public_include/shared_config.hpp`); `simulation.realtime`
+  (paces the outer `MacroExecutor` macro steps), `simulation.tolerance`,
+  `simulation.executor.forward_derivatives`, `simulation.log.fmu` and the
+  experiment times (`simulation.start_time` / `simulation.timestep` /
+  `simulation.stop_time`, owned by `ssp4sim::FmuModelConfig`) are parsed in the
+  same `SharedConfig` constructor. Options are nested and passed through
+  directly: `SharedConfig::executor.la2` is forwarded unchanged to the
+  config-free `make_la2_stack(nodes, La2Options)` factory
+  (`executor/loop_aware/la2_builder.hpp`) for the `la2` (and legacy
+  `loop_aware`) method, and `SharedConfig::fmu` is forwarded unchanged to the
+  model layer via `GraphBuilder`. Executors and models are constructed from
+  these typed values (constructor injection) and never read the global
+  `utils::Config`; `ExecutorBuilder` resolves the single matching registered
+  variant from the whole config set (`options.method` plus the per-family
+  flags) — no per-family branching.
 - Unknown `simulation.executor.method` throws runtime error.
 - Unknown `simulation.executor.jacobi.method` throws runtime error.
 
@@ -120,7 +142,7 @@ Notes:
 
 Logging level values are passed through Quill's `loglevel_from_string()`.
 OpenTelemetry is the distributed observability tier and is documented in
-[OD-005](../product-breakdown/05-operation/decisions/OD-005.md); it is not yet
+[OD-005](../breakdown/05-operation/decisions/OD-005.md); it is not yet
 part of the current JSON config surface.
 Supported values are case-insensitive:
 

@@ -185,12 +185,7 @@ def run_reference_ssp(ssp_root: Path, tmp_path: Path) -> Path:
 
 
 def assert_start_values_match_ssv(start_values_text: str, ssv_path: Path) -> None:
-    """Assert that every parameter in the SSV file appears in start_values.csv text.
-
-    Both artifacts describe the same resolved parameter state after a simulation run.
-    The SSV file is the reference; start_values.csv is the simulation output.
-    When nested system traversal is added to the graph builder, running this fixture
-    should produce a start_values.csv whose lines match all entries in the SSV file.
+    """Asserts that the produced start_values.csv lines match all entries in the SSV file (nested-system start-value propagation is not yet supported; see IMP-042).
     """
     tree = ET.parse(str(ssv_path))
     root = tree.getroot()

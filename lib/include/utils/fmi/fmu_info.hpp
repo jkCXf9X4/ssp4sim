@@ -1,0 +1,49 @@
+#pragma once
+
+
+
+#include "fmi4c_adapter.hpp"
+
+// #include "utils/map.hpp"
+
+#include "ssp4cpp/fmu.hpp"
+#include "ssp4cpp/utils/log.hpp"
+
+// #include <map>
+// #include <memory>
+#include <string>
+
+namespace ssp4cpp
+{
+    class Ssp;
+    class Fmu;
+}
+
+namespace ssp4cpp::fmi2::md
+{
+    struct fmi2ModelDescription;
+}
+
+namespace ssp4sim::handler
+{
+    // using namespace std;
+
+    struct FmuInfo
+    {
+        std::string system_name;
+        std::string model_name;
+
+        // Borrowing
+        ssp4cpp::Fmu *fmu;
+        ssp4cpp::fmi2::md::fmi2ModelDescription *model_description;
+
+        // Owning
+        std::unique_ptr<FmuInstance> fmi_instance;
+        std::unique_ptr<CoSimulationModel> model;
+
+        FmuInfo(std::string name, ssp4cpp::Fmu *fmu);
+        // can not be copied, has unique pointers
+        FmuInfo(const FmuInfo &) = delete;
+        FmuInfo &operator=(const FmuInfo &) = delete;
+    };
+}

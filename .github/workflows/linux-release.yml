@@ -67,17 +67,21 @@ jobs:
                 WHEEL_VERSION="0.0.0.dev$(date +%Y%m%d)+$(git rev-parse --short HEAD)"
               fi
               WHEEL_ALIAS_VERSION="0.0.0.dev0"
+              DIST_DIR="${PWD}/dist"
 
               for VERSION in "${WHEEL_VERSION}" "${WHEEL_ALIAS_VERSION}"; do
-                cp -f resources/scripts/release/setup_release.py.template dist/ssp4sim/python/setup_release.py
-                sed -i "s|__WHEEL_VERSION__|${VERSION}|g" dist/ssp4sim/python/setup_release.py
+                WHEEL_BUILD_DIR="$(mktemp -d /tmp/pyssp4sim-wheel.XXXXXX)"
+                cp -f resources/scripts/release/setup_release.py.template "${WHEEL_BUILD_DIR}/setup_release.py"
+                sed -i "s|__WHEEL_VERSION__|${VERSION}|g" "${WHEEL_BUILD_DIR}/setup_release.py"
+                cp -r dist/ssp4sim/python/pyssp4sim "${WHEEL_BUILD_DIR}/pyssp4sim"
 
                 (
-                  cd dist/ssp4sim/python
+                  cd "${WHEEL_BUILD_DIR}"
                   python3 setup_release.py bdist_wheel \
-                    --dist-dir ../../ \
+                    --dist-dir "${DIST_DIR}" \
                     --plat-name linux_x86_64
                 )
+                rm -rf "${WHEEL_BUILD_DIR}"
               done
             '
       # TODO: break out into release script for reuse 

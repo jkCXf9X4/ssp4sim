@@ -1,9 +1,9 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-#include "signal/sinks/sqlite_recorder_sink.hpp"
+#include "simulation/signal/sinks/sqlite_recorder_sink.hpp"
 
-#include "utils/time.hpp"
+#include "utils/time/time.hpp"
 
 #include <sqlite3.h>
 
@@ -162,7 +162,7 @@ namespace
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Consumer.output");
-        storage.add("Consumer.value", DataType::real, 1);
+        storage.add_variable("Consumer.value", DataType::real, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);
@@ -184,6 +184,11 @@ namespace
     }
 }
 
+// ---------------------------------------------------------------------------
+// Description: Writes mixed-type events (real, int, bool, string); verifies
+//              via SQL SELECT queries
+// Rationale:   Core SQLite recording contract with all FMI data types
+// ---------------------------------------------------------------------------
 TEST_CASE("T-001: SQLite sink writes events with mixed types and verifies via SELECT", "[DataRecorder][SQLite]")
 {
     const auto db_path = test_path("test_sqlite_recorder.sqlite");
@@ -192,14 +197,14 @@ TEST_CASE("T-001: SQLite sink writes events with mixed types and verifies via SE
     SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
-    storage.add("Consumer.CPUtime", DataType::real, 1);
-    storage.add("Consumer.EventCounter", DataType::integer, 1);
-    storage.add("Consumer.enabled", DataType::boolean, 1);
-    storage.add("Consumer.label", DataType::string, 1);
+    storage.add_variable("Consumer.CPUtime", DataType::real, 1);
+    storage.add_variable("Consumer.EventCounter", DataType::integer, 1);
+    storage.add_variable("Consumer.enabled", DataType::boolean, 1);
+    storage.add_variable("Consumer.label", DataType::string, 1);
     storage.allocate();
 
     SignalStorage aux_storage(2, "Aux.output");
-    aux_storage.add("Aux.value", DataType::real, 1);
+    aux_storage.add_variable("Aux.value", DataType::real, 1);
     aux_storage.allocate();
 
     sink.on_storage_added(&storage);
@@ -273,6 +278,10 @@ TEST_CASE("T-001: SQLite sink writes events with mixed types and verifies via SE
     remove_if_exists(db_path);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies PRAGMA journal_mode=wal is active
+// Rationale:   WAL mode required for concurrent read/write access
+// ---------------------------------------------------------------------------
 TEST_CASE("T-002: SQLite sink verifies PRAGMA journal_mode=wal", "[DataRecorder][SQLite]")
 {
     const auto db_path = test_path("test_sqlite_recorder_wal.sqlite");
@@ -282,7 +291,7 @@ TEST_CASE("T-002: SQLite sink verifies PRAGMA journal_mode=wal", "[DataRecorder]
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Test.model");
-        storage.add("Test.value", DataType::real, 1);
+        storage.add_variable("Test.value", DataType::real, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);
@@ -323,6 +332,12 @@ TEST_CASE("T-002: SQLite sink verifies PRAGMA journal_mode=wal", "[DataRecorder]
     remove_if_exists(db_path);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies ssp4sim_run_counter exists with run_id=1; no
+//              ssp4sim_metadata table
+// Rationale:   Run counter enables multi-run databases; metadata absence
+//              is a design choice that must be enforced
+// ---------------------------------------------------------------------------
 TEST_CASE("T-003: SQLite run counter and no metadata table", "[DataRecorder][SQLite]")
 {
     const auto db_path = test_path("test_sqlite_recorder_run_counter.sqlite");
@@ -332,7 +347,7 @@ TEST_CASE("T-003: SQLite run counter and no metadata table", "[DataRecorder][SQL
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
         SignalStorage storage(1, "Consumer.output");
-        storage.add("Consumer.value", DataType::real, 1);
+        storage.add_variable("Consumer.value", DataType::real, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);
@@ -377,6 +392,11 @@ TEST_CASE("T-003: SQLite run counter and no metadata table", "[DataRecorder][SQL
     remove_if_exists(db_path);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Two sequential runs; verifies both tables exist with correct
+//              data and run_id=2
+// Rationale:   Shared-file multi-run mode is key for batch simulation workflows
+// ---------------------------------------------------------------------------
 TEST_CASE("T-004: SQLite sink appends runs to existing database (shared-file mode)", "[DataRecorder][SQLite]")
 {
     const auto db_path = test_path("test_sqlite_recorder_append.sqlite");
@@ -416,6 +436,11 @@ TEST_CASE("T-004: SQLite sink appends runs to existing database (shared-file mod
     remove_if_exists(db_path);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Sends event from unregistered storage; verifies no crash and
+//              known storage still works
+// Rationale:   Robustness — unregistered storages silently ignored
+// ---------------------------------------------------------------------------
 TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecorder][SQLite]")
 {
     const auto db_path = test_path("test_sqlite_recorder_unknown.sqlite");
@@ -424,7 +449,7 @@ TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecor
     SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
-    storage.add("Consumer.value", DataType::real, 1);
+    storage.add_variable("Consumer.value", DataType::real, 1);
     storage.allocate();
 
     sink.on_storage_added(&storage);
@@ -433,7 +458,7 @@ TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecor
 
     // Create an event referencing a storage that was never registered
     SignalStorage unknown_storage(1, "Unknown.output");
-    unknown_storage.add("Unknown.value", DataType::real, 1);
+    unknown_storage.add_variable("Unknown.value", DataType::real, 1);
     unknown_storage.allocate();
 
     const auto timestamp = 1ULL * sim_time::nanoseconds_per_second;
@@ -478,6 +503,13 @@ TEST_CASE("T-005: Unknown storage event does not crash SQLite sink", "[DataRecor
     remove_if_exists(db_path);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Writes 10010 events; concurrent reader verifies >=10000
+//              committed rows visible (WAL concurrency)
+// Rationale:   WAL mode enables concurrent read/write
+// Creep flag:  10010 events needed to cross 10000-event commit boundary;
+//              count is tied to sink's internal batch size
+// ---------------------------------------------------------------------------
 TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQLite]")
 {
     const auto db_path = test_path("test_sqlite_recorder_concurrent.sqlite");
@@ -491,7 +523,7 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", db_path);
 
     SignalStorage storage(1, "Consumer.output");
-    storage.add("Consumer.value", DataType::real, 1);
+    storage.add_variable("Consumer.value", DataType::real, 1);
     storage.allocate();
 
     sink.on_storage_added(&storage);
@@ -499,7 +531,7 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     sink.start();
 
     // Write enough events to ensure at least one commit boundary is crossed.
-    for (int i = 0; i < 10050; ++i)
+    for (int i = 0; i < 10010; ++i)
     {
         const auto timestamp = static_cast<std::uint64_t>(i + 1) * sim_time::nanoseconds_per_second;
         const std::size_t area = storage.push(timestamp);
@@ -551,6 +583,10 @@ TEST_CASE("T-006: Concurrent read while SQLite sink writes", "[DataRecorder][SQL
     remove_if_exists(db_path);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Writes 10 mixed-type events; verifies 10 rows in SQLite
+// Rationale:   Row-count integrity — every event produces exactly one row
+// ---------------------------------------------------------------------------
 TEST_CASE("T-007: Row-count match for SQLite events", "[DataRecorder][SQLite]")
 {
     const auto sqlite_path = test_path("test_row_count_match.sqlite");
@@ -561,10 +597,10 @@ TEST_CASE("T-007: Row-count match for SQLite events", "[DataRecorder][SQLite]")
         SqliteWALRecorderSink sink(fs::temp_directory_path(), "test-uuid", sqlite_path);
 
         SignalStorage storage(1, "Consumer.output");
-        storage.add("Consumer.CPUtime", DataType::real, 1);
-        storage.add("Consumer.EventCounter", DataType::integer, 1);
-        storage.add("Consumer.enabled", DataType::boolean, 1);
-        storage.add("Consumer.label", DataType::string, 1);
+        storage.add_variable("Consumer.CPUtime", DataType::real, 1);
+        storage.add_variable("Consumer.EventCounter", DataType::integer, 1);
+        storage.add_variable("Consumer.enabled", DataType::boolean, 1);
+        storage.add_variable("Consumer.label", DataType::string, 1);
         storage.allocate();
 
         sink.on_storage_added(&storage);

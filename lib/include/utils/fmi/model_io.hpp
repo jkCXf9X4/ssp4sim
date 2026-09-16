@@ -1,0 +1,24 @@
+#pragma once
+
+#include "ssp4cpp/schema/fmi2/FMI2_Enums.hpp"
+
+#include "utils/fmi/fmi4c_adapter.hpp"
+
+#include "ssp4sim_definitions.hpp"
+
+#include <cstddef>
+#include <cstdint>
+
+namespace ssp4sim::utils
+{
+    void read_from_model_(types::DataType t,
+                          handler::CoSimulationModel &model,
+                          uint64_t value_reference,
+                          void *out);
+
+    void write_to_model_(types::DataType t,
+                         handler::CoSimulationModel &model,
+                         uint64_t &value_reference,
+                         void *data);
+
+}

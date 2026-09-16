@@ -2,9 +2,9 @@
 <!-- Layer: 00-intent, 01-product, 05-operation, 03-implementation -->
 
 
-SSP4SIM is a C++23 simulation engine for SSP archives with local database result artifacts and CSV export. See [product-breakdown/00-intent/purpose.md](product-breakdown/00-intent/purpose.md) for the full project purpose.
+SSP4SIM is a C++23 simulation engine for SSP archives with local database result artifacts and CSV export. See [breakdown/00-intent/purpose.md](breakdown/00-intent/purpose.md) for the full project purpose.
 
-See [product-breakdown/01-product/capabilities.md](product-breakdown/01-product/capabilities.md) for the full capabilities list.
+See [breakdown/01-product/capabilities.md](breakdown/01-product/capabilities.md) for the full capabilities list.
 
 Builds upon the [SSP4CPP](https://github.com/jkCXf9X4/ssp4cpp) XML deserializer
 and uses [Quill](https://github.com/odygrd/quill) for logging.
@@ -29,7 +29,7 @@ sim.simulate()
 
 ## Documentation
 
-For structured per-layer documentation, see the [product-breakdown](product-breakdown/) directory.
+For structured per-layer documentation, see the [breakdown](breakdown/) directory.
 
 - [Documentation](docs/README.md): installation, usage, configuration, and development guides.
 - [Installation](docs/installation.md): release tarball and wheel consumption.

@@ -9,16 +9,28 @@ target_include_directories(
   PUBLIC ${CMAKE_CURRENT_LIST_DIR}/public_include
 
   PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include
-         ${CMAKE_CURRENT_LIST_DIR}/include/execution
-         ${CMAKE_CURRENT_LIST_DIR}/include/graph
-         ${CMAKE_CURRENT_LIST_DIR}/include/graph/analysis
-         ${CMAKE_CURRENT_LIST_DIR}/include/handler
-         ${CMAKE_CURRENT_LIST_DIR}/include/model
-         ${CMAKE_CURRENT_LIST_DIR}/include/schema_extensions
-         ${CMAKE_CURRENT_LIST_DIR}/include/utils
-         ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
-         ${CMAKE_CURRENT_LIST_DIR}/include/signal
-         )
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser/elements
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/1_ssp_parser/schema_extensions
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis_graph
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/2_analysis_graph/elements
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation_graph
+          ${CMAKE_CURRENT_LIST_DIR}/include/pre/3_simulation_graph/elements
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/fmi
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/graph
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/io
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/memory
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/primitives
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/thread_pool
+          ${CMAKE_CURRENT_LIST_DIR}/include/utils/time
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/executor
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/resolver
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal
+          ${CMAKE_CURRENT_LIST_DIR}/include/simulation/signal/sinks
+          )
 
 # The library is linked into shared modules (Python extension), so force PIC.
 set_target_properties(ssp4sim_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)

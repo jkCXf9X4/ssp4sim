@@ -1,0 +1,129 @@
+#pragma once
+
+#include "invocable.hpp"
+#include "resolver/resolver_common.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <vector>
+
+namespace ssp4sim::graph
+{
+    class FmuModel;
+}
+
+namespace ssp4sim::scheduling
+{
+    using ssp4sim::graph::Invocable;
+
+    /// Resolver. Owns the shared machinery:
+    ///   - per-model vectors of incoming edges, index-aligned with model->connections;
+    ///   - per-producer committed frontiers (detail::ModelStatus);
+    ///   - per-edge AccessMode stamping, mark_committed (D17) and the
+    ///     copy_model_inputs read path.
+    /// Resolution is per (model, connection): every edge is resolved by the shared
+    /// detail::resolve_edge dispatch, which consults the edge's transparent
+    /// contract (rules) together with its producer frontier (status) in one lookup
+    /// via the protected `edge()` accessor. The sampling policy for an executor
+    /// family is decided at construction: the constructor stamps every wired edge
+    /// with `default_mode`, and graph-aware schedulers override individual edges
+    /// via `stamp_edge_mode()`.
+    class DataAccessResolver
+    {
+    public:
+        /// Sentinel for an unlinked edge / unknown (model, connection): no
+        /// registered producer (uc-14).
+        static constexpr std::size_t no_producer = std::size_t(-1);
+
+        /// Build per-model edge rule tables from the graph nodes. Only FmuModel
+        /// nodes are registered (keyed by their Node id). Wired edges are
+        /// stamped with `default_mode`; unlinked edges (source storage without a
+        /// registered owner) are forced to AccessMode::Latest so every policy sees
+        /// the stale-only intent (they also resolve invalid: D2/D13).
+        DataAccessResolver(std::vector<Invocable *> nodes,
+                           AccessMode default_mode = AccessMode::StartTime);
+
+        virtual ~DataAccessResolver() noexcept;
+
+        /// Advance one producer's committed frontier. Called ONLY after the
+        /// producer's output bytes are fully visible (D17 release-store). No-op
+        /// for producers the resolver has not registered.
+        void mark_committed(std::size_t model_id,
+                            std::uint64_t output_time,
+                            std::size_t area);
+
+        /// The entire read path for one model: for each incoming connection, call
+        /// the resolution hook and copy the source value (and forwarded
+        /// derivatives) into the target's input area. Intentionally cheap per
+        /// connection; the resolver's own edges are index-aligned with
+        /// target->connections.
+        void copy_model_inputs(ssp4sim::graph::FmuModel *target,
+                               std::size_t target_area,
+                               std::uint64_t step_start,
+                               std::uint64_t step_end);
+
+    protected:
+        /// "What to read" for one incoming edge of one model. The `(model,
+        /// connection)` pair identifies the edge; its transparent contract and
+        /// producer frontier are reached via `edge()` and resolved by the shared
+        /// per-mode recipe `detail::resolve_edge`. The only policy knob is the
+        /// per-edge AccessMode, fixed at construction (default stamping + graph-aware
+        /// overrides). No storage, no I/O, no mutation.
+        ResolvedRead resolve(std::size_t model_id,
+                             std::size_t connection_id,
+                             std::uint64_t step_start,
+                             std::uint64_t step_end);
+
+        /// The producer (a Node id) feeding one registered edge;
+        /// `no_producer` when the edge is unlinked or the (model, connection)
+        /// is unknown. Backs graph-aware edge stamping.
+        std::size_t edge_source_producer(std::size_t model_id,
+                                         std::size_t connection_id);
+
+        /// One registered edge's resolution view: the transparent per-edge
+        /// contract (wire delay/time_offset + sampling intent) together with the
+        /// source producer's committed frontier, in a single bundle.
+        struct EdgeAccess
+        {
+            const EdgeAccessRules *rules = nullptr;      // the edge's transparent contract
+            const detail::ModelStatus *status = nullptr; // the producer's committed frontier
+        };
+
+        /// Single-lookup accessor backing resolve(): returns the resolution view
+        /// for one (model, connection). Unknown inputs yield neutral Latest rules
+        /// against a never-committed frontier (D2/D13).
+        EdgeAccess edge(std::size_t model_id, std::size_t connection_id);
+
+        /// Override one registered edge's sampling mode (graph-structure resolvers
+        /// use this after the uniform default). No-op for unknown model/connection.
+        void stamp_edge_mode(std::size_t model_id,
+                             std::size_t connection_id,
+                             AccessMode mode);
+
+    private:
+        // Opaque implementation state (defined in data_access_resolver.cpp). Raw
+        // pointer (not unique_ptr) so the header stays complete-type-free.
+        struct State;
+        State *s_ = nullptr;
+    };
+}
+
+namespace ssp4sim::graph
+{
+    using ssp4sim::scheduling::DataAccessResolver;
+
+    /// Assembly-side resolver installation (shared by `make_la2_stack` and the
+    /// flat builder factories): install `resolver` on every FmuModel in
+    /// `nodes`. Executors are constructed without a resolver — the assembler
+    /// derives it and installs it here, so no executor constructor has
+    /// referential knowledge of the read policy. The models own the resolver
+    /// (FmuModel::access_resolver) for the pipeline's lifetime.
+    void install_resolver(const std::vector<std::shared_ptr<Invocable>> &nodes,
+                          std::shared_ptr<DataAccessResolver> resolver);
+
+    /// Derive a flat DataAccessResolver over `nodes` stamped with the family's
+    /// `mode` (Seidel: EndTime; Jacobi / custom delay: StartTime) and install
+    /// it via `install_resolver`.
+    void install_flat_resolver(const std::vector<std::shared_ptr<Invocable>> &nodes,
+                               ssp4sim::scheduling::AccessMode mode);
+}

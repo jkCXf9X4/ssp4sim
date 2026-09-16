@@ -1,6 +1,6 @@
 #pragma once
 
-#include "utils/time.hpp"
+#include "utils/time/time.hpp"
 
 #include <nlohmann/json_fwd.hpp>
 #include <stdexcept>

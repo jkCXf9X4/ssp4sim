@@ -103,6 +103,22 @@ After entering the container shell, run the same preset and build commands
 shown in the recommended path. Keep using the repository preset when adding
 cache options so the build continues to use the vcpkg toolchain.
 
+## ccache (compile cache)
+
+Local and container builds use `ccache` as the compiler launcher **by default**
+whenever `ccache` is on `PATH`. This makes rebuilds of the per-test unit
+binaries (which recompile shared cone sources repeatedly) and clean rebuilds
+much faster. Disable it for a build tree with `-DCCACHE=OFF`:
+
+```bash
+cmake --preset=vcpkg -DCCACHE=OFF
+```
+
+The cache lives in `~/.cache/ccache` (or wherever `CCACHE_DIR` points). Inside
+the container helpers the cache uses the container's throwaway home, so each
+container starts cold; ccache still speeds up repeated builds within a single
+container session. The host cache and the container never share storage.
+
 ## Custom Build Directory
 
 If you want the build tree somewhere other than `./build`, configure CMake with
@@ -132,10 +148,23 @@ cmake --preset=vcpkg -DSSP4SIM_LOG_HOT_PATH=OFF
 
 ## Enable C++ Tests
 
-See tests/README.md for test-running caveats.
+See tests/README.md for the test architecture and tier matrix.
 
 Enable the C++ test target by adding `-DSSP4SIM_BUILD_TEST=ON` to the preset
-command, then rebuild and run `./build/tests/lib/ssp4sim_tests`.
+command, then rebuild. C++ tests come in two shapes: per-test unit binaries
+(`test_<name>`, each built from its own include cone under `lib/include/**`) and
+the retained integration binary `ssp4sim_tests`. CTest is the canonical runner:
+
+```bash
+ctest --test-dir build --output-on-failure -j
+```
+
+Targeted per-binary build and run:
+
+```bash
+ninja -C build test_ring_buffer && ./build/tests/lib/test_ring_buffer
+tests/run_unit.sh --tier T1          # T1 kernel/units, T2 parser, T3 analysis/graph
+```
 
 Some test fixtures are stored as expanded FMU/SSP directories instead of `.fmu`/`.ssp` archives to make resource diffs and version handling easier. Tests should accept either layout when resolving fixture paths.
 

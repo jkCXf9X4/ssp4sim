@@ -1,11 +1,10 @@
 #include <catch.hpp>
 #include "ssp4cpp/utils/log.hpp"
 
-#include "signal/sinks/csv_recorder_sink.hpp"
-#include "utils/time.hpp"
-#include "utils/allocator.hpp"
-#include "signal/recorder.hpp"
-#include "utils/model.hpp"
+#include "simulation/signal/sinks/csv_recorder_sink.hpp"
+#include "utils/time/time.hpp"
+#include "utils/memory/allocator.hpp"
+#include "simulation/signal/recorder.hpp"
 
 #include "ssp4sim_definitions.hpp"
 
@@ -75,7 +74,7 @@ public:
     {
         events.push_back(event);
         storage_names.push_back(event.storage->name);
-        if (event.buffer && event.storage->mem_size >= sizeof(double))
+        if (event.buffer && event.storage->area_byte_size >= sizeof(double))
         {
             double value = 0.0;
             std::memcpy(&value, event.buffer, sizeof(double));
@@ -88,6 +87,11 @@ public:
     }
 };
 
+// ---------------------------------------------------------------------------
+// Description: Verifies CSV file creation on construction and persistence
+//              after destruction
+// Rationale:   File lifecycle — recorder must create files and not delete them
+// ---------------------------------------------------------------------------
 TEST_CASE("DataRecorder initialization and cleanup", "[DataRecorder]")
 {
     // Use a temporary filename for testing
@@ -109,6 +113,10 @@ TEST_CASE("DataRecorder initialization and cleanup", "[DataRecorder]")
     fs::remove(test_filename);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies storage registration count and CSV header line
+// Rationale:   CSV header must match registered signal names
+// ---------------------------------------------------------------------------
 TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
 {
     const fs::path test_filename = project_root / "build" / "test_recorder_headers.csv";
@@ -118,8 +126,8 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage storage(2, "signals");
-    storage.add("signals.real", DataType::real, 1);
-    storage.add("signals.int", DataType::integer, 1);
+    storage.add_variable("signals.real", DataType::real, 1);
+    storage.add_variable("signals.int", DataType::integer, 1);
     storage.allocate();
 
     recorder.add_storage(&storage);
@@ -135,6 +143,10 @@ TEST_CASE("DataRecorder configures trackers and headers", "[DataRecorder]")
     fs::remove(test_filename);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies CSV contains expected values for real and int signals
+// Rationale:   Core recording contract — data in storage appears in CSV output
+// ---------------------------------------------------------------------------
 TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecorder]")
 {
     const fs::path test_filename = project_root / "build" / "test_recorder_rows.csv";
@@ -144,8 +156,8 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage storage(2, "signals");
-    storage.add("signals.temperature", DataType::real, 1);
-    storage.add("signals.mode", DataType::integer, 0);
+    storage.add_variable("signals.temperature", DataType::real, 1);
+    storage.add_variable("signals.mode", DataType::integer, 0);
     storage.allocate();
 
     recorder.add_storage(&storage);
@@ -170,6 +182,10 @@ TEST_CASE("DataRecorder writes new rows when storages provide data", "[DataRecor
     fs::remove(test_filename);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies multi-storage data appears in single CSV row
+// Rationale:   Coalescing required for time-aligned output
+// ---------------------------------------------------------------------------
 TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorder]")
 {
     const fs::path test_filename = project_root / "build" / "test_recorder_multistorage.csv";
@@ -179,13 +195,13 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000));
 
     SignalStorage primary(2, "primary");
-    primary.add("primary.temperature", DataType::real, 1);
-    primary.add("primary.mode", DataType::integer, 0);
+    primary.add_variable("primary.temperature", DataType::real, 1);
+    primary.add_variable("primary.mode", DataType::integer, 0);
     primary.allocate();
 
     SignalStorage secondary(2, "secondary");
-    secondary.add("secondary.pressure", DataType::real, 1);
-    secondary.add("secondary.index", DataType::integer, 2);
+    secondary.add_variable("secondary.pressure", DataType::real, 1);
+    secondary.add_variable("secondary.index", DataType::integer, 2);
     secondary.allocate();
 
     recorder.add_storage(&primary);
@@ -236,6 +252,10 @@ TEST_CASE("DataRecorder coalesces updates from multiple storages", "[DataRecorde
     fs::remove(test_filename);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies interval-based recording skips intra-interval data
+// Rationale:   Interval recording is a performance optimization
+// ---------------------------------------------------------------------------
 TEST_CASE("DataRecorder respects CSV recording interval", "[DataRecorder]")
 {
     const fs::path test_filename = project_root / "build" / "test_recorder_interval.csv";
@@ -245,11 +265,11 @@ TEST_CASE("DataRecorder respects CSV recording interval", "[DataRecorder]")
     recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, sim_time::nanoseconds_per_second));
 
     SignalStorage primary(1, "primary");
-    primary.add("primary.temperature", DataType::real, 1);
+    primary.add_variable("primary.temperature", DataType::real, 1);
     primary.allocate();
 
     SignalStorage secondary(1, "secondary");
-    secondary.add("secondary.pressure", DataType::real, 1);
+    secondary.add_variable("secondary.pressure", DataType::real, 1);
     secondary.allocate();
 
     recorder.add_storage(&primary);
@@ -303,6 +323,12 @@ TEST_CASE("DataRecorder respects CSV recording interval", "[DataRecorder]")
     fs::remove(test_filename);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies CollectingSink receives correct events with aligned
+//              buffers, correct pointers, timestamps, indices
+// Rationale:   Sink event dispatch is the extension point for custom backends
+// Creep flag:  Alignment checks are buffer-allocation implementation details
+// ---------------------------------------------------------------------------
 TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecorder]")
 {
     const fs::path test_filename = project_root / "build" / "test_recorder_sink_events.csv";
@@ -315,11 +341,11 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
     recorder.add_sink(std::move(sink));
 
     SignalStorage primary(2, "primary");
-    primary.add("primary.temperature", DataType::real, 1);
+    primary.add_variable("primary.temperature", DataType::real, 1);
     primary.allocate();
 
     SignalStorage secondary(2, "secondary");
-    secondary.add("secondary.pressure", DataType::real, 1);
+    secondary.add_variable("secondary.pressure", DataType::real, 1);
     secondary.allocate();
 
     recorder.add_storage(&primary);
@@ -347,13 +373,13 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
     REQUIRE(sink_ptr->events[0].timestamp == timestamp);
     REQUIRE(sink_ptr->events[0].recorder_storage_index == 0);
     REQUIRE(sink_ptr->events[0].buffer != nullptr);
-    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
+    CHECK(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->events[1].storage == &secondary);
     REQUIRE(sink_ptr->events[1].area == secondary_area);
     REQUIRE(sink_ptr->events[1].timestamp == timestamp);
     REQUIRE(sink_ptr->events[1].recorder_storage_index == 1);
     REQUIRE(sink_ptr->events[1].buffer != nullptr);
-    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
+    CHECK(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->first_values.size() == 2);
     REQUIRE(sink_ptr->first_values[0] == primary_temperature);
     REQUIRE(sink_ptr->first_values[1] == secondary_pressure);
@@ -363,6 +389,12 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
     fs::remove(test_filename);
 }
 
+// ---------------------------------------------------------------------------
+// Description: Verifies events pushed before start_recording() are dispatched
+//              after start_recording()
+// Rationale:   Event buffering required because storages may produce data
+//              before recorder is ready
+// ---------------------------------------------------------------------------
 TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten", "[DataRecorder]")
 {
     const fs::path test_filename = project_root / "build" / "test_recorder_stale_events.csv";
@@ -375,7 +407,7 @@ TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten"
     recorder.add_sink(std::move(sink));
 
     SignalStorage storage(1, "signals");
-    storage.add("signals.temperature", DataType::real, 1);
+    storage.add_variable("signals.temperature", DataType::real, 1);
     storage.allocate();
 
     recorder.add_storage(&storage);
@@ -403,13 +435,13 @@ TEST_CASE("DataRecorder buffers raw events before storage areas are overwritten"
     REQUIRE(sink_ptr->events[0].timestamp == stale_timestamp);
     REQUIRE(sink_ptr->events[0].recorder_storage_index == 0);
     REQUIRE(sink_ptr->events[0].buffer != nullptr);
-    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
+    CHECK(reinterpret_cast<std::uintptr_t>(sink_ptr->events[0].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->events[1].storage == &storage);
     REQUIRE(sink_ptr->events[1].area == latest_area);
     REQUIRE(sink_ptr->events[1].timestamp == latest_timestamp);
     REQUIRE(sink_ptr->events[1].recorder_storage_index == 0);
     REQUIRE(sink_ptr->events[1].buffer != nullptr);
-    REQUIRE(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
+    CHECK(reinterpret_cast<std::uintptr_t>(sink_ptr->events[1].buffer) % ssp4sim::utils::target_alignment == 0);
     REQUIRE(sink_ptr->first_values.size() == 2);
     REQUIRE(sink_ptr->first_values[0] == stale_temperature);
     REQUIRE(sink_ptr->first_values[1] == latest_temperature);

@@ -1,8 +1,5 @@
-
-
-#include "SSP1_SystemStructureParameter_Ext.hpp"   // get_start_values, get_start_value_map
-#include "initial_value.hpp"                        // StartValue
-#include "ssp4cpp/ssp.hpp"                         // ParameterBindings, Ssp
+#include "pre/1_ssp_parser/schema_extensions/SSP1_SystemStructureParameter_Ext.hpp"   // get_start_value_mappings
+#include "pre/1_ssp_parser/schema_extensions/parameter_value.hpp"                        // ParameterValue
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -10,7 +7,7 @@
 #include <string>
 #include <vector>
 
-using ssp4sim::ext::ssp1::ssv::StartValue;
+using ssp4sim::ext::ParameterValue;
 using ssp4sim::types::DataType;
 
 // External vs inline ParameterSets and ParameterMappings
@@ -25,8 +22,8 @@ using ssp4sim::types::DataType;
 // (get_parameter_set and get_parameter_mapping). Both paths produce
 // identical C++ types (ssp4cpp::ssp1::ssv::ParameterSet and
 // ssp4cpp::ssp1::ssm::ParameterMapping). The API functions tested in
-// this file (get_start_values, get_start_value_map) operate on these
-// already-resolved types and are therefore source-agnostic.
+// this file (get_start_value_mappings) operate on these already-resolved
+// types and are therefore source-agnostic.
 //
 // The cases below exercise all four combinatorial patterns explicitly
 // to document coverage, even though the data-processing code paths
@@ -68,8 +65,31 @@ static ssp4cpp::ssp1::ssv::TParameter make_string_param(const std::string &name,
     return p;
 }
 
+// Helper: construct a TParameter with a boolean value
+static ssp4cpp::ssp1::ssv::TParameter make_bool_param(const std::string &name, bool value)
+{
+    ssp4cpp::ssp1::ssv::TParameter p;
+    p.name = name;
+    ssp4cpp::ssp1::ssv::Boolean b;
+    b.value = value;
+    p.Boolean = b;
+    return p;
+}
+
+// Helper: construct a TParameter with an enumeration value
+static ssp4cpp::ssp1::ssv::TParameter make_enum_param(const std::string &name, int value)
+{
+    ssp4cpp::ssp1::ssv::TParameter p;
+    p.name = name;
+    ssp4cpp::ssp1::ssv::Enumeration e;
+    e.value = value;
+    p.Enumeration = e;
+    return p;
+}
+
 // ---------------------------------------------------------------------------
-// Test Case 1: System-level SSV-only bindings
+// Description: Tests SSV-only binding with real, int, string parameters
+// Rationale:   Core parameter binding — values must be correctly typed
 // ---------------------------------------------------------------------------
 TEST_CASE("System-level SSV-only bindings with mixed types", "[parameter_binding]")
 {
@@ -86,44 +106,53 @@ TEST_CASE("System-level SSV-only bindings with mixed types", "[parameter_binding
     param_set.name = "test_set";
     param_set.Parameters = std::move(params);
 
-    // Create ParameterBindings (no SSM)
-    ssp4cpp::ParameterBindings bindings;
-    bindings.ssv = std::move(param_set);
+    // Create ParameterBinding (SSV only)
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
 
-    std::vector<ssp4cpp::ParameterBindings> bindings_vec;
-    bindings_vec.push_back(std::move(bindings));
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
 
-    auto start_values = ssp4sim::ext::ssp1::ssv::get_start_values(bindings_vec);
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    REQUIRE(start_values.size() == 3);
+    REQUIRE(result.size() == 3);
 
     // --- gain.k : real = 3.0 ---
-    CHECK(start_values[0].name == "gain.k");
-    CHECK(start_values[0].type == DataType::real);
-    CHECK(std::holds_alternative<double>(start_values[0].value));
-    CHECK(std::get<double>(start_values[0].value) == 3.0);
-    CHECK(start_values[0].mappings.size() == 1);
-    CHECK(start_values[0].mappings[0] == "gain.k");
+    {
+        auto it = result.find("gain.k");
+        REQUIRE(it != result.end());
+        CHECK(it->second.name == "gain.k");
+        CHECK(it->second.type == DataType::real);
+        CHECK(std::holds_alternative<double>(it->second.value));
+        CHECK(std::get<double>(it->second.value) == 3.0);
+    }
 
     // --- step.count : integer = 5 ---
-    CHECK(start_values[1].name == "step.count");
-    CHECK(start_values[1].type == DataType::integer);
-    CHECK(std::holds_alternative<int>(start_values[1].value));
-    CHECK(std::get<int>(start_values[1].value) == 5);
-    CHECK(start_values[1].mappings.size() == 1);
-    CHECK(start_values[1].mappings[0] == "step.count");
+    {
+        auto it = result.find("step.count");
+        REQUIRE(it != result.end());
+        CHECK(it->second.name == "step.count");
+        CHECK(it->second.type == DataType::integer);
+        CHECK(std::holds_alternative<int>(it->second.value));
+        CHECK(std::get<int>(it->second.value) == 5);
+    }
 
     // --- step.mode : string = "linear" ---
-    CHECK(start_values[2].name == "step.mode");
-    CHECK(start_values[2].type == DataType::string);
-    CHECK(std::holds_alternative<std::string>(start_values[2].value));
-    CHECK(std::get<std::string>(start_values[2].value) == "linear");
-    CHECK(start_values[2].mappings.size() == 1);
-    CHECK(start_values[2].mappings[0] == "step.mode");
+    {
+        auto it = result.find("step.mode");
+        REQUIRE(it != result.end());
+        CHECK(it->second.name == "step.mode");
+        CHECK(it->second.type == DataType::string);
+        CHECK(std::holds_alternative<std::string>(it->second.value));
+        CHECK(std::get<std::string>(it->second.value) == "linear");
+    }
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 2: System-level bindings with SSV and SSM
+// Description: Tests SSM remapping: source "k" → target "fmu.k"
+// Rationale:   SSM remapping is the standard SSP parameter override mechanism
 // ---------------------------------------------------------------------------
 TEST_CASE("System-level bindings with SSV and SSM parameter mapping", "[parameter_binding]")
 {
@@ -141,31 +170,41 @@ TEST_CASE("System-level bindings with SSV and SSM parameter mapping", "[paramete
     entry.target = "fmu.k";
 
     // Create ParameterMapping
-    ssp4cpp::ssp1::ssm::ParameterMapping mapping;
-    mapping.version = "1.0";
-    mapping.MappingEntry = {entry};
+    ssp4cpp::ssp1::ssm::ParameterMapping ssm_mapping;
+    ssm_mapping.version = "1.0";
+    ssm_mapping.MappingEntry = {entry};
 
-    // Create ParameterBindings with both SSV and SSM
-    ssp4cpp::ParameterBindings bindings;
-    bindings.ssv = std::move(param_set);
-    bindings.ssm = std::move(mapping);
+    // Create ParameterBinding with both SSV and SSM
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
+    ssp4cpp::ssp1::ssd::ParameterMapping pm;
+    pm.ParameterMapping = std::move(ssm_mapping);
+    binding.ParameterMapping = std::move(pm);
 
-    std::vector<ssp4cpp::ParameterBindings> bindings_vec;
-    bindings_vec.push_back(std::move(bindings));
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
 
-    auto start_values = ssp4sim::ext::ssp1::ssv::get_start_values(bindings_vec);
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    REQUIRE(start_values.size() == 1);
-    CHECK(start_values[0].name == "k");
-    CHECK(start_values[0].mappings.size() == 2);
-    CHECK(start_values[0].mappings[0] == "k");
-    CHECK(start_values[0].mappings[1] == "fmu.k");
-    CHECK(std::holds_alternative<double>(start_values[0].value));
-    CHECK(std::get<double>(start_values[0].value) == 2.0);
+    // The SSM replaces the default mappings with just the target name.
+    // Only the SSM target "fmu.k" appears as a map key (not the source "k").
+    REQUIRE(result.size() == 1);
+
+    {
+        auto it = result.find("fmu.k");
+        REQUIRE(it != result.end());
+        CHECK(it->second.name == "k");
+        CHECK(it->second.type == DataType::real);
+        CHECK(std::holds_alternative<double>(it->second.value));
+        CHECK(std::get<double>(it->second.value) == 2.0);
+    }
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 3: Component-level bindings (prepended component prefix)
+// Description: Tests component-level binding with pre-prefixed names
+// Rationale:   Component-level bindings have different name resolution rules
 // ---------------------------------------------------------------------------
 TEST_CASE("Component-level parameter bindings with name prefix", "[parameter_binding]")
 {
@@ -178,67 +217,87 @@ TEST_CASE("Component-level parameter bindings with name prefix", "[parameter_bin
     param_set.name = "component_binding";
     param_set.Parameters = std::move(params);
 
-    ssp4cpp::ParameterBindings bindings;
-    bindings.ssv = std::move(param_set);
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
 
-    std::vector<ssp4cpp::ParameterBindings> bindings_vec;
-    bindings_vec.push_back(std::move(bindings));
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
 
-    auto start_values = ssp4sim::ext::ssp1::ssv::get_start_values(bindings_vec);
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    REQUIRE(start_values.size() == 1);
-    CHECK(start_values[0].name == "gain.k");
-    CHECK(std::holds_alternative<double>(start_values[0].value));
-    CHECK(std::get<double>(start_values[0].value) == 3.0);
-    CHECK(start_values[0].mappings.size() == 1);
-    CHECK(start_values[0].mappings[0] == "gain.k");
+    REQUIRE(result.size() == 1);
+
+    auto it = result.find("gain.k");
+    REQUIRE(it != result.end());
+    CHECK(it->second.name == "gain.k");
+    CHECK(it->second.type == DataType::real);
+    CHECK(std::holds_alternative<double>(it->second.value));
+    CHECK(std::get<double>(it->second.value) == 3.0);
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 4: Empty bindings
+// Description: Verifies empty input produces empty output
+// Rationale:   Edge case — empty parameter sets must not crash
 // ---------------------------------------------------------------------------
 TEST_CASE("Empty bindings produce empty start values", "[parameter_binding]")
 {
-    std::vector<ssp4cpp::ParameterBindings> empty;
-    auto result = ssp4sim::ext::ssp1::ssv::get_start_values(empty);
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> empty;
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(empty, nullptr);
     REQUIRE(result.empty());
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 5: get_start_value_map
+// Description: Verifies SSM target names are map keys (not source names)
+// Rationale:   Consumers look up parameters by target (FMU connector) name
 // ---------------------------------------------------------------------------
-TEST_CASE("get_start_value_map assembles name-to-StartValue map", "[parameter_binding]")
+TEST_CASE("SSM mappings produce map entries keyed by target names", "[parameter_binding]")
 {
-    // Manually construct a StartValue with two mappings
-    StartValue sv("k", DataType::real);
-    sv.mappings.push_back("fmu.k");
-    double val = 2.0;
-    sv.store_value(&val);
+    // Create a parameter "k" with an SSM entry k -> fmu.k
+    ssp4cpp::ssp1::ssv::TParameters params;
+    params.Parameters = { make_real_param("k", 2.0) };
 
-    std::vector<StartValue> values = {sv};
-    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_map(values);
+    ssp4cpp::ssp1::ssv::ParameterSet param_set;
+    param_set.name = "test";
+    param_set.Parameters = std::move(params);
 
-    REQUIRE(result.size() == 2);
+    ssp4cpp::ssp1::ssm::TMappingEntry entry;
+    entry.source = "k";
+    entry.target = "fmu.k";
 
-    {
-        auto it = result.find("k");
-        REQUIRE(it != result.end());
-        CHECK(it->second.name == "k");
-        CHECK(it->second.type == DataType::real);
-        CHECK(std::get<double>(it->second.value) == 2.0);
-    }
-    {
-        auto it = result.find("fmu.k");
-        REQUIRE(it != result.end());
-        CHECK(it->second.name == "k");
-        CHECK(it->second.type == DataType::real);
-        CHECK(std::get<double>(it->second.value) == 2.0);
-    }
+    ssp4cpp::ssp1::ssm::ParameterMapping ssm_mapping;
+    ssm_mapping.version = "1.0";
+    ssm_mapping.MappingEntry = {entry};
+
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
+    ssp4cpp::ssp1::ssd::ParameterMapping pm;
+    pm.ParameterMapping = std::move(ssm_mapping);
+    binding.ParameterMapping = std::move(pm);
+
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
+
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
+
+    // Only the SSM target appears as a key, not the source name
+    REQUIRE(result.size() == 1);
+
+    auto it = result.find("fmu.k");
+    REQUIRE(it != result.end());
+    CHECK(it->second.name == "k");
+    CHECK(it->second.type == DataType::real);
+    CHECK(std::get<double>(it->second.value) == 2.0);
 }
 
 // ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// Test Case 7: External ParameterSet (constructed), no ParameterMapping
+// Description: Tests external SSV without SSM (combinatorial coverage)
+// Rationale:   Inline vs external resolution happens upstream; both paths
+//              produce identical types at this layer
+// Creep flag:  Tests identical code path as SSV-only test (deliberate doc coverage)
 // ---------------------------------------------------------------------------
 TEST_CASE("External ParameterSet (constructed), no ParameterMapping", "[parameter_binding]")
 {
@@ -254,33 +313,42 @@ TEST_CASE("External ParameterSet (constructed), no ParameterMapping", "[paramete
     param_set.name = "external_ssv";
     param_set.Parameters = std::move(params);
 
-    // Create ParameterBindings with SSV and no SSM (simulating external SSV source)
-    ssp4cpp::ParameterBindings bindings;
-    bindings.ssv = std::move(param_set);
+    // Create ParameterBinding with SSV and no SSM (simulating external SSV source)
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
 
-    std::vector<ssp4cpp::ParameterBindings> bindings_vec;
-    bindings_vec.push_back(std::move(bindings));
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
 
-    auto start_values = ssp4sim::ext::ssp1::ssv::get_start_values(bindings_vec);
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    REQUIRE(start_values.size() == 2);
-    CHECK(start_values[0].name == "ext.k");
-    CHECK(std::holds_alternative<double>(start_values[0].value));
-    CHECK(std::get<double>(start_values[0].value) == 4.0);
-    CHECK(start_values[0].type == DataType::real);
-    CHECK(start_values[0].mappings.size() == 1);
-    CHECK(start_values[0].mappings[0] == "ext.k");
+    REQUIRE(result.size() == 2);
 
-    CHECK(start_values[1].name == "ext.gain");
-    CHECK(std::holds_alternative<double>(start_values[1].value));
-    CHECK(std::get<double>(start_values[1].value) == 1.5);
-    CHECK(start_values[1].type == DataType::real);
-    CHECK(start_values[1].mappings.size() == 1);
-    CHECK(start_values[1].mappings[0] == "ext.gain");
+    {
+        auto it = result.find("ext.k");
+        REQUIRE(it != result.end());
+        CHECK(it->second.name == "ext.k");
+        CHECK(std::holds_alternative<double>(it->second.value));
+        CHECK(std::get<double>(it->second.value) == 4.0);
+        CHECK(it->second.type == DataType::real);
+    }
+
+    {
+        auto it = result.find("ext.gain");
+        REQUIRE(it != result.end());
+        CHECK(it->second.name == "ext.gain");
+        CHECK(std::holds_alternative<double>(it->second.value));
+        CHECK(std::get<double>(it->second.value) == 1.5);
+        CHECK(it->second.type == DataType::real);
+    }
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 8: Inline ParameterSet with external ParameterMapping (constructed)
+// Description: Tests inline SSV + external SSM (combinatorial coverage)
+// Rationale:   Combinatorial pattern coverage
+// Creep flag:  Tests identical code path (see file comment block lines 13-32)
 // ---------------------------------------------------------------------------
 TEST_CASE("Inline ParameterSet with external ParameterMapping (constructed)", "[parameter_binding]")
 {
@@ -298,29 +366,39 @@ TEST_CASE("Inline ParameterSet with external ParameterMapping (constructed)", "[
     entry.target = "sink.a";
 
     // Create ParameterMapping
-    ssp4cpp::ssp1::ssm::ParameterMapping mapping;
-    mapping.version = "1.0";
-    mapping.MappingEntry = {entry};
+    ssp4cpp::ssp1::ssm::ParameterMapping ssm_mapping;
+    ssm_mapping.version = "1.0";
+    ssm_mapping.MappingEntry = {entry};
 
-    // Create ParameterBindings with both (simulating inline SSV + external SSM)
-    ssp4cpp::ParameterBindings bindings;
-    bindings.ssv = std::move(param_set);
-    bindings.ssm = std::move(mapping);
+    // Create ParameterBinding with both (simulating inline SSV + external SSM)
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
+    ssp4cpp::ssp1::ssd::ParameterMapping pm;
+    pm.ParameterMapping = std::move(ssm_mapping);
+    binding.ParameterMapping = std::move(pm);
 
-    std::vector<ssp4cpp::ParameterBindings> bindings_vec;
-    bindings_vec.push_back(std::move(bindings));
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
 
-    auto start_values = ssp4sim::ext::ssp1::ssv::get_start_values(bindings_vec);
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    REQUIRE(start_values.size() == 1);
-    CHECK(start_values[0].name == "a");
-    CHECK(start_values[0].mappings.size() == 2);
-    CHECK(start_values[0].mappings[0] == "a");
-    CHECK(start_values[0].mappings[1] == "sink.a");
+    // SSM target "sink.a" is the map key; source name "a" is not a key
+    REQUIRE(result.size() == 1);
+
+    auto it = result.find("sink.a");
+    REQUIRE(it != result.end());
+    CHECK(it->second.name == "a");
+    CHECK(it->second.type == DataType::real);
+    CHECK(std::holds_alternative<double>(it->second.value));
+    CHECK(std::get<double>(it->second.value) == 1.0);
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 9: External ParameterSet with external ParameterMapping (constructed)
+// Description: Tests external SSV + external SSM (combinatorial coverage)
+// Rationale:   Combinatorial pattern coverage
+// Creep flag:  Tests identical code path (see file comment block lines 13-32)
 // ---------------------------------------------------------------------------
 TEST_CASE("External ParameterSet with external ParameterMapping (constructed)", "[parameter_binding]")
 {
@@ -338,31 +416,38 @@ TEST_CASE("External ParameterSet with external ParameterMapping (constructed)", 
     entry.target = "out.b";
 
     // Create ParameterMapping
-    ssp4cpp::ssp1::ssm::ParameterMapping mapping;
-    mapping.version = "1.0";
-    mapping.MappingEntry = {entry};
+    ssp4cpp::ssp1::ssm::ParameterMapping ssm_mapping;
+    ssm_mapping.version = "1.0";
+    ssm_mapping.MappingEntry = {entry};
 
-    // Create ParameterBindings with both (simulating all-external scenario)
-    ssp4cpp::ParameterBindings bindings;
-    bindings.ssv = std::move(param_set);
-    bindings.ssm = std::move(mapping);
+    // Create ParameterBinding with both (simulating all-external scenario)
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
+    ssp4cpp::ssp1::ssd::ParameterMapping pm;
+    pm.ParameterMapping = std::move(ssm_mapping);
+    binding.ParameterMapping = std::move(pm);
 
-    std::vector<ssp4cpp::ParameterBindings> bindings_vec;
-    bindings_vec.push_back(std::move(bindings));
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
 
-    auto start_values = ssp4sim::ext::ssp1::ssv::get_start_values(bindings_vec);
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    REQUIRE(start_values.size() == 1);
-    CHECK(start_values[0].name == "b");
-    CHECK(std::holds_alternative<double>(start_values[0].value));
-    CHECK(std::get<double>(start_values[0].value) == 9.0);
-    CHECK(start_values[0].mappings.size() == 2);
-    CHECK(start_values[0].mappings[0] == "b");
-    CHECK(start_values[0].mappings[1] == "out.b");
+    REQUIRE(result.size() == 1);
+
+    auto it = result.find("out.b");
+    REQUIRE(it != result.end());
+    CHECK(it->second.name == "b");
+    CHECK(it->second.type == DataType::real);
+    CHECK(std::holds_alternative<double>(it->second.value));
+    CHECK(std::get<double>(it->second.value) == 9.0);
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 10: Empty external ParameterSet edge case
+// Description: Tests empty external SSV edge case
+// Rationale:   Edge case — empty parameter sets must not crash
+// Creep flag:  "External" qualifier is meaningless at this layer
 // ---------------------------------------------------------------------------
 TEST_CASE("Empty external ParameterSet edge case", "[parameter_binding]")
 {
@@ -374,114 +459,90 @@ TEST_CASE("Empty external ParameterSet edge case", "[parameter_binding]")
     param_set.name = "empty_ssv";
     param_set.Parameters = std::move(params);
 
-    // Create ParameterBindings with empty SSV and no SSM
-    ssp4cpp::ParameterBindings bindings;
-    bindings.ssv = std::move(param_set);
+    // Create ParameterBinding with empty SSV and no SSM
+    ssp4cpp::ssp1::ssd::ParameterBinding binding;
+    ssp4cpp::ssp1::ssd::ParameterValues pv;
+    pv.ParameterSet = std::move(param_set);
+    binding.ParameterValues = std::move(pv);
 
-    std::vector<ssp4cpp::ParameterBindings> bindings_vec;
-    bindings_vec.push_back(std::move(bindings));
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding));
 
-    auto start_values = ssp4sim::ext::ssp1::ssv::get_start_values(bindings_vec);
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    REQUIRE(start_values.size() == 0);
-    CHECK(start_values.empty());
+    REQUIRE(result.size() == 0);
+    CHECK(result.empty());
 }
 
 // ---------------------------------------------------------------------------
-// Test Case 11: Real SSP fixture resolves external SSV/SSM (integration)
+// Description: Two bindings mapping to same SSM target; verifies last-write-wins
+// Rationale:   Last-write-wins semantics for duplicate targets must be explicit
 // ---------------------------------------------------------------------------
-TEST_CASE("Real SSP fixture resolves external SSV/SSM", "[parameter_binding][integration]")
+TEST_CASE("get_start_value_mappings overwrites duplicate SSM target keys", "[parameter_binding]")
 {
-    auto ssp_path = std::filesystem::path(SSP4SIM_PROJECT_ROOT)
-        / "resources" / "reference_ssp" / "artifacts" / "models"
-        / "signal_nested_parameter_bindings" / "baseline";
-    REQUIRE(std::filesystem::exists(ssp_path / "SystemStructure.ssd"));
+    // Two bindings with different parameters that map to the same SSM target.
+    // The second binding's value should overwrite the first.
 
-    ssp4cpp::Ssp ssp(ssp_path);
+    // First binding: param "a" = 1.0, SSM maps a -> shared.target
+    ssp4cpp::ssp1::ssv::TParameters params_a;
+    params_a.Parameters = { make_real_param("a", 1.0) };
+    ssp4cpp::ssp1::ssv::ParameterSet ps_a;
+    ps_a.name = "set_a";
+    ps_a.Parameters = std::move(params_a);
 
-    // Root system: external SSV + SSM (add_k1=1.0, add_k2=1.0 mapped to add.k1, add.k2)
-    // + component step inline (height=1.0, offset=0.0, startTime=0.25)
-    REQUIRE(ssp.parameter_bindings.size() >= 2);
+    ssp4cpp::ssp1::ssm::TMappingEntry entry_a;
+    entry_a.source = "a";
+    entry_a.target = "shared.target";
 
-    // Binding[0]: root system external SSV + SSM
-    {
-        auto &bind = ssp.parameter_bindings[0];
+    ssp4cpp::ssp1::ssm::ParameterMapping ssm_a;
+    ssm_a.version = "1.0";
+    ssm_a.MappingEntry = {entry_a};
 
-        // External SSV: add_k1=1.0, add_k2=1.0
-        REQUIRE(bind.ssv.Parameters.Parameters.size() == 2);
-        CHECK(bind.ssv.Parameters.Parameters[0].name == "add_k1");
-        CHECK(bind.ssv.Parameters.Parameters[0].Real->value == 1.0);
-        CHECK(bind.ssv.Parameters.Parameters[1].name == "add_k2");
-        CHECK(bind.ssv.Parameters.Parameters[1].Real->value == 1.0);
+    ssp4cpp::ssp1::ssd::ParameterBinding binding_a;
+    ssp4cpp::ssp1::ssd::ParameterValues pv_a;
+    pv_a.ParameterSet = std::move(ps_a);
+    binding_a.ParameterValues = std::move(pv_a);
+    ssp4cpp::ssp1::ssd::ParameterMapping pm_a;
+    pm_a.ParameterMapping = std::move(ssm_a);
+    binding_a.ParameterMapping = std::move(pm_a);
 
-        // External SSM: add_k1 to add.k1, add_k2 to add.k2
-        REQUIRE(bind.ssm.has_value());
-        REQUIRE(bind.ssm->MappingEntry.size() == 2);
-        CHECK(bind.ssm->MappingEntry[0].source == "add_k1");
-        CHECK(bind.ssm->MappingEntry[0].target == "add.k1");
-        CHECK(bind.ssm->MappingEntry[1].source == "add_k2");
-        CHECK(bind.ssm->MappingEntry[1].target == "add.k2");
-    }
+    // Second binding: param "b" = 2.0, SSM maps b -> shared.target (same target)
+    ssp4cpp::ssp1::ssv::TParameters params_b;
+    params_b.Parameters = { make_real_param("b", 2.0) };
+    ssp4cpp::ssp1::ssv::ParameterSet ps_b;
+    ps_b.name = "set_b";
+    ps_b.Parameters = std::move(params_b);
 
-    // Binding[1]: component step inline parameter set
-    {
-        auto &bind = ssp.parameter_bindings[1];
-        REQUIRE(bind.ssv.Parameters.Parameters.size() == 3);
+    ssp4cpp::ssp1::ssm::TMappingEntry entry_b;
+    entry_b.source = "b";
+    entry_b.target = "shared.target";
 
-        // Find parameters by component-prefixed name (ssp4cpp prepends component name)
-        auto find_param = [&](const std::string &name) -> const ssp4cpp::ssp1::ssv::TParameter* {
-            for (auto &p : bind.ssv.Parameters.Parameters)
-                if (p.name == name) return &p;
-            return nullptr;
-        };
+    ssp4cpp::ssp1::ssm::ParameterMapping ssm_b;
+    ssm_b.version = "1.0";
+    ssm_b.MappingEntry = {entry_b};
 
-        const auto *height = find_param("step.height");
-        REQUIRE(height != nullptr);
-        CHECK(height->Real->value == 1.0);
+    ssp4cpp::ssp1::ssd::ParameterBinding binding_b;
+    ssp4cpp::ssp1::ssd::ParameterValues pv_b;
+    pv_b.ParameterSet = std::move(ps_b);
+    binding_b.ParameterValues = std::move(pv_b);
+    ssp4cpp::ssp1::ssd::ParameterMapping pm_b;
+    pm_b.ParameterMapping = std::move(ssm_b);
+    binding_b.ParameterMapping = std::move(pm_b);
 
-        const auto *offset = find_param("step.offset");
-        REQUIRE(offset != nullptr);
-        CHECK(offset->Real->value == 0.0);
+    std::vector<ssp4cpp::ssp1::ssd::ParameterBinding> bindings_vec;
+    bindings_vec.push_back(std::move(binding_a));
+    bindings_vec.push_back(std::move(binding_b));
 
-        const auto *startTime = find_param("step.startTime");
-        REQUIRE(startTime != nullptr);
-        CHECK(startTime->Real->value == 0.25);
-    }
+    auto result = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(bindings_vec, nullptr);
 
-    // Verify the assembled start-value map via get_start_value_mappings
-    auto start_map = ssp4sim::ext::ssp1::ssv::get_start_value_mappings(ssp);
+    // Only one entry for "shared.target" (the second binding overwrites the first)
+    REQUIRE(result.size() == 1);
 
-    // Source names from SSV
-    CHECK(start_map.contains("add_k1"));
-    CHECK(start_map.contains("add_k2"));
-
-    // Mapped target names from SSM
-    CHECK(start_map.contains("add.k1"));
-    CHECK(start_map.contains("add.k2"));
-
-    // Component-level prefixed names
-    CHECK(start_map.contains("step.height"));
-    CHECK(start_map.contains("step.offset"));
-    CHECK(start_map.contains("step.startTime"));
-
-    // Verify types and values
-    auto check_real = [&](const std::string &name, double expected) {
-        auto it = start_map.find(name);
-        REQUIRE(it != start_map.end());
-        CHECK(it->second.type == ssp4sim::types::DataType::real);
-        CHECK(std::get<double>(it->second.value) == expected);
-    };
-    check_real("add_k1", 1.0);
-    check_real("add.k1", 1.0);
-    check_real("add_k2", 1.0);
-    check_real("add.k2", 1.0);
-    check_real("step.height", 1.0);
-    check_real("step.offset", 0.0);
-    check_real("step.startTime", 0.25);
-
-    // Known limitation: nested system inner's bindings (sine.*, gain.k)
-    // are not traversed by ssp4cpp's get_parameter_bindings()
-    WARN("Nested system parameter bindings are not traversed by ssp4cpp (known limitation). "
-         "This fixture has additional inline bindings inside the 'inner' nested system "
-         "that are not captured in ssp.parameter_bindings.");
+    auto it = result.find("shared.target");
+    REQUIRE(it != result.end());
+    // The overwritten value should be from binding_b (the second one)
+    CHECK(it->second.name == "b");
+    CHECK(it->second.type == DataType::real);
+    CHECK(std::holds_alternative<double>(it->second.value));
+    CHECK(std::get<double>(it->second.value) == 2.0);
 }

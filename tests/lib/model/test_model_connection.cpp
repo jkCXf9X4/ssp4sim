@@ -1,4 +1,4 @@
-#include "model/model_connection.hpp"
+#include "pre/3_simulation_graph/elements/model_connection.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -9,13 +9,21 @@ using ssp4sim::graph::ConnectionInfo;
 using ssp4sim::signal::SignalStorage;
 using ssp4sim::types::DataType;
 
+// ---------------------------------------------------------------------------
+// Description: Verifies ConnectionInfo::is_feedthrough field defaults,
+//              zero-delay behavior, delay>0 behavior, and to_string inclusion
+// Rationale:   Feedthrough field is the primary mechanism for algebraic loop
+//              detection
+// Creep flag:  to_string sub-test is presentation detail; feedthrough logic
+//              overlaps with tests/lib/graph/test_sim_graph_builder.cpp
+// ---------------------------------------------------------------------------
 TEST_CASE("ConnectionInfo is_feedthrough field", "[ConnectionInfo]")
 {
     // Setup minimal SignalStorage for source/target pointers
     SignalStorage src_storage(1, "source");
     SignalStorage tgt_storage(1, "target");
-    src_storage.add("source.signal", DataType::real, 0);
-    tgt_storage.add("target.signal", DataType::real, 0);
+    src_storage.add_variable("source.signal", DataType::real, 0);
+    tgt_storage.add_variable("target.signal", DataType::real, 0);
 
     ConnectionInfo con;
     con.type = DataType::real;

@@ -1,29 +1,26 @@
 
 #include "simulation.hpp"
 
-#include "utils/timer.hpp"
+#include "utils/time/timer.hpp"
 
-#include "analysis_graph_builder.hpp"
-#include "graph_builder.hpp"
+#include "pre/pre_pipeline.hpp"
+#include "simulation/sim_setup.hpp"
+#include "executor/executor_base.hpp"
 
-#include "signal/sinks/csv_recorder_sink.hpp"
+#include "simulation/signal/sinks/csv_recorder_sink.hpp"
 
-#include "signal/sinks/sqlite_recorder_sink.hpp"
-#include "signal/recorder.hpp"
+#include "simulation/signal/sinks/sqlite_recorder_sink.hpp"
+#include "simulation/signal/recorder.hpp"
 
-#include "config.hpp"
-
-#include "handler/fmu_handler.hpp"
-
-#include "execution/invocable.hpp"
-#include "graph/graph.hpp"
+#include "utils/config.hpp"
 
 #include "ssp4cpp/utils/log.hpp"
 
 #include "ssp4cpp/fmu.hpp"
 
-#include "utils/io.hpp"
-#include "utils/uuid.hpp"
+#include "utils/io/io.hpp"
+#include "utils/primitives/map.hpp"
+#include "utils/primitives/uuid.hpp"
 
 #include <cstdint>
 #include <exception>
@@ -43,11 +40,12 @@ namespace ssp4sim
 
         std::string session_uuid;
 
-        std::unique_ptr<handler::FmuHandler> fmu_handler;
-        std::unique_ptr<signal::DataRecorder> recorder = nullptr;
-        std::unique_ptr<graph::Graph> sim_graph;
+        pre::SimulationGraph sim_graph; // model graph
+        pre::SimulationData sim; // executors, access rules
 
-        std::map<std::string, std::unique_ptr<graph::Invocable>> nodes;
+        std::unique_ptr<signal::DataRecorder> recorder = nullptr;
+
+        std::shared_ptr<graph::Invocable> simulation_node;
     };
 
     Simulation::Simulation(ssp4cpp::Ssp *ssp, ssp4sim::SharedConfig *config) : p(std::make_unique<SimulationPrivate>())
@@ -57,7 +55,6 @@ namespace ssp4sim
         p->session_uuid = utils::make_uuid_v4();
 
         LOG_INFO(p->log, "[{func}] Creating simulation", __func__);
-        p->fmu_handler = std::make_unique<handler::FmuHandler>(p->ssp);
 
         if (config->enable_recording)
         {
@@ -83,26 +80,22 @@ namespace ssp4sim
      */
     void Simulation::init()
     {
+        if (p->simulation_node)
+        {
+            throw std::logic_error("Simulation::init() called twice");
+        }
+
         LOG_INFO(p->log, "[{func}] Initializing simulation", __func__);
 
-        LOG_INFO(p->log, "[{func}] - Initializing fmus", __func__);
-        p->fmu_handler->init();
+        p->sim_graph = pre::build_simulation_graph(p->ssp, this->config);
 
-        LOG_INFO(p->log, "[{func}] - Creating analysis graph", __func__);
-        auto analysis_graph = analysis::graph::AnalysisGraphBuilder(p->ssp, p->fmu_handler.get()).build();
-        LOG_DEBUG(p->log, " -- {graph}", analysis_graph->to_string());
+        // set up executors, data access rules, data recording mechanisms
+        p->sim = pre::setup_sim_behaviour(p->sim_graph.models, p->recorder.get(), this->config);
+        p->simulation_node = p->sim.execution_node;
 
-        LOG_INFO(p->log, "[{func}] - Creating simulation graph", __func__);
-        auto graph_builder = graph::GraphBuilder(analysis_graph.get(), p->recorder.get(), this->config);
-        graph_builder.build();
-
-        p->sim_graph = graph_builder.get_graph();
-        LOG_DEBUG(p->log, " -- {graph}", p->sim_graph->to_string());
-
-        p->nodes = graph_builder.get_models(); // transfer ownership of nodes to simulation
 
         LOG_INFO(p->log, "[{func}] - Init simulation graph", __func__);
-        p->sim_graph->init();
+        p->simulation_node->init();
 
         if (p->recorder)
         {
@@ -120,6 +113,11 @@ namespace ssp4sim
      */
     void Simulation::simulate()
     {
+        if (!p->simulation_node)
+        {
+            throw std::runtime_error("Simulation::simulate() called before init()");
+        }
+
         if (p->recorder)
         {
             p->recorder->start_recording();
@@ -129,16 +127,11 @@ namespace ssp4sim
 
         auto sim_timer = utils::time::Timer();
 
-        if (config->realtime)
-        {
-            p->sim_graph->enable_realtime(utils::time::time_now_ns());
-        }
-
         std::exception_ptr simulation_error;
 
         try
         {
-            p->sim_graph->invoke(ssp4sim::graph::StepData(config->start_time, config->end_time, config->timestep));
+            p->simulation_node->invoke(ssp4sim::graph::StepData(config->fmu.start_time, config->fmu.end_time));
         }
         catch (const std::exception &e)
         {
@@ -170,7 +163,7 @@ namespace ssp4sim
         }
 
         uint64_t total_model_time = 0;
-        for (auto &node : p->sim_graph->nodes)
+        for (auto& [key, node] : p->sim_graph.models)
         {
             auto model_walltime = node->walltime_ns;
             LOG_INFO(p->log, "[{func}] Model {model} walltime: {walltime}", __func__, node->name, utils::time::ns_to_s(model_walltime));

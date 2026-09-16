@@ -1,0 +1,57 @@
+#include <catch2/catch_test_macros.hpp>
+
+#include "pre/3_simulation_graph/builder/sim_graph_builder.hpp"
+
+#include "signal/recorder.hpp"
+
+using ssp4sim::signal::DataRecorder;
+
+// ---------------------------------------------------------------------------
+// Description: Verifies GraphBuilder constructor sets record_inputs flag
+// Rationale:   Configuration flag propagation
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// GraphBuilder construction
+// ---------------------------------------------------------------------------
+TEST_CASE("GraphBuilder constructs with record_inputs flag", "[sim_graph_builder]")
+{
+    SECTION("record_inputs = false")
+    {
+        ssp4sim::graph::GraphBuilder builder(false, ssp4sim::FmuModelConfig{});
+        REQUIRE_FALSE(builder.record_inputs);
+    }
+
+    SECTION("record_inputs = true")
+    {
+        ssp4sim::graph::GraphBuilder builder(true, ssp4sim::FmuModelConfig{});
+        REQUIRE(builder.record_inputs);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Description: Verifies register_model_storages handles null recorder
+// Rationale:   Robustness — null recorder must not crash
+// ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// register_model_storages — null-safety
+// ---------------------------------------------------------------------------
+TEST_CASE("register_model_storages handles null recorder", "[sim_graph_builder]")
+{
+    std::map<std::string, std::shared_ptr<ssp4sim::graph::Invocable>> empty_models;
+    REQUIRE_NOTHROW(ssp4sim::graph::GraphBuilder::register_model_storages(empty_models, nullptr));
+}
+
+// ---------------------------------------------------------------------------
+// Description: Verifies register_model_storages skips non-FmuModel entries
+// Rationale:   Robustness — null model entries silently skipped
+// ---------------------------------------------------------------------------
+TEST_CASE("register_model_storages skips non-FmuModel entries", "[sim_graph_builder]")
+{
+    DataRecorder recorder(false);
+
+    std::map<std::string, std::shared_ptr<ssp4sim::graph::Invocable>> models;
+    models["not_an_fmu"] = nullptr;
+
+    // Should not crash — the loop checks for null model.get() via dynamic_cast
+    REQUIRE_NOTHROW(ssp4sim::graph::GraphBuilder::register_model_storages(models, &recorder));
+}

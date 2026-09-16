@@ -1,0 +1,76 @@
+#include "sim_graph_builder.hpp"
+
+#include "pre/3_simulation_graph/elements/model_fmu.hpp"
+#include "signal/recorder.hpp"
+
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace ssp4sim::graph
+{
+
+    GraphBuilder::GraphBuilder(bool record_inputs, const ssp4sim::FmuModelConfig &config)
+        : log(ssp4cpp::utils::log::make_logger("ssp4sim.graph.GraphBuilder")),
+          record_inputs(record_inputs),
+          config(config)
+    {
+    }
+
+    FmuModel* GraphBuilder::as_fmu(Invocable* invocable) {
+        return dynamic_cast<FmuModel*>(invocable);
+    }
+
+    void GraphBuilder::register_model_storages(
+        const std::map<std::string, std::shared_ptr<Invocable>> &models,
+        ssp4sim::signal::DataRecorder *recorder)
+    {
+        if (!recorder)
+        {
+            return;
+        }
+        for (auto &[name, model] : models)
+        {
+            (void)name;
+            auto m = dynamic_cast<FmuModel *>(model.get());
+            if (!m)
+            {
+                continue;
+            }
+            if (m->record_inputs)
+            {
+                recorder->add_storage(m->input_area.get());
+            }
+            recorder->add_storage(m->output_area.get());
+        }
+    }
+
+    std::map<std::string, std::shared_ptr<Invocable>> GraphBuilder::build(analysis::AnalysisGraphData *graph_data)
+    {
+        LOG_DEBUG(log, "[{func}] init with pre-resolved graph data", __func__);
+
+        create_fmu_models(*graph_data);
+        create_data_storage_areas(*graph_data);
+        wire_connections(*graph_data);
+        derive_model_edges(*graph_data);
+
+        LOG_DEBUG(log, "[{func}] - Allocate the input/output areas", __func__);
+        for (auto &[ssp_resource_name, model] : models)
+        {
+            auto m = as_fmu(model.get());
+            if (!m)
+            {
+                LOG_WARNING(log, "[{func}] Skipping model '{name}' with null FmuModel pointer", __func__, ssp_resource_name);
+                continue;
+            }
+            m->input_area->allocate();
+            m->output_area->allocate();
+        }
+
+        LOG_DEBUG(log, "[{func}] exit", __func__);
+        return models;
+    }
+
+
+
+} // namespace ssp4sim::graph

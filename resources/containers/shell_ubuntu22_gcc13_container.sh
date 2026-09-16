@@ -14,6 +14,7 @@ CONTAINER_HOME="/tmp/ssp4sim-home"
 
 # Build the volume list incrementally to keep the final `run` command readable.
 VOLUME_ARGS=()
+ENV_ARGS=()
 
 # Prefer Podman when available because it supports rootless containers well.
 # With Podman, `--userns keep-id` preserves access to bind-mounted files in the
@@ -48,6 +49,7 @@ exec "${CONTAINER_RUNTIME}" run \
     --user "$(id -u):$(id -g)" \
     "${USERNS_ARGS[@]}" \
     --env HOME="${CONTAINER_HOME}" \
+    "${ENV_ARGS[@]}" \
     "${VOLUME_ARGS[@]}" \
     "${IMAGE_NAME}" \
     /bin/bash

@@ -43,7 +43,7 @@ access levels:
 |---|---|---|
 | Local database | Primary result artifact category. Supported today through SQLite WAL | Queryable local storage for viewers, bounded time-window plots, and run-to-run comparison without repeatedly parsing CSV. |
 | CSV | Portable export path via `simulation.recording.csv.*` | Lowest-friction access for scripts, spreadsheets, regression fixtures, and quick inspection. |
-| Remote database | Not implemented; the remote ingest interface is decided as InfluxDB Line Protocol ([OD-004](../product-breakdown/05-operation/decisions/OD-004.md)) | Central ingestion from multiple simulation sources for shared dashboards, fleet-scale comparison, and long-lived history. |
+| Remote database | Not implemented; the remote ingest interface is decided as InfluxDB Line Protocol ([OD-004](../breakdown/05-operation/decisions/OD-004.md)) | Central ingestion from multiple simulation sources for shared dashboards, fleet-scale comparison, and long-lived history. |
 
 The local database is the primary result artifact because it gives the viewer a
 typed, indexed query layer for recent windows and run-to-run comparison.
@@ -114,11 +114,11 @@ pyssp4sim ./resources/embrace/embrace.json
 ## Result Artifact Policy
 
 The result artifact policy and supporting tradeoffs are documented in
-[PD-001](../product-breakdown/01-product/decisions/PD-001.md), the
-[capabilities page](../product-breakdown/01-product/capabilities.md), and the
-[result artifact strategy](../product-breakdown/01-product/result-artifact-strategy.md).
+[PD-001](../breakdown/01-product/decisions/PD-001.md), the
+[capabilities page](../breakdown/01-product/capabilities.md), and the
+[result artifact strategy](../breakdown/01-product/result-artifact-strategy.md).
 
 ## Logging Artifact Strategy
 
 The logging output tiers and their intended uses are documented in the
-[logging output artifact strategy](../product-breakdown/01-product/logging-output-artifact-strategy.md).
+[logging output artifact strategy](../breakdown/01-product/logging-output-artifact-strategy.md).
