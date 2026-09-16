@@ -4,7 +4,8 @@
 // build() resolves the single matching variant from the typed config set
 // (`ssp4sim::ExecutorOptions`) — no per-family branching:
 //   (a) jacobi: serial vs the three parallel backends (TBB / spin / futures).
-//   (b) seidel: serial vs the parallel stub.
+//   (b) seidel: serial resolves; the parallel variant throws a clear
+//       not-implemented error at build() time.
 //   (c) custom delay family: `custom_delay` / `custom_delay_partial`.
 //   (d) legacy `loop_aware` alias resolves to the same la2 variant.
 //   (e) `realtime` is forwarded to the MacroExecutor wrap as its pacing flag.
@@ -167,13 +168,12 @@ TEST_CASE("seidel variants resolve to serial vs the parallel stub", "[builder][v
         REQUIRE(dynamic_cast<ssp4sim::graph::SerialSeidel *>(specialized_of(executor)) != nullptr);
     }
 
-    SECTION("seidel_parallel=true selects ParallelSeidel (runtime stub)")
+    SECTION("seidel_parallel=true throws a clear not-implemented error")
     {
         options.seidel_parallel = true;
         auto storage = make_chain_graph();
         ssp4sim::graph::ExecutorBuilder builder(options, T1);
-        auto executor = builder.build(to_owned(storage));
-        REQUIRE(dynamic_cast<ssp4sim::graph::ParallelSeidel *>(specialized_of(executor)) != nullptr);
+        REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
     }
 }
 

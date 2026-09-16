@@ -1,8 +1,8 @@
 // Unit tests for the self-contained substep relaxation executors
-// (LinearSubstepExecutor / GeometricSubstepExecutor): each owns the schedule
-// construction logic (build_schedule) and sweeps its group in parallel per
-// sub-step. Covers the schedule edge cases previously tested against the
-// monolithic substep::build_substep_schedule.
+// (LinearSubstepExecutor / GeometricSubstepExecutor): LinearSubstepExecutor
+// builds its schedule inline in invoke() (equal sub-steps, remainder spread
+// over the first sub-steps); GeometricSubstepExecutor owns its build_schedule
+// static. Both sweep their group in parallel per sub-step.
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -82,36 +82,39 @@ namespace
 // Linear schedule
 // ---------------------------------------------------------------------------
 
-TEST_CASE("LinearSubstepExecutor.build_schedule divides the macro step equally",
+TEST_CASE("LinearSubstepExecutor divides the macro step equally",
           "[substep_executor][linear]")
 {
-    auto sched = ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 100, 4);
-    REQUIRE(sched.size() == 4);
-    CHECK(sched[0] == Step(0, 25));
-    CHECK(sched[1] == Step(25, 50));
-    CHECK(sched[2] == Step(50, 75));
-    CHECK(sched[3] == Step(75, 100));
+    auto b = make_two_nodes();
+    ssp4sim::graph::LinearSubstepExecutor ex(b.owned, 4);
+    ex.invoke(ssp4sim::graph::StepData(0, 100));
+
+    const std::vector<Step> expected{{0, 25}, {25, 50}, {50, 75}, {75, 100}};
+    REQUIRE(b.recorded_a == expected);
+    REQUIRE(b.recorded_b == expected);
 }
 
-TEST_CASE("LinearSubstepExecutor.build_schedule rounds up and clamps the tail",
+TEST_CASE("LinearSubstepExecutor spreads the remainder over the first sub-steps",
           "[substep_executor][linear]")
 {
-    // 10 is not divisible by 4: sub-steps round up to 3 and the final
-    // sub-step is clamped at the macro end (no tiny 1-unit tail).
-    auto sched = ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 10, 4);
-    REQUIRE(sched.size() == 4);
-    CHECK(sched[0] == Step(0, 3));
-    CHECK(sched[1] == Step(3, 6));
-    CHECK(sched[2] == Step(6, 9));
-    CHECK(sched[3] == Step(9, 10));
+    // 10 is not divisible by 4: each sub-step gets base 2 and the 2-unit
+    // remainder is spread over the first two sub-steps, so no tiny tail is
+    // left at the macro end.
+    auto b = make_two_nodes();
+    ssp4sim::graph::LinearSubstepExecutor ex(b.owned, 4);
+    ex.invoke(ssp4sim::graph::StepData(0, 10));
+
+    const std::vector<Step> expected{{0, 3}, {3, 6}, {6, 8}, {8, 10}};
+    REQUIRE(b.recorded_a == expected);
+    REQUIRE(b.recorded_b == expected);
 }
 
-TEST_CASE("LinearSubstepExecutor.build_schedule requires steps >= 1",
+TEST_CASE("LinearSubstepExecutor requires iterations >= 1",
           "[substep_executor][linear]")
 {
-    REQUIRE_THROWS_AS(ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 100, 0),
+    REQUIRE_THROWS_AS(ssp4sim::graph::LinearSubstepExecutor(
+                          std::vector<std::shared_ptr<ssp4sim::graph::Invocable>>{}, 0),
                       std::runtime_error);
-    CHECK(ssp4sim::graph::LinearSubstepExecutor::build_schedule(100, 100, 4).empty());
 }
 
 TEST_CASE("LinearSubstepExecutor sweeps the group once per equal sub-step",
@@ -121,34 +124,23 @@ TEST_CASE("LinearSubstepExecutor sweeps the group once per equal sub-step",
     ssp4sim::graph::LinearSubstepExecutor ex(b.owned, 4);
     ex.invoke(ssp4sim::graph::StepData(T0, T1));
 
-    auto expected = ssp4sim::graph::LinearSubstepExecutor::build_schedule(T0, T1, 4);
-    REQUIRE(expected.size() == 4);
+    const std::vector<Step> expected{{0, 300}, {300, 600}, {600, 900}, {900, 1200}};
     REQUIRE(b.recorded_a == expected);
     REQUIRE(b.recorded_b == expected);
 }
 
-TEST_CASE("LinearSubstepExecutor sweeps the group per rounded-up sub-step",
+TEST_CASE("LinearSubstepExecutor with an empty macro step emits zero-length sub-steps",
           "[substep_executor][linear]")
 {
-    auto b = make_two_nodes();
-    ssp4sim::graph::LinearSubstepExecutor ex(b.owned, 4);
-    ex.invoke(ssp4sim::graph::StepData(0, 10));
-
-    auto expected = ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 10, 4);
-    REQUIRE(expected.size() == 4);
-    REQUIRE(b.recorded_a == expected);
-    REQUIRE(b.recorded_b == expected);
-}
-
-TEST_CASE("LinearSubstepExecutor with an empty macro step invokes nothing",
-          "[substep_executor][linear]")
-{
+    // An empty macro step still sweeps `iterations` zero-length sub-steps
+    // (the remainder-distribution loop has no start >= end early-out).
     auto b = make_two_nodes();
     ssp4sim::graph::LinearSubstepExecutor ex(b.owned, 4);
     ex.invoke(ssp4sim::graph::StepData(T1, T1));
 
-    REQUIRE(b.recorded_a.empty());
-    REQUIRE(b.recorded_b.empty());
+    const std::vector<Step> expected(4, Step(T1, T1));
+    REQUIRE(b.recorded_a == expected);
+    REQUIRE(b.recorded_b == expected);
 }
 
 // ---------------------------------------------------------------------------

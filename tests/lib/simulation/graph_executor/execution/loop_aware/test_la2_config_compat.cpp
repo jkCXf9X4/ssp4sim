@@ -223,10 +223,11 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
 
         // iterations only drives the linear split; the factor mode sub-steps
         // shrink by `factor` until the remaining time is at or below
-        // `threshold` (config seconds, converted to ns by make_la2_stack).
+        // `threshold` (ns; the config loader converts seconds to ns, so the
+        // typed struct is set in ns here).
         auto options = la2_options("geometric", 4);
         options.la2.factor = 0.5;
-        options.la2.threshold = 150e-9; // 150 ns -> 3 sub-steps over [0, 1200)
+        options.la2.threshold = 150; // ns -> 3 sub-steps over [0, 1200)
 
         ssp4sim::graph::ExecutorBuilder builder(options, T1);
         auto executor = builder.build(to_owned(storage));
@@ -255,7 +256,8 @@ TEST_CASE("executor_builder throws a clear error for parallel_seidel",
           "[la2][config][compat]")
 {
     ssp4sim::ExecutorOptions options;
-    options.method = "parallel_seidel";
+    options.method = "seidel";
+    options.seidel_parallel = true;
 
     std::vector<std::shared_ptr<MockNode>> storage;
     make_chain_graph(storage);

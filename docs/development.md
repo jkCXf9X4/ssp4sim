@@ -156,17 +156,17 @@ Reusable building blocks that serve la2 but live outside it:
   and throws on a cycle.
 - `LinearSubstepExecutor` / `GeometricSubstepExecutor` — self-contained executors
   (`executor/substep/`) that relax any group of nodes over a linear or shrinking
-  sub-step schedule. Each owns its schedule construction (`build_schedule`
-  static) and sweeps the group in parallel per sub-step; use them outside la2 to
-  sub-step groups on equal or shrinking schedules. `invoke` streams the schedule
-  through `for_each_substep` / `for_each_equal_substep` (`executor_utils.hpp`)
-  without materializing a schedule vector. Both accept an optional
-  `const bool realtime = false` that paces every emitted sub-step to the wall
-  clock (shared `ExecutorBase::wait_for_realtime_sync`). `LinearSubstepExecutor`
-  requires `iterations` / `steps` >= 1 (its constructor and `build_schedule`
-  throw on 0); `GeometricSubstepExecutor` requires a factor in (0, 1) and
-  shrinks each sub-step by `factor` until the remaining time is at or below its
-  absolute `threshold` (ns), then takes the remaining step whole.
+  sub-step schedule. `LinearSubstepExecutor` builds its equal sub-step schedule
+  inline in `invoke` (base sub-step + remainder spread over the first
+  sub-steps); `GeometricSubstepExecutor` owns its schedule construction
+  (`build_schedule` static). Both sweep the group in parallel per sub-step; use
+  them outside la2 to sub-step groups on equal or shrinking schedules. Both
+  accept an optional `const bool realtime = false` that paces every emitted
+  sub-step to the wall clock (shared `ExecutorBase::wait_for_realtime_sync`).
+  `LinearSubstepExecutor` requires `iterations` >= 1 (its constructor throws on
+  0); `GeometricSubstepExecutor` requires a factor in (0, 1) and shrinks each
+  sub-step by `factor` until the remaining time is at or below its absolute
+  `threshold` (ns), then takes the remaining step whole.
 
 When reusing `SeidelBase` with executors as nodes, remember that its node array
 is positional (`index_of_id` maps the process-wide `Node` id -> array index), so executors can
