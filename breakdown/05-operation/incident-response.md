@@ -45,5 +45,5 @@ This artifact provides structured triage steps for common SSP4SIM failure modes.
 
 ## Traceability
 
-- Backward: Monitoring in `product-breakdown/05-operation/monitoring.md`.
+- Backward: Monitoring in `breakdown/05-operation/monitoring.md`.
 - Sources: `docs/usage.md`, `docs/profiling.md`, `docs/logging_guidlines.md`.

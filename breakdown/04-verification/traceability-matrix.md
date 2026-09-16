@@ -4,7 +4,7 @@
 
 ## Description
 
-This artifact maps each product requirement to its verification coverage. Requirements from `product-breakdown/01-product/requirements/` are traced to specific test files and known gaps.
+This artifact maps each product requirement to its verification coverage. Requirements from `breakdown/01-product/requirements/` are traced to specific test files and known gaps.
 
 ## Matrix
 
@@ -29,5 +29,5 @@ This artifact maps each product requirement to its verification coverage. Requir
 
 ## Traceability
 
-- Backward: Traces to requirements in `product-breakdown/01-product/requirements/`.
+- Backward: Traces to requirements in `breakdown/01-product/requirements/`.
 - Sources: Test file inventory, `tests/README.md`.

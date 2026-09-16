@@ -47,5 +47,5 @@ Execution Graph → schedules → FMU Model → reads/writes → Signal Storage
 
 ## Traceability
 
-- Backward: Traces to capabilities in `product-breakdown/01-product/capabilities.md`.
+- Backward: Traces to capabilities in `breakdown/01-product/capabilities.md`.
 - Sources: `lib/include/readme.md`, `lib/class_diagram.md`, `lib/class_description.md`.

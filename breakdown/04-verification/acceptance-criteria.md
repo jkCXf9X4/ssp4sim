@@ -25,5 +25,5 @@ This artifact defines the conditions for product acceptance at each verification
 
 ## Traceability
 
-- Backward: Traces to requirements in `product-breakdown/01-product/requirements/`.
+- Backward: Traces to requirements in `breakdown/01-product/requirements/`.
 - Sources: `tests/README.md`, current test practices.

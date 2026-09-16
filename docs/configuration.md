@@ -142,7 +142,7 @@ Notes:
 
 Logging level values are passed through Quill's `loglevel_from_string()`.
 OpenTelemetry is the distributed observability tier and is documented in
-[OD-005](../product-breakdown/05-operation/decisions/OD-005.md); it is not yet
+[OD-005](../breakdown/05-operation/decisions/OD-005.md); it is not yet
 part of the current JSON config surface.
 Supported values are case-insensitive:
 

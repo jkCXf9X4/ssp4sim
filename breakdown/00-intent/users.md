@@ -14,5 +14,5 @@ This artifact enumerates the target user groups and their primary needs. It defi
 
 ## Traceability
 
-- Backward: Defined by the product-breakdown 00-intent layer framework.
+- Backward: Defined by the breakdown 00-intent layer framework.
 - Sources: `readme.md` (lines 5-7, 54-60), `docs/README.md` (lines 21-23).

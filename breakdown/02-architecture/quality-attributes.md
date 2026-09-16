@@ -42,5 +42,5 @@ This artifact documents the non-functional characteristics that shape SSP4SIM ar
 
 ## Traceability
 
-- Backward: Traces to constraints in `product-breakdown/00-intent/constraints.md`.
+- Backward: Traces to constraints in `breakdown/00-intent/constraints.md`.
 - Sources: `readme.md` (project description), `docs/development.md` (coding style), `docs/logging_guidlines.md`, `docs/profiling.md`.

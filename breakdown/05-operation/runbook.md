@@ -35,5 +35,5 @@ After a successful run, verify:
 
 ## Traceability
 
-- Backward: Deployment topology in `product-breakdown/05-operation/deployment-topology.md`.
+- Backward: Deployment topology in `breakdown/05-operation/deployment-topology.md`.
 - Sources: `docs/usage.md`, `docs/configuration.md`.

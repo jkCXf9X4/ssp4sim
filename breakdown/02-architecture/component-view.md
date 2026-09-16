@@ -51,5 +51,5 @@ ExecutionBase → Jacobi, Seidel
 
 ## Traceability
 
-- Backward: Traces to context view in `product-breakdown/02-architecture/context-view.md`.
+- Backward: Traces to context view in `breakdown/02-architecture/context-view.md`.
 - Sources: `lib/CMakeLists.txt`, `lib/include/readme.md`, `lib/include/signal/readme.md`, `lib/class_diagram.md`.

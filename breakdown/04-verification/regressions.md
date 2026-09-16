@@ -28,5 +28,5 @@ This artifact tracks known regressions and unresolved issues in the verification
 
 ## Traceability
 
-- Backward: Traces to decision VD-002 (xfail tracking method) in `product-breakdown/04-verification/decisions/`.
+- Backward: Traces to decision VD-002 (xfail tracking method) in `breakdown/04-verification/decisions/`.
 - Sources: `tests/README.md` (xfail section), Python test markers.

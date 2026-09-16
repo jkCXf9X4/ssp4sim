@@ -50,5 +50,5 @@ ssp4sim-linux-x86_64-<version>/
 
 ## Traceability
 
-- Backward: Implementation build environment (`product-breakdown/03-implementation/build-environment.md`).
+- Backward: Implementation build environment (`breakdown/03-implementation/build-environment.md`).
 - Sources: `docs/linux_binary_distribution.md`, `docs/installation.md`, `docs/build_from_source.md`.

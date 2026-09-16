@@ -22,7 +22,7 @@ Each candidate is proposed. None is approved for implementation until it has a s
 Place the overview at the repository's chosen evolution or backlog location, such as:
 
 ```text
-product-breakdown/06-evolution/backlog/improvement-backlog.md
+breakdown/06-evolution/backlog/improvement-backlog.md
 ```
 
 Put each candidate in its own file beside the overview or in a local `candidates/` directory. Move completed implementations to a local `completed/` directory when the repository uses one.
@@ -134,8 +134,8 @@ Items moved to `deferred/` — do **not** implement unless explicitly and well-m
 
 ## Cross-Cutting Constraints
 
-1. **Layer ownership**: `product-breakdown/` holds "what the product is, who it is for, scope, stable decisions." `docs/` holds "runnable guidance: usage, install, build, development workflow, examples, profiling commands."
-2. **No duplication**: If a doc needs product context, it must link to `product-breakdown/` rather than copying text. If a PBS file needs runnable commands, it must link to `docs/` rather than reproducing them.
+1. **Layer ownership**: `breakdown/` holds "what the product is, who it is for, scope, stable decisions." `docs/` holds "runnable guidance: usage, install, build, development workflow, examples, profiling commands."
+2. **No duplication**: If a doc needs product context, it must link to `breakdown/` rather than copying text. If a PBS file needs runnable commands, it must link to `docs/` rather than reproducing them.
 3. **Traceability preservation**: Every PBS file's Sources field that references a `docs/` file is correct and must be preserved. The deduplication removes content but keeps the cross-reference.
 4. **Stay out of feature diffs**: None of these candidates should be bundled into unrelated feature or bug-fix work. Each candidate is a standalone documentation-hygiene task.
 5. **`AGENTS.md` and `readme.md`**: These files reference both directories and may need link updates if files referenced in their link lists change. Any such changes must be scoped within the candidate's task contract, not added as incidental edits to other work.

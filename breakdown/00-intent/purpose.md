@@ -14,5 +14,5 @@ The project focuses on a direct path from SSP input to an executable run, keepin
 
 ## Traceability
 
-- Backward: Defined by the product-breakdown 00-intent layer framework.
+- Backward: Defined by the breakdown 00-intent layer framework.
 - Sources: `readme.md` (lines 5-7), `docs/README.md` (lines 5-23).

@@ -6,7 +6,7 @@ Gauss-Seidel execution strategies (parallel and serial), local database
 recording with CSV export, tiered logging, and provides a CLI (`sim_app`), a
 C API, and a Python API (`pyssp4sim`).
 
-The product-breakdown structure organises project documentation into seven
+The breakdown structure organises project documentation into seven
 layers. Each layer captures a distinct concern of the SSP4SIM project.
 
 | Layer | Directory | What It Covers |

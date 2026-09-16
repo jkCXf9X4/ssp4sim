@@ -60,7 +60,7 @@ decision record:
 - `uuid_suffix()`, `current_epoch_seconds()`, `create_metadata_table()`, and
   `insert_metadata_row()` are removed from `sqlite_recorder_utils`. Added
   `sqlite_recorder::run_counter()` and `table_name_for(run_id, model, storage_name)`.
-- See `product-breakdown/06-evolution/backlog/candidates/IMP-032.md` for the
+- See `breakdown/06-evolution/backlog/candidates/IMP-032.md` for the
   original candidate.
 
 ### Concurrent-Writer Limitations
@@ -89,10 +89,10 @@ the domain model, configuration docs, and usage docs to prevent future mistakes.
 - `lib/include/simulation.cpp` — register the sink
 - `tests/lib/core/test_sqlite_recorder.cpp` — test coverage
 - `docs/configuration.md` — document SQLite config keys
-- `product-breakdown/01-product/domain-model.md` — update Recording description
-- `product-breakdown/03-implementation/modules/signal.md` — add sink to Key Components and Sinks
+- `breakdown/01-product/domain-model.md` — update Recording description
+- `breakdown/03-implementation/modules/signal.md` — add sink to Key Components and Sinks
 - `tests/README.md` — add test file to docs
-- `product-breakdown/06-evolution/backlog/candidates/IMP-029.md` → done
+- `breakdown/06-evolution/backlog/candidates/IMP-029.md` → done
 
 ## Traceability
 

@@ -32,5 +32,5 @@ This artifact defines verification coverage expectations for SSP4SIM modules. Ta
 
 ## Traceability
 
-- Backward: Traces to test strategy in `product-breakdown/04-verification/test-strategy.md`.
+- Backward: Traces to test strategy in `breakdown/04-verification/test-strategy.md`.
 - Sources: Test file inventory, `tests/README.md`, traceability matrix.

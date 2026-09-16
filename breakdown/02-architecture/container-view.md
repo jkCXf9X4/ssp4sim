@@ -27,5 +27,5 @@ Release tarball (`ssp4sim-linux-x86_64-<version>.tar.gz`) contains:
 
 ## Traceability
 
-- Backward: Traces to product scope in `product-breakdown/01-product/scope.md`.
+- Backward: Traces to product scope in `breakdown/01-product/scope.md`.
 - Sources: `lib/CMakeLists.txt`, `docs/linux_binary_distribution.md`, `public/` directory structure.

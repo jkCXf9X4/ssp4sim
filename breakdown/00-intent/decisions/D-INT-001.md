@@ -24,5 +24,5 @@ Make Linux the sole supported platform. No Windows or macOS support is planned a
 
 ## Traceability
 
-- Backward: Constraint documented in `product-breakdown/00-intent/constraints.md` (platform: Linux-only).
+- Backward: Constraint documented in `breakdown/00-intent/constraints.md` (platform: Linux-only).
 - Sources: `docs/development.md` (line 64, 87), `docs/linux_binary_distribution.md` (line 5), `docs/build_from_source.md` (line 13).

@@ -1,14 +1,14 @@
 # Documentation
 <!-- Layer: 00-intent, 01-product -->
 
-This page indexes the SSP4SIM documentation. See [product-breakdown/README.md](../product-breakdown/README.md) for the project introduction and layered breakdown.
+This page indexes the SSP4SIM documentation. See [breakdown/README.md](../breakdown/README.md) for the project introduction and layered breakdown.
 
 ## Product
 
-- [Scope](../product-breakdown/01-product/scope.md) — what is in and out of scope
-- [Capabilities](../product-breakdown/01-product/capabilities.md) — full feature list
-- [Domain Model](../product-breakdown/01-product/domain-model.md) — core concepts and their relationships
-- [Glossary](../product-breakdown/01-product/glossary.md) — shared vocabulary
+- [Scope](../breakdown/01-product/scope.md) — what is in and out of scope
+- [Capabilities](../breakdown/01-product/capabilities.md) — full feature list
+- [Domain Model](../breakdown/01-product/domain-model.md) — core concepts and their relationships
+- [Glossary](../breakdown/01-product/glossary.md) — shared vocabulary
 
 ## Setup
 

@@ -40,5 +40,5 @@ This artifact describes the high-level code organization of SSP4SIM, including t
 
 ## Traceability
 
-- Backward: Traces to component view in `product-breakdown/02-architecture/component-view.md`.
+- Backward: Traces to component view in `breakdown/02-architecture/component-view.md`.
 - Sources: `docs/development.md`, `lib/CMakeLists.txt`, `lib/include/` directory listing.

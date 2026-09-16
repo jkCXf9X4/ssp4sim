@@ -35,5 +35,5 @@ details.
 
 ## Traceability
 
-- Backward: Traces to requirements in `product-breakdown/01-product/requirements/`.
+- Backward: Traces to requirements in `breakdown/01-product/requirements/`.
 - Sources: `tests/README.md`, `resources/reference_ssp/AGENTS.md`.

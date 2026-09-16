@@ -16,5 +16,5 @@ This artifact documents the assumptions the project depends on — conditions th
 
 ## Traceability
 
-- Backward: Defined by the product-breakdown 00-intent layer framework.
+- Backward: Defined by the breakdown 00-intent layer framework.
 - Sources: `readme.md` (lines 11-12, 36), `docs/README.md` (lines 11-13).

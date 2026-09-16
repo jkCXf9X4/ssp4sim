@@ -9,8 +9,8 @@ This page collects contributor conventions. Build commands live in
 
 ## Repository Layout
 
-For the complete repository structure, see the [code structure overview](../product-breakdown/03-implementation/code-structure.md).
-For detailed architecture information, see the [architecture layer](../product-breakdown/02-architecture/).
+For the complete repository structure, see the [code structure overview](../breakdown/03-implementation/code-structure.md).
+For detailed architecture information, see the [architecture layer](../breakdown/02-architecture/).
 
 ## Core Development Loop
 
@@ -61,7 +61,7 @@ therefore blocks only the tests whose cones reach it.
 - Use the repo-local `venv` for Python commands when it exists. Prefer
   `. venv/bin/activate && <command>` or `venv/bin/python <command>` over the
   system Python for workflow scripts and pytest.
-See [Dependency Policy — Generated Data Policy](../product-breakdown/03-implementation/dependency-policy.md#generated-data-policy) for the authoritative policy on generated and fixture data, including Python environment guidelines.
+See [Dependency Policy — Generated Data Policy](../breakdown/03-implementation/dependency-policy.md#generated-data-policy) for the authoritative policy on generated and fixture data, including Python environment guidelines.
 
 ## Configuration Work
 

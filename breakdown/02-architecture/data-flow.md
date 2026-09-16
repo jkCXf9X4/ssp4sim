@@ -48,5 +48,5 @@ RecorderSink
 
 ## Traceability
 
-- Backward: Traces to component view in `product-breakdown/02-architecture/component-view.md`.
+- Backward: Traces to component view in `breakdown/02-architecture/component-view.md`.
 - Sources: `lib/include/signal/readme.md`, `lib/include/readme.md`.

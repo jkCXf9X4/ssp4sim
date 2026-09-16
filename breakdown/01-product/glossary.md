@@ -26,5 +26,5 @@ Standardized terms and definitions used across the SSP4SIM project. Maintains co
 
 ## Traceability
 
-- Backward: Traces to domain model in `product-breakdown/01-product/domain-model.md`.
+- Backward: Traces to domain model in `breakdown/01-product/domain-model.md`.
 - Sources: `lib/include/readme.md`, `lib/class_description.md`, SSP 1.0 standard.

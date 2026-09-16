@@ -52,5 +52,5 @@ configuration.
 
 ## Traceability
 
-- Backward: Implementation logging infrastructure (`product-breakdown/03-implementation/modules/signal.md`).
-- Sources: `docs/logging_guidlines.md`, `docs/profiling.md`, `product-breakdown/05-operation/decisions/OD-005.md`.
+- Backward: Implementation logging infrastructure (`breakdown/03-implementation/modules/signal.md`).
+- Sources: `docs/logging_guidlines.md`, `docs/profiling.md`, `breakdown/05-operation/decisions/OD-005.md`.

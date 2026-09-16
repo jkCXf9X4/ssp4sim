@@ -37,5 +37,5 @@ SSP4SIM is a simulation engine that consumes SSP archives, loads FMI 2.0 FMUs, a
 
 ## Traceability
 
-- Backward: Traces to product scope in `product-breakdown/01-product/scope.md`.
+- Backward: Traces to product scope in `breakdown/01-product/scope.md`.
 - Sources: Entry points (`public/ssp4sim_app/`, `public/python_api/`), `lib/public_include/simulator_c_api.h`.

@@ -43,5 +43,5 @@ Triggered on tag push.
 
 ## Traceability
 
-- Backward: Traces to acceptance criteria in `product-breakdown/04-verification/acceptance-criteria.md`.
+- Backward: Traces to acceptance criteria in `breakdown/04-verification/acceptance-criteria.md`.
 - Sources: `.github/workflows/linux-release.yml`, `docs/linux_binary_distribution.md`, `docs/build_from_source.md`.

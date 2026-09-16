@@ -51,5 +51,5 @@ Use the same container scripts locally when investigating release failures.
 
 ## Traceability
 
-- Backward: Deployment topology in `product-breakdown/05-operation/deployment-topology.md`.
+- Backward: Deployment topology in `breakdown/05-operation/deployment-topology.md`.
 - Sources: `docs/linux_binary_distribution.md`, `.github/workflows/linux-release.yml`.

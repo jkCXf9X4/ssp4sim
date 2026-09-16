@@ -17,5 +17,5 @@ This artifact defines the success indicators for the SSP4SIM project — the mea
 
 ## Traceability
 
-- Backward: Defined by the product-breakdown 00-intent layer framework.
+- Backward: Defined by the breakdown 00-intent layer framework.
 - Sources: `readme.md` (lines 11-14), `docs/README.md` (lines 11-19).
