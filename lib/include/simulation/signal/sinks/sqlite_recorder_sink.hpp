@@ -32,8 +32,9 @@ namespace ssp4sim::signal
         bool disabled = false;
         bool initialized = false;
         bool stopped = false;
+        bool record_derivatives = false;
 
-        SqliteWALRecorderSink(std::filesystem::path working_dir, std::string session_uuid, std::optional<std::filesystem::path> file_override);
+        SqliteWALRecorderSink(std::filesystem::path working_dir, std::string session_uuid, std::optional<std::filesystem::path> file_override, bool record_derivatives = false);
         ~SqliteWALRecorderSink() override;
 
         void on_storage_added(const SignalStorage *storage) override;

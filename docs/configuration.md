@@ -128,6 +128,7 @@ Notes:
 | `simulation.recording.sqlite.file` | `string` | No | *auto-generated* | Output SQLite database path (`[TIME]` supported). When **absent** (the default), the sink auto-generates one `.sqlite` file per run as `{epoch_seconds}_{session_uuid}.sqlite` in `simulation.working_dir`. When **set**, the sink writes to the specified path — this is an opt-in for sequential-only workflows that need a stable known path. The shared-file mode (`sqlite.file` set) **must never** be used with concurrent writers. |
 | `simulation.recording.wait_for` | `bool` | No | `false` | If `true`, simulation producer threads wait when recorder buffers are full. If `false`, recorder events can be dropped under backpressure. |
 | `simulation.recording.record_inputs` | `bool` | No | `false` | When `true`, input signal values are recorded alongside output signals in CSV artifacts. Input storage has 10 slots; at the default recording interval (0 = every timestep), simulations with more than 10 steps may overflow the input buffer and silently drop events. |
+| `simulation.recording.record_derivatives` | `bool` | No | `false` | When `true`, exported signals gain one column per reserved derivative order (`.d1`, `.d2`, …) alongside the value, for both CSV and SQLite sinks. Derivative slots are only reserved for models declaring `maxOutputDerivativeOrder > 0`; signals without them produce no extra columns. Useful for verifying that forward-derivative values are anchored to the correct timestep. |
 
 ### `simulation.log.*`
 

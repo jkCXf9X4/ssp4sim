@@ -112,6 +112,7 @@ namespace ssp4sim
         bool enable_recording;
         bool wait_for_recorder;
         bool record_inputs = false;
+        bool record_derivatives = false;
 
         struct CsvRecordingConfig
         {
@@ -188,6 +189,7 @@ namespace ssp4sim
             }
             wait_for_recorder = utils::Config::getOr("simulation.recording.wait_for", false);
             record_inputs = utils::Config::getOr("simulation.recording.record_inputs", false);
+            record_derivatives = utils::Config::getOr("simulation.recording.record_derivatives", false);
 
             enable_recording = csv.enable || sqlite.enable;
 

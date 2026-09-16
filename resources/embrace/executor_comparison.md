@@ -1,5 +1,8 @@
 # Executor Comparison: Jacobi vs Loop-Aware
 
+See [`executor_timing_analysis.md`](executor_timing_analysis.md) for the follow-up analysis of
+*why* the loop-aware executor is slower (step-count scaling and the derivative investigation).
+
 **Date:** 2026-07-03
 **Configs:** `embrace.json` (jacobi) vs `embrace_loop_aware.json` (loop_aware)
 **SSP:** `embrace_scen.ssp` (same for both)

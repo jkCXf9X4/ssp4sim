@@ -11,9 +11,10 @@
 
 namespace ssp4sim::signal
 {
-    CsvRecorderSink::CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval)
+    CsvRecorderSink::CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval, bool record_derivatives)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.CsvRecorderSink")),
-          recording_interval(interval)
+          recording_interval(interval),
+          record_derivatives(record_derivatives)
     {
         utils::io::create_parent_folder(filename.string());
         file.open(filename, std::ios::out);
@@ -42,6 +43,19 @@ namespace ssp4sim::signal
             variable_layout.position = variable.position;
             variable_layout.column = column_count++;
             layout.variables.emplace_back(std::move(variable_layout));
+
+            if (record_derivatives && variable.max_interpolation_orders > 0)
+            {
+                for (std::size_t order = 1; order <= variable.max_interpolation_orders; ++order)
+                {
+                    CsvVariableLayout derivative_layout;
+                    derivative_layout.name = variable.name + ".d" + std::to_string(order);
+                    derivative_layout.type = types::DataType::real;
+                    derivative_layout.position = variable.derivative_position + (order - 1) * variable.derivative_size;
+                    derivative_layout.column = column_count++;
+                    layout.variables.emplace_back(std::move(derivative_layout));
+                }
+            }
         }
 
         layout_lookup[storage] = layout.index;

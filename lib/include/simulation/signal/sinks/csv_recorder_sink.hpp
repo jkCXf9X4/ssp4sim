@@ -59,9 +59,10 @@ namespace ssp4sim::signal
         std::uint64_t recording_interval = 0;
         std::uint64_t last_recorded_timestamp = 0;
         bool has_recorded_timestamp = false;
+        bool record_derivatives = false;
         std::size_t printed_rows = 0;
 
-        CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval);
+        CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval, bool record_derivatives = false);
 
         void on_storage_added(const SignalStorage *storage) override;
 

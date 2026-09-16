@@ -28,11 +28,12 @@ namespace ssp4sim::signal
         }
     }
 
-    SqliteWALRecorderSink::SqliteWALRecorderSink(std::filesystem::path working_dir, std::string session_uuid, std::optional<std::filesystem::path> file_override)
+    SqliteWALRecorderSink::SqliteWALRecorderSink(std::filesystem::path working_dir, std::string session_uuid, std::optional<std::filesystem::path> file_override, bool record_derivatives)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.SqliteWALRecorderSink")),
           working_dir(std::move(working_dir)),
           session_uuid(std::move(session_uuid)),
-          file_override(std::move(file_override))
+          file_override(std::move(file_override)),
+          record_derivatives(record_derivatives)
     {
         LOG_DEBUG(log, "[{func}] Working dir {dir}", __func__, this->working_dir.string());
     }
@@ -174,6 +175,19 @@ namespace ssp4sim::signal
             variable_layout.position = variable.position;
             variable_layout.bind_index = static_cast<int>(i) + 3;
             layout.variables.emplace_back(std::move(variable_layout));
+
+            if (record_derivatives && variable.max_interpolation_orders > 0)
+            {
+                for (std::size_t order = 1; order <= variable.max_interpolation_orders; ++order)
+                {
+                    SqliteVariableLayout derivative_layout;
+                    derivative_layout.name = local_variable_name(layout.model, variable.name) + ".d" + std::to_string(order);
+                    derivative_layout.type = types::DataType::real;
+                    derivative_layout.position = variable.derivative_position + (order - 1) * variable.derivative_size;
+                    derivative_layout.bind_index = static_cast<int>(layout.variables.size()) + 3;
+                    layout.variables.emplace_back(std::move(derivative_layout));
+                }
+            }
         }
 
         layout_lookup[storage] = layout.index;
