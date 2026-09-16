@@ -10,8 +10,7 @@
 #include "executor/seidel/seidel_serial.hpp"
 #include "executor/seidel/seidel_parallel.hpp"
 #include "executor/loop_aware/la2_builder.hpp"
-#include "executor/macro/macro_executor.hpp"
-#include "executor/macro/realtime_macro_executor.hpp"
+#include "executor/substep/macro_substep_executor.hpp"
 
 #include "resolver/data_access_resolver.hpp"
 
@@ -164,18 +163,11 @@ namespace ssp4sim::graph
 
         auto specialized_executor = matches[0]->factory(std::move(nodes));
 
-        if (options_.realtime)
-        {
-            return std::make_shared<graph::RealtimeMacroExecutor>(
-                std::vector<std::shared_ptr<Invocable>>{specialized_executor},
-                macro_step_);
-        }
-        else
-        {
-            return std::make_shared<graph::MacroExecutor>(
-                std::vector<std::shared_ptr<Invocable>>{specialized_executor},
-                macro_step_);
-        }
+        // Always wrap in a MacroExecutor; `realtime` records whether the outer
+        // macro steps are paced to the wall clock.
+        return std::make_shared<graph::MacroExecutor>(
+            std::vector<std::shared_ptr<Invocable>>{specialized_executor},
+            macro_step_, options_.realtime);
     }
 
 }

@@ -93,23 +93,24 @@ TEST_CASE("LinearSubstepExecutor.build_schedule divides the macro step equally",
     CHECK(sched[3] == Step(75, 100));
 }
 
-TEST_CASE("LinearSubstepExecutor.build_schedule clamps non-divisible macros",
+TEST_CASE("LinearSubstepExecutor.build_schedule rounds up and clamps the tail",
           "[substep_executor][linear]")
 {
+    // 10 is not divisible by 4: sub-steps round up to 3 and the final
+    // sub-step is clamped at the macro end (no tiny 1-unit tail).
     auto sched = ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 10, 4);
-    REQUIRE(sched.size() == 5);
-    CHECK(sched[0] == Step(0, 2));
-    CHECK(sched[1] == Step(2, 4));
-    CHECK(sched[2] == Step(4, 6));
-    CHECK(sched[3] == Step(6, 8));
-    CHECK(sched[4] == Step(8, 10));
+    REQUIRE(sched.size() == 4);
+    CHECK(sched[0] == Step(0, 3));
+    CHECK(sched[1] == Step(3, 6));
+    CHECK(sched[2] == Step(6, 9));
+    CHECK(sched[3] == Step(9, 10));
 }
 
-TEST_CASE("LinearSubstepExecutor.build_schedule steps 0 is a single full step",
+TEST_CASE("LinearSubstepExecutor.build_schedule requires steps >= 1",
           "[substep_executor][linear]")
 {
-    auto sched = ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 100, 0);
-    REQUIRE(sched == std::vector<Step>{Step(0, 100)});
+    REQUIRE_THROWS_AS(ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 100, 0),
+                      std::runtime_error);
     CHECK(ssp4sim::graph::LinearSubstepExecutor::build_schedule(100, 100, 4).empty());
 }
 
@@ -121,6 +122,19 @@ TEST_CASE("LinearSubstepExecutor sweeps the group once per equal sub-step",
     ex.invoke(ssp4sim::graph::StepData(T0, T1));
 
     auto expected = ssp4sim::graph::LinearSubstepExecutor::build_schedule(T0, T1, 4);
+    REQUIRE(expected.size() == 4);
+    REQUIRE(b.recorded_a == expected);
+    REQUIRE(b.recorded_b == expected);
+}
+
+TEST_CASE("LinearSubstepExecutor sweeps the group per rounded-up sub-step",
+          "[substep_executor][linear]")
+{
+    auto b = make_two_nodes();
+    ssp4sim::graph::LinearSubstepExecutor ex(b.owned, 4);
+    ex.invoke(ssp4sim::graph::StepData(0, 10));
+
+    auto expected = ssp4sim::graph::LinearSubstepExecutor::build_schedule(0, 10, 4);
     REQUIRE(expected.size() == 4);
     REQUIRE(b.recorded_a == expected);
     REQUIRE(b.recorded_b == expected);
@@ -141,60 +155,45 @@ TEST_CASE("LinearSubstepExecutor with an empty macro step invokes nothing",
 // Geometric schedule
 // ---------------------------------------------------------------------------
 
-TEST_CASE("GeometricSubstepExecutor.build_schedule scaled lands on the macro end",
-          "[substep_executor][geometric]")
-{
-    auto sched = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 100, 0.5, 100, 0, 3);
-    REQUIRE(sched.size() == 3);
-    CHECK(sched[0] == Step(0, 57));
-    CHECK(sched[1] == Step(57, 86));
-    CHECK(sched[2] == Step(86, 100));
-}
-
 TEST_CASE("GeometricSubstepExecutor.build_schedule free-shrink covers the macro",
           "[substep_executor][geometric]")
 {
     auto sched = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 100, 0.5, 100, 10, 0);
-    REQUIRE(sched.size() == 3);
+        0, 100, 0.5, 10);
+    REQUIRE(sched.size() == 4);
     CHECK(sched[0] == Step(0, 50));
     CHECK(sched[1] == Step(50, 75));
-    // Last sub-step is extended to the macro end (was (75, 88)) so the tail
-    // 88 -> 100 is simulated and the union of sub-steps equals [0, 100].
-    CHECK(sched[2] == Step(75, 100));
+    CHECK(sched[2] == Step(75, 88));
+    // Once the remaining time is at or below the threshold (12 -> 6), the
+    // rest of the macro step is taken whole, so the union of sub-steps
+    // exactly equals [0, 100].
+    CHECK(sched[3] == Step(88, 100));
 }
 
-TEST_CASE("GeometricSubstepExecutor.build_schedule free-shrink min threshold",
+TEST_CASE("GeometricSubstepExecutor.build_schedule takes the remaining step at the threshold",
           "[substep_executor][geometric]")
 {
     auto sched = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 100, 0.5, 100, 25, 0);
+        0, 100, 0.5, 25);
     REQUIRE(sched.size() == 2);
     CHECK(sched[0] == Step(0, 50));
     CHECK(sched[1] == Step(50, 100));
 
+    // A threshold >= the macro duration collapses to one step.
+    CHECK(ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
+              0, 100, 0.5, 100).size() == 1);
+
     // start >= end -> empty.
     CHECK(ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-              100, 100, 0.5, 100, 25, 0).empty());
+              100, 100, 0.5, 25).empty());
 }
 
 TEST_CASE("GeometricSubstepExecutor.build_schedule large macro full coverage",
           "[substep_executor][geometric]")
 {
     auto sched = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 1000000, 0.5, 100, 1000, 0);
+        0, 1000000, 0.5, 1000);
     check_full_coverage(0, 1000000, sched);
-}
-
-TEST_CASE("GeometricSubstepExecutor.build_schedule scaled tiny macro coverage",
-          "[substep_executor][geometric]")
-{
-    // llround collisions collapse inner sub-steps to zero length and they are
-    // dropped, but the last sub-step must still reach the macro end.
-    auto sched = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 1, 0.5, 100, 0, 3);
-    check_full_coverage(0, 1, sched);
 }
 
 TEST_CASE("GeometricSubstepExecutor.build_schedule free-shrink tiny macro",
@@ -203,28 +202,30 @@ TEST_CASE("GeometricSubstepExecutor.build_schedule free-shrink tiny macro",
     // A macro so small that the first candidate sub-step rounds to zero must
     // still emit a single sub-step covering the whole macro.
     auto sched = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 1, 0.7, 100, 0, 0);
+        0, 1, 0.7, 0);
     REQUIRE(sched.size() == 1);
     CHECK(sched[0] == Step(0, 1));
 
-    // The min_substep threshold fires before the tail-close too: min_substep=1
-    // on a macro of 2 with r=0.5 leaves the last sub-step extended to `end`.
+    // The threshold fires before the tail-close too: threshold=1 on a macro
+    // of 2 with r=0.5 collapses to a single step covering the whole macro.
     auto sched2 = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 2, 0.5, 100, 1, 0);
-    REQUIRE_FALSE(sched2.empty());
-    CHECK(sched2.back().second == 2);
+        0, 2, 0.5, 1);
+    REQUIRE(sched2.size() == 1);
+    CHECK(sched2[0] == Step(0, 2));
 }
 
-TEST_CASE("GeometricSubstepExecutor.build_schedule out-of-range factor falls back",
+TEST_CASE("GeometricSubstepExecutor rejects an out-of-range factor",
           "[substep_executor][geometric]")
 {
-    // An invalid shrink factor is treated as equal sub-steps
-    // (legacy "fixed"-style behavior).
-    auto sched = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        0, 100, 1.5, 100, 0, 4);
-    REQUIRE(sched.size() == 4);
-    CHECK(sched[0] == Step(0, 25));
-    CHECK(sched[3] == Step(75, 100));
+    // An invalid shrink factor is rejected, not silently degraded to equal
+    // sub-steps (the legacy fallback was removed when the constructor started
+    // validating factor).
+    REQUIRE_THROWS_AS(ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
+                          0, 100, 1.5, 0),
+                      std::runtime_error);
+    REQUIRE_THROWS_AS(ssp4sim::graph::GeometricSubstepExecutor(
+                          std::vector<std::shared_ptr<ssp4sim::graph::Invocable>>{}, 1.5),
+                      std::runtime_error);
 }
 
 TEST_CASE("GeometricSubstepExecutor sweeps the group per shrinking sub-step",
@@ -232,8 +233,8 @@ TEST_CASE("GeometricSubstepExecutor sweeps the group per shrinking sub-step",
 {
     auto b = make_two_nodes();
     auto steps = ssp4sim::graph::GeometricSubstepExecutor::build_schedule(
-        T0, T1, 0.5, 256, 0, 4);
-    ssp4sim::graph::GeometricSubstepExecutor ex(b.owned, 0.5, 256, 0.001, 4);
+        T0, T1, 0.5, 0);
+    ssp4sim::graph::GeometricSubstepExecutor ex(b.owned, 0.5, 0);
     ex.invoke(ssp4sim::graph::StepData(T0, T1));
 
     REQUIRE_FALSE(steps.empty());

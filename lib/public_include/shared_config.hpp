@@ -21,8 +21,7 @@ namespace ssp4sim
         std::string mode = "linear";          // "linear" | "factor" (aliases allowed)
         int iterations = -1;                  // < 0 -> SCC node count
         double factor = 0.8;
-        std::size_t max_steps = 64;
-        double min_substep_fraction = 0.001;
+        uint64_t threshold = 0.0;               // nanoseconds; free-shrink cutoff for "factor" mode
         bool parallel = false;
     };
 
@@ -72,10 +71,7 @@ namespace ssp4sim
         o.la2.mode = utils::Config::getOr("simulation.executor.la2.mode", std::string("linear"));
         o.la2.iterations = utils::Config::getOr("simulation.executor.la2.iterations", -1);
         o.la2.factor = utils::Config::getOr("simulation.executor.la2.factor", 0.8);
-        o.la2.max_steps = static_cast<std::size_t>(
-            utils::Config::getOr("simulation.executor.la2.max_steps", 64));
-        o.la2.min_substep_fraction = utils::Config::getOr(
-            "simulation.executor.la2.min_substep_fraction", 0.001);
+        o.la2.threshold = utils::time::s_to_ns(utils::Config::getOr("simulation.executor.la2.threshold", 0.0));
         o.la2.parallel = utils::Config::getOr("simulation.executor.la2.parallel", false);
         return o;
     }

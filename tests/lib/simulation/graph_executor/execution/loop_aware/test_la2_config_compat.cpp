@@ -26,7 +26,7 @@
 #include "config.hpp"
 #include "executor/seidel/seidel_serial.hpp"
 #include "executor_builder.hpp"
-#include "executor/macro/macro_executor.hpp"
+#include "executor/substep/macro_substep_executor.hpp"
 #include "shared_config.hpp"
 
 #include <cstdint>
@@ -216,24 +216,27 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
         REQUIRE(total_invocations(nodes) == 6);
     }
 
-    SECTION("'geometric' behaves like 'factor' (shrinking sub-steps, count = iterations)")
+    SECTION("'geometric' behaves like 'factor' (shrinking sub-steps, threshold cutoff)")
     {
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
 
+        // iterations only drives the linear split; the factor mode sub-steps
+        // shrink by `factor` until the remaining time is at or below
+        // `threshold` (config seconds, converted to ns by make_la2_stack).
         auto options = la2_options("geometric", 4);
         options.la2.factor = 0.5;
+        options.la2.threshold = 150e-9; // 150 ns -> 3 sub-steps over [0, 1200)
 
         ssp4sim::graph::ExecutorBuilder builder(options, T1);
         auto executor = builder.build(to_owned(storage));
         executor->invoke(ssp4sim::graph::StepData(T0, T1));
 
-        // "geometric" honors BOTH iterations (sub-step count) and factor:
-        // 2 nodes * 4 shrinking sub-steps = 8 invocations.
-        REQUIRE(total_invocations(nodes) == 8);
+        // 2 nodes * 3 shrinking sub-steps = 6 invocations.
+        REQUIRE(total_invocations(nodes) == 6);
     }
 
-    SECTION("'geometric' with factor outside (0,1) falls back to equal sub-steps")
+    SECTION("'geometric' with factor outside (0,1) is rejected")
     {
         std::vector<std::shared_ptr<MockNode>> storage;
         auto nodes = make_loop_graph(storage);
@@ -242,13 +245,9 @@ TEST_CASE("legacy mode aliases map to the new scheduler modes", "[la2][config][c
         options.la2.factor = 1.5;
 
         ssp4sim::graph::ExecutorBuilder builder(options, T1);
-        auto executor = builder.build(to_owned(storage));
-        executor->invoke(ssp4sim::graph::StepData(T0, T1));
-
-        // GeometricSubstepExecutor::build_schedule treats an out-of-range
-        // factor as equal sub-steps:
-        // 2 nodes * 3 equal sub-steps = 6 invocations.
-        REQUIRE(total_invocations(nodes) == 6);
+        // GeometricSubstepExecutor rejects a shrink factor outside (0, 1);
+        // the legacy equal-sub-step fallback was removed.
+        REQUIRE_THROWS_AS(builder.build(to_owned(storage)), std::runtime_error);
     }
 }
 

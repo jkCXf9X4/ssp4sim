@@ -12,7 +12,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
-#include "executor/macro/macro_executor.hpp"
+#include "executor/substep/macro_substep_executor.hpp"
 #include "executor/seidel/seidel_serial.hpp"
 #include "executor_builder.hpp"
 #include "shared_config.hpp"

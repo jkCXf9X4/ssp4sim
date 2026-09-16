@@ -7,7 +7,7 @@
 //   (b) seidel: serial vs the parallel stub.
 //   (c) custom delay family: `custom_delay` / `custom_delay_partial`.
 //   (d) legacy `loop_aware` alias resolves to the same la2 variant.
-//   (e) `realtime` selects the RealtimeMacroExecutor outer wrap.
+//   (e) `realtime` is forwarded to the MacroExecutor wrap as its pacing flag.
 //   (f) a config set with no matching variant throws, naming the method
 //       (unknown method, and an unknown jacobi parallel backend id).
 //
@@ -18,8 +18,8 @@
 // builds shared graphs and hands a shared copy to each executor. The shared
 // pointer returned by build() must be KEPT alive while the wrapped executor is
 // inspected (the test_la2_config_compat.cpp pattern): inspection happens in
-// `specialized_of` / the realtime assertions a statement that still holds the
-// owning shared_ptr.
+// `specialized_of` / the realtime assertions while that statement still holds
+// the owning shared_ptr.
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -31,8 +31,7 @@
 #include "executor/seidel/seidel_parallel.hpp"
 #include "executor/seidel/seidel_serial.hpp"
 #include "executor_builder.hpp"
-#include "executor/macro/macro_executor.hpp"
-#include "executor/macro/realtime_macro_executor.hpp"
+#include "executor/substep/macro_substep_executor.hpp"
 #include "shared_config.hpp"
 
 #include <cstdint>
@@ -215,18 +214,28 @@ TEST_CASE("executor_builder legacy 'loop_aware' method name resolves to the la2 
     REQUIRE(dynamic_cast<ssp4sim::graph::SerialSeidel *>(specialized_of(executor)) != nullptr);
 }
 
-TEST_CASE("realtime selects the RealtimeMacroExecutor outer wrap", "[builder][variant][realtime]")
+TEST_CASE("realtime flag is forwarded to the MacroExecutor wrap", "[builder][variant][realtime]")
 {
-    ssp4sim::ExecutorOptions options;
-    options.method = "jacobi";
-    options.realtime = true;
+    ssp4sim::ExecutorOptions realtime_options;
+    realtime_options.method = "jacobi";
+    realtime_options.realtime = true;
 
     auto storage = make_chain_graph();
-    ssp4sim::graph::ExecutorBuilder builder(options, T1);
-    auto executor = builder.build(to_owned(storage));
+    ssp4sim::graph::ExecutorBuilder realtime_builder(realtime_options, T1);
+    auto realtime_executor = realtime_builder.build(to_owned(storage));
 
-    REQUIRE(dynamic_cast<ssp4sim::graph::RealtimeMacroExecutor *>(executor.get()) != nullptr);
-    REQUIRE(dynamic_cast<ssp4sim::graph::MacroExecutor *>(executor.get()) == nullptr);
+    auto *macro = dynamic_cast<ssp4sim::graph::MacroExecutor *>(realtime_executor.get());
+    REQUIRE(macro != nullptr);
+    REQUIRE(macro->realtime);
+
+    ssp4sim::ExecutorOptions default_options;
+    default_options.method = "jacobi";
+    ssp4sim::graph::ExecutorBuilder default_builder(default_options, T1);
+    auto default_executor = default_builder.build(to_owned(storage));
+
+    auto *default_macro = dynamic_cast<ssp4sim::graph::MacroExecutor *>(default_executor.get());
+    REQUIRE(default_macro != nullptr);
+    REQUIRE_FALSE(default_macro->realtime);
 }
 
 TEST_CASE("a config set with no matching variant throws, naming the method",

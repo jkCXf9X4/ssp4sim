@@ -90,16 +90,17 @@ For CLI and Python invocation examples, see [Usage](usage.md).
 | `simulation.executor.jacobi.parallel` | `bool` | No | `false` | If `true`, uses a parallel Jacobi implementation. |
 | `simulation.executor.jacobi.method` | `int` | No | `1` | `1` = TBB, `2` = spin pool, `3` = futures. |
 | `simulation.executor.seidel.parallel` | `bool` | No | `false` | If `true`, selects `ParallelSeidel`; **not implemented** — throws at config selection. Else `SerialSeidel`. |
-| `simulation.executor.la2.iterations` | `int` | No | SCC node count | Number of internal sub-steps the `la2` executor takes per macro step inside each loop SCC. Defaults to the SCC size (`1` = no sub-step relaxation). Nested (loop-within-loop) SCCs need a higher count because their feedback path passes through the inner loop nodes as well; the relaxation rate (Jacobi spectral radius) tightens with more iterations. |
-| `simulation.executor.la2.mode` | `string` | No | `linear` | How the macro step is subdivided for a loop SCC: `linear` = `iterations` equal sub-steps; `factor` = sub-steps shrink by `simulation.executor.la2.factor`, so the smallest sub-steps land at the macro-step end. Both modes only advance time (models cannot be reset), so the loop relaxes as a moving wavefront toward the macro-step boundary. The scheduling guarantees the macro interval `[0, end]` is fully covered (the last sub-step covers the tail). Legacy mode aliases: `fixed` → `linear`, `geometric` → `factor`. |
-| `simulation.executor.la2.factor` | `double` | No | `0.8` | Sub-step decay factor in `(0, 1)` used when `mode` is `factor`. Smaller values concentrate relaxation closer to the macro-step end; zero-length sub-steps are dropped. |
+| `simulation.executor.la2.iterations` | `int` | No | SCC node count | Number of equal sub-steps the `la2` executor takes per macro step inside each loop SCC when `mode` is `linear`. Defaults to the SCC size (`1` = no sub-step relaxation). Nested (loop-within-loop) SCCs need a higher count because their feedback path passes through the inner loop nodes as well; the relaxation rate (Jacobi spectral radius) tightens with more iterations. Ignored in `factor` mode. |
+| `simulation.executor.la2.mode` | `string` | No | `linear` | How the macro step is subdivided for a loop SCC: `linear` = `iterations` equal sub-steps; `factor` = sub-steps shrink by `simulation.executor.la2.factor` until the remaining time is at or below `simulation.executor.la2.threshold`, then the remaining step is taken whole. Both modes only advance time (models cannot be reset), so the loop relaxes as a moving wavefront toward the macro-step boundary. The scheduling guarantees the macro interval `[0, end]` is fully covered (the last sub-step covers the tail). Legacy mode aliases: `fixed` → `linear`, `geometric` → `factor`. |
+| `simulation.executor.la2.factor` | `double` | No | `0.8` | Sub-step decay factor in `(0, 1)` used when `mode` is `factor`: each sub-step covers `factor` of the remaining time. Smaller values concentrate relaxation closer to the macro-step end; zero-length sub-steps are dropped. |
+| `simulation.executor.la2.threshold` | `double` | No | `0.0` | Seconds; used when `mode` is `factor`. Shrinking sub-steps stop once the remaining time is at or below this cutoff, and the rest of the macro step is simulated as one final sub-step. `0` (default) shrinks until the rounded sub-step ends stop advancing. |
 | `simulation.executor.la2.parallel` | `bool` | No | `false` | If `true`, the `la2` outer Gauss-Seidel executor is `ParallelSeidel` instead of `SerialSeidel`. `ParallelSeidel` is **not implemented** yet, so this throws during `ExecutorBuilder` assembly until the stub lands. |
 
 Notes:
 - All `simulation.executor.*` keys are parsed exactly once, centrally, by
   `ssp4sim::ExecutorOptions::load()` (called from the `SharedConfig`
   constructor in `lib/public_include/shared_config.hpp`); `simulation.realtime`
-  (outer macro wrapper), `simulation.tolerance`,
+  (paces the outer `MacroExecutor` macro steps), `simulation.tolerance`,
   `simulation.executor.forward_derivatives`, `simulation.log.fmu` and the
   experiment times (`simulation.start_time` / `simulation.timestep` /
   `simulation.stop_time`, owned by `ssp4sim::FmuModelConfig`) are parsed in the

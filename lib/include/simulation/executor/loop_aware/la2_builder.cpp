@@ -13,6 +13,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cmath>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -89,9 +90,9 @@ namespace ssp4sim::graph
             std::shared_ptr<Invocable> repr;
             if (geometric)
             {
+                // The config threshold is in seconds; the executor works in ns.
                 repr = std::make_shared<GeometricSubstepExecutor>(
-                    std::move(members), options.factor, options.max_steps,
-                    options.min_substep_fraction, iterations);
+                    std::move(members), options.factor,options.threshold);
             }
             else
             {

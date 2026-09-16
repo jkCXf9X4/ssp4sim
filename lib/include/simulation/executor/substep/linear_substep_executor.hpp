@@ -14,11 +14,16 @@ namespace ssp4sim::graph
     /// @brief Runs a group of nodes over equal pre-selected sub-steps covering
     ///        the macro step.
     ///
-    /// invoke() divides [start, end) into `iterations` equal sub-steps
-    /// (0 -> a single full step) and sweeps the whole group in parallel per
-    /// sub-step (invoke_group_parallel). Sub-steps advance time, so each
-    /// sub-step samples the previous sub-step's commitments (deterministic
-    /// Jacobi-style relaxation).
+    /// invoke() divides [start, end) into `iterations` equal sub-steps and
+    /// sweeps the whole group in parallel per sub-step (invoke_group_parallel).
+    /// Each sub-step rounds UP (ceil), so the final sub-step only slightly
+    /// overshoots the macro and is clamped at `end`, keeping the union of
+    /// emitted sub-steps exactly equal to [start, end). Sub-steps advance time,
+    /// so each sub-step samples the previous sub-step's commitments
+    /// (deterministic Jacobi-style relaxation).
+    ///
+    /// `realtime` (default false) paces every emitted sub-step to the wall
+    /// clock via ExecutorBase::wait_for_realtime_sync.
     ///
     /// Resolver-neutral: this executor never installs a read-path resolver.
     /// The executor stack owner installs THE resolver for the whole stack.
@@ -26,14 +31,9 @@ namespace ssp4sim::graph
     {
     public:
         LinearSubstepExecutor(std::vector<std::shared_ptr<Invocable>> nodes,
-                              std::size_t iterations = 0);
+                              std::size_t iterations = 0,
+                              const bool realtime = false);
 
-        // Equal sub-steps over [start, end); `steps` == 0 means a single full
-        // step. Contract: the union of the emitted sub-steps always exactly
-        // equals [start, end]. The final sub-step is clamped at `end` when the
-        // macro duration is not divisible by `steps`.
-        static std::vector<std::pair<std::uint64_t, std::uint64_t>> build_schedule(
-            std::uint64_t start, std::uint64_t end, std::size_t steps);
 
         std::string to_string() const override;
 

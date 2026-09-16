@@ -99,7 +99,10 @@ LinearSubstepExecutor -> FmuModel`). When composing a stack:
   scans the registry and requires *exactly one* matching variant — no
   per-family branching: none match is a precise no-match error naming the
   method, more than one is an ambiguity error. The resolved factory builds the
-  specialized executor, then `build` applies the uniform macro wrap.
+  specialized executor, then `build` applies the uniform macro wrap: always a
+  `MacroExecutor` sized from the configured macro step (the former
+  `RealtimeMacroExecutor` class was merged into it), with `options.realtime`
+  forwarded as its `const bool realtime` pacing flag.
 - **la2 is a factory, not a class.** There is no `La2Scheduler` type;
   `make_la2_stack(nodes, La2Options)` (`executor/loop_aware/la2_builder.hpp`)
   is a config-free, pure construction function that SCC-partitions the graph,
@@ -155,7 +158,15 @@ Reusable building blocks that serve la2 but live outside it:
   (`executor/substep/`) that relax any group of nodes over a linear or shrinking
   sub-step schedule. Each owns its schedule construction (`build_schedule`
   static) and sweeps the group in parallel per sub-step; use them outside la2 to
-  sub-step groups on equal or shrinking schedules.
+  sub-step groups on equal or shrinking schedules. `invoke` streams the schedule
+  through `for_each_substep` / `for_each_equal_substep` (`executor_utils.hpp`)
+  without materializing a schedule vector. Both accept an optional
+  `const bool realtime = false` that paces every emitted sub-step to the wall
+  clock (shared `ExecutorBase::wait_for_realtime_sync`). `LinearSubstepExecutor`
+  requires `iterations` / `steps` >= 1 (its constructor and `build_schedule`
+  throw on 0); `GeometricSubstepExecutor` requires a factor in (0, 1) and
+  shrinks each sub-step by `factor` until the remaining time is at or below its
+  absolute `threshold` (ns), then takes the remaining step whole.
 
 When reusing `SeidelBase` with executors as nodes, remember that its node array
 is positional (`index_of_id` maps the process-wide `Node` id -> array index), so executors can

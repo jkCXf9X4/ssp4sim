@@ -14,18 +14,18 @@ namespace ssp4sim::graph
     /// @brief Runs a group of nodes over shrinking sub-steps (each sub-step
     ///        covers `factor` of the remaining time).
     ///
-    /// Each sub-step covers `factor` of the remaining time. With `steps` > 0
-    /// the shrinking sub-steps are scaled to land exactly on the macro end;
-    /// with `steps` == 0 (free-shrink) the executor keeps shrinking until the
-    /// next candidate sub-step would be shorter than `min_substep` (resolved by
-    /// the executor from `min_substep_fraction` and the macro duration) or
-    /// `max_steps` is reached, then closes the tail so [start, end] is fully
-    /// covered. Only the final sub-step may be shorter than `min_substep`.
+    /// Each sub-step covers `factor` of the remaining time. Shrinking stops
+    /// once the remaining time is at or below `threshold` (absolute ns): the
+    /// remaining step is then taken whole, so [start, end] is always fully
+    /// covered and only the final sub-step may be shorter than `threshold`.
     ///
     /// invoke() sweeps the whole group in parallel per sub-step
     /// (invoke_group_parallel). Sub-steps advance time, so each sub-step
     /// samples the previous sub-step's commitments (deterministic Jacobi-style
     /// relaxation).
+    ///
+    /// `realtime` (default false) paces every emitted sub-step to the wall
+    /// clock via ExecutorBase::wait_for_realtime_sync.
     ///
     /// Resolver-neutral: this executor never installs a read-path resolver.
     /// The executor stack owner installs THE resolver for the whole stack.
@@ -34,18 +34,17 @@ namespace ssp4sim::graph
     public:
         GeometricSubstepExecutor(std::vector<std::shared_ptr<Invocable>> nodes,
                                  double factor = 0.5,
-                                 std::size_t max_steps = 256,
-                                 double min_substep_fraction = 0.001,
-                                 std::size_t steps = 0);
+                                 std::uint64_t threshold = 0,
+                                 const bool realtime = false);
 
-        // Shrinking sub-steps over [start, end). `min_substep` is absolute;
-        // `steps` == 0 selects free-shrink. An out-of-range factor (not in
-        // (0, 1)) falls back to equal sub-steps. Contract: the union of the
-        // emitted sub-steps always exactly equals [start, end].
+        // Shrinking sub-steps over [start, end): each covers `factor` of the
+        // remaining time; when the remaining time drops at or below
+        // `threshold` (absolute ns) the remaining step is taken whole. An
+        // out-of-range factor (not in (0, 1)) throws. Contract: the union of
+        // the emitted sub-steps always exactly equals [start, end].
         static std::vector<std::pair<std::uint64_t, std::uint64_t>> build_schedule(
             std::uint64_t start, std::uint64_t end,
-            double factor, std::size_t max_steps,
-            std::uint64_t min_substep, std::size_t steps);
+            double factor, std::uint64_t threshold);
 
         std::string to_string() const override;
 
@@ -53,10 +52,8 @@ namespace ssp4sim::graph
 
     private:
         double factor = 0.5;
-        std::size_t max_steps = 256;
-        // Macro-relative minimum sub-step (default 0.001 of the macro step);
-        // resolved to the absolute `min_substep` per invoke().
-        double min_substep_fraction = 0.001;
-        std::size_t steps = 0;
+        // Absolute remaining-time cutoff (ns): once the remaining time drops
+        // at or below `threshold`, the rest of the macro step is taken whole.
+        std::uint64_t threshold = 0;
     };
 }

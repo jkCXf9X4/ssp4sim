@@ -11,37 +11,18 @@ namespace ssp4sim::graph
 {
 
     LinearSubstepExecutor::LinearSubstepExecutor(
-        std::vector<std::shared_ptr<Invocable>> nodes, std::size_t iterations)
-        : ExecutorBase(std::move(nodes), "ssp4sim.execution.LinearSubstepExecutor"),
+        std::vector<std::shared_ptr<Invocable>> nodes, std::size_t iterations,
+        const bool realtime)
+        : ExecutorBase(std::move(nodes), "ssp4sim.execution.LinearSubstepExecutor",
+                       realtime),
           iterations(iterations)
     {
         this->name = "LinearSubstepExecutor";
-    }
 
-    std::vector<std::pair<std::uint64_t, std::uint64_t>>
-    LinearSubstepExecutor::build_schedule(std::uint64_t start, std::uint64_t end,
-                                          std::size_t steps)
-    {
-        std::vector<std::pair<std::uint64_t, std::uint64_t>> out;
-        if (start >= end)
+        if (iterations < 1)
         {
-            return out;
+            throw std::runtime_error("LinearSubstepExecutor need to take at least 1 iteration, currently: " + std::to_string(iterations));
         }
-
-        auto n = steps ? steps : std::size_t(1);
-        auto sub_dt = (end - start) / n;
-        if (sub_dt == 0u)
-        {
-            sub_dt = 1u;
-        }
-        auto t = start;
-        while (t < end)
-        {
-            auto e = std::min(t + sub_dt, end);
-            out.emplace_back(t, e);
-            t = e;
-        }
-        return out;
     }
 
     uint64_t LinearSubstepExecutor::invoke(StepData step_data)
@@ -51,11 +32,24 @@ namespace ssp4sim::graph
                       __func__, name, nodes.size(), iterations);
         });
 
-        for (auto &[sub_start, sub_end] : build_schedule(
-                 step_data.start_time, step_data.end_time, iterations))
+        const auto total = step_data.end_time - step_data.start_time;
+        const auto base_sub_dt = total / iterations;
+        const auto remainder = total % iterations;
+
+        auto start = step_data.start_time;
+
+        for (uint64_t i = 0; i < iterations; ++i)
         {
-            invoke_group_parallel(nodes, StepData(sub_start, sub_end));
+
+            // distribute the remainders across the iterations
+            const auto end = start + base_sub_dt + (i < remainder);
+
+            wait_for_realtime_sync(start);
+            invoke_group_parallel(nodes, StepData(start, end));
+
+            start = end;
         }
+
         return step_data.end_time;
     }
 
