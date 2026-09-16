@@ -49,7 +49,7 @@ namespace ssp4sim::graph
             throw std::runtime_error("Node not found");
         }
 
-        // continuous input will allow the substep to sample new data during the substep
+        // Run the model forward in substeps of substep_size until step_data.end_time, invoking the model once per substep.
         void invoke_sub_step(FmuModel *models, const StepData &step_data, uint64_t substep_size)
         {
             while (models->current_time < step_data.end_time)

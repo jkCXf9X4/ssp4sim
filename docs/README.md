@@ -26,4 +26,5 @@ This page indexes the SSP4SIM documentation. See [product-breakdown/README.md](.
 
 - [Development Guide](development.md) — contributor workflow and conventions
 - [Tests](../tests/README.md) — C++ and Python test layout and commands
+- [Test Levels Analysis](test-levels-analysis.md) — coverage map and future implementation
 - [Release Pipeline](linux_binary_distribution.md) — Linux binary and wheel packaging

@@ -25,7 +25,7 @@ This artifact documents the non-functional characteristics that shape SSP4SIM ar
 - **Experimental quality.** No formal reliability targets.
 - FMU step failures handled gracefully (cleanup without fmi2Terminate).
 - Recorder buffer overflow drops events with rate-limited warning.
-- `ctest` integration is unreliable — test binary must be run directly.
+- CTest is the canonical test runner — see `docs/build_from_source.md` and `tests/README.md` for run commands.
 
 ## Security
 

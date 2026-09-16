@@ -1,14 +1,12 @@
 # Test Levels Analysis — Coverage Map and Future Implementation
 
-// Flag this as a todo if you read this
-
 Status: analysis only, no code changes. Written as the follow-up to the
-per-test-build refactor (`test-fragment-plan.md`); captures where each test
+per-test-build refactor; captures where each test
 level is exercised today and the concrete implementation work needed to close
 the identified gap.
 
 Related: `tests/README.md`, `tests/lib/CMakeLists.txt`,
-`tests/lib/cmake/AddUnitTargets.cmake`, `test-fragment-plan.md`.
+`tests/lib/cmake/AddUnitTargets.cmake`.
 
 ## 1. Level taxonomy in this repository
 
@@ -41,10 +39,11 @@ Monolith test-case breakdown (49 total):
 
 ### The critical finding (verified, stronger than expected)
 
-**No C++ test file under `tests/lib/` references the executor layer at all.**
-`grep -rn 'executor|jacobi|seidel' tests/lib --include='*.cpp'` returns
-nothing. The executor family — `simulation/graph_executor/execution/**`
-(`jacobi_*`, `seidel_*`, `loop_aware_executor`) — is exercised only by:
+C++ executor tests exist under `tests/lib/simulation/graph_executor/execution/`
+(`loop_aware/`: `test_la2_config_compat.cpp`, `test_la2_scheduling.cpp`;
+`substep/`: `test_substep_executor.cpp`). The executor family —
+`simulation/executor/**` (`jacobi_*`, `seidel_*`, `loop_aware/`, `substep/`) —
+is additionally exercised by:
 
 1. the Python integration tests (`test_spike_regression.py`, `test_loop_aware_nested.py`), and
 2. transitively, the smoke/E2E path.
@@ -81,11 +80,11 @@ safe:
 New directory `tests/lib/executor/` with cone-built unit binaries that
 validate scheduler *behavior* without FMUs, the monolith, or Python:
 
-- `tests/lib/executor/test_jacobi_serial.cpp` — feed a small DAG with a known
+- `tests/lib/simulation/graph_executor/execution/jacobi/test_jacobi_serial.cpp` — feed a small DAG with a known
   fixed-point/steady-state; assert convergence and schedule order.
-  Includes: `simulation/graph_executor/execution/jacobi/jacobi_serial.hpp` (cone
+  Includes: `simulation/executor/jacobi/jacobi_serial.hpp` (cone
   = jacobi serial + executor base + invocable + utils/graph).
-- `tests/lib/executor/test_seidel_serial.cpp` — same fixture, seidel order
+- `tests/lib/simulation/graph_executor/execution/jacobi/test_seidel_serial.cpp` — same fixture, seidel order
   semantics; assert in-place updates differ from jacobi (both read results of
   the same graph).
 - `tests/lib/executor/test_loop_aware_scheduling.cpp` — algebraic-loop

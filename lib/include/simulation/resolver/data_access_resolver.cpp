@@ -283,9 +283,9 @@ namespace ssp4sim::scheduling
     }
 
     // ------------------------------------------------------------------
-    // The entire read path: one resolve() hook call + one copy per connection.
-    // The hook is the abstract specialization point, so both the policy and the
-    // (model, connection) that it acts on are explicit here.
+    // The entire read path: one resolve() call + one copy per connection.
+    // resolve() is the shared per-mode dispatch (policy differences are
+    // construction-time data: default mode + stamp_edge_mode).
     // ------------------------------------------------------------------
     void DataAccessResolver::copy_model_inputs(ssp4sim::graph::FmuModel *target,
                                                std::size_t target_area,

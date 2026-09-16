@@ -43,4 +43,4 @@ auto conn = sys->get_connector("SuT", "SuT.edrive_mass.M_A");
 
 ## Architecture
 
-See AD-005 (three-layer architecture) in `product-breakdown/02-architecture/decisions/`.
+See AD-005 (three-layer architecture) in `breakdown/02-architecture/decisions/AD-005-three-layer-architecture.md`.

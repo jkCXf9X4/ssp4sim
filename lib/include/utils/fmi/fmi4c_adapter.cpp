@@ -332,10 +332,10 @@ namespace ssp4sim::handler
 
             if (!this->step(step_time)) [[unlikely]]
             {
-                int status = last_status();
-                if (status == 3 or status == 4)
+                fmi2Status status = last_status();
+                if (is_error_status(status))
                 {
-                    throw std::runtime_error(std::format("[{}] Model return status fmi2Error: Execution failed for model: {}", __func__, this->instance_.instance_name()));
+                    throw std::runtime_error(std::format("[{}] Model return status {}: Execution failed for model: {}", __func__, status_to_string(status), this->instance_.instance_name()));
                 }
             }
             sim_time = get_simulation_time();

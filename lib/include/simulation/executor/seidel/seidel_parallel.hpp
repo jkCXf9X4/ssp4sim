@@ -19,8 +19,8 @@ namespace ssp4sim::graph
         }
 
         /**
-         * Traverse the connection graph and invoke nodes when all parents have been invoked for this timestep.
-         * [hot path]
+         * Parallel Seidel traversal is not implemented yet; invoke() always
+         * throws std::runtime_error("This is not implemented").
          */
         uint64_t invoke(StepData step_data) override final;
     };

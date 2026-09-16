@@ -201,6 +201,8 @@ namespace ssp4sim::signal
      * @brief Cached value pointer for (area, variable).
      * @return byte* to the variable's value, or nullptr if never allocated.
      * Hot path: single lookup, no offset math.
+     * The [area][index] pointer indirection was analyzed in IMP-009 and
+     * accepted as a non-bottleneck.
      */
     std::byte *SignalStorage::get_item(std::size_t area, std::size_t index) noexcept
     {

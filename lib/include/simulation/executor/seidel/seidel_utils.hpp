@@ -24,14 +24,14 @@ namespace ssp4sim::graph
             }
             else if (substep_start + node->delay <= substep_end)
             {
-                // if the step is shorter than the model delay, do the best of it and set it to sub_step_end
-                // evaluate if this is true, it could be set to the correct time but there is the potential
-                // that the data could be used non-deterministic if a time before substep_end is set...
+                // if the step is longer than the model delay, set the correct time
                 output_time = substep_end;
             }
             else if (substep_start + node->delay > substep_end)
             {
-                // if the step is longer than the model delay, set the correct time
+                // if the step is shorter than the model delay, do the best of it and set it to sub_step_end
+                // evaluate if this is true, it could be set to the correct time but there is the potential
+                // that the data could be used non-deterministic if a time before substep_end is set...
                 output_time = substep_start + node->delay;
             }
 

@@ -28,8 +28,8 @@ Provides executor strategies that advance simulation time and coordinate FMU ste
 
 ## Include Boundary
 
-- Path: `lib/include/execution/`
-- 10 files including executor, executor_builder, executor_utils, invocable, and variant subdirs.
+- Path: `lib/include/simulation/executor/`
+- Top-level files: `executor_base.hpp`/`.cpp`, `executor_utils.hpp`. Variant subdirs: `jacobi/`, `seidel/`, `loop_aware/`, `substep/`, `custom/`. `ExecutorBuilder` lives at `lib/include/simulation/executor_builder.hpp` (one level up).
 
 ## Dependencies
 
@@ -45,4 +45,4 @@ Provides executor strategies that advance simulation time and coordinate FMU ste
 ## Traceability
 
 - Backward: Architecture component view, quality attributes (performance).
-- Sources: `lib/include/execution/`, `docs/configuration.md` (executor.method section).
+- Sources: `lib/include/simulation/executor/`, `lib/include/simulation/executor_builder.hpp`, `docs/configuration.md` (executor.method section).

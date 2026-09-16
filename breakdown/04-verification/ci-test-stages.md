@@ -39,7 +39,7 @@ Triggered on tag push.
 
 - CI workflow files in `.github/workflows/` may contain additional detail — this doc reflects known behavior
 - Docker container build is part of the release pipeline (from container/ubuntu22-gcc13/Containerfile)
-- ctest integration is unreliable — test binary execution is the canonical method
+- CTest is the canonical test runner — see `docs/build_from_source.md` and `tests/README.md` for run commands.
 
 ## Traceability
 

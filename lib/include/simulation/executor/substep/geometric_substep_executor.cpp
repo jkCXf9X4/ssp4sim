@@ -56,7 +56,7 @@ namespace ssp4sim::graph
         // eventually stop advancing (llround collisions).
         //
         // Contract: the union of the emitted sub-steps must exactly equal
-        // [start, end] in every mode. Every early-stop path below can leave
+        // [start, end]. Every early-stop path below can leave
         // [prev, end) uncovered, so the tail is closed after the loop: the
         // last emitted sub-step is extended to `end` (or a final (prev, end)
         // sub-step is emitted when nothing was emitted yet). Only this final

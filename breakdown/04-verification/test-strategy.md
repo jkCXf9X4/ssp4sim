@@ -8,15 +8,11 @@ This artifact formalizes the SSP4SIM testing approach — what is tested at each
 
 ## Test Pyramid
 
-The test suite follows a three-layer pyramid:
-
-1. **Unit Tests (C++)**: Test individual runtime primitives in isolation. Catch2-based. Targets module-level correctness and edge cases.
-
-2. **Integration Smoke Test (C++)**: One C++ smoke test that exercises a complete SSP through the public simulator entry point. Verifies end-to-end execution without workflow-level tooling.
-
-3. **Workflow Tests (Python)**: Reference SSP sweep using pytest parameterization. Targets output validation, fixture discovery, and known failure tracking.
-
-See tests/README.md for the concrete test layout and run commands.
+The test suite follows a three-layer pyramid: C++ unit tests for runtime primitives,
+one C++ integration smoke test through the public simulator entry point, and Python
+workflow tests for reference-SSP sweeps and result validation. The concrete test
+layout, tier matrix, and run commands live in `tests/README.md` — see that file for
+details.
 
 ## Layer Boundary Rationale
 

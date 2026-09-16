@@ -90,7 +90,7 @@ namespace ssp4sim::graph
             std::shared_ptr<Invocable> repr;
             if (geometric)
             {
-                // The config threshold is in seconds; the executor works in ns.
+                // The config threshold arrives in ns (SharedConfig applied s_to_ns) and is passed through raw.
                 repr = std::make_shared<GeometricSubstepExecutor>(
                     std::move(members), options.factor,options.threshold);
             }

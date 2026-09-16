@@ -21,7 +21,7 @@ C -> D
 
 The parallel part should be able to execute in two different modes
 1. linear - each substep is pre-selected before execution, the substeps should run untill the full macro step is passed
-2. iterative/factor - the substep is decided by a factor of what time is left to the current macro step. a factor of 0.5 would first take a stet of macro step/2 and then a step of 1/4 and then 1/8 until the output values stabilizes
+2. iterative/factor - the substep is decided by a factor of what time is left to the current macro step. a factor of 0.5 would first take a stet of macro step/2 and then a step of 1/4 and then 1/8 shrinking until the remaining time drops at or below the configured threshold, at which point the rest of the macro step is taken whole (so [start, end] is always fully covered)
 
 
 Access rules

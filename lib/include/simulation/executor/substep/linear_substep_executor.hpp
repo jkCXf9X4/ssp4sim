@@ -16,9 +16,9 @@ namespace ssp4sim::graph
     ///
     /// invoke() divides [start, end) into `iterations` equal sub-steps and
     /// sweeps the whole group in parallel per sub-step (invoke_group_parallel).
-    /// Each sub-step rounds UP (ceil), so the final sub-step only slightly
-    /// overshoots the macro and is clamped at `end`, keeping the union of
-    /// emitted sub-steps exactly equal to [start, end). Sub-steps advance time,
+    /// Each sub-step is total / iterations (floor), with the total % iterations
+    /// remainder distributed one unit per early sub-step, so sub-steps land
+    /// exactly on end. Sub-steps advance time,
     /// so each sub-step samples the previous sub-step's commitments
     /// (deterministic Jacobi-style relaxation).
     ///
