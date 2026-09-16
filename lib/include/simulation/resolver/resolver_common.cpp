@@ -147,7 +147,12 @@ namespace ssp4sim::scheduling
                     if (auto *src = c.source_storage->get_derivative(source_area, c.source_index, order);
                         auto *dst = c.target_storage->get_derivative(target_area, c.target_index, order))
                     {
-                        *dst = *src;
+                        // Derivatives are doubles stored in a byte buffer, so src/dst
+                        // are std::byte*. A plain `*dst = *src;` would copy a single
+                        // byte, corrupting the forwarded derivative and forcing
+                        // canInterpolateInputs FMUs to grind internally. Copy the
+                        // full sizeof(double) explicitly.
+                        std::memcpy(dst, src, sizeof(double));
                     }
                 }
 

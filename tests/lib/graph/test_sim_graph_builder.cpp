@@ -1,5 +1,6 @@
 #include "pre/3_simulation_graph/elements/model_connection.hpp"
 #include "pre/3_simulation_graph/elements/model_connector.hpp"
+#include "resolver/resolver_common.hpp"
 #include "signal/storage.hpp"
 
 #include <catch2/catch_test_macros.hpp>
@@ -7,6 +8,9 @@
 #include <cstring>
 #include <string>
 #include <unordered_map>
+
+using namespace ssp4sim::scheduling::detail;
+using ssp4sim::scheduling::ResolvedRead;
 
 using ssp4sim::graph::ConnectionInfo;
 using ssp4sim::graph::ConnectorInfo;
@@ -263,4 +267,44 @@ TEST_CASE("ConnectorInfo forward_derivatives fields", "[sim_graph_builder]")
         CHECK(info.forward_derivatives == true);
         CHECK(info.forward_derivatives_order == 4);
     }
+}
+
+// ---------------------------------------------------------------------------
+// Description: Verifies copy_connection forwards the full 8-byte derivative
+//              value, not just a single byte
+// Rationale:   Regression test for the performance regression where a 1-byte
+//              std::byte copy corrupted forwarded input derivatives, causing
+//              interpolating FMUs (canInterpolateInputs) to grind internally.
+//              The bug: `*dst = *src;` copies one byte; the fix uses memcpy.
+// ---------------------------------------------------------------------------
+TEST_CASE("copy_connection forwards full double derivative", "[sim_graph_builder][resolver]")
+{
+    SignalStorage src_storage(kStorageAreas, "src");
+    SignalStorage dst_storage(kStorageAreas, "dst");
+    const size_t var_index = src_storage.add_variable("src.sig", DataType::real, 1);
+    dst_storage.add_variable("dst.sig", DataType::real, 1);
+    src_storage.allocate();
+    dst_storage.allocate();
+
+    const double src_derivative = -1234.56789012345;
+    auto *src_der_ptr = src_storage.get_derivative(0, var_index, 1);
+    REQUIRE(src_der_ptr != nullptr);
+    std::memcpy(src_der_ptr, &src_derivative, sizeof(double));
+
+    ConnectionInfo con = make_connection(src_storage, dst_storage);
+    con.forward_derivatives = true;
+    con.forward_derivatives_order = 1;
+
+    ResolvedRead r;
+    r.valid = true;
+    r.is_area = true;
+    r.area = 0;
+
+    REQUIRE(copy_connection(con, 0, r));
+
+    auto *dst_der_ptr = dst_storage.get_derivative(0, 0, 1);
+    REQUIRE(dst_der_ptr != nullptr);
+    double forwarded = 0.0;
+    std::memcpy(&forwarded, dst_der_ptr, sizeof(double));
+    CHECK(forwarded == src_derivative);
 }
