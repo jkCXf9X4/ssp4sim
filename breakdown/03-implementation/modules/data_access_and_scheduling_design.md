@@ -73,9 +73,12 @@ base + offset, so the runtime body is a straight memcpy stream with no loop reso
 - The plan is trivially vectorizable; arrays-of-scalars phase tables.
 
 ### Weaknesses vs current — decisive
-- Only works for **unconditional schedules**. `loop_aware` adapts by convergence, Seidel
-  terminates by observed error, plus sub-step re-entry, rollback/recompute, and
-  `find_next_valid` traversal — any run-dependent decision makes "step s ⇒ producer ordinal w"
+- Only works for **unconditional schedules**. `la2` (loop-aware) relaxes loop
+  SCCs over pre-selected sub-step schedules (`linear` count or shrinking
+  `factor`), not convergence adaptation — convergence-based termination is a
+  proposed future improvement (IMP-046). Seidel is a single topological sweep,
+  not error-terminated. Sub-step re-entry, rollback/recompute, and
+  `find_next_valid` traversal all make "step s ⇒ producer ordinal w"
   false after the first adaptation. The precomputed table is **stale mid-run**.
 - Still needs populated/committed presence checks at read time — storage-history ≠ published
   frontier (D2/D17). It saves the address arithmetic but **not the validity check**.

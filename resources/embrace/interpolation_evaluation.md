@@ -9,16 +9,18 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  LoopAwareExecutor::invoke()                             │
+│  SerialSeidel::invoke() (outer) over condensed SCC DAG   │
 │                                                          │
 │  for each SCC in topological order:                      │
 │    if single-node SCC:                                   │
 │      node->invoke(StepData(t_start, t_end, dt,           │
 │                             t_start, t_start))           │
 │    if multi-node SCC (loop):                             │
+│      LinearSubstepExecutor::invoke() (or                 │
+│      GeometricSubstepExecutor in `factor` mode)          │
 │      sub_dt = macro_dt / n_iters                         │
 │      for each sub-step:                                  │
-│        JacobiParallelTBB::invoke(StepData(sub_start,     │
+│        invoke_group_parallel(StepData(sub_start,         │
 │                                   sub_end, step,         │
 │                                   sub_start, sub_end))   │
 │          → all nodes in parallel:                        │
@@ -183,7 +185,7 @@ double hermite_interpolate(double t, double t_low, double t_high,
 
 ### 2.3 Sub-Step Interpolation Within the Loop (Architectural)
 
-**Problem:** The loop-aware executor currently divides the macro timestep into `n_iters` equal sub-steps and runs each sub-step sequentially. Each sub-step uses `sub_start` as both `input_time` and `output_time`. This means within a single macro timestep, each node sees outputs from the immediately preceding sub-step — effectively a Gauss-Seidel pattern within the loop.
+**Problem:** The loop-aware executor currently divides the macro timestep into `n_iters` equal sub-steps and runs each sub-step sequentially. Intra-SCC edges read the sub-step start value (`AccessMode::StartTime`), so each sub-step sees outputs committed by the immediately preceding sub-step — a deterministic Jacobi-style relaxation across sub-steps, marching the loop forward toward the macro-step boundary.
 
 **Solution:** Use the derivatives to predict outputs at the *end* of the macro timestep from the *start*, enabling a Jacobi-like pattern where all nodes in the loop see consistent time-aligned inputs.
 
@@ -255,7 +257,7 @@ With extrapolation:
 ### Phase 3: Sub-Step Extrapolation (Higher Risk, Architectural)
 
 **Files to modify:**
-- `la2_scheduler.cpp` — change sub-step iteration strategy
+- `la2_builder.cpp` / `linear_substep_executor.cpp` — change sub-step iteration strategy
 - `StepData` — may need additional fields for extrapolation horizon
 
 **Changes:**
@@ -269,7 +271,7 @@ With extrapolation:
 ### Phase 4: Iteration History Extrapolation (Experimental)
 
 **Files to modify:**
-- `la2_scheduler.cpp` — add iteration history ring buffer
+- `la2_builder.cpp` / `linear_substep_executor.cpp` — add iteration history ring buffer
 - `jacobi_parallel_tbb.cpp` — may need to expose iteration count
 
 **Changes:**

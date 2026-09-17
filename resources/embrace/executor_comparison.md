@@ -4,7 +4,7 @@ See [`executor_timing_analysis.md`](executor_timing_analysis.md) for the follow-
 *why* the loop-aware executor is slower (step-count scaling and the derivative investigation).
 
 **Date:** 2026-07-03
-**Configs:** `embrace.json` (jacobi) vs `embrace_loop_aware.json` (loop_aware)
+**Configs:** `embrace.json` (jacobi) vs `embrace_loop_aware.json` (la2; `loop_aware` is the legacy method name)
 **SSP:** `embrace_scen.ssp` (same for both)
 **Simulation:** 0–2000 s, timestep 0.01 s, 6 models (scenario, Atmos, Consumer, ECS_HW, ECS_SW, AdaptionUnit)
 
@@ -12,10 +12,10 @@ See [`executor_timing_analysis.md`](executor_timing_analysis.md) for the follow-
 
 | Setting | Jacobi (`embrace.json`) | Loop-Aware (`embrace_loop_aware.json`) |
 |---|---|---|
-| Executor method | `jacobi` | `loop_aware` |
+| Executor method | `jacobi` | `la2` |
 | Thread pool | 5 workers | 5 workers |
 | Jacobi parallel | yes (method 1) | yes (method 1) |
-| Sub-step | n/a | 0.001 s |
+| Loop sub-steps | n/a | `linear`, 4 sub-steps per macro step (the 4-node SCC; the legacy `sub_step` key is no longer read by `la2`) |
 | Forward derivatives | true | true |
 | SQLite | disabled | enabled |
 | Working dir | `./wd/embrace` | `./wd/embrace_loop_aware` |
@@ -38,7 +38,8 @@ The loop-aware executor is slower because it performs **4 internal iterations pe
 - No algebraic loop convergence within a timestep
 
 ### Loop-Aware
-- Executor: `LoopAwareExecutor`
+- Stack: `make_la2_stack` (SCC detection → `LinearSubstepExecutor` per loop SCC →
+  condensed component DAG → outer `SerialSeidel`)
 - 3 SCCs detected:
   - **Step 0:** scenario (1 node, 1 iter) — no feedback
   - **Step 1:** Atmos (1 node, 1 iter) — no feedback

@@ -13,7 +13,8 @@
             "thread_pool_workers": 5,
             "forward_derivatives": true,
             "la2": {
-                "sub_step": 0.001
+                "mode": "linear",
+                "iterations": 4
             },
             "jacobi": {
                 "parallel": true,

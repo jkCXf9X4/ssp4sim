@@ -40,25 +40,33 @@ Monolith test-case breakdown (49 total):
 ### The critical finding (verified, stronger than expected)
 
 C++ executor tests exist under `tests/lib/simulation/graph_executor/execution/`
-(`loop_aware/`: `test_la2_config_compat.cpp`, `test_la2_scheduling.cpp`;
-`substep/`: `test_substep_executor.cpp`). The executor family —
+(`loop_aware/`: `test_executor_builder_variants.cpp`,
+`test_la2_config_compat.cpp`, `test_la2_scheduling.cpp`; `substep/`:
+`test_substep_executor.cpp`). The executor family —
 `simulation/executor/**` (`jacobi_*`, `seidel_*`, `loop_aware/`, `substep/`) —
 is additionally exercised by:
 
 1. the Python integration tests (`test_spike_regression.py`, `test_loop_aware_nested.py`), and
 2. transitively, the smoke/E2E path.
 
+These C++ tests assert real scheduling behavior — variant dispatch,
+la2 sub-step counts and Gauss-Seidel ordering, and the sub-step schedule shapes
+of `LinearSubstepExecutor` / `GeometricSubstepExecutor`. They are retained in
+the integration monolith (`ssp4sim_tests` via `SSP4SIM_INTEGRATION_TESTS`)
+because the resolver chain pulls in FMI.
+
 Consequences:
 
-- A correctness regression in `graph_executor/**` is invisible to every C++
-  test. The per-test cone isolation means unit tests cannot even *accidentally*
-  cover it; the monolith links it but asserts nothing about scheduler behavior.
-- The Python suite is the sole oracle for the exact subsystem this repo's
-  refactoring effort treats as most fragile — and it carries the whole-suite
-  coupling failure mode (broken executor file → `py_ssp4sim` fails to build →
-  `pytest -q tests/python` collapses).
-- This inverts the pyramid at the component level for exactly the layer with
-  the most risk.
+- A correctness regression in `graph_executor/**` is only caught once the whole
+  `ssp4sim_lib` links and the monolith runs; no cone-isolated unit binary
+  covers scheduler behavior today.
+- The la2/executor tests keep the most fragile layer coupled to the full
+  pipeline (a broken executor file can still block the monolith at build
+  time), and the Python suite remains an additional coupling point (broken
+  executor file → `py_ssp4sim` fails to build → `pytest -q tests/python`
+  collapses).
+- The monolith test-case breakdown in section 1 predates the executor tests and
+  does not include them.
 
 ## 3. Why the cone machinery is the enabling piece
 
@@ -88,7 +96,7 @@ validate scheduler *behavior* without FMUs, the monolith, or Python:
   semantics; assert in-place updates differ from jacobi (both read results of
   the same graph).
 - `tests/lib/executor/test_loop_aware_scheduling.cpp` — algebraic-loop
-  regression in C++ at the unit level: nested loop SCC, fixed/geometric
+  regression in C++ at the unit level: nested loop SCC, `linear`/`factor`
   sub-step modes, steady-state compare (mirror of
   `test_loop_aware_nested.py` but without fixture archive I/O).
 

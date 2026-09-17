@@ -86,7 +86,7 @@ For CLI and Python invocation examples, see [Usage](usage.md).
 | `simulation.executor.forward_derivatives` | `bool` | No | `true` | Enables derivative forwarding on model connections. |
 | `simulation.executor.method` | `string` | No | `jacobi` | `jacobi`, `seidel`, `custom_delay`, `custom_delay_partial`, `la2` (legacy alias `loop_aware`). `parallel_seidel` is **not** implemented and throws at config selection. |
 | `simulation.executor.thread_pool_workers` | `int` | No | `5` | Used by some parallel Jacobi modes. |
-| `simulation.executor.sub_step` | `double` | No | `simulation.timestep` | Seconds; used by executors that sub-step. |
+| `simulation.executor.sub_step` | `double` | No | `simulation.timestep` | Reserved; currently no executor reads this key. `la2` sub-stepping is controlled by `simulation.executor.la2.*` (mode, iterations, factor, threshold) instead. |
 | `simulation.executor.jacobi.parallel` | `bool` | No | `false` | If `true`, uses a parallel Jacobi implementation. |
 | `simulation.executor.jacobi.method` | `int` | No | `1` | `1` = TBB, `2` = spin pool, `3` = futures. |
 | `simulation.executor.seidel.parallel` | `bool` | No | `false` | If `true`, selects `ParallelSeidel`; **not implemented** — throws at config selection. Else `SerialSeidel`. |

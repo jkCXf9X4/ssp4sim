@@ -26,6 +26,22 @@ Provides executor strategies that advance simulation time and coordinate FMU ste
 - `seidel_serial`: Sequential Seidel.
 - `seidel_parallel`: Parallel Seidel variant — **not implemented**; selecting it throws at config selection.
 
+## Loop-Aware (la2) Variants
+
+- `la2` (legacy alias `loop_aware`): a factory-assembled stack, not a class —
+  SCC detection, one `LinearSubstepExecutor` / `GeometricSubstepExecutor` per
+  loop SCC, the condensed component DAG run by an outer `SerialSeidel`, and a
+  mixed-policy `La2DataAccessResolver` (cross-SCC `Latest`, intra-SCC
+  `StartTime`). See `loop_aware/la2_builder.hpp`.
+- Outer `ParallelSeidel` (`la2.parallel`) — **not implemented**; throws during stack assembly.
+
+## Sub-step Executors
+
+- `LinearSubstepExecutor`: equal sub-steps covering the macro step (`iterations`).
+- `GeometricSubstepExecutor`: shrinking sub-steps, each covering `factor` of the
+  remaining time until the remaining time is at or below `threshold`; the rest
+  of the macro step is then taken whole.
+
 ## Include Boundary
 
 - Path: `lib/include/simulation/executor/`

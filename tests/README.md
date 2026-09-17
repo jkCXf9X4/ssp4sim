@@ -121,7 +121,8 @@ topological_sort building blocks, plus the connection-mutation primitives
 `disconnect()` and `redirect()`.
 
 `tests/lib/simulation/graph_executor/execution/` holds executor scheduling
-tests: `test_la2_config_compat.cpp` (config contract), `test_la2_scheduling.cpp`
+tests: `test_executor_builder_variants.cpp` (variant registry resolution),
+`test_la2_config_compat.cpp` (config contract), `test_la2_scheduling.cpp`
 (loop-only sub-stepping, outer-Gauss-Seidel ordering, the `la2.parallel` seam),
 and `test_substep_executor.cpp` (`LinearSubstepExecutor` /
 `GeometricSubstepExecutor` schedules). These depend on the full pipeline (the
