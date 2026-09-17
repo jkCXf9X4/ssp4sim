@@ -10,12 +10,12 @@
 
 namespace ssp4sim::handler
 {
-    FmuInfo::FmuInfo(std::string name, ssp4cpp::Fmu *fmu)
+    FmuInfo::FmuInfo(std::string name, std::shared_ptr<ssp4cpp::Fmu> fmu)
     {
         this->model_name = fmu->md->modelName;
         this->system_name = name;
 
-        this->fmu = fmu;
+        this->fmu = std::move(fmu);
 
         this->fmi_instance = std::make_unique<FmuInstance>(this->fmu->dir, this->system_name);
         if (!this->fmi_instance->supports_co_simulation())
@@ -24,6 +24,6 @@ namespace ssp4sim::handler
         }
         this->model = std::make_unique<CoSimulationModel>(*this->fmi_instance);
 
-        this->model_description = fmu->md.get();
+        this->model_description = this->fmu->md.get();
     }
 }

@@ -175,6 +175,14 @@ multiple value types, including the hierarchical `dcmotor` fixture.
 
 All known regression fixtures have been resolved. See breakdown/04-verification/regressions.md for history.
 
+`test_smoke_simulator.cpp` also covers the FMU-archive extraction lifecycle from
+`breakdown/06-evolution/backlog/bug/bug-report-ssp4sim-v030-fmu-extraction.md`:
+it runs the simulator against `tests/resources/scenario_fmu_archive.ssp` (the
+`scenario` fixture packaged as a `.ssp` archive with the FMU re-zipped as a
+`.fmu`) and asserts that `init()`/`simulate()` run to completion and produce a
+`result.csv`. The extracted FMU temp dir is kept alive by the model's `FmuInfo`
+ownership until the FMU handle is freed.
+
 After an FMU reaches `fmi2Error` or `fmi2Fatal`, cleanup frees the instance
 without calling `fmi2Terminate` so logs keep the original step failure as the
 root cause.

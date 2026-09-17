@@ -24,8 +24,8 @@ namespace ssp4sim::graph
                 continue;
             }
 
-            // Create FmuInfo from the SspModel's FMU pointer and transfer ownership to FmuModel
-            auto fmu_info = std::make_unique<handler::FmuInfo>(analysis_model->name, analysis_model->fmu.get());
+            // Create FmuInfo from the SspModel's FMU and transfer ownership to FmuModel
+            auto fmu_info = std::make_unique<handler::FmuInfo>(analysis_model->name, analysis_model->fmu);
 
             auto m = std::make_shared<FmuModel>(analysis_model->name, std::move(fmu_info), analysis_model->maxOutputDerivativeOrder, config);
             LOG_TRACE_L1(log, "[{func}] -- New Model: {model}", __func__, m->name);
