@@ -14,8 +14,11 @@ option(SSP4SIM_LOG_HOT_PATH "Include logging in hot path" OFF)
 option(SSP4SIM_HOT_PATH_CHECKS "Perform validation checks in get_derivative hot path" ON)
 
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Debug)
 endif()
+
+# add 3rdparty subdirectories first to override any flags set during the inclusion
+add_subdirectory(3rdParty)
 
 # Link static
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libstdc++")
@@ -32,10 +35,10 @@ set(CMAKE_C_FLAGS_DEBUG   "-O1 -fno-lto -g" CACHE STRING "" FORCE)
 # -march=native
 
 set(CMAKE_CXX_FLAGS_RELEASE
-    " -flto=auto -O3 -g -march=x86-64 -mtune=generic -fno-omit-frame-pointer -DNDEBUG"
+    " -flto=auto -O3 -march=x86-64 -mtune=generic -fno-omit-frame-pointer -DNDEBUG"
     CACHE STRING "" FORCE)
 set(CMAKE_C_FLAGS_RELEASE
-    " -flto=auto -O3 -g -march=x86-64 -mtune=generic -fno-omit-frame-pointer -DNDEBUG"
+    " -flto=auto -O3 -march=x86-64 -mtune=generic -fno-omit-frame-pointer -DNDEBUG"
     CACHE STRING "" FORCE)
 
 if(SSP4SIM_LOG_HOT_PATH)
@@ -63,8 +66,6 @@ message("CMAKE_CXX_COMPILER: ${CMAKE_CXX_COMPILER}\n")
 message("CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}\n")
 
 # Subdirectories
-
-add_subdirectory(3rdParty)
 
 add_subdirectory(lib)
 
