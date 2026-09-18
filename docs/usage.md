@@ -26,6 +26,12 @@ Show the embedded CLI version:
 sim_app --version
 ```
 
+Show usage and options:
+
+```bash
+sim_app --help
+```
+
 Simulation input is controlled by the JSON file passed to `sim_app`. The full
 configuration key reference is in [Configuration](configuration.md).
 
@@ -110,6 +116,15 @@ The wheel also installs a `pyssp4sim` command that wraps the same flow:
 ```bash
 pyssp4sim ./resources/embrace/embrace.json
 ```
+
+Show the installed Python API version:
+
+```bash
+pyssp4sim --version
+```
+
+(`-v` is an alias for `--version`.) Run `pyssp4sim --help` for usage and
+options.
 
 ## Result Artifact Policy
 

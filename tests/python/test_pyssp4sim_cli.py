@@ -53,6 +53,31 @@ def assert_has_log_file(workdir: Path) -> None:
     assert any(path.is_file() for path in workdir.glob("sim*.log")), "Missing log file matching sim*.log"
 
 
+def test_pyssp4sim_version_flag(tmp_path: Path) -> None:
+    """Description: Runs venv/bin/pyssp4sim --version; verifies exit code 0
+    and a non-empty version string on stdout.
+    Rationale: CLI packaging smoke test — ensures the -v/--version flag works
+    and resolves a version from installed metadata.
+    Creep flag: Depends on venv/ directory existence (dev-environment-specific).
+    """
+    root = repository_root(Path(__file__))
+
+    for flag in ("--version", "-v"):
+        completed = subprocess.run(
+            [str(root / "venv" / "bin" / "pyssp4sim"), flag],
+            cwd=root,
+            capture_output=True,
+            text=True,
+        )
+
+        assert completed.returncode == 0, (
+            f"pyssp4sim {flag} failed with exit code {completed.returncode}\n"
+            f"stdout:\n{completed.stdout}\n"
+            f"stderr:\n{completed.stderr}"
+        )
+        assert completed.stdout.strip(), f"pyssp4sim {flag} printed an empty version"
+
+
 def test_pyssp4sim_smoke_runs_local_embrace(tmp_path: Path) -> None:
     """Description: Runs venv/bin/pyssp4sim CLI with embrace config; verifies
     exit code 0, result.csv, and log file.
