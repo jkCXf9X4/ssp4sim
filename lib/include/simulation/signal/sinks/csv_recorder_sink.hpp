@@ -62,13 +62,18 @@ namespace ssp4sim::signal
         bool record_derivatives = false;
         std::size_t printed_rows = 0;
 
-        CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval, bool record_derivatives = false);
+        std::uint64_t flush_interval = 0;         // ns, wall-clock period for incremental flush
+        std::uint64_t last_flush_wall_ns = 0;     // wall-clock ns of last incremental flush
+
+        CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval, std::uint64_t flush_interval = 0, bool record_derivatives = false);
 
         void on_storage_added(const SignalStorage *storage) override;
 
         void init() override;
 
         void on_event(const NewDataEvent &event) override;
+
+        void flush_progress();
 
         void stop() override;
 

@@ -118,7 +118,8 @@ namespace ssp4sim
         {
             bool enable = true;
             std::filesystem::path file;
-            uint64_t interval = 0;
+            uint64_t interval = 0;         // ns, recording interval (row spacing)
+            uint64_t flush_interval = 0;   // ns, wall-clock period to flush buffered rows
         };
         CsvRecordingConfig csv;
         struct SqliteRecordingConfig
@@ -171,6 +172,13 @@ namespace ssp4sim
                     throw std::runtime_error("simulation.recording.csv.interval must be greater than or equal to zero");
                 }
                 csv.interval = utils::time::s_to_ns(csv_interval_s);
+
+                const auto csv_flush_interval_s = utils::Config::getOr("simulation.recording.csv.flush_interval", 0.0);
+                if (csv_flush_interval_s < 0.0)
+                {
+                    throw std::runtime_error("simulation.recording.csv.flush_interval must be greater than or equal to zero");
+                }
+                csv.flush_interval = utils::time::s_to_ns(csv_flush_interval_s);
 
                 auto default_result_file = working_dir / "result.csv";
                 csv.file = std::filesystem::path(utils::Config::getOr("simulation.recording.csv.file", default_result_file.string()));

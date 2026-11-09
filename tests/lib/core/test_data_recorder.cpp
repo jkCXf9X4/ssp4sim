@@ -390,6 +390,69 @@ TEST_CASE("DataRecorder dispatches raw events to registered sinks", "[DataRecord
 }
 
 // ---------------------------------------------------------------------------
+// Description: Verifies CSV data is written to disk before stop() when a
+//              flush_interval is configured
+// Rationale:   Incremental flush keeps recorded data when a run is interrupted
+//              before clean shutdown
+// ---------------------------------------------------------------------------
+TEST_CASE("DataRecorder flushes buffered rows before stop", "[DataRecorder]")
+{
+    const fs::path test_filename = project_root / "build" / "test_recorder_incremental_flush.csv";
+    remove_if_existing(test_filename);
+
+    constexpr uint64_t flush_interval_ns = 50 * sim_time::nanoseconds_per_millisecond;
+
+    DataRecorder recorder(false);
+    recorder.add_sink(std::make_unique<CsvRecorderSink>(test_filename, 1000, flush_interval_ns));
+
+    SignalStorage primary(2, "primary");
+    primary.add_variable("primary.temperature", DataType::real, 1);
+    primary.allocate();
+
+    SignalStorage secondary(2, "secondary");
+    secondary.add_variable("secondary.pressure", DataType::real, 1);
+    secondary.allocate();
+
+    recorder.add_storage(&primary);
+    recorder.add_storage(&secondary);
+    recorder.init();
+    recorder.start_recording();
+
+    const uint64_t first_timestamp = 1ULL * sim_time::nanoseconds_per_second;
+    const std::size_t primary_area = primary.push(first_timestamp);
+    const std::size_t secondary_area = secondary.push(first_timestamp);
+    const double primary_temp = 42.5;
+    const double secondary_pressure = 3.14;
+
+    std::memcpy(primary.get_item(primary_area, 0), &primary_temp, sizeof(double));
+    std::memcpy(secondary.get_item(secondary_area, 0), &secondary_pressure, sizeof(double));
+
+    primary.flag_new_data(primary_area);
+    secondary.flag_new_data(secondary_area);
+
+    // Wait past the flush interval, then emit another event so the recorder
+    // thread runs flush_progress() while still recording (no stop() yet).
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
+    const uint64_t later_timestamp = first_timestamp + sim_time::nanoseconds_per_second;
+    const std::size_t later_area = primary.push(later_timestamp);
+    const double later_temp = 9.9;
+    std::memcpy(primary.get_item(later_area, 0), &later_temp, sizeof(double));
+    primary.flag_new_data(later_area);
+
+    // Give the recorder thread time to process the later event + flush.
+    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
+    // The first (complete) row must already be on disk while recording.
+    REQUIRE(check_file_contains(test_filename.string(), "1, 42.5"));
+    REQUIRE(check_file_contains(test_filename.string(), ", 3.14"));
+
+    recorder.stop_recording();
+
+    fs::remove(test_filename);
+}
+
+// ---------------------------------------------------------------------------
 // Description: Verifies events pushed before start_recording() are dispatched
 //              after start_recording()
 // Rationale:   Event buffering required because storages may produce data

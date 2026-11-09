@@ -62,7 +62,7 @@ namespace ssp4sim
 
             if (config->csv.enable)
             {
-                p->recorder->add_sink(std::make_unique<signal::CsvRecorderSink>(config->csv.file, config->csv.interval, config->record_derivatives));
+                p->recorder->add_sink(std::make_unique<signal::CsvRecorderSink>(config->csv.file, config->csv.interval, config->csv.flush_interval, config->record_derivatives));
             }
 
             if (config->sqlite.enable)

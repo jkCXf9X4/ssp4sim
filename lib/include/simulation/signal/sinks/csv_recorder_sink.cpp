@@ -11,10 +11,11 @@
 
 namespace ssp4sim::signal
 {
-    CsvRecorderSink::CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval, bool record_derivatives)
+    CsvRecorderSink::CsvRecorderSink(const std::filesystem::path &filename, std::uint64_t interval, std::uint64_t flush_interval, bool record_derivatives)
         : log(ssp4cpp::utils::log::make_logger("ssp4sim.signal.CsvRecorderSink")),
           recording_interval(interval),
-          record_derivatives(record_derivatives)
+          record_derivatives(record_derivatives),
+          flush_interval(flush_interval)
     {
         utils::io::create_parent_folder(filename.string());
         file.open(filename, std::ios::out);
@@ -131,11 +132,57 @@ namespace ssp4sim::signal
         return head;
     }
 
+    void CsvRecorderSink::flush_progress()
+    {
+        // Periodically write buffered rows to disk so an interrupted run still
+        // keeps its recorded data. Normally rows are only printed once the ring
+        // buffer wraps or on clean stop(); this drains the old complete rows in
+        // between, keeping output chronological.
+        //
+        // The ring is laid out newest-first at `head`; older rows are at
+        // `head + i` (mod rows). A row is only safe to print once every storage
+        // has written to it (updated_storages all set). Rows complete in order,
+        // so stop draining at the first incomplete row to preserve time order.
+        for (std::size_t i = 1; i <= rows; i++)
+        {
+            auto idx = static_cast<std::uint16_t>((head + i) % rows);
+            auto &row = row_buffer[idx];
+            if (!row.valid)
+            {
+                continue;
+            }
+            const bool complete = std::all_of(row.updated_storages.begin(), row.updated_storages.end(), [](bool v) { return v; });
+            if (!complete)
+            {
+                break;
+            }
+            print_row(idx);
+            time_row_map.erase(row.timestamp);
+            row_time_map.erase(idx);
+            reset_row(idx);
+        }
+        file.flush();
+    }
+
     void CsvRecorderSink::on_event(const NewDataEvent &event)
     {
         if (event.storage == nullptr || event.buffer == nullptr)
         {
             return;
+        }
+
+        if (flush_interval > 0)
+        {
+            const auto now_ns = utils::time::time_now_ns();
+            if (last_flush_wall_ns == 0)
+            {
+                last_flush_wall_ns = now_ns;
+            }
+            else if (now_ns - last_flush_wall_ns >= flush_interval)
+            {
+                last_flush_wall_ns = now_ns;
+                flush_progress();
+            }
         }
 
         auto layout_it = layout_lookup.find(event.storage);
