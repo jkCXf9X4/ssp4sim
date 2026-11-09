@@ -107,6 +107,12 @@ namespace ssp4sim::ext::ssp1::ssv
                 params = &binding.ParameterValues.value().ParameterSet.Parameters;
             }
 
+            if (params == nullptr)
+            {
+                LOG_WARNING(log(), "[{func}] ParameterBinding has no source or ParameterValues; skipping", __func__);
+                continue;
+            }
+
             // Build SSM mapping lookup for this binding
             std::vector<std::pair<std::string, std::string>> ssm_mapping;
             if (binding.ParameterMapping.has_value())

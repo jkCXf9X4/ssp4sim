@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 namespace ssp4sim::analysis
 {
@@ -57,17 +58,32 @@ SspModel::SspModel(std::string name_,
     {
         connectors.clear();
 
-        auto dependencies = ext::fmi2::dependency::get_dependencies_variables(
-            fmu->md->ModelStructure.Outputs.value().Unknowns,
-            fmu->md->ModelVariables,
-            ext::fmi2::DependenciesKind::dependent);
+        std::vector<ext::fmi2::dependency::VariableDependency> dependencies;
+        if (fmu->md->ModelStructure.Outputs.has_value())
+        {
+            dependencies = ext::fmi2::dependency::get_dependencies_variables(
+                fmu->md->ModelStructure.Outputs.value().Unknowns,
+                fmu->md->ModelVariables,
+                ext::fmi2::DependenciesKind::dependent);
+        }
+        else
+        {
+            LOG_DEBUG(log(), "[{func}] FMU {name} has no ModelStructure.Outputs; using no output dependencies", __func__, name);
+        }
 
         auto variables = ext::fmi2::model_variables::get_variables(
             *fmu->md, {types::Causality::input, types::Causality::output, types::Causality::parameter});
 
         for (auto &var : variables)
         {
+            if (!var.valueReference.has_value())
+            {
+                LOG_WARNING(log(), "[{func}] Skipping FMU variable {name} with missing valueReference", __func__, var.name);
+                continue;
+            }
+
             auto value_reference = var.valueReference.value();
+            auto causality = var.causality.value_or(types::Causality::local);
             auto type = ext::fmi2::model_variables::get_variable_type(var);
 
             // Connector names include the model prefix so the flat connector map
@@ -75,7 +91,7 @@ SspModel::SspModel(std::string name_,
             // The lookup key is constructed as source_model + "." + source_connector
             // in graph_builder.cpp, which matches this naming.
             auto connector_name = name + "." + var.name;
-            auto c = SspConnector(connector_name, value_reference, type, var.causality.value());
+            auto c = SspConnector(connector_name, value_reference, type, causality);
 
             auto start_value = ext::fmi2::model_variables::get_variable_start_value(var);
             if (start_value != nullptr)

@@ -33,6 +33,11 @@ namespace ssp4sim::ext::ssp1
 
             if (recursive)
             {
+                if (!sys.Elements.has_value())
+                {
+                    return;
+                }
+
                 auto &elements = sys.Elements.value();
 
                 for (const auto &sub_sys : elements.Systems)
