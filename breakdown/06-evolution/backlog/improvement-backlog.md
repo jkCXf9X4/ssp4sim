@@ -74,6 +74,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | `candidates/IMP-043.md` | IMP-043 | Unit Test Coverage for Boundary Connection Resolution | Proposed | Medium | tests/lib/graph/test_graph_builder.cpp (new), graph_builder.hpp visibility change; test files only, no production behavior change |
 | `selected/IMP-044.md` | IMP-044 | Refactor test_sim_graph_builder.cpp — extract helpers, fix test gaps, clarify scope | Selected | Medium | tests/lib/graph/test_sim_graph_builder.cpp only; test-only refactoring, no production code changes |
 | `under_development/IMP-046.md` | IMP-046 | la2 hybrid — warm-started SCC sub-step iteration and sub-step input interpolation | In Development | Medium | la2_builder.cpp, linear_substep_executor.cpp, la2_data_access_resolver.cpp; perf + numerical-parity gate |
+| `candidates/IMP-047.md` | IMP-047 | Replace vendored reference SSPs with small in-repo e2e fixtures; outsource full e2e to ssp_references | Proposed | Medium | Removes `resources/reference_ssp` submodule, adds small fixtures, repoints Python high-level + C++ tests, CI checkout, verification docs + supersedes VD-004; no production code changes |
  
     
 ## Summary
@@ -123,6 +124,7 @@ Put each candidate in its own file beside the overview or in a local `candidates
 | IMP-041 | Integration test: external SSV/SSM loading | Medium | None | Low-Medium — test files only; no production code changes |
     
 | IMP-042 | Nested System Graph Support | Medium | None | analysis_system.cpp, graph_builder.cpp, analysis_system_builder.cpp; moderate blast radius, enables hierarchical SSP simulation |
+| IMP-047 | Replace vendored reference SSPs with small in-repo e2e fixtures; outsource full e2e to ssp_references | Medium | None | Remove `resources/reference_ssp` submodule + add small fixtures; repoint Python/C++ tests, CI, verification docs; supersedes VD-004 |
 
 ## Deferred
 
