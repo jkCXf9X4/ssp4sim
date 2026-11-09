@@ -194,4 +194,43 @@ Run Python tests after the Python API has been built:
 pytest -q tests/python
 ```
 
+### Static runtime symbol visibility
+
+The Python module links `libstdc++`/`libgcc` statically for portability. Because
+the process also loads a dynamic `libstdc++` (Python extensions, OpenBLAS, FMI
+FMUs), the module must not export symbols from its static runtime copy: they
+would interpose the shared runtime and split locale/allocator/exception state.
+The link step therefore uses:
+
+```text
+-Wl,--exclude-libs,libstdc++.a:libgcc.a:libgcc_eh.a:libsupc++.a
+```
+
+This localizes only symbols pulled from those archives. `PyInit_*` and other
+symbols compiled directly into the module remain default-visible, so no
+visibility attributes are needed. Note that `--exclude-libs` only affects
+archive members: C++ template instantiations emitted from the module's own
+object files can still be exported (`_Z...` code symbols). Those are harmless
+for the runtime clash, but if the module should export nothing except its init
+entry point, use a version script instead:
+
+```text
+{
+  global: PyInit_py_ssp4sim;
+  local: *;
+};
+```
+
+Verify after a build that the static runtime's state is no longer exported:
+
+```bash
+nm -D --defined-only build/public/python_api/py_ssp4sim.abi3.so \
+  | grep -E ' (__cxa_|_Unwind_|_Znwm|_ZdlPv|_ZGVNSt)'
+# expected: no output
+```
+
+Do not combine this with `-fvisibility=hidden`; if hidden visibility becomes a
+project-wide default, public entry points must be annotated with
+`__attribute__((visibility("default")))`.
+
 CLI and Python usage examples are in [Usage](usage.md).

@@ -16,6 +16,16 @@ set_target_properties(
 target_compile_definitions(py_ssp4sim PRIVATE Py_LIMITED_API=${SSP4SIM_PY_LIMITED_API})
 target_link_options(py_ssp4sim PRIVATE -static-libstdc++ -static-libgcc)
 
+# Hide the statically linked C++/GCC runtime symbols. The module is loaded into
+# a process that also loads libstdc++ dynamically (Python extensions, OpenBLAS,
+# and FMI FMUs), and exported runtime symbols from the static copy interpose
+# the shared one, splitting locale/allocator/exception state and crashing.
+# This only localizes symbols coming from these archives; PyInit_* and other
+# symbols compiled directly into the module stay default-visible, so no
+# visibility attributes are required.
+target_link_options(py_ssp4sim PRIVATE
+    -Wl,--exclude-libs,libstdc++.a:libgcc.a:libgcc_eh.a:libsupc++.a)
+
 if(TARGET Python::Module)
   target_link_libraries(py_ssp4sim PRIVATE Python::Module)
 elseif(TARGET Python::Python)
