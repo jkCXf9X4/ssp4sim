@@ -17,6 +17,10 @@ from here.
 ## Canonical Documentation
 
 - Project overview and user entry points: [`readme.md`](readme.md)
+- Systems-engineering record (source of truth for intent, product, architecture,
+  implementation, verification, operation, review, and open work):
+  [`docs/breakdown/README.md`](docs/breakdown/README.md), managed with the
+  product-breakdown skill (`pb check`, `pb node-size`, `pb registers`, `pb archive`)
 - Running the CLI and Python API: [`docs/usage.md`](docs/usage.md)
 - Local build commands: [`docs/build_from_source.md`](docs/build_from_source.md)
 - Development workflows, repository layout, coding style, dependencies, generated

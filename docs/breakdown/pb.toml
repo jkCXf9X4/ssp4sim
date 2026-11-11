@@ -1,0 +1,31 @@
+# pb.toml — SSP4SIM product breakdown configuration.
+# Defaults mirror pbstd/config.py; only deviations are stated here.
+
+[layout]
+# Cold-storage decision archive: records live in docs/archive/archive.zip,
+# reached only via `pb archive`. There is no loose decisions/ stream.
+archive = "../archive/archive.zip"
+# Record `artifacts:` paths resolve from the repo root (docs/breakdown -> repo).
+repo_root = "../.."
+
+[ids.prefixes]
+# SSP4SIM use cases carry their own stable prefix (UC-###). The remaining
+# prefixes use the standard defaults (info, eval, imp, research-question,
+# constraint, trace, capability, requirement, test).
+info = "INFO"
+decision = "DEC"
+eval = "EVAL"
+imp = "IMP"
+research-question = "RQ"
+constraint = "CON"
+trace = "TR"
+capability = "CP"
+requirement = "REQ"
+test = "TEST"
+use-case = "UC"
+
+[registers]
+# In archive mode these resolve relative to docs/archive/ (the archive's parent).
+index = "decision-stream.md"
+log = "design-choice-log.md"
+traceability = "traceability-map.md"

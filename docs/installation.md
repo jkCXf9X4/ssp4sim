@@ -18,7 +18,7 @@ The Linux tarball contains:
 
 - `bin/sim_app`
 - `python/pyssp4sim` (Python API package with native extension)
-- [`readme.md`](../readme.md), [`LICENSE`](../LICENSE), `RELEASE.txt`
+- [`readme.md`](../README.md), [`LICENSE`](../LICENSE), `RELEASE.txt`
 
 Download and verify the latest release:
 

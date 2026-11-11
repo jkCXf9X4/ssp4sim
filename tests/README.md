@@ -13,7 +13,7 @@ need to run the C++ binary or the Python suite.
 
 ## Test Architecture
 
-See breakdown/04-verification/test-strategy.md for the strategic rationale and test coverage targets.
+See docs/breakdown/04-verification/test-strategy.md for the strategic rationale and test coverage targets.
 
 The suite is split by layer so each test has a clear responsibility:
 
@@ -159,7 +159,7 @@ SCC node count to converge; the test pins that with
 `simulation.executor.la2.iterations`. The legacy `loop_aware.*` config key
 namespace is no longer honored.
 
-See breakdown/03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
+See docs/breakdown/03-implementation/dependency-policy.md for the fmi4c mode-bit issue and recommended fixture handling.
 
 The reference sweep uses a `0.001` second simulation timestep. The `embrace`
 SSP needs this smaller communication step; with a coarse `0.1` second step,
@@ -173,10 +173,10 @@ the internal parameter-set fixture in `signal_sine_gain_add`, external `.ssv`
 bindings, `.ssv + .ssm` mappings, and representative mapped fixtures with
 multiple value types, including the hierarchical `dcmotor` fixture.
 
-All known regression fixtures have been resolved. See breakdown/04-verification/regressions.md for history.
+All known regression fixtures have been resolved. See docs/breakdown/04-verification/regressions.md for history.
 
 `test_smoke_simulator.cpp` also covers the FMU-archive extraction lifecycle from
-`breakdown/06-evolution/backlog/bug/bug-report-ssp4sim-v030-fmu-extraction.md`:
+`docs/archive/deprecated/bug-report-ssp4sim-v030-fmu-extraction.md`:
 it runs the simulator against `tests/resources/scenario_fmu_archive.ssp` (the
 `scenario` fixture packaged as a `.ssp` archive with the FMU re-zipped as a
 `.fmu`) and asserts that `init()`/`simulate()` run to completion and produce a

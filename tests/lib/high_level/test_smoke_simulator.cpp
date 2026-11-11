@@ -145,7 +145,7 @@ TEST_CASE("Simulator smoke test runs one complete unpacked SSP", "[high_level][s
 // Description: A .ssp archive embedding a .fmu archive loads and simulates:
 //              the extracted FMU temp dir stays alive until the model is
 //              destroyed, so init()/simulate() run to completion. Regression for
-//              breakdown/06-evolution/backlog/bug/bug-report-ssp4sim-v030-fmu-extraction.md
+//              docs/archive/deprecated/bug-report-ssp4sim-v030-fmu-extraction.md
 // Rationale:   Smoke test for the FMU-archive extraction lifecycle.
 // ---------------------------------------------------------------------------
 TEST_CASE("Simulator smoke test: .ssp with embedded .fmu archive loads and simulates", "[high_level][smoke][fmu_archive]")
