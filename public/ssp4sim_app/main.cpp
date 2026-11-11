@@ -10,9 +10,9 @@
 #endif
 
 static const char *SSP4SIM_DOCS_USAGE =
-    "https://github.com/jkCXf9X4/ssp4sim/blob/main/docs/usage.md";
+    "https://github.com/pyssporg/ssp4sim/blob/main/docs/usage.md";
 static const char *SSP4SIM_DOCS_CONFIGURATION =
-    "https://github.com/jkCXf9X4/ssp4sim/blob/main/docs/configuration.md";
+    "https://github.com/pyssporg/ssp4sim/blob/main/docs/configuration.md";
 
 namespace
 {

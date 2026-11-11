@@ -6,7 +6,7 @@ SSP4SIM is a C++23 simulation engine for SSP archives with local database result
 
 See [breakdown/01-product/capabilities.md](breakdown/01-product/capabilities.md) for the full capabilities list.
 
-Builds upon the [SSP4CPP](https://github.com/jkCXf9X4/ssp4cpp) XML deserializer
+Builds upon the [SSP4CPP](https://github.com/pyssporg/ssp4cpp) XML deserializer
 and uses [Quill](https://github.com/odygrd/quill) for logging.
 
 ## Quick Start

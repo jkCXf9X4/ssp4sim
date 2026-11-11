@@ -14,8 +14,8 @@ def package_version() -> str:
         return "unknown"
 
 
-DOCS_USAGE = "https://github.com/jkCXf9X4/ssp4sim/blob/main/docs/usage.md"
-DOCS_CONFIGURATION = "https://github.com/jkCXf9X4/ssp4sim/blob/main/docs/configuration.md"
+DOCS_USAGE = "https://github.com/pyssporg/ssp4sim/blob/main/docs/usage.md"
+DOCS_CONFIGURATION = "https://github.com/pyssporg/ssp4sim/blob/main/docs/configuration.md"
 
 
 def build_parser() -> argparse.ArgumentParser:

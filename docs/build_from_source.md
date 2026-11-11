@@ -54,7 +54,7 @@ sudo apt install -y ninja-build autoconf automake autoconf-archive cmake build-e
 Clone the repository:
 
 ```bash
-git clone --recursive git@github.com:jkCXf9X4/ssp4sim.git
+git clone --recursive git@github.com:pyssporg/ssp4sim.git
 cd ssp4sim
 ```
 

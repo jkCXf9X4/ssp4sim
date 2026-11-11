@@ -22,14 +22,14 @@ The Linux tarball contains:
 
 Download and verify the latest release:
 
-https://github.com/jkCXf9X4/ssp4sim/releases/latest
+https://github.com/pyssporg/ssp4sim/releases/latest
 
 ```bash
 curl -fLO \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/ssp4sim-linux-x86_64-latest.tar.gz
+  https://github.com/pyssporg/ssp4sim/releases/latest/download/ssp4sim-linux-x86_64-latest.tar.gz
 
 curl -fLO \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/SHA256SUMS
+  https://github.com/pyssporg/ssp4sim/releases/latest/download/SHA256SUMS
 
 sha256sum -c SHA256SUMS
 
@@ -67,14 +67,14 @@ Runtime notes:
 
 ```bash
 pip install \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0.dev0-cp39-abi3-linux_x86_64.whl
+  https://github.com/pyssporg/ssp4sim/releases/latest/download/pyssp4sim-0.0.0.dev0-cp39-abi3-linux_x86_64.whl
 ```
 
 This alias wheel uses a constant version and can be cached by `pip`. For upgrades, use:
 
 ```bash
 pip install --upgrade --force-reinstall --no-cache-dir \
-  https://github.com/jkCXf9X4/ssp4sim/releases/latest/download/pyssp4sim-0.0.0.dev0-cp39-abi3-linux_x86_64.whl
+  https://github.com/pyssporg/ssp4sim/releases/latest/download/pyssp4sim-0.0.0.dev0-cp39-abi3-linux_x86_64.whl
 ```
 
 Verify the package imports:
