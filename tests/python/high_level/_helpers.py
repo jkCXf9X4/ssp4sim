@@ -244,7 +244,8 @@ def assert_start_values_match_ssv(start_values_text: str, ssv_path: Path) -> Non
     SSV entries carrying a source name are resolved through the sibling SSM
     mapping (if one exists) to their nested target names before comparison;
     entries not mapped are covered by inline parameter sets and skipped.
-    Nested-system start-value propagation is not yet supported (see IMP-042).
+    Nested-target entries are compared against the full hierarchical name
+    (e.g. inner.sine.amplitude).
     """
     tree = ET.parse(str(ssv_path))
     root = tree.getroot()

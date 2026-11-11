@@ -210,7 +210,9 @@ TEST_CASE("Flat inline SSV with external SSM resolves correctly", "[parameter_bi
 
 // ---------------------------------------------------------------------------
 // Description: Nested SSP with bindings at multiple levels
-// Rationale:   Nested parameter resolution is the most complex scenario
+// Rationale:   Nested parameter resolution is the most complex scenario;
+//              a root-level binding must override a nested inline set
+//              (higher hierarchy level takes precedence)
 // ---------------------------------------------------------------------------
 TEST_CASE("Nested system with root external and nested inline bindings", "[parameter_binding][integration]")
 {
@@ -245,9 +247,13 @@ TEST_CASE("Nested system with root external and nested inline bindings", "[param
     check_override(add, "add.k1", 1.0);
     check_override(add, "add.k2", 1.0);
 
-    // sine: amplitude=1.0, f=2.0, offset=0.0, phase=0.0, startTime=0.0 (inline at nested system level)
+    // sine: amplitude=2.0, f=2.0, offset=0.0, phase=0.0, startTime=0.0
+    // amplitude is overridden by the root external SSV+SSM binding
+    // (inner_sine_amplitude -> inner.sine.amplitude), which takes precedence
+    // over the inner system-level inline set (sine.amplitude=1.0) per SSP
+    // hierarchical precedence.
     auto *sine = find_model(sys, "sine");
-    check_override(sine, "sine.amplitude", 1.0);
+    check_override(sine, "sine.amplitude", 2.0);
     check_override(sine, "sine.f", 2.0);
     check_override(sine, "sine.offset", 0.0);
     check_override(sine, "sine.phase", 0.0);

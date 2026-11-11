@@ -137,17 +137,6 @@ def resolve_test_root(ssp_root: Path) -> Path:
             resolve_fixture("signal_nested_parameter_bindings"),
             None,
             Path("resources") / "signal_nested_parameter_bindings_parameters.ssv",
-            marks=[
-                pytest.mark.xfail(
-                    strict=False,
-                    reason=(
-                        "Root external SSV+SSM override of a nested target "
-                        "(inner_sine_amplitude -> inner.sine.amplitude = 2.0) is "
-                        "ignored: the nested inline value 1.0 wins. Nested-system "
-                        "start-value propagation not yet supported (see IMP-042)."
-                    ),
-                )
-            ],
             id="signal_nested_parameter_bindings",
         ),
     ],

@@ -96,7 +96,26 @@ namespace ssp4sim::analysis
             for (auto *child : node->children)
             {
                 auto child_prefix = prefix;
-                child_prefix.push_back(child->name);
+
+                // Model connectors are named "model.variable" (ssp_model.cpp), so
+                // a path through an SspModelNode would duplicate the element name
+                // (e.g. inner.sine.sine.amplitude). Strip the model prefix so leaf
+                // paths are exact SSP hierarchical names (inner.sine.amplitude),
+                // which lets parameter bindings match at any hierarchy level.
+                // System boundary connectors keep plain names; other node types
+                // are unchanged. Only strip when the prefix actually matches.
+                auto child_name = child->name;
+                if (dynamic_cast<SspModelNode *>(node) != nullptr &&
+                    dynamic_cast<SspConnectorNode *>(child) != nullptr)
+                {
+                    auto model_prefix = node->name + ".";
+                    if (child_name.rfind(model_prefix, 0) == 0)
+                    {
+                        child_name = child_name.substr(model_prefix.size());
+                    }
+                }
+
+                child_prefix.push_back(child_name);
                 out.emplace(child_prefix, child);
                 flatten_subtree(child, out, child_prefix);
             }
@@ -128,8 +147,10 @@ namespace ssp4sim::analysis
         /// bindings are applied first, matching SSP semantics.
         ///
         /// Parameter keys are dotted paths (e.g. "sine.amplitude" or "gain.k").
-        /// Each key is matched as a suffix against the reconstructed dotted path
-        /// of every descendant, with a dot boundary check to avoid false matches.
+        /// Leaf paths are exact SSP hierarchical names (flatten_subtree strips the
+        /// duplicated model prefix), so each key is matched against the end of the
+        /// reconstructed dotted path, with a dot boundary check to avoid false
+        /// matches.
         static void apply_parameters(utils::graph::Node *node)
         {
             // Post-order: recurse into children first
