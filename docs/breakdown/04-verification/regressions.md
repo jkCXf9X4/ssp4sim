@@ -2,20 +2,20 @@
 id: INFO-031
 type: info
 title: Regressions
-summary: Known issues tracked as pytest xfails with rationale; one open regression (REG-003), two recorded ones fixed and their markers removed
+summary: Known issues tracked as pytest xfails with rationale; the three recorded regressions are fixed and their markers removed
 date: 2026-11-11
 status: current
 ---
 
 # Regressions
 
-One open regression; two recorded ones are fixed and their xfail markers removed.
+All three recorded regressions are fixed and their xfail markers removed.
 
-- **REG-003** (`embrace/baseline/model`): open. BC FMU fails at simulator init with `RuntimeError: Failed to write string value to FMU` (`fmi4c_adapter.cpp:613`, "failed to write_string, vr BC"). Root cause: new fixture BC FMU lacks `resources/data/CONOPS.csv`; the `csv_path` String start value (vr 0, `data/CONOPS.csv`) is pushed to the FMU on init in old and new fixtures alike, and `fmi2SetString` fails when the file is absent. Not a layout issue: direct `pyssp4sim.Simulator` run reproduces; old submodule commit `f484677` simulates with the same build. xfail marker in `test_reference_sweep.py` (strict=False).
+- **REG-003** (`embrace/baseline/model`): fixed. BC FMU failed at init with `RuntimeError: Failed to write string value to FMU` (`fmi4c_adapter.cpp:613`). Root cause: the reference_ssp artifact build drops FMU data files (`*.csv` gitignored in the submodule); embrace's BC is a pyfmu-csv FMU that reads `data/CONOPS.csv` via the `csv_path` String start value, and `fmi2SetString` fails when the file is absent. The old artifact shipped the file, the new one does not. Fix: `ensure_fmu_data_files()` in `_helpers.py` copies FMU data files from the source model tree (`models/ssp/<model>/resources/`) into the fixture at runtime. Also fixed a sweep-wrapper bug (`param.values` passed as a tuple), which had masked the true result.
 - **REG-001** (`signal_sine_gain_add/baseline`): fixed; runtime start-value mismatch resolved by correcting the namespace in `ssp1_ssd.toml` (ssv to ssd); xfail marker removed, test passes.
 - **REG-002** (`dcmotor/baseline`): fixed; runtime start-value mismatch resolved by adding component-level `<ssd:ParameterBindings>` traversal to `get_parameter_bindings()` in `ssp.cpp`; xfail marker removed, test passes.
 - **Tracking method:**
-  - Known issues are marked with pytest xfail markers carrying rationale strings (REG-003 and the nested-override case use strict=False, so XPASS flags the fix without failing the suite).
+  - Known issues are marked with pytest xfail markers carrying rationale strings (strict=False, so XPASS flags the fix without failing the suite).
   - XPASS detection alerts when a marked test starts passing.
   - This leaf complements markers with structured root-cause tracking.
   - Each issue tracks a corresponding GitHub issue.

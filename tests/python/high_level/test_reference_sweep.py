@@ -11,27 +11,10 @@ from ._helpers import (
     run_reference_ssp,
 )
 
-# REG-003: the embrace fixture's BC FMU fails with "Failed to write string
-# value to FMU" during simulator init. Postponed; see
-# docs/breakdown/04-verification/regressions.md.
-EMBRACE_XFAIL_REASON = (
-    "embrace BC FMU: write_string fails during init (REG-003)"
-)
-
 
 def _reference_params_with_known_failures():
     params = reference_params()
     for param in params:
-        param_id = param.id
-        if param_id and param_id.startswith("embrace"):
-            param = pytest.param(
-                param.values,
-                marks=[pytest.mark.xfail(
-                    strict=False,
-                    reason=EMBRACE_XFAIL_REASON,
-                )],
-                id=param.id,
-            )
         yield param
 
 

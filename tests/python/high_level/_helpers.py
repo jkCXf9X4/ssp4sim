@@ -205,6 +205,7 @@ def run_reference_ssp(ssp_root: Path, tmp_path: Path) -> Path:
     if runtime_ssp_root.exists():
         shutil.rmtree(runtime_ssp_root)
     shutil.copytree(ssp_root, runtime_ssp_root)
+    ensure_fmu_data_files(runtime_ssp_root, ssp_root.parent.parent.name)
     config_path = write_reference_config(runtime_ssp_root, workdir)
 
     simulator = pyssp4sim.Simulator(str(config_path))
@@ -213,6 +214,41 @@ def run_reference_ssp(ssp_root: Path, tmp_path: Path) -> Path:
 
     assert_result_file_is_complete(workdir / "result.csv")
     return workdir
+
+
+def ensure_fmu_data_files(ssp_root: Path, model_name: str) -> None:
+    """Copy FMU data files referenced by modelDescription (``String start="data/..."``)
+    from the source model tree into the fixture.
+
+    The reference_ssp artifact build drops these files (``*.csv`` is gitignored in
+    the submodule), so pyfmu-csv FMUs like embrace's BC fail on fmi2SetString at
+    init. The source model keeps them under ``models/ssp/<model>/resources/``.
+    """
+    source_models = REFERENCE_SSP_ROOT.parent.parent / "models" / "ssp" / model_name
+    if not source_models.is_dir():
+        return
+
+    for fmu_dir in ssp_root.glob("resources/*"):
+        md_path = fmu_dir / "modelDescription.xml"
+        if not md_path.is_file():
+            continue
+        tree = ET.parse(str(md_path))
+        data_refs = [
+            elem.get("start")
+            for elem in tree.iter()
+            if (elem.get("start") or "").startswith("data/")
+        ]
+        for ref in data_refs:
+            target = fmu_dir / "resources" / ref
+            if target.exists():
+                continue
+            matches = sorted(
+                source_models.glob(f"resources/*/resources/data/{Path(ref).name}")
+            )
+            if not matches:
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(str(matches[0]), str(target))
 
 
 def _load_ssm_mapping(ssv_path: Path) -> dict[str, str] | None:

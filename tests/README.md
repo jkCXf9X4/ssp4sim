@@ -155,6 +155,12 @@ directory that directly contains `SystemStructure.ssd` (e.g.
 Model-exchange fixtures are excluded because the current runtime only supports
 co-simulation FMUs.
 
+The reference_ssp artifact build drops FMU data files (`*.csv` is gitignored in
+the submodule), so pyfmu-csv FMUs like embrace's BC would fail at init.
+`ensure_fmu_data_files()` in `_helpers.py` copies each FMU's `data/*.csv`
+referenced from `modelDescription.xml` back into the fixture from the source
+model tree (`models/ssp/<model>/resources/`) at runtime.
+
 The Python tests import `pyssp4sim` from `build/public/python_api` when that
 build artifact exists. This prevents high-level tests from accidentally passing
 against an unrelated installed wheel.
