@@ -12,13 +12,7 @@ from ._helpers import (
 )
 
 
-def _reference_params_with_known_failures():
-    params = reference_params()
-    for param in params:
-        yield param
-
-
-PARAMETRIZED_SSP_ROOTS = list(_reference_params_with_known_failures()) + [
+PARAMETRIZED_SSP_ROOTS = list(reference_params()) + [
     pytest.param(
         SOURCE_SSP_ROOT / "dcmotor" / "ssp",
         id="dcmotor_nested/baseline",
