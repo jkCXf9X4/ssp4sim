@@ -12,12 +12,35 @@ from ._helpers import (
 )
 
 
-PARAMETRIZED_SSP_ROOTS = list(reference_params()) + [
+# signal_init_guard is a known, documented hard failure on the ssp4sim backend:
+# ssp4sim initializes each FMU independently, so the guard's connected input u
+# holds its default 0.0 at fmi2ExitInitializationMode and the InitGuard assert
+# fires (resources/reference_ssp/models/ssp/signal_init_guard/FIXTURE.md). It is
+# expected to fail (xfail) until IMP-048 lands; strict keeps it loud if it ever
+# starts passing so the marker is revisited.
+PARAMETRIZED_SSP_ROOTS = []
+for _param in reference_params() + [
     pytest.param(
         SOURCE_SSP_ROOT / "dcmotor" / "ssp",
         id="dcmotor_nested/baseline",
-    ),
-]
+    )
+]:
+    if getattr(_param, "id", None) and _param.id.startswith("signal_init_guard"):
+        _param = _param._replace(
+            marks=list(_param.marks)
+            + [
+                pytest.mark.xfail(
+                    reason=(
+                        "[exit_init] exit_initialization_mode failed for guard: "
+                        "ssp4sim initializes each FMU independently, so guard.u "
+                        "holds default 0.0 at fmi2ExitInitializationMode and the "
+                        "InitGuard assert fires (FIXTURE.md; IMP-048)."
+                    ),
+                    strict=True,
+                )
+            ]
+        )
+    PARAMETRIZED_SSP_ROOTS.append(_param)
 
 
 @pytest.mark.parametrize("ssp_root", PARAMETRIZED_SSP_ROOTS)
