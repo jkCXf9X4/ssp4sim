@@ -2,6 +2,8 @@
 
 #include "utils/time/time.hpp"
 
+#include "reference_ssp_fixture.hpp"
+
 #include <catch.hpp>
 
 #include <cmath>
@@ -37,11 +39,12 @@ namespace
         return *candidates.begin();
     }
 
+    /// Locate the scenario FMU's modelDescription directory under the fixture's
+    /// resources. The FMU name follows the SSD component source, not a fixed
+    /// prefix.
     std::filesystem::path scenario_fmu_path()
     {
-        auto path = first_existing_path({
-            repository_root() / "resources" / "reference_ssp" / "artifacts" / "models" / "scenario" / "baseline" / "resources" / "0001_scenario"
-        });
+        auto path = ssp4sim::tests::reference_ssp::fixture_fmu_dir("scenario");
         REQUIRE(std::filesystem::exists(path));
         return path;
     }

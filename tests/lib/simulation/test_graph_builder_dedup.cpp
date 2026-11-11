@@ -23,6 +23,8 @@
 #include "pre/3_simulation_graph/elements/model_fmu.hpp"
 #include "pre/2_analysis_graph/ssp_graph_data.hpp"
 
+#include "reference_ssp_fixture.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <filesystem>
@@ -41,15 +43,10 @@ namespace {
     using ssp4sim::analysis::SspModelNode;
     using ssp4sim::analysis::SspNode;
 
-    fs::path project_root()
-    {
-        return fs::path(SSP4SIM_PROJECT_ROOT);
-    }
-
     fs::path fixture_model_dir(const std::string &model_name)
     {
-        return project_root() / "resources" / "reference_ssp" / "artifacts" / "models" /
-               "signal_sine_gain_add" / "baseline" / "resources" / model_name;
+        return ssp4sim::tests::reference_ssp::fixture_resource(
+            "signal_sine_gain_add", model_name);
     }
 
     /// Build an AnalysisGraphData with one wire src.out -> tgt.in, where the

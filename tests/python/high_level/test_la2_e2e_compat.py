@@ -12,6 +12,7 @@ import pytest
 from ._helpers import (
     GENERIC_CONFIG_PATH,
     REFERENCE_SSP_ROOT,
+    find_runnable_ssp,
     parse_float,
     pyssp4sim,
 )
@@ -179,8 +180,8 @@ def _prepare_fixture(tmp_path: Path, fixture: str) -> tuple[Path, Path] | None:
     Returns None when the fixture is not unpacked (caller skips), mirroring the
     skip idiom of test_loop_aware_nested.py.
     """
-    fixture_root = REFERENCE_SSP_ROOT / fixture / "baseline"
-    if not fixture_root.exists():
+    fixture_root = find_runnable_ssp(REFERENCE_SSP_ROOT / fixture)
+    if fixture_root is None:
         return None
     workdir = tmp_path / fixture
     runtime_ssp_root = workdir / "ssp"
@@ -223,7 +224,7 @@ def test_la2_names_end_to_end_converges(
     """
     prepared = _prepare_fixture(tmp_path, fixture)
     if prepared is None:
-        pytest.skip(f"Missing fixture: {REFERENCE_SSP_ROOT / fixture / 'baseline'}")
+        pytest.skip(f"Missing fixture: {fixture}")
     runtime_ssp_root, workdir = prepared
 
     config_path = write_la2_compat_config(
@@ -254,7 +255,7 @@ def test_executor_method_alias_accepted(method: str, tmp_path: Path) -> None:
     """
     prepared = _prepare_fixture(tmp_path, "signal_algebraic_loop")
     if prepared is None:
-        pytest.skip("Missing fixture: signal_algebraic_loop/baseline")
+        pytest.skip("Missing fixture: signal_algebraic_loop")
     runtime_ssp_root, workdir = prepared
 
     config_path = write_la2_compat_config(
@@ -295,7 +296,7 @@ def test_legacy_loop_aware_keys_are_ignored(tmp_path: Path) -> None:
     """
     prepared = _prepare_fixture(tmp_path, "signal_nested_algebraic_loop")
     if prepared is None:
-        pytest.skip("Missing fixture: signal_nested_algebraic_loop/baseline")
+        pytest.skip("Missing fixture: signal_nested_algebraic_loop")
     runtime_ssp_root, workdir = prepared
 
     # Legacy namespace only: a deliberately under-converged configuration.

@@ -13,6 +13,7 @@ import pytest
 from ._helpers import (
     GENERIC_CONFIG_PATH,
     REFERENCE_SSP_ROOT,
+    find_runnable_ssp,
     parse_float,
     pyssp4sim,
 )
@@ -115,9 +116,9 @@ def test_signal_sine_gain_add_jacobi_parallel_has_no_output_spikes(
     max_allowed_err = float(os.environ.get("SSP4SIM_SPIKE_MAX_ERR", "0.02"))
     max_allowed_delta = float(os.environ.get("SSP4SIM_SPIKE_MAX_DELTA", "0.1"))
 
-    fixture_root = REFERENCE_SSP_ROOT / "signal_sine_gain_add" / "baseline"
-    if not fixture_root.exists():
-        pytest.skip(f"Missing fixture: {fixture_root}")
+    fixture_root = find_runnable_ssp(REFERENCE_SSP_ROOT / "signal_sine_gain_add")
+    if fixture_root is None:
+        pytest.skip("Missing fixture: signal_sine_gain_add")
 
     workdir = tmp_path / "signal_sine_gain_add_spike_regression"
     runtime_ssp_root = workdir / "ssp"

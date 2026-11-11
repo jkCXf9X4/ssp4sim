@@ -39,6 +39,7 @@ set(SSP4SIM_TEST_INCLUDE_DIRS
   "${CMAKE_SOURCE_DIR}/lib/include/utils/thread_pool"
   "${CMAKE_SOURCE_DIR}/lib/include/utils/time"
   "${CMAKE_SOURCE_DIR}/lib/public_include"
+  "${CMAKE_SOURCE_DIR}/tests/lib"
 )
 
 # Remove C block comments (/* ... */), preserving newlines so the remaining

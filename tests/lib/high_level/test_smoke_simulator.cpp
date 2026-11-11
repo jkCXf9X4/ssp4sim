@@ -2,6 +2,8 @@
 
 #include "simulator.hpp"
 
+#include "reference_ssp_fixture.hpp"
+
 #include <nlohmann/json.hpp>
 
 #include <filesystem>
@@ -13,14 +15,9 @@ namespace
 {
     namespace fs = std::filesystem;
 
-    fs::path project_root()
-    {
-        return fs::path(SSP4SIM_PROJECT_ROOT);
-    }
-
     fs::path smoke_ssp_root()
     {
-        return project_root() / "resources" / "reference_ssp" / "artifacts" / "models" / "pyfmu_csv_source_sink" / "baseline";
+        return ssp4sim::tests::reference_ssp::fixture_root("pyfmu_csv_source_sink");
     }
 
     fs::path runtime_smoke_ssp_root(const fs::path &workdir)
@@ -36,7 +33,7 @@ namespace
 
     fs::path write_smoke_config(const fs::path &workdir)
     {
-        const auto config_template = project_root() / "resources" / "generic_config.json";
+        const auto config_template = ssp4sim::tests::reference_ssp::project_root() / "resources" / "generic_config.json";
         REQUIRE(fs::exists(config_template));
 
         fs::create_directories(workdir);
@@ -79,7 +76,7 @@ namespace
 
     fs::path write_fmu_archive_config(const fs::path &workdir, const fs::path &ssp_archive)
     {
-        const auto config_template = project_root() / "resources" / "generic_config.json";
+        const auto config_template = ssp4sim::tests::reference_ssp::project_root() / "resources" / "generic_config.json";
         REQUIRE(fs::exists(config_template));
 
         fs::create_directories(workdir);
@@ -122,7 +119,7 @@ namespace
 // ---------------------------------------------------------------------------
 TEST_CASE("Simulator smoke test runs one complete unpacked SSP", "[high_level][smoke]")
 {
-    const auto workdir = project_root() / "build" / "test_cpp_high_level" / "pyfmu_csv_source_sink";
+    const auto workdir = ssp4sim::tests::reference_ssp::project_root() / "build" / "test_cpp_high_level" / "pyfmu_csv_source_sink";
     const auto config_path = write_smoke_config(workdir);
 
     ssp4sim::Simulator simulator(config_path.string());
@@ -150,11 +147,11 @@ TEST_CASE("Simulator smoke test runs one complete unpacked SSP", "[high_level][s
 // ---------------------------------------------------------------------------
 TEST_CASE("Simulator smoke test: .ssp with embedded .fmu archive loads and simulates", "[high_level][smoke][fmu_archive]")
 {
-    const auto workdir = project_root() / "build" / "test_cpp_high_level" / "fmu_archive";
+    const auto workdir = ssp4sim::tests::reference_ssp::project_root() / "build" / "test_cpp_high_level" / "fmu_archive";
     fs::remove_all(workdir);
     fs::create_directories(workdir);
 
-    const auto fixture = project_root() / "tests" / "resources" / "scenario_fmu_archive.ssp";
+    const auto fixture = ssp4sim::tests::reference_ssp::project_root() / "tests" / "resources" / "scenario_fmu_archive.ssp";
     REQUIRE(fs::exists(fixture));
     const auto ssp_archive = workdir / "scenario_fmu_archive.ssp";
     fs::copy(fixture, ssp_archive);

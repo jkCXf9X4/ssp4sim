@@ -86,6 +86,15 @@ closure of each test file. Consequences:
   for any local include a cone cannot resolve (a missing directory in the
   include set, or a misspelled include). Watch configure output for it.
 
+C++ tests that touch reference-SSP fixtures share one helper,
+`tests/lib/reference_ssp_fixture.hpp` (`namespace ssp4sim::tests::reference_ssp`):
+`fixture_root(name)`, `fixture_resource(name, res)`, `fixture_fmu_dir(name)`, and
+`project_root()`. It is the single source of the `<analysis>/<build>` scan that
+locates the runnable SSP root under `resources/reference_ssp/`, so upstream
+layout changes land in one place. `tests/lib` is added to
+`SSP4SIM_TEST_INCLUDE_DIRS` in `tests/lib/cmake/AddUnitTargets.cmake` so the
+helper resolves inside unit cones.
+
 Prefer small, focused C++ cases named `test_*.cpp` under `tests/lib/core/`,
 `tests/lib/utils/`, or `tests/lib/analysis/`. New files are picked up by the
 build automatically (`GLOB CONFIGURE_DEPENDS`); they become standalone per-test
@@ -136,8 +145,13 @@ pytest parameterization and Python-side CSV/result comparison helpers. Pytest is
 configured to collect only `tests/python`.
 
 The test iterates the unpacked SSP fixtures under
-`resources/reference_ssp/artifacts/models/*/*`, simulates each
-co-simulation SSP, and checks that a complete result CSV is produced.
+`resources/reference_ssp/artifacts/models/<model>/<analysis>/<build>`
+(glob `models/*/*/*`), simulates each co-simulation SSP, and checks that a
+complete result CSV is produced. The runnable SSP root is the `<build>`
+directory that directly contains `SystemStructure.ssd` (e.g.
+`baseline/model/`); analysis names vary per fixture (`baseline`,
+`test_baseline`, `fast`/`slow`, `one_stage`, ...) and the build dir is
+`model/`.
 Model-exchange fixtures are excluded because the current runtime only supports
 co-simulation FMUs.
 

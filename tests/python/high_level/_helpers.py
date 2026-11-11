@@ -34,6 +34,7 @@ SOURCE_SSP_ROOT = (
 REFERENCE_SSP_ROOTS = [REFERENCE_SSP_ROOT, SOURCE_SSP_ROOT]
 SSP_NAMESPACE = {"ssd": "http://ssp-standard.org/SSP1/SystemStructureDescription"}
 SSV_NAMESPACE = {"ssv": "http://ssp-standard.org/SSP1/SystemStructureParameterValues"}
+SSM_NAMESPACE = {"ssm": "http://ssp-standard.org/SSP1/SystemStructureParameterMapping"}
 
 
 if not (PYTHON_API_BUILD / "pyssp4sim").exists():
@@ -43,6 +44,35 @@ pyssp4sim = pytest.importorskip("pyssp4sim")
 
 if not Path(pyssp4sim.__file__).resolve().is_relative_to(PYTHON_API_BUILD.resolve()):
     pytest.fail(f"pyssp4sim imported from {pyssp4sim.__file__}, not {PYTHON_API_BUILD}")
+
+
+def find_runnable_ssp(model_dir: Path, analysis_name: str | None = None) -> Path | None:
+    """Return the runnable SSP root for a fixture: the <analysis>/<build>
+    directory directly containing SystemStructure.ssd under
+    artifacts/models/<model>. Returns None when no runnable SSP is present.
+    When analysis_name is given, only that analysis directory is considered.
+    """
+    analysis_dirs = (
+        [model_dir / analysis_name] if analysis_name else sorted(
+            path for path in model_dir.iterdir() if path.is_dir()
+        )
+    )
+    for analysis in analysis_dirs:
+        runnable = runnable_build(analysis)
+        if runnable is not None:
+            return runnable
+    return None
+
+
+def runnable_build(analysis_dir: Path) -> Path | None:
+    """Return the runnable SSP root directly under an analysis directory: the
+    <build> subdirectory containing SystemStructure.ssd. Returns None when no
+    runnable SSP is present.
+    """
+    for build in sorted(path for path in analysis_dir.iterdir() if path.is_dir()):
+        if (build / "SystemStructure.ssd").exists():
+            return build
+    return None
 
 
 def uses_model_exchange(ssp_root: Path) -> bool:
@@ -62,16 +92,14 @@ def discover_reference_ssps() -> list[Path]:
 
     models = []
     for model_dir in sorted(path for path in REFERENCE_SSP_ROOT.iterdir() if path.is_dir()):
-        for experiment_root in sorted(
-            path for path in model_dir.iterdir() if path.is_dir()
-        ):
-            if not (experiment_root / "SystemStructure.ssd").exists():
-                continue
+        experiment_root = find_runnable_ssp(model_dir)
+        if experiment_root is None:
+            continue
 
-            if uses_model_exchange(experiment_root):
-                continue
+        if uses_model_exchange(experiment_root):
+            continue
 
-            models.append(experiment_root)
+        models.append(experiment_root)
 
     return models
 
@@ -91,9 +119,12 @@ def reference_params() -> list[pytest.ParameterSet]:
 
     params = []
     for ssp_root in models:
-        model_name = ssp_root.parent.name
-        experiment_name = ssp_root.name
-        params.append(pytest.param(ssp_root, id=f"{model_name}/{experiment_name}"))
+        model_name = ssp_root.parent.parent.name
+        analysis_name = ssp_root.parent.name
+        build_name = ssp_root.name
+        params.append(
+            pytest.param(ssp_root, id=f"{model_name}/{analysis_name}/{build_name}")
+        )
 
     return params
 
@@ -184,11 +215,40 @@ def run_reference_ssp(ssp_root: Path, tmp_path: Path) -> Path:
     return workdir
 
 
+def _load_ssm_mapping(ssv_path: Path) -> dict[str, str] | None:
+    """Resolve the sibling SSM mapping (source -> nested target name).
+
+    Returns None when no ``*.ssm`` file sits next to the SSV, preserving the
+    legacy behavior of comparing SSV source names directly against
+    ``start_values.csv``.
+    """
+    ssm_paths = sorted(ssv_path.parent.glob("*.ssm"))
+    if not ssm_paths:
+        return None
+    ssm_path = ssm_paths[0]
+    tree = ET.parse(str(ssm_path))
+    root = tree.getroot()
+
+    mapping: dict[str, str] = {}
+    for entry in root.findall("ssm:MappingEntry", SSM_NAMESPACE):
+        source = entry.get("source")
+        target = entry.get("target")
+        if source is not None and target is not None:
+            mapping[source] = target
+    return mapping
+
+
 def assert_start_values_match_ssv(start_values_text: str, ssv_path: Path) -> None:
-    """Asserts that the produced start_values.csv lines match all entries in the SSV file (nested-system start-value propagation is not yet supported; see IMP-042).
+    """Asserts that the produced start_values.csv lines match all entries in the SSV file.
+
+    SSV entries carrying a source name are resolved through the sibling SSM
+    mapping (if one exists) to their nested target names before comparison;
+    entries not mapped are covered by inline parameter sets and skipped.
+    Nested-system start-value propagation is not yet supported (see IMP-042).
     """
     tree = ET.parse(str(ssv_path))
     root = tree.getroot()
+    ssm_mapping = _load_ssm_mapping(ssv_path)
 
     parameters = root.find("ssv:Parameters", SSV_NAMESPACE)
     assert parameters is not None, f"No <ssv:Parameters> found in {ssv_path}"
@@ -196,6 +256,14 @@ def assert_start_values_match_ssv(start_values_text: str, ssv_path: Path) -> Non
     for param in parameters.findall("ssv:Parameter", SSV_NAMESPACE):
         name = param.get("name")
         assert name is not None, f"Parameter without name in {ssv_path}"
+
+        if ssm_mapping is not None:
+            target = ssm_mapping.get(name)
+            if target is None:
+                # Not part of the external binding; provided by inline sets.
+                continue
+        else:
+            target = name
 
         # Determine type from child element (Real, Integer, String, Boolean)
         elem = None
@@ -223,7 +291,7 @@ def assert_start_values_match_ssv(start_values_text: str, ssv_path: Path) -> Non
         else:
             raise ValueError(f"Unsupported SSV type: {tag}")
 
-        expected_line = f"0, {name}, {formatted}"
+        expected_line = f"0, {target}, {formatted}"
         assert expected_line in start_values_text, (
             f"Missing parameter in start_values.csv:\n"
             f"  Expected: '{expected_line}'\n"

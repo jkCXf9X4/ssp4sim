@@ -12,6 +12,7 @@ import pytest
 from ._helpers import (
     GENERIC_CONFIG_PATH,
     REFERENCE_SSP_ROOT,
+    find_runnable_ssp,
     parse_float,
     pyssp4sim,
 )
@@ -160,9 +161,9 @@ def test_loop_aware_converges_algebraic_loop(
     sub-iterations does the fixed point emerge. Both sub-step scheduling modes
     (fixed equal steps, geometric shrinking steps) must converge.
     """
-    fixture_root = REFERENCE_SSP_ROOT / fixture / "baseline"
-    if not fixture_root.exists():
-        pytest.skip(f"Missing fixture: {fixture_root}")
+    fixture_root = find_runnable_ssp(REFERENCE_SSP_ROOT / fixture)
+    if fixture_root is None:
+        pytest.skip(f"Missing fixture: {fixture}")
 
     workdir = tmp_path / f"{fixture}_{mode}"
     runtime_ssp_root = workdir / "ssp"

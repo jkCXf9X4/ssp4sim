@@ -4,6 +4,8 @@
 
 #include "ssp4cpp/ssp.hpp"
 
+#include "reference_ssp_fixture.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <set>
@@ -13,15 +15,9 @@ namespace fs = std::filesystem;
 
 namespace {
 
-    fs::path project_root()
-    {
-        return fs::path(SSP4SIM_PROJECT_ROOT);
-    }
-
     fs::path fixture_path(const std::string &fixture_name)
     {
-        return project_root() / "resources" / "reference_ssp" / "artifacts" / "models" /
-               fixture_name / "baseline";
+        return ssp4sim::tests::reference_ssp::fixture_root(fixture_name);
     }
 
     /// Build an SspSystem from a fixture and trigger parameter application

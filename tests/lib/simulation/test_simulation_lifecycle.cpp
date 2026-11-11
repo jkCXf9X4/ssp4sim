@@ -6,6 +6,8 @@
 #include "ssp4cpp/ssp.hpp"
 #include "ssp4cpp/utils/log.hpp"
 
+#include "reference_ssp_fixture.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 #include <filesystem>
 #include <stdexcept>
@@ -26,22 +28,16 @@ namespace fs = std::filesystem;
 //              tests/resources (only .ssd reference files). The test uses the
 //              directory-based SSP fixture pattern from
 //              test_graph_builder.cpp
-//              (resources/reference_ssp/artifacts/models/<name>/baseline) and
-//              SKIPs when the fixture is not present, so the suite stays
+//              (resources/reference_ssp/artifacts/models/<name>/<analysis>/<build>)
+//              and SKIPs when the fixture is not present, so the suite stays
 //              green without a .ssp archive.
 // ---------------------------------------------------------------------------
 
 namespace {
 
-    fs::path project_root()
-    {
-        return fs::path(SSP4SIM_PROJECT_ROOT);
-    }
-
     fs::path fixture_path(const std::string &fixture_name)
     {
-        return project_root() / "resources" / "reference_ssp" / "artifacts" / "models" /
-               fixture_name / "baseline";
+        return ssp4sim::tests::reference_ssp::fixture_root(fixture_name);
     }
 
     /// Minimal SharedConfig with recording disabled (csv + sqlite off).
@@ -80,7 +76,7 @@ namespace {
         config.enable_recording = false;
         config.csv.enable = false;
         config.sqlite.enable = false;
-        config.working_dir = project_root() / ".dynamic-harness" / "wd" / "sim_lifecycle_test";
+        config.working_dir = ssp4sim::tests::reference_ssp::project_root() / ".dynamic-harness" / "wd" / "sim_lifecycle_test";
         return config;
     }
 
@@ -118,7 +114,7 @@ TEST_CASE("double init throws logic_error", "[simulation][lifecycle]")
     {
         // No .ssp archive exists in the repo; without a real SSP fixture
         // init() cannot succeed and this test cannot be exercised.
-        SKIP("requires an SSP fixture (resources/reference_ssp/artifacts/models/scenario/baseline)");
+        SKIP("requires an SSP fixture (resources/reference_ssp/artifacts/models/scenario/<analysis>/<build>)");
     }
 
     auto config = make_minimal_config();
@@ -142,7 +138,7 @@ TEST_CASE("init then simulate completes", "[simulation][lifecycle]")
     const fs::path ssp_dir = fixture_path("scenario");
     if (!fs::exists(ssp_dir / "SystemStructure.ssd"))
     {
-        SKIP("requires an SSP fixture (resources/reference_ssp/artifacts/models/scenario/baseline)");
+        SKIP("requires an SSP fixture (resources/reference_ssp/artifacts/models/scenario/<analysis>/<build>)");
     }
 
     auto config = make_minimal_config();
