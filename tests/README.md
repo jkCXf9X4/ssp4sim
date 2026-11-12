@@ -155,14 +155,25 @@ directory that directly contains `SystemStructure.ssd` (e.g.
 Model-exchange fixtures are excluded because the current runtime only supports
 co-simulation FMUs.
 
-`signal_init_guard` is the one known hard failure in the sweep and is pinned as a
-strict `xfail` in `test_reference_sweep.py`. ssp4sim initializes each FMU
-independently, so the `InitGuard` component's connected input `u` still holds its
-default `0.0` at `fmi2ExitInitializationMode` and the guard's Modelica
-`initial equation assert(u > 1e-6, ...)` fires (`[exit_init]
-exit_initialization_mode failed for guard`). See
-`resources/reference_ssp/models/ssp/signal_init_guard/FIXTURE.md`; the fix is
-tracked in IMP-048. Remove the `xfail` marker once that lands.
+Two fixtures are known hard failures in the sweep and are pinned as strict
+`xfail`s in `test_reference_sweep.py`:
+
+- `signal_init_chain_guard`: ssp4sim initializes each FMU independently, so
+  the `InitGuard` component's connected input `u` still holds its default
+  `0.0` at `fmi2ExitInitializationMode` and the guard's Modelica
+  `initial equation assert(u > 1e-6, ...)` fires (`[exit_init]
+  exit_initialization_mode failed for guard`). See
+  `resources/reference_ssp/models/ssp/signal_init_chain_guard/FIXTURE.md`;
+  the fix is tracked in IMP-048. Remove the `xfail` marker once that lands.
+- `signal_init_loop_guard`: the divider divides by its connected input, so
+  any initialization evaluation with the input at its default `0.0` divides
+  by zero. Both ssp4sim (every executor mode: `jacobi`, `seidel`, `la2`) and
+  omsimulator abort (`[exit_init] exit_initialization_mode failed for div`);
+  passing the fixture requires initialization that survives a rejected FMU
+  init (loop-breaking propagation, or reload-and-retry — after `fmi2Error`
+  the FMI 2.0 contract forbids reusing the instance), which no engine
+  implements today. See
+  `resources/reference_ssp/models/ssp/signal_init_loop_guard/FIXTURE.md`.
 
 The Python tests import `pyssp4sim` from `build/public/python_api` when that
 build artifact exists. This prevents high-level tests from accidentally passing
@@ -196,8 +207,9 @@ the internal parameter-set fixture in `signal_sine_gain_add`, external `.ssv`
 bindings, `.ssv + .ssm` mappings, and representative mapped fixtures with
 multiple value types, including the hierarchical `dcmotor` fixture.
 
-Known regression fixtures have been resolved except for `signal_init_guard`,
-which is a documented expected failure (strict xfail, see above). See
+Known regression fixtures have been resolved except for `signal_init_chain_guard`
+and `signal_init_loop_guard`, which are documented expected failures (strict
+xfails, see above). See
 docs/breakdown/04-verification/regressions.md for history.
 
 `test_smoke_simulator.cpp` also covers the FMU-archive extraction lifecycle from

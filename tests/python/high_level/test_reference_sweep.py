@@ -12,12 +12,19 @@ from ._helpers import (
 )
 
 
-# signal_init_guard is a known, documented hard failure on the ssp4sim backend:
-# ssp4sim initializes each FMU independently, so the guard's connected input u
-# holds its default 0.0 at fmi2ExitInitializationMode and the InitGuard assert
-# fires (resources/reference_ssp/models/ssp/signal_init_guard/FIXTURE.md). It is
+# signal_init_chain_guard is a known, documented hard failure on the ssp4sim
+# backend: ssp4sim initializes each FMU independently, so the guard's connected
+# input u holds its default 0.0 at fmi2ExitInitializationMode and the InitGuard
+# assert fires
+# (resources/reference_ssp/models/ssp/signal_init_chain_guard/FIXTURE.md). It is
 # expected to fail (xfail) until IMP-048 lands; strict keeps it loud if it ever
 # starts passing so the marker is revisited.
+#
+# signal_init_loop_guard is the cyclic companion: the divider divides by its
+# connected input, so any evaluation with the input still at its default 0.0
+# divides by zero. ssp4sim evaluates at fmi2ExitInitializationMode with the
+# default, the FMU rejects initialization, and the engine aborts
+# (resources/reference_ssp/models/ssp/signal_init_loop_guard/FIXTURE.md).
 PARAMETRIZED_SSP_ROOTS = []
 for _param in reference_params() + [
     pytest.param(
@@ -25,7 +32,7 @@ for _param in reference_params() + [
         id="dcmotor_nested/baseline",
     )
 ]:
-    if getattr(_param, "id", None) and _param.id.startswith("signal_init_guard"):
+    if getattr(_param, "id", None) and _param.id.startswith("signal_init_chain_guard"):
         _param = _param._replace(
             marks=list(_param.marks)
             + [
@@ -35,6 +42,22 @@ for _param in reference_params() + [
                         "ssp4sim initializes each FMU independently, so guard.u "
                         "holds default 0.0 at fmi2ExitInitializationMode and the "
                         "InitGuard assert fires (FIXTURE.md; IMP-048)."
+                    ),
+                    strict=True,
+                )
+            ]
+        )
+    if getattr(_param, "id", None) and _param.id.startswith("signal_init_loop_guard"):
+        _param = _param._replace(
+            marks=list(_param.marks)
+            + [
+                pytest.mark.xfail(
+                    reason=(
+                        "[exit_init] exit_initialization_mode failed for div: "
+                        "ssp4sim initializes each FMU independently, so div.u "
+                        "holds default 0.0 at fmi2ExitInitializationMode and the "
+                        "c/u divide-by-zero guard rejects initialization "
+                        "(FIXTURE.md)."
                     ),
                     strict=True,
                 )
